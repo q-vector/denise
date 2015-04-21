@@ -31,7 +31,7 @@ namespace denise
 
       Tc_Category tc_category = LOW;
 
-      if (max_wind >= 32.7) { tc_category = T; }
+      if (max_wind >= 32.7) { tc_category = TY; }
 
       else
       if (max_wind >= 24.5) { tc_category = STS; }
@@ -86,11 +86,10 @@ namespace denise
       }
 
       else
-      if (((tc_category_string == "T")) ||
-          ((tc_category_string == "TY")) ||
+      if (((tc_category_string == "TY")) ||
           ((tc_category_string == "TYPHOON")))
       {
-         tc_category = T;
+         tc_category = TY;
       }
 
       return tc_category;
@@ -108,7 +107,7 @@ namespace denise
          case TD:  intensity = 17.0; break;
          case TS:  intensity = 24.3; break;
          case STS: intensity = 32.5; break;
-         case T:   intensity = 99.9; break;
+         case TY:  intensity = 99.9; break;
       }
 
       return intensity;
@@ -126,7 +125,7 @@ namespace denise
          case TD:  intensity =  0.0; break;
          case TS:  intensity = 17.4; break;
          case STS: intensity = 24.7; break;
-         case T:   intensity = 32.9; break;
+         case TY:  intensity = 32.9; break;
       }
 
       return intensity;
@@ -175,7 +174,7 @@ namespace denise
          case TD:  s.assign ("TD");  break;
          case TS:  s.assign ("TS");  break;
          case STS: s.assign ("STS"); break;
-         case T:   s.assign ("T");   break;
+         case TY:  s.assign ("TY");   break;
          case ALL_TC_CATEGORIES: s.append ("ALL_TC_CATEGORIES"); break;
       }
 

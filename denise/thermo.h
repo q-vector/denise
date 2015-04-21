@@ -146,11 +146,13 @@ namespace denise
 
          static Real
          get_rh (const Real t,
-                 const Real t_d);
+                 const Real t_d,
+                 const Thermo_Medium thermo_medium = WATER);
 
          static Real
          get_t_d (const Real t,
-                  const Real rh);
+                  const Real rh,
+                  const Thermo_Medium thermo_medium = WATER);
 
          static Real
          get_t_v (const Real t,
@@ -567,7 +569,8 @@ namespace denise
       public:
 
          Thermo_Diagram (const Size_2D& size_2d,
-                         const Real p_0);
+                         const Real p_0 = 1000e2,
+                         const Thermo_Point& ref_thermo_point = Thermo_Point::t_p (-40, 1000e3));
 
          ~Thermo_Diagram ();
 
@@ -1797,7 +1800,8 @@ namespace denise
       public:
 
          Tephigram (const Size_2D& size_2d,
-                    const Real p_0 = 1000e2);
+                    const Real p_0 = 1000e2,
+                    const Thermo_Point& ref_thermo_point = Thermo_Point::t_p (-40, 1000e2));
 
          void
          reset (const Size_2D& size_2d);
@@ -1826,8 +1830,10 @@ namespace denise
       public:
 
          Emagram (const Size_2D& size_2d,
-                  const Real magic_ratio = 36.6,
-                  const Real p_0 = 1000e2);
+//                  const Real magic_ratio = 36.6,
+                  const Real magic_ratio = 45,
+                  const Real p_0 = 1000e2,
+                  const Thermo_Point& ref_thermo_point = Thermo_Point::t_p (-120, 1000e2));
 
          virtual void
          reset (const Size_2D& size_2d);
@@ -1844,7 +1850,8 @@ namespace denise
 
          Skew_T (const Size_2D& size_2d,
                  const Real magic_ratio = 36.6,
-                 const Real p_0 = 1000e2);
+                 const Real p_0 = 1000e2,
+                 const Thermo_Point& ref_thermo_point = Thermo_Point::t_p (-40, 1000e2));
 
          void
          reset (const Size_2D& size_2d);

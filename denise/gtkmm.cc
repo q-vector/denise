@@ -1114,8 +1114,7 @@ Dgrid_Box::pack ()
    {
 
       const Index_2D& index_2d = iterator->first;
-      Iterator iterator = widget_id_map.find (index_2d);
-      if (iterator == widget_id_map.end ()) { continue; }
+      if (widget_id_map.find (index_2d) == widget_id_map.end ()) { continue; }
 
       const Integer id = iterator->second;
       const Integer i = index_2d.i;

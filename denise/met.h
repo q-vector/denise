@@ -44,7 +44,7 @@ namespace denise
       TROPICAL_DEPRESSION   = 0, TD  = 0,
       TROPICAL_STORM        = 1, TS  = 1,
       SEVERE_TROPICAL_STORM = 2, STS = 2,
-      TYPHOON               = 3, T   = 3, TY = 3,
+      TYPHOON               = 3, TY = 3,
       LOW                   = 4,
       NUMBER_OF_TC_CATEGORIES = 5
    };

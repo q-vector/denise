@@ -75,7 +75,8 @@ Moisture::get_e_s (const Real t,
          Real bulk_a = 10.79574 * a - 5.028 * log10 (b + 1);
          Real bulk_b = 1.50475e-4 * (1 - exp10 (-8.2969 * b));
          Real bulk_c = 0.42873e-3 * (exp10 (4.76955 * a) - 1) + 0.78614;
-         e_s = exp10 (bulk_a + bulk_b + bulk_c) * 1e2;
+         e_s = exp10 (bulk_a + bulk_b + bulk_c);
+         e_s *= 1e2;
 
          break;
 
@@ -86,6 +87,7 @@ Moisture::get_e_s (const Real t,
          Real a = (273.16 / (t + K));
          //Real a = (273.16 / t);
          e_s = exp10 (-9.09685*a - 3.56653*log10 (a) - 0.87682/a + 10.75981);
+         e_s *= 1e2;
          break;
       }
 
@@ -161,15 +163,18 @@ Moisture::get_t (const Real e_s,
 
 Real
 Moisture::get_rh (const Real t,
-                  const Real t_d)
+                  const Real t_d,
+                  const Thermo_Medium thermo_medium)
 {
-   return get_e_s (t_d, WATER) / get_e_s (t, WATER);
+   return get_e_s (t_d, thermo_medium) / get_e_s (t, thermo_medium);
 }
 
 Real
 Moisture::get_t_d (const Real t,
-                   const Real rh)
+                   const Real rh,
+                   const Thermo_Medium thermo_medium)
 {
+   return get_t (get_e_s (t - K, thermo_medium) * rh, thermo_medium) + K;
    const Real y = 1 - rh;
    const Real tt = t - K;
    return (tt - (14.55 + 0.114 * tt) * y - pow ((2.5 + 0.007 * tt) * y, 3) -
@@ -1666,6 +1671,15 @@ Thermo_Line::Thermo_Line (const Thermo_Diagram& thermo_diagram,
       }
       catch (const Thermo_Exception& te)
       {
+         try
+         {
+            const Real t = sounding.get_temperature (thermo_diagram, p);
+            if (gsl_finite (t)) { insert (make_pair (p, t)); }
+         }
+         catch (const Thermo_Exception& te)
+         {
+         }
+        
       }
 
    }
@@ -4394,8 +4408,9 @@ Thermo_Diagram::render_labels (const RefPtr<Context>& cr,
 }
 
 Thermo_Diagram::Thermo_Diagram (const Size_2D& size_2d,
-                                const Real p_0)
-   : ref_thermo_point (Thermo_Point::t_p (-40, p_0)),
+                                const Real p_0,
+                                const Thermo_Point& ref_thermo_point)
+   : ref_thermo_point (ref_thermo_point),
      label_size (size_2d.i * 0.014),
      p_0 (p_0)
 {
@@ -4547,8 +4562,9 @@ Tephigram::reverse_tp (Thermo_Point& thermo_point,
 }
 
 Tephigram::Tephigram (const Size_2D& size_2d,
-                      const Real p_0)
-   : Thermo_Diagram (size_2d, p_0)
+                      const Real p_0,
+                      const Thermo_Point& ref_thermo_point)
+   : Thermo_Diagram (size_2d, p_0, ref_thermo_point)
 {
    reset (size_2d);
 }
@@ -4596,8 +4612,9 @@ Emagram::reverse_tp (Thermo_Point& thermo_point,
 
 Emagram::Emagram (const Size_2D& size_2d,
                   const Real magic_ratio,
-                  const Real p_0)
-   : Thermo_Diagram (size_2d, p_0),
+                  const Real p_0,
+                  const Thermo_Point& ref_thermo_point)
+   : Thermo_Diagram (size_2d, p_0, ref_thermo_point),
      magic_ratio (magic_ratio)
 {
    reset (size_2d);
@@ -4607,7 +4624,7 @@ void
 Emagram::reset (const Size_2D& size_2d)
 {
 
-   const Real scale = size_2d.i / 100.0;
+   const Real scale = size_2d.i / 200.0;
    const Real x = ref_thermo_point.get_t ();
    const Real y = log (ref_thermo_point.get_p ());
    set_anchor (size_2d);
@@ -4621,8 +4638,9 @@ Emagram::reset (const Size_2D& size_2d)
 
 Skew_T::Skew_T (const Size_2D& size_2d,
                 const Real magic_ratio,
-                const Real p_0)
-   : Emagram (size_2d, magic_ratio, p_0)
+                const Real p_0,
+                const Thermo_Point& ref_thermo_point)
+   : Emagram (size_2d, magic_ratio, p_0, ref_thermo_point)
 {
    reset (size_2d);
 }

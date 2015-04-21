@@ -793,6 +793,808 @@ namespace denise
    operator << (ostream &out_file,
                 const Grib2::Key& key);
 
+   class Access : public Nwp,
+                  public map<Grib::Key, Grib*>
+   {
+
+      private:
+
+         class Data_3D : public Nwp::Data_3D
+         {
+
+            public:
+
+               Data_3D (const vector<Nwp_Element>& nwp_element_vector,
+                        const Key& key);
+
+               virtual Real
+               evaluate (const Nwp_Element element,
+                         const Real p,
+                         const Real latitude,
+                         const Real longitude,
+                         const Evaluate_Op evaluate_op = VALUE) const;
+
+
+         };
+
+         set<Grib*>
+         grib_ptr_set;
+
+         const bool
+         omega_as_w;
+
+         const string
+         data_path;
+
+         const string
+         search_string;
+
+         Size_2D
+         size_2d;
+
+         Domain_2D
+         domain_2d;
+
+         Grib::Key
+         get_grib_key (const Key& key,
+                       const Nwp_Element nwp_element,
+                       const Level& level) const;
+
+         void
+         set_grib_key (Grib::Key& grib_key,
+                       const Nwp_Element nwp_element,
+                       const Dtime& base_time,
+                       const Integer forecast_hour) const;
+
+         void
+         set_grib_key (Grib::Key& grib_key,
+                       const Nwp_Element nwp_element,
+                       const denise::Level& level) const;
+
+         void
+         initialize_3d_data (const Key& key);
+
+         void
+         load_3d_data (Nwp::Data_3D& data_3d);
+
+         Geodetic_Vector_Data_2D*
+         get_initialized_vd_2d (const Integer vector_size) const;
+
+         void
+         fill_ts_diagnosis_data (Geodetic_Vector_Data_2D& gvd_2d,
+                                 const Integer vector_index,
+                                 const Key& key,
+                                 const Level& level,
+                                 const Nwp_Element nwp_element);
+
+         void
+         fill_rain_data (Geodetic_Vector_Data_2D& gvd_2d,
+                         const Integer vector_index,
+                         const Key& key,
+                         const Nwp_Element nwp_element);
+
+         void
+         fill_cloud_data (Geodetic_Vector_Data_2D& gvd_2d,
+                          const Integer vector_index,
+                          const Key& key,
+                          const Nwp_Element nwp_element);
+
+         void
+         fill_screen_level_data (Geodetic_Vector_Data_2D& gvd_2d,
+                                 const Integer vector_index,
+                                 const Key& key,
+                                 const Nwp_Element nwp_element);
+
+         void
+         fill_10m_level_data (Geodetic_Vector_Data_2D& gvd_2d,
+                              const Integer vector_index,
+                              const Key& key,
+                              const Nwp_Element nwp_element);
+
+         void
+         fill_msl_data (Geodetic_Vector_Data_2D& gvd_2d,
+                        const Integer vector_index,
+                        const Key& key,
+                        const Nwp_Element nwp_element);
+
+         void
+         fill_surface_level_data (Geodetic_Vector_Data_2D& gvd_2d,
+                                  const Integer vector_index,
+                                  const Key& key,
+                                  const Nwp_Element nwp_element);
+
+         Geodetic_Vector_Data_3D*
+         get_gvd_3d_ptr (const Nwp_Element nwp_element,
+                         const Key& key) const;
+
+         Geodetic_Vector_Data_2D*
+         get_grib_data_ptr (const Grib& grib,
+                            const Grib::Key& grib_key) const;
+
+         void
+         fill_grib_data (Geodetic_Vector_Data_2D& gvd_2d,
+                         const Integer vector_index,
+                         const Nwp_Element nwp_element,
+                         const Key& key,
+                         const Level& level) const;
+
+      public:
+
+         Access (const string& description,
+                 const string& data_path,
+                 const string& search_string,
+                 const bool omega_as_w = false);
+
+         ~Access ();
+
+         void
+         survey ();
+
+         void
+         clean_up ();
+
+   };
+
+   class Ecmwf : public Nwp,
+                 public map<Grib::Key, Grib*>
+   {
+
+      private:
+
+         class Data_3D : public Nwp::Data_3D
+         {
+
+            public:
+
+               Data_3D (const vector<Nwp_Element>& nwp_element_vector,
+                        const Key& key);
+
+               virtual Real
+               evaluate (const Nwp_Element element,
+                         const Real p,
+                         const Real latitude,
+                         const Real longitude,
+                         const Evaluate_Op evaluate_op = VALUE) const;
+
+
+         };
+
+         set<Grib*>
+         grib_ptr_set;
+
+         const bool
+         omega_as_w;
+
+         const string
+         data_path;
+
+         const string
+         search_string;
+
+         map<Real, Size_2D>
+         size_2d_map;
+
+         Domain_2D
+         domain_2d;
+
+         Grib::Key
+         get_grib_key (const Key& key,
+                       const Nwp_Element nwp_element,
+                       const Level& level) const;
+
+         void
+         set_grib_key (Grib::Key& grib_key,
+                       const Nwp_Element nwp_element,
+                       const Dtime& base_time,
+                       const Integer forecast_hour) const;
+
+         void
+         set_grib_key (Grib::Key& grib_key,
+                       const Nwp_Element nwp_element,
+                       const denise::Level& level) const;
+
+         void
+         initialize_3d_data (const Key& key);
+
+         void
+         load_3d_data (Nwp::Data_3D& data_3d);
+
+         Geodetic_Vector_Data_2D*
+         get_initialized_vd_2d (const Integer vector_size) const;
+
+         void
+         fill_ts_diagnosis_data (Geodetic_Vector_Data_2D& gvd_2d,
+                                 const Integer vector_index,
+                                 const Key& key,
+                                 const Level& level,
+                                 const Nwp_Element nwp_element);
+
+         void
+         fill_rain_data (Geodetic_Vector_Data_2D& gvd_2d,
+                         const Integer vector_index,
+                         const Key& key,
+                         const Nwp_Element nwp_element);
+
+         void
+         fill_cloud_data (Geodetic_Vector_Data_2D& gvd_2d,
+                          const Integer vector_index,
+                          const Key& key,
+                          const Nwp_Element nwp_element);
+
+         void
+         fill_screen_level_data (Geodetic_Vector_Data_2D& gvd_2d,
+                                 const Integer vector_index,
+                                 const Key& key,
+                                 const Nwp_Element nwp_element);
+
+         void
+         fill_10m_level_data (Geodetic_Vector_Data_2D& gvd_2d,
+                              const Integer vector_index,
+                              const Key& key,
+                              const Nwp_Element nwp_element);
+
+         void
+         fill_msl_data (Geodetic_Vector_Data_2D& gvd_2d,
+                        const Integer vector_index,
+                        const Key& key,
+                        const Nwp_Element nwp_element);
+
+         void
+         fill_surface_level_data (Geodetic_Vector_Data_2D& gvd_2d,
+                                  const Integer vector_index,
+                                  const Key& key,
+                                  const Nwp_Element nwp_element);
+
+         Geodetic_Vector_Data_3D*
+         get_gvd_3d_ptr (const Nwp_Element nwp_element,
+                         const Key& key) const;
+
+         Geodetic_Vector_Data_2D*
+         get_grib_data_ptr (const Grib& grib,
+                            const Grib::Key& grib_key) const;
+
+         void
+         fill_grib_data (Geodetic_Vector_Data_2D& gvd_2d,
+                         const Integer vector_index,
+                         const Nwp_Element nwp_element,
+                         const Key& key,
+                         const Level& level) const;
+
+      public:
+
+         Ecmwf (const string& description,
+                const string& data_path,
+                const string& search_string,
+                const bool omega_as_w = false);
+
+         ~Ecmwf ();
+
+         void
+         survey ();
+
+         void
+         clean_up ();
+
+   };
+
+   class Gfs3 : public Nwp,
+                public map<Nwp::Key, Grib*>
+   {
+
+      private:
+
+         class Data_3D : public Nwp::Data_3D
+         {
+
+            public:
+
+               Data_3D (const vector<Nwp_Element>& nwp_element_vector,
+                        const Key& key);
+
+               virtual Real
+               evaluate (const Nwp_Element element,
+                         const Real p,
+                         const Real latitude,
+                         const Real longitude,
+                         const Evaluate_Op evaluate_op = VALUE) const;
+
+
+         };
+
+         const string
+         data_path;
+
+         Size_2D
+         size_2d;
+
+         Domain_2D
+         domain_2d;
+
+         Grib::Key
+         get_grib_key (const Key& key,
+                       const Nwp_Element nwp_element,
+                       const Level& level) const;
+
+         void
+         set_grib_key (Grib::Key& grib_key,
+                       const Dtime& base_time) const;
+
+         void
+         set_grib_key (Grib::Key& grib_key,
+                       const Nwp_Element nwp_element,
+                       const Integer forecast_hour) const;
+
+         void
+         set_grib_key (Grib::Key& grib_key,
+                       const Nwp_Element nwp_element) const;
+
+         void
+         set_grib_key (Grib::Key& grib_key,
+                       const Nwp_Element nwp_element,
+                       const denise::Level& level) const;
+
+         void
+         initialize_3d_data (const Key& key);
+
+         void
+         load_3d_data (Nwp::Data_3D& data_3d);
+
+         Geodetic_Vector_Data_2D*
+         get_initialized_vd_2d (const Integer vector_size) const;
+
+         void
+         fill_ts_diagnosis_data (Geodetic_Vector_Data_2D& gvd_2d,
+                                 const Integer vector_index,
+                                 const Key& key,
+                                 const Level& level,
+                                 const Nwp_Element nwp_element);
+
+         void
+         fill_cumulative_rain_data (Geodetic_Vector_Data_2D& gvd_2d,
+                                    const Integer vector_index,
+                                    const Key& key);
+
+         void
+         fill_step_rain_data (Geodetic_Vector_Data_2D& gvd_2d,
+                              const Integer vector_index,
+                              const Key& key);
+
+         void
+         fill_rain_data (Geodetic_Vector_Data_2D& gvd_2d,
+                         const Integer vector_index,
+                         const Key& key,
+                         const Nwp_Element nwp_element);
+
+         void
+         fill_cloud_data (Geodetic_Vector_Data_2D& gvd_2d,
+                          const Integer vector_index,
+                          const Key& key,
+                          const Nwp_Element nwp_element);
+
+         void
+         fill_screen_level_data (Geodetic_Vector_Data_2D& gvd_2d,
+                                 const Integer vector_index,
+                                 const Key& key,
+                                 const Nwp_Element nwp_element);
+
+         void
+         fill_10m_level_data (Geodetic_Vector_Data_2D& gvd_2d,
+                              const Integer vector_index,
+                              const Key& key,
+                              const Nwp_Element nwp_element);
+
+         void
+         fill_msl_data (Geodetic_Vector_Data_2D& gvd_2d,
+                        const Integer vector_index,
+                        const Key& key,
+                        const Nwp_Element nwp_element);
+
+         void
+         fill_surface_level_data (Geodetic_Vector_Data_2D& gvd_2d,
+                                  const Integer vector_index,
+                                  const Key& key,
+                                  const Nwp_Element nwp_element);
+
+/*
+         void
+         fill_grib_data (Geodetic_Vector_Data_3D& gvd_3d,
+                         const Integer vector_index,
+                         const Nwp_Element nwp_element,
+                         const Key& key) const;
+*/
+         Geodetic_Vector_Data_3D*
+         get_gvd_3d_ptr (const Nwp_Element nwp_element,
+                         const Key& key) const;
+
+         Geodetic_Vector_Data_2D*
+         get_grib_data_ptr (const Grib& grib,
+                            const Grib::Key& grib_key) const;
+
+         void
+         fill_grib_data (Geodetic_Vector_Data_2D& gvd_2d,
+                         const Integer vector_index,
+                         const Nwp_Element nwp_element,
+                         const Key& key,
+                         const Level& level) const;
+
+      public:
+
+         Gfs3 (const string& data_path);
+
+         ~Gfs3 ();
+
+         void
+         survey ();
+
+         void
+         clear_3d_data ();
+
+         void
+         clean_up ();
+
+         vector<Dtime>
+         get_valid_time_vector () const;
+
+         Key
+         get_key (const Dtime& dtime) const;
+
+         void
+         acquire_base_time_forecast_hour (Dtime& base_time,
+                                          Integer& forecast_hour,
+                                          const Dtime& dtime) const;
+
+   };
+
+   class Gfs4 : public Nwp,
+                public map<Nwp::Key, Grib2*>
+   {
+
+      private:
+
+         class Data_3D : public Nwp::Data_3D
+         {
+
+            public:
+
+               Data_3D (const vector<Nwp_Element>& nwp_element_vector,
+                        const Key& key);
+
+               virtual Real
+               evaluate (const Nwp_Element element,
+                         const Real p,
+                         const Real latitude,
+                         const Real longitude,
+                         const Evaluate_Op evaluate_op = VALUE) const;
+
+
+         };
+
+         const string
+         data_path;
+
+         Size_2D
+         grib_size_2d;
+
+         Domain_2D
+         grib_domain_2d;
+
+         Size_2D
+         size_2d;
+
+         Domain_2D
+         domain_2d;
+
+         Grib2::Key
+         get_grib_key (const Key& key,
+                       const Nwp_Element nwp_element,
+                       const Level& level) const;
+
+         void
+         set_grib_key (Grib2::Key& grib_key,
+                       const Dtime& base_time) const;
+
+         void
+         set_grib_key (Grib2::Key& grib_key,
+                       const Nwp_Element nwp_element,
+                       const Integer forecast_hour) const;
+
+         void
+         set_grib_key (Grib2::Key& grib_key,
+                       const Nwp_Element nwp_element) const;
+
+         void
+         set_grib_key (Grib2::Key& grib_key,
+                       const Nwp_Element nwp_element,
+                       const denise::Level& level) const;
+
+         void
+         initialize_3d_data (const Key& key);
+
+         void
+         load_3d_data (Nwp::Data_3D& data_3d);
+
+         Geodetic_Vector_Data_2D*
+         get_initialized_vd_2d (const Integer vector_size) const;
+
+         void
+         fill_ts_diagnosis_data (Geodetic_Vector_Data_2D& gvd_2d,
+                                 const Integer vector_index,
+                                 const Key& key,
+                                 const Level& level,
+                                 const Nwp_Element nwp_element);
+
+         void
+         fill_cumulative_rain_data (Geodetic_Vector_Data_2D& gvd_2d,
+                                    const Integer vector_index,
+                                    const Key& key);
+
+         void
+         fill_step_rain_data (Geodetic_Vector_Data_2D& gvd_2d,
+                              const Integer vector_index,
+                              const Key& key);
+
+         void
+         fill_rain_data (Geodetic_Vector_Data_2D& gvd_2d,
+                         const Integer vector_index,
+                         const Key& key,
+                         const Nwp_Element nwp_element);
+
+         void
+         fill_cloud_data (Geodetic_Vector_Data_2D& gvd_2d,
+                          const Integer vector_index,
+                          const Key& key,
+                          const Nwp_Element nwp_element);
+
+         void
+         fill_screen_level_data (Geodetic_Vector_Data_2D& gvd_2d,
+                                 const Integer vector_index,
+                                 const Key& key,
+                                 const Nwp_Element nwp_element);
+
+         void
+         fill_10m_level_data (Geodetic_Vector_Data_2D& gvd_2d,
+                              const Integer vector_index,
+                              const Key& key,
+                              const Nwp_Element nwp_element);
+
+         void
+         fill_msl_data (Geodetic_Vector_Data_2D& gvd_2d,
+                        const Integer vector_index,
+                        const Key& key,
+                        const Nwp_Element nwp_element);
+
+         void
+         fill_surface_level_data (Geodetic_Vector_Data_2D& gvd_2d,
+                                  const Integer vector_index,
+                                  const Key& key,
+                                  const Nwp_Element nwp_element);
+
+/*
+         void
+         fill_grib_data (Geodetic_Vector_Data_3D& gvd_3d,
+                         const Integer vector_index,
+                         const Nwp_Element nwp_element,
+                         const Key& key) const;
+*/
+
+         Geodetic_Vector_Data_3D*
+         get_gvd_3d_ptr (const Nwp_Element nwp_element,
+                         const Key& key) const;
+
+         Geodetic_Vector_Data_2D*
+         get_grib_data_ptr (const Grib2& grib,
+                            const Grib2::Key& grib_key) const;
+
+         void
+         fill_grib_data (Geodetic_Vector_Data_2D& gvd_2d,
+                         const Integer vector_index,
+                         const Nwp_Element nwp_element,
+                         const Key& key,
+                         const Level& level) const;
+
+      public:
+
+         Gfs4 (const string& data_path);
+
+         ~Gfs4 ();
+
+         void
+         survey ();
+
+         void
+         clean_up ();
+
+         void
+         set_domain_2d (const Domain_2D& domain_2d);
+
+         vector<Dtime>
+         get_valid_time_vector () const;
+
+         Key
+         get_key (const Dtime& dtime) const;
+
+         void
+         acquire_base_time_forecast_hour (Dtime& base_time,
+                                          Integer& forecast_hour,
+                                          const Dtime& dtime) const;
+
+   };
+
+   class Gfs : public Nwp,
+               public map<Nwp::Key, Grib2*>
+   {
+
+      private:
+
+         class Data_3D : public Nwp::Data_3D
+         {
+
+            public:
+
+               Data_3D (const vector<Nwp_Element>& nwp_element_vector,
+                        const Key& key);
+
+               virtual Real
+               evaluate (const Nwp_Element element,
+                         const Real p,
+                         const Real latitude,
+                         const Real longitude,
+                         const Evaluate_Op evaluate_op = VALUE) const;
+
+
+         };
+
+         const string
+         data_path;
+
+         Size_2D
+         grib_size_2d;
+
+         Domain_2D
+         grib_domain_2d;
+
+         Size_2D
+         size_2d;
+
+         Domain_2D
+         domain_2d;
+
+         Grib2::Key
+         get_grib_key (const Key& key,
+                       const Nwp_Element nwp_element,
+                       const Level& level) const;
+
+         void
+         set_grib_key (Grib2::Key& grib_key,
+                       const Dtime& base_time) const;
+
+         void
+         set_grib_key (Grib2::Key& grib_key,
+                       const Nwp_Element nwp_element,
+                       const Integer forecast_hour) const;
+
+         void
+         set_grib_key (Grib2::Key& grib_key,
+                       const Nwp_Element nwp_element) const;
+
+         void
+         set_grib_key (Grib2::Key& grib_key,
+                       const Nwp_Element nwp_element,
+                       const denise::Level& level) const;
+
+         void
+         initialize_3d_data (const Key& key);
+
+         void
+         load_3d_data (Nwp::Data_3D& data_3d);
+
+         Geodetic_Vector_Data_2D*
+         get_initialized_vd_2d (const Integer vector_size) const;
+
+         void
+         fill_ts_diagnosis_data (Geodetic_Vector_Data_2D& gvd_2d,
+                                 const Integer vector_index,
+                                 const Key& key,
+                                 const Level& level,
+                                 const Nwp_Element nwp_element);
+
+         void
+         fill_cumulative_rain_data (Geodetic_Vector_Data_2D& gvd_2d,
+                                    const Integer vector_index,
+                                    const Key& key);
+
+         void
+         fill_step_rain_data (Geodetic_Vector_Data_2D& gvd_2d,
+                              const Integer vector_index,
+                              const Key& key);
+
+         void
+         fill_rain_data (Geodetic_Vector_Data_2D& gvd_2d,
+                         const Integer vector_index,
+                         const Key& key,
+                         const Nwp_Element nwp_element);
+
+         void
+         fill_cloud_data (Geodetic_Vector_Data_2D& gvd_2d,
+                          const Integer vector_index,
+                          const Key& key,
+                          const Nwp_Element nwp_element);
+
+         void
+         fill_screen_level_data (Geodetic_Vector_Data_2D& gvd_2d,
+                                 const Integer vector_index,
+                                 const Key& key,
+                                 const Nwp_Element nwp_element);
+
+         void
+         fill_10m_level_data (Geodetic_Vector_Data_2D& gvd_2d,
+                              const Integer vector_index,
+                              const Key& key,
+                              const Nwp_Element nwp_element);
+
+         void
+         fill_msl_data (Geodetic_Vector_Data_2D& gvd_2d,
+                        const Integer vector_index,
+                        const Key& key,
+                        const Nwp_Element nwp_element);
+
+         void
+         fill_surface_level_data (Geodetic_Vector_Data_2D& gvd_2d,
+                                  const Integer vector_index,
+                                  const Key& key,
+                                  const Nwp_Element nwp_element);
+
+/*
+         void
+         fill_grib_data (Geodetic_Vector_Data_3D& gvd_3d,
+                         const Integer vector_index,
+                         const Nwp_Element nwp_element,
+                         const Key& key) const;
+*/
+
+         Geodetic_Vector_Data_3D*
+         get_gvd_3d_ptr (const Nwp_Element nwp_element,
+                         const Key& key) const;
+
+         Geodetic_Vector_Data_2D*
+         get_grib_data_ptr (const Grib2& grib,
+                            const Grib2::Key& grib_key) const;
+
+         void
+         fill_grib_data (Geodetic_Vector_Data_2D& gvd_2d,
+                         const Integer vector_index,
+                         const Nwp_Element nwp_element,
+                         const Key& key,
+                         const Level& level) const;
+
+      public:
+
+         Gfs (const string& data_path);
+
+         ~Gfs ();
+
+         void
+         survey ();
+
+         void
+         clean_up ();
+
+         void
+         set_domain_2d (const Domain_2D& domain_2d);
+
+         vector<Dtime>
+         get_valid_time_vector () const;
+
+         Key
+         get_key (const Dtime& dtime) const;
+
+         void
+         acquire_base_time_forecast_hour (Dtime& base_time,
+                                          Integer& forecast_hour,
+                                          const Dtime& dtime) const;
+
+   };
+
 };
 
 #endif /* DENISE_GRIB_H */ 

@@ -19,6 +19,7 @@
 // along with libdenise.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "grib.h"
+#include <denise/thermo.h>
 #include <jasper/jasper.h>
 
 using namespace std;
@@ -2083,12 +2084,6 @@ namespace denise
       return out_file;
    }
 
-};
-
-
-namespace denise
-{
-
    ostream&
    operator << (ostream &out_file,
                 const Grib2::Key& key)
@@ -2104,4 +2099,5200 @@ namespace denise
 
 };
 
+Access::Data_3D::Data_3D (const vector<Nwp_Element>& nwp_element_vector,
+                          const Key& key)
+   : Nwp::Data_3D (nwp_element_vector, key)
+{
+}
+
+Real
+Access::Data_3D::evaluate (const Nwp_Element element,
+                           const Real p,
+                           const Real latitude,
+                           const Real longitude,
+                           const Evaluate_Op evaluate_op) const
+{
+
+   switch (element)
+   {
+
+      case denise::DEW_POINT:
+      {
+         const Nwp_Element& T = denise::TEMPERATURE;
+         const Nwp_Element& RH = denise::RELATIVE_HUMIDITY;
+         const Real t = Nwp::Data_3D::evaluate (T, p, latitude, longitude);
+         const Real rh = Nwp::Data_3D::evaluate (RH, p, latitude, longitude);
+         const Thermo_Medium thermo_medium = (t < 0 ? ICE : WATER);
+         return Moisture::get_t_d (t, rh, WATER);
+      }
+
+      case denise::OMEGA:
+      {
+         const Nwp_Element& T = TEMPERATURE;
+         const Nwp_Element& W = VERTICAL_VELOCITY;
+         const Real t = Nwp::Data_3D::evaluate (T, p, latitude, longitude);
+         const Real w = Nwp::Data_3D::evaluate (W, p, latitude, longitude);
+         const Real rho = p / (R_d * t);
+         return -rho * g * w;
+      }
+
+   }
+
+   return Nwp::Data_3D::evaluate (element, p,
+      latitude, longitude, evaluate_op);
+
+}
+
+Grib::Key
+Access::get_grib_key (const Key& key,
+                      const Nwp_Element nwp_element,
+                      const Level& level) const
+{
+
+   const Dtime& base_time = key.base_time;
+   const Integer forecast_hour = key.forecast_hour;
+
+   Grib::Key grib_key;
+   set_grib_key (grib_key, nwp_element, base_time, forecast_hour);
+   set_grib_key (grib_key, nwp_element, level);
+
+   return grib_key;
+
+}
+
+void
+Access::set_grib_key (Grib::Key& grib_key,
+                      const Nwp_Element nwp_element,
+                      const Dtime& base_time,
+                      const Integer forecast_hour) const
+{
+
+   uint8_t* buffer = grib_key.buffer;
+
+   const Integer yyyy = base_time.get_year ();
+   const Integer mm = base_time.get_month ();
+   const Integer dd = base_time.get_day ();
+   const Integer HH = base_time.get_hour ();
+   const Integer MM = base_time.get_minute ();
+
+   buffer[0] = uint8_t (yyyy / 100) + 1;
+   buffer[1] = uint8_t (yyyy % 100);
+   buffer[2] = uint8_t (mm);
+   buffer[3] = uint8_t (dd);
+   buffer[4] = uint8_t (HH);
+   buffer[5] = uint8_t (MM);
+   buffer[6] = 1; // hour
+   buffer[7] = uint8_t (forecast_hour);
+   buffer[8] = 0;
+   buffer[9] = 0;
+   buffer[10] = 0;
+   buffer[11] = 0;
+
+   if (nwp_element == RAINFALL_CUMULATIVE)
+   {
+      buffer[7] = 0;
+      buffer[8] = uint8_t (forecast_hour);
+      buffer[9] = 4;
+      buffer[10] = 0;
+      buffer[11] = 1;
+   }
+
+}
+
+void
+Access::set_grib_key (Grib::Key& grib_key,
+                      const Nwp_Element nwp_element,
+                      const denise::Level& level) const
+{
+
+   uint8_t* buffer = grib_key.buffer;
+   const uint8_t n = (omega_as_w ? 135 : 134);
+
+   if (level.type == PRESSURE_LEVEL)
+   {
+      switch (nwp_element)
+      {
+         case denise::ZONAL_WIND:          { buffer[12] = 131; break; }
+         case denise::MERIDIONAL_WIND:     { buffer[12] = 132; break; }
+         case denise::TEMPERATURE:         { buffer[12] = 130; break; }
+         case denise::RELATIVE_HUMIDITY:   { buffer[12] = 157; break; }
+         case denise::VERTICAL_VELOCITY:   { buffer[12] = n; break; }
+         case denise::GEOPOTENTIAL_HEIGHT: { buffer[12] = 156; break; }
+      }
+      buffer[13] = 100;
+      uint16_t hpa = uint16_t (round (level.get_value () * 1e-2)); 
+#ifndef WORDS_BIGENDIAN
+      swap_endian (&hpa, sizeof (uint16_t));
+#endif
+      memcpy (buffer + 14, &hpa, sizeof (uint16_t));
+   }
+   else
+   {
+
+      switch (nwp_element)
+      {
+         case MEAN_SEA_LEVEL_PRESSURE:
+            buffer[12] = 151;
+            buffer[13] = 102;
+            buffer[14] = 0;
+            buffer[15] = 0;
+            break;
+         case PRESSURE:
+            buffer[12] = 134;
+            buffer[13] = 1;
+            buffer[14] = 0;
+            buffer[15] = 0;
+            break;
+         case PPTN:
+         case RAINFALL_CUMULATIVE:
+            buffer[12] = 61;
+            buffer[13] = 1;
+            buffer[14] = 0;
+            buffer[15] = 0;
+            break;
+         case HIGH_CLOUD:
+            buffer[12] = 186;
+            buffer[13] = 200;
+            buffer[14] = 0;
+            buffer[15] = 0;
+            break;
+         case MIDDLE_CLOUD:
+            buffer[12] = 187;
+            buffer[13] = 200;
+            buffer[14] = 0;
+            buffer[15] = 0;
+            break;
+         case LOW_CLOUD:
+            buffer[12] = 188;
+            buffer[13] = 200;
+            buffer[14] = 0;
+            buffer[15] = 0;
+            break;
+         case ZONAL_WIND:
+            buffer[12] = 165;
+            buffer[13] = 105;
+            buffer[14] = 0;
+            buffer[15] = 10;
+            break;
+         case MERIDIONAL_WIND:
+            buffer[12] = 166;
+            buffer[13] = 105;
+            buffer[14] = 0;
+            buffer[15] = 10;
+            break;
+         case TEMPERATURE:
+            buffer[12] = 167;
+            buffer[13] = 105;
+            buffer[14] = 0;
+            buffer[15] = 2;
+            break;
+         case DEW_POINT:
+            buffer[12] = 168;
+            buffer[13] = 105;
+            buffer[14] = 0;
+            buffer[15] = 2;
+            break;
+      }
+
+   }
+
+}
+
+void
+Access::initialize_3d_data (const Key& key)
+{
+   typedef Access::Data_3D Ad_3d;
+   Ad_3d* ad_3d_ptr = new Ad_3d (nwp_element_vector, key);
+   data_3d_ptr_map.insert (make_pair (key, ad_3d_ptr));
+}
+
+void          
+Access::load_3d_data (Nwp::Data_3D& data_3d)
+{
+
+   typedef vector<Nwp_Element>::const_iterator Iterator;
+   const Key& key = data_3d.key;
+
+   for (Iterator iterator = nwp_element_vector.begin ();
+        iterator != nwp_element_vector.end (); iterator++)
+   {
+      const Nwp_Element& nwp_element = *(iterator);
+      Geodetic_Vector_Data_3D* gvd_3d_ptr = get_gvd_3d_ptr (nwp_element, key);
+      data_3d.set_gvd_3d_ptr (nwp_element, gvd_3d_ptr);
+   }
+
+   data_3d.set_available ();
+
+}
+
+Geodetic_Vector_Data_2D*
+Access::get_initialized_vd_2d (const Integer vector_size) const
+{
+
+   typedef Geodetic_Vector_Data_2D Gvd_2d;
+
+   Gvd_2d* data_ptr = new Gvd_2d (vector_size, size_2d, domain_2d, false);
+   return data_ptr;
+
+}
+
+void 
+Access::fill_ts_diagnosis_data (Geodetic_Vector_Data_2D& gvd_2d,
+                                const Integer vector_index,
+                                const Key& key,
+                                const Level& level,
+                                const Nwp_Element nwp_element)
+{
+
+   const Integer vi = vector_index;
+
+   switch (nwp_element)
+   {
+
+      case CAPE:
+      case PRECIPITABLE_WATER:
+      {
+         const Level& surface = Level::surface_level ();
+         fill_grib_data (gvd_2d, vi, nwp_element, key, surface);
+         return;
+      }
+
+   }
+
+   Nwp::fill_ts_diagnosis_data (gvd_2d, vi, key, level, nwp_element);
+
+}
+
+void
+Access::fill_rain_data (Geodetic_Vector_Data_2D& gvd_2d,
+                        const Integer vector_index,
+                        const Key& key,
+                        const Nwp_Element nwp_element)
+{
+
+   switch (nwp_element)
+   {
+
+      case RAINFALL_CUMULATIVE:
+      {
+
+         if (key.forecast_hour == 0)
+         {
+            gvd_2d.initialize (vector_index, 0);
+            return;
+         }
+
+         const Level& nil_level = Level::nil_level ();
+         fill_grib_data (gvd_2d, vector_index,
+            RAINFALL_CUMULATIVE, key, nil_level);
+         return;
+
+      }
+
+   }
+
+   Nwp::fill_rain_data (gvd_2d, vector_index, key, nwp_element);
+
+}
+
+void
+Access::fill_cloud_data (Geodetic_Vector_Data_2D& gvd_2d,
+                         const Integer vector_index,
+                         const Key& key,
+                         const Nwp_Element nwp_element)
+{
+   const Level& nil_level = Level::nil_level ();
+   fill_grib_data (gvd_2d, vector_index, nwp_element, key, nil_level);
+}
+
+void
+Access::fill_screen_level_data (Geodetic_Vector_Data_2D& gvd_2d,
+                                const Integer vector_index,
+                                const Key& key,
+                                const Nwp_Element nwp_element)
+{
+
+   const Level& screen = Level::screen_level ();
+
+   switch (nwp_element)
+   {
+
+      case TEMPERATURE:
+      case DEW_POINT:
+      {
+         fill_grib_data (gvd_2d, vector_index, nwp_element, key, screen);
+         return;
+      }
+
+      case RELATIVE_HUMIDITY:
+      {
+
+         typedef Geodetic_Vector_Data_2D Gvd_2d;
+         Gvd_2d* data_ptr = get_initialized_vd_2d (2);
+         fill_data (*data_ptr, 0, key, screen, TEMPERATURE);
+         fill_data (*data_ptr, 1, key, screen, DEW_POINT);
+
+         #pragma omp parallel for
+         for (Integer i = 0; i < size_2d.i; i++)
+         {
+            for (Integer j = 0; j < size_2d.j; j++)
+            {
+               const Real t = data_ptr->get_datum (0, i, j);
+               const Real t_d = data_ptr->get_datum (1, i, j);
+               const Real rh = Moisture::get_rh (t - K, t_d - K);
+               gvd_2d.set_datum (vector_index, i, j, rh);
+            }
+         }
+
+         delete data_ptr;
+         return;
+
+      }
+
+   }
+
+   Nwp::fill_screen_level_data (gvd_2d, vector_index, key, nwp_element);
+
+}
+
+void
+Access::fill_10m_level_data (Geodetic_Vector_Data_2D& gvd_2d,
+                             const Integer vector_index,
+                             const Key& key,
+                             const Nwp_Element nwp_element)
+{
+
+   const Level& ten = Level::ten_metre_level ();
+
+   switch (nwp_element)
+   {
+
+      case ZONAL_WIND:
+      case MERIDIONAL_WIND:
+      {
+         fill_grib_data (gvd_2d, vector_index, nwp_element, key, ten);
+         return;
+      }
+
+   }
+
+   Nwp::fill_10m_level_data (gvd_2d, vector_index, key, nwp_element);
+
+}
+
+void
+Access::fill_msl_data (Geodetic_Vector_Data_2D& gvd_2d,
+                       const Integer vector_index,
+                       const Key& key,
+                       const Nwp_Element nwp_element)
+{
+
+   const Level& msl = Level::mean_sea_level ();
+
+   switch (nwp_element)
+   {
+
+      case PRESSURE:
+      case MEAN_SEA_LEVEL_PRESSURE:
+      {
+         const Nwp_Element mslp = MEAN_SEA_LEVEL_PRESSURE;
+         fill_grib_data (gvd_2d, vector_index, mslp, key, msl);
+         return;
+      }
+
+   }
+
+   Nwp::fill_msl_data (gvd_2d, vector_index, key, nwp_element);
+
+}
+
+void
+Access::fill_surface_level_data (Geodetic_Vector_Data_2D& gvd_2d,
+                                 const Integer vector_index,
+                                 const Key& key,
+                                 const Nwp_Element nwp_element)
+{
+
+   const Level& surface = Level::surface_level ();
+
+   switch (nwp_element)
+   {
+
+      case PRESSURE:
+      {
+         fill_grib_data (gvd_2d, vector_index, PRESSURE, key, surface);
+         return;
+      }
+
+   }
+
+   Nwp::fill_surface_level_data (gvd_2d, vector_index, key, nwp_element);
+
+}
+
+Geodetic_Vector_Data_3D*
+Access::get_gvd_3d_ptr (const Nwp_Element nwp_element,
+                        const Key& key) const
+{
+
+   Geodetic_Vector_Data_3D* gvd_3d_ptr =
+      new Geodetic_Vector_Data_3D (1, tuple_p, size_2d, domain_2d);
+   Geodetic_Vector_Data_3D& gvd_3d = *gvd_3d_ptr;
+
+   const bool is_rh = (nwp_element == RELATIVE_HUMIDITY);
+   const bool is_zonal_wind = (nwp_element == ZONAL_WIND);
+   const bool is_meridional_wind = (nwp_element == MERIDIONAL_WIND);
+   const bool is_wind = (is_zonal_wind || is_meridional_wind);
+
+   for (Integer k = 0; k < tuple_p.size (); k++)
+   {
+
+      const Real p = tuple_p[k];
+      const denise::Level level (PRESSURE_LEVEL, p);
+      const Grib::Key& grib_key = get_grib_key (key, nwp_element, level);
+
+      Access::const_iterator iterator = find (grib_key);
+      if (iterator == end ())
+      {
+         cout << key.base_time << " " << key.forecast_hour << " " <<
+                 nwp_element << " " << level.get_string () <<
+                 " throw exception " << endl;
+         throw Nwp_Exception ("Access::gvd_3d_ptr Not Available");
+      }
+      const Grib& grib = *(iterator->second);
+
+      Geodetic_Vector_Data_2D* grib_data_ptr =
+         get_grib_data_ptr (grib, grib_key);
+
+      if (is_rh) { grib_data_ptr->scale_offset (0, 0.01, 0); }
+
+      #pragma omp parallel for
+      for (Integer i = 0; i < size_2d.i; i++)
+      {
+         for (Integer j = 0; j < size_2d.j; j++)
+         {
+            const Integer jj = (j == size_2d.j - 1 ? j - 1 : j);
+            Real datum = grib_data_ptr->get_datum (0, i, jj);
+            if (is_wind && fabs (datum) > 500) { datum = 0; }
+            gvd_3d.set_datum (0, k, i, j, datum);
+         }
+      }
+
+      delete grib_data_ptr;
+
+   }
+
+   return gvd_3d_ptr;
+
+}
+
+Geodetic_Vector_Data_2D*
+Access::get_grib_data_ptr (const Grib& grib,
+                           const Grib::Key& grib_key) const
+{
+
+   typedef Geodetic_Vector_Data_2D Gvd_2d;
+   Gvd_2d* data_ptr = new Gvd_2d (1, size_2d, domain_2d);
+   grib.fill_data (*data_ptr, 0, grib_key);
+
+   const Integer last_j = size_2d.j - 1;
+
+   #pragma omp parallel for
+   for (Integer i = 0; i < size_2d.i; i++)
+   {
+      const Real datum = data_ptr->get_datum (0, i, 0);
+      data_ptr->set_datum (0, i, last_j, datum);
+   }
+
+   return data_ptr;
+
+}
+
+void
+Access::fill_grib_data (Geodetic_Vector_Data_2D& gvd_2d,
+                        const Integer vector_index,
+                        const Nwp_Element nwp_element,
+                        const Key& key,
+                        const Level& level) const
+{
+
+   const Grib::Key& grib_key = get_grib_key (key, nwp_element, level);
+   const Nwp_Exception exception ("Access::fill_grib_data Not Available");
+
+   Access::const_iterator iterator = find (grib_key);
+   if (iterator == end ()) { throw exception; }
+   const Grib& grib = *(iterator->second);
+
+   Geodetic_Vector_Data_2D* grib_data_ptr = get_grib_data_ptr (grib, grib_key);
+
+   const bool is_zonal_wind = (nwp_element == ZONAL_WIND);
+   const bool is_meridional_wind = (nwp_element == MERIDIONAL_WIND);
+   const bool is_wind = (is_zonal_wind || is_meridional_wind);
+
+   #pragma omp parallel for
+   for (Integer i = 0; i < size_2d.i; i++)
+   {
+      for (Integer j = 0; j < size_2d.j; j++)
+      {
+         const Integer jj = (j == size_2d.j - 1 ? j - 1 : j);
+         Real datum = grib_data_ptr->get_datum (0, i, jj);
+         if (is_wind && fabs (datum) > 500) { datum = 0; }
+         gvd_2d.set_datum (vector_index, i, j, datum);
+      }
+   }
+
+   delete grib_data_ptr;
+
+}
+
+Access::Access (const string& description,
+                const string& data_path,
+                const string& search_string,
+                const bool omega_as_w)
+   : Nwp (description, data_path),
+     data_path (data_path),
+     search_string (search_string),
+     omega_as_w (omega_as_w)
+{
+
+   this->status = "Unloaded";
+
+   nwp_element_vector.push_back (denise::TEMPERATURE);
+   nwp_element_vector.push_back (denise::RELATIVE_HUMIDITY);
+   nwp_element_vector.push_back (denise::GEOPOTENTIAL_HEIGHT);
+   nwp_element_vector.push_back (denise::ZONAL_WIND);
+   nwp_element_vector.push_back (denise::MERIDIONAL_WIND);
+   nwp_element_vector.push_back (denise::VERTICAL_VELOCITY);
+
+}
+
+Access::~Access ()
+{
+   clean_up ();
+}
+
+void
+Access::survey ()
+{
+
+   typedef map<Grib::Key, Grib::Header*> Header_Ptr_Map;
+
+   const vector<string>& dir_listing = get_dir_listing (path, search_string);
+   for (vector<string>::const_iterator iterator = dir_listing.begin ();
+        iterator != dir_listing.end (); iterator++)
+   {
+
+      const string& file_name = *(iterator);
+      const string& file_path = path + "/" + file_name;
+
+cout << "Grib file_path " << file_path << endl;
+      Grib* grib_ptr = new Grib (file_path);
+      const Header_Ptr_Map& header_ptr_map = grib_ptr->get_header_ptr_map ();
+
+      for (Header_Ptr_Map::const_iterator i = header_ptr_map.begin ();
+           i != header_ptr_map.end (); i++)
+      {
+         const Grib::Header& header = *(i->second);
+         const Grib::Pds& pds = header.get_pds ();
+         const Dtime base_time = pds.get_base_time ();
+         const Integer forecast_hour = pds.get_forecast_time ().get_p1 ();
+
+         const Grib::Key grib_key (pds);
+         const Nwp::Key key (base_time, forecast_hour);
+
+         key_multimap.add (key);
+         insert (make_pair (grib_key, grib_ptr));
+
+      }
+
+      grib_ptr_set.insert (grib_ptr);
+
+   }
+
+   if (size () > 0)
+   {
+
+      set<uint16_t> set_p;
+      const Grib& grib = *(begin ()->second);
+      const Header_Ptr_Map& header_ptr_map = grib.get_header_ptr_map ();
+
+      const Grib::Header& first_header = *(header_ptr_map.begin ()->second);
+      const Grib::Gds& gds = first_header.get_gds ();
+      size_2d = gds.get_size_2d ();
+      const Real latitude_0 = gds.get_int (10, 3) * 1e-3;
+      const Real longitude_0 = gds.get_int (13, 3) * 1e-3;
+      const Real latitude_1 = gds.get_int (17, 3) * 1e-3;
+      const Real longitude_1 = gds.get_int (20, 3) * 1e-3;
+
+      Domain_1D& domain_latitude = domain_2d.domain_x;
+      Domain_1D& domain_longitude = domain_2d.domain_y;
+      domain_latitude.start = std::min (latitude_0, latitude_1);
+      domain_latitude.end = std::max (latitude_0, latitude_1);
+      domain_longitude.start = std::min (longitude_0, longitude_1);
+      domain_longitude.end = std::max (longitude_0, longitude_1);
+
+      for (Header_Ptr_Map::const_iterator iterator = header_ptr_map.begin ();
+           iterator != header_ptr_map.end (); iterator++)
+      {
+
+         const Grib::Header& header = *(iterator->second);
+         const Grib::Pds& pds = header.get_pds ();
+         const Grib::Pds::Level& level = pds.get_level ();
+
+         if (level.get_uint (0, 1) == 100)
+         {
+            const uint16_t p = level.get_uint (1, 2);
+            if (p < 100) { continue; }
+            set_p.insert (p);
+         }
+
+      }
+
+      for (set<uint16_t>::const_iterator iterator = set_p.begin ();
+           iterator != set_p.end (); iterator++)
+      {
+         const Real p = Real (*(iterator)) * 100;
+         tuple_p.push_back (p);
+      }
+
+   }
+
+   status = "";
+   const set<Dtime>& base_time_set = key_multimap.get_base_time_set ();
+   for (set<Dtime>::const_iterator iterator = base_time_set.begin ();
+        iterator != base_time_set.end (); iterator++)
+   {
+      const Dtime& base_time = *(iterator);
+      status += base_time.get_string () + " ";
+   }
+
+   for (Key_Multimap::const_iterator iterator = key_multimap.begin ();
+        iterator != key_multimap.end (); iterator++)
+   {
+      const Key key (iterator->first, iterator->second);
+      initialize_3d_data (key);
+   }
+
+}
+
+void
+Access::clean_up ()
+{
+
+   for (set<Grib*>::iterator iterator = grib_ptr_set.begin ();
+        iterator != grib_ptr_set.end (); iterator++)
+   {
+      Grib* grib_ptr = *(iterator);
+      delete grib_ptr;
+   }
+
+   key_multimap.clear ();
+   tuple_p.clear ();
+   clear_data_3d_ptr_map ();
+
+   clear ();
+   grib_ptr_set.clear ();
+
+}
+
+Ecmwf::Data_3D::Data_3D (const vector<Nwp_Element>& nwp_element_vector,
+                         const Key& key)
+   : Nwp::Data_3D (nwp_element_vector, key)
+{
+}
+
+Real
+Ecmwf::Data_3D::evaluate (const Nwp_Element element,
+                          const Real p,
+                          const Real latitude,
+                          const Real longitude,
+                          const Evaluate_Op evaluate_op) const
+{
+
+   switch (element)
+   {
+
+      case denise::DEW_POINT:
+      {
+         const Nwp_Element& T = denise::TEMPERATURE;
+         const Nwp_Element& R = denise::MIXING_RATIO;
+         const Real t = Nwp::Data_3D::evaluate (T, p, latitude, longitude);
+         const Real q = Nwp::Data_3D::evaluate (R, p, latitude, longitude);
+         const Real rh = 0.00263 * p*q / (exp ((17.67 * (t-K) / (t-29.65))));
+         return Moisture::get_t_d (t, rh);
+      }
+
+      case denise::RELATIVE_HUMIDITY:
+      {
+         const Nwp_Element& T = denise::TEMPERATURE;
+         const Nwp_Element& R = denise::MIXING_RATIO;
+         const Real t = Nwp::Data_3D::evaluate (T, p, latitude, longitude);
+         const Real q = Nwp::Data_3D::evaluate (R, p, latitude, longitude);
+         return 0.00263 * p * q / (exp ((17.67 * (t - K) / (t - 29.65))));
+      }
+
+      case denise::OMEGA:
+      {
+         const Nwp_Element& T = TEMPERATURE;
+         const Nwp_Element& W = VERTICAL_VELOCITY;
+         const Real t = Nwp::Data_3D::evaluate (T, p, latitude, longitude);
+         const Real w = Nwp::Data_3D::evaluate (W, p, latitude, longitude);
+         const Real rho = p / (R_d * t);
+         return -rho * g * w;
+      }
+
+   }
+
+   return Nwp::Data_3D::evaluate (element, p,
+      latitude, longitude, evaluate_op);
+
+}
+
+Grib::Key
+Ecmwf::get_grib_key (const Key& key,
+                     const Nwp_Element nwp_element,
+                     const Level& level) const
+{
+
+   const Dtime& base_time = key.base_time;
+   const Integer forecast_hour = key.forecast_hour;
+
+   Grib::Key grib_key;
+   set_grib_key (grib_key, nwp_element, base_time, forecast_hour);
+   set_grib_key (grib_key, nwp_element, level);
+
+   return grib_key;
+
+}
+
+void
+Ecmwf::set_grib_key (Grib::Key& grib_key,
+                     const Nwp_Element nwp_element,
+                     const Dtime& base_time,
+                     const Integer forecast_hour) const
+{
+
+   uint8_t* buffer = grib_key.buffer;
+
+   const Integer yyyy = base_time.get_year ();
+   const Integer mm = base_time.get_month ();
+   const Integer dd = base_time.get_day ();
+   const Integer HH = base_time.get_hour ();
+   const Integer MM = base_time.get_minute ();
+
+   buffer[0] = uint8_t (yyyy / 100) + 1;
+   buffer[1] = uint8_t (yyyy % 100);
+   buffer[2] = uint8_t (mm);
+   buffer[3] = uint8_t (dd);
+   buffer[4] = uint8_t (HH);
+   buffer[5] = uint8_t (MM);
+   buffer[6] = 1; // hour
+   buffer[7] = uint8_t (forecast_hour);
+   buffer[8] = 0;
+   buffer[9] = 0;
+   buffer[10] = 0;
+   buffer[11] = 0;
+
+   if (nwp_element == RAINFALL_CUMULATIVE)
+   {
+      buffer[7] = 0;
+      buffer[8] = uint8_t (forecast_hour);
+      buffer[9] = 4;
+      buffer[10] = 0;
+      buffer[11] = 1;
+   }
+
+//cout << "Ecmwf::set_grib_key " << grib_key << endl;
+
+}
+
+void
+Ecmwf::set_grib_key (Grib::Key& grib_key,
+                     const Nwp_Element nwp_element,
+                     const denise::Level& level) const
+{
+
+   uint8_t* buffer = grib_key.buffer;
+   //const uint8_t n = (omega_as_w ? 135 : 134);
+
+   if (level.type == PRESSURE_LEVEL)
+   {
+      switch (nwp_element)
+      {
+         case denise::ZONAL_WIND:          { buffer[12] = 131; break; }
+         case denise::MERIDIONAL_WIND:     { buffer[12] = 132; break; }
+         case denise::TEMPERATURE:         { buffer[12] = 130; break; }
+         case denise::MIXING_RATIO:        { buffer[12] = 133; break; }
+         case denise::VERTICAL_VELOCITY:   { buffer[12] = 135; break; }
+         case denise::GEOPOTENTIAL_HEIGHT: { buffer[12] = 156; break; }
+      }
+      buffer[13] = 100;
+      uint16_t hpa = uint16_t (round (level.get_value () * 1e-2)); 
+#ifndef WORDS_BIGENDIAN
+      swap_endian (&hpa, sizeof (uint16_t));
+#endif
+      memcpy (buffer + 14, &hpa, sizeof (uint16_t));
+   }
+   else
+   {
+
+      switch (nwp_element)
+      {
+         case MEAN_SEA_LEVEL_PRESSURE:
+            buffer[12] = 151;
+            buffer[13] = 102;
+            buffer[14] = 0;
+            buffer[15] = 0;
+            break;
+         case PRESSURE:
+            buffer[12] = 134;
+            buffer[13] = 1;
+            buffer[14] = 0;
+            buffer[15] = 0;
+            break;
+         case PPTN:
+         case RAINFALL_CUMULATIVE:
+            buffer[12] = 61;
+            buffer[13] = 1;
+            buffer[14] = 0;
+            buffer[15] = 0;
+            break;
+         case HIGH_CLOUD:
+            buffer[12] = 186;
+            buffer[13] = 200;
+            buffer[14] = 0;
+            buffer[15] = 0;
+            break;
+         case MIDDLE_CLOUD:
+            buffer[12] = 187;
+            buffer[13] = 200;
+            buffer[14] = 0;
+            buffer[15] = 0;
+            break;
+         case LOW_CLOUD:
+            buffer[12] = 188;
+            buffer[13] = 200;
+            buffer[14] = 0;
+            buffer[15] = 0;
+            break;
+         case ZONAL_WIND:
+            buffer[12] = 165;
+            buffer[13] = 1;
+            buffer[14] = 0;
+            buffer[15] = 0;
+            break;
+         case MERIDIONAL_WIND:
+            buffer[12] = 166;
+            buffer[13] = 1;
+            buffer[14] = 0;
+            buffer[15] = 0;
+            break;
+         case TEMPERATURE:
+            buffer[12] = 167;
+            buffer[13] = 1;
+            buffer[14] = 0;
+            buffer[15] = 0;
+            break;
+         case DEW_POINT:
+            buffer[12] = 168;
+            buffer[13] = 1;
+            buffer[14] = 0;
+            buffer[15] = 0;
+            break;
+      }
+
+//cout << "!!Ecmwf::set_grib_key " << grib_key << endl;
+   }
+
+}
+
+void
+Ecmwf::initialize_3d_data (const Key& key)
+{
+   typedef Ecmwf::Data_3D Ed_3d;
+   Ed_3d* ed_3d_ptr = new Ed_3d (nwp_element_vector, key);
+   data_3d_ptr_map.insert (make_pair (key, ed_3d_ptr));
+}
+
+void          
+Ecmwf::load_3d_data (Nwp::Data_3D& data_3d)
+{
+
+   typedef vector<Nwp_Element>::const_iterator Iterator;
+   const Key& key = data_3d.key;
+
+   for (Iterator iterator = nwp_element_vector.begin ();
+        iterator != nwp_element_vector.end (); iterator++)
+   {
+      const Nwp_Element& nwp_element = *(iterator);
+      Geodetic_Vector_Data_3D* gvd_3d_ptr = get_gvd_3d_ptr (nwp_element, key);
+      data_3d.set_gvd_3d_ptr (nwp_element, gvd_3d_ptr);
+   }
+
+   data_3d.set_available ();
+
+}
+
+Geodetic_Vector_Data_2D*
+Ecmwf::get_initialized_vd_2d (const Integer vector_size) const
+{
+
+   typedef Geodetic_Vector_Data_2D Gvd_2d;
+
+   const Size_2D& size_2d = size_2d_map.at (1000);
+   Gvd_2d* data_ptr = new Gvd_2d (vector_size, size_2d, domain_2d, false);
+   return data_ptr;
+
+}
+
+void 
+Ecmwf::fill_ts_diagnosis_data (Geodetic_Vector_Data_2D& gvd_2d,
+                               const Integer vector_index,
+                               const Key& key,
+                               const Level& level,
+                               const Nwp_Element nwp_element)
+{
+
+   const Integer vi = vector_index;
+
+   switch (nwp_element)
+   {
+
+      case CAPE:
+      case PRECIPITABLE_WATER:
+      {
+         const Level& surface = Level::surface_level ();
+         fill_grib_data (gvd_2d, vi, nwp_element, key, surface);
+         return;
+      }
+
+   }
+
+   Nwp::fill_ts_diagnosis_data (gvd_2d, vi, key, level, nwp_element);
+
+}
+
+void
+Ecmwf::fill_rain_data (Geodetic_Vector_Data_2D& gvd_2d,
+                       const Integer vector_index,
+                       const Key& key,
+                       const Nwp_Element nwp_element)
+{
+
+   switch (nwp_element)
+   {
+
+      case RAINFALL_CUMULATIVE:
+      {
+
+         if (key.forecast_hour == 0)
+         {
+            gvd_2d.initialize (vector_index, 0);
+            return;
+         }
+
+         const Level& nil_level = Level::nil_level ();
+         fill_grib_data (gvd_2d, vector_index,
+            RAINFALL_CUMULATIVE, key, nil_level);
+         return;
+
+      }
+
+   }
+
+   Nwp::fill_rain_data (gvd_2d, vector_index, key, nwp_element);
+
+}
+
+void
+Ecmwf::fill_cloud_data (Geodetic_Vector_Data_2D& gvd_2d,
+                        const Integer vector_index,
+                        const Key& key,
+                        const Nwp_Element nwp_element)
+{
+   const Level& nil_level = Level::nil_level ();
+   fill_grib_data (gvd_2d, vector_index, nwp_element, key, nil_level);
+}
+
+void
+Ecmwf::fill_screen_level_data (Geodetic_Vector_Data_2D& gvd_2d,
+                               const Integer vector_index,
+                               const Key& key,
+                               const Nwp_Element nwp_element)
+{
+
+   const Level& screen = Level::screen_level ();
+
+   switch (nwp_element)
+   {
+
+      case TEMPERATURE:
+      case DEW_POINT:
+      {
+         fill_grib_data (gvd_2d, vector_index, nwp_element, key, screen);
+         return;
+      }
+
+      case RELATIVE_HUMIDITY:
+      {
+
+         typedef Geodetic_Vector_Data_2D Gvd_2d;
+         Gvd_2d* data_ptr = get_initialized_vd_2d (2);
+         fill_data (*data_ptr, 0, key, screen, TEMPERATURE);
+         fill_data (*data_ptr, 1, key, screen, DEW_POINT);
+
+         const Size_2D& size_2d = gvd_2d.get_size_2d ();
+         #pragma omp parallel for
+         for (Integer i = 0; i < size_2d.i; i++)
+         {
+            const Real latitude = gvd_2d.get_coordinate (0, i);
+            for (Integer j = 0; j < size_2d.j; j++)
+            {
+               const Real longitude = gvd_2d.get_coordinate (1, j);
+               const Real t = data_ptr->evaluate (0, latitude, longitude);
+               const Real t_d = data_ptr->evaluate (1, latitude, longitude);
+               const Real rh = Moisture::get_rh (t - K, t_d - K);
+               gvd_2d.set_datum (vector_index, i, j, rh);
+            }
+         }
+
+         delete data_ptr;
+         return;
+
+      }
+
+   }
+
+   Nwp::fill_screen_level_data (gvd_2d, vector_index, key, nwp_element);
+
+}
+
+void
+Ecmwf::fill_10m_level_data (Geodetic_Vector_Data_2D& gvd_2d,
+                            const Integer vector_index,
+                            const Key& key,
+                            const Nwp_Element nwp_element)
+{
+
+   const Level& ten = Level::ten_metre_level ();
+
+   switch (nwp_element)
+   {
+
+      case ZONAL_WIND:
+      case MERIDIONAL_WIND:
+      {
+         fill_grib_data (gvd_2d, vector_index, nwp_element, key, ten);
+         return;
+      }
+
+   }
+
+   Nwp::fill_10m_level_data (gvd_2d, vector_index, key, nwp_element);
+
+}
+
+void
+Ecmwf::fill_msl_data (Geodetic_Vector_Data_2D& gvd_2d,
+                      const Integer vector_index,
+                      const Key& key,
+                      const Nwp_Element nwp_element)
+{
+
+   const Level& msl = Level::mean_sea_level ();
+
+   switch (nwp_element)
+   {
+
+      case PRESSURE:
+      case MEAN_SEA_LEVEL_PRESSURE:
+      {
+         const Nwp_Element mslp = MEAN_SEA_LEVEL_PRESSURE;
+         fill_grib_data (gvd_2d, vector_index, mslp, key, msl);
+         return;
+      }
+
+   }
+
+   Nwp::fill_msl_data (gvd_2d, vector_index, key, nwp_element);
+
+}
+
+void
+Ecmwf::fill_surface_level_data (Geodetic_Vector_Data_2D& gvd_2d,
+                                const Integer vector_index,
+                                const Key& key,
+                                const Nwp_Element nwp_element)
+{
+
+   const Level& surface = Level::surface_level ();
+
+   switch (nwp_element)
+   {
+
+      case PRESSURE:
+      {
+         fill_grib_data (gvd_2d, vector_index, PRESSURE, key, surface);
+         return;
+      }
+
+   }
+
+   Nwp::fill_surface_level_data (gvd_2d, vector_index, key, nwp_element);
+
+}
+
+Geodetic_Vector_Data_3D*
+Ecmwf::get_gvd_3d_ptr (const Nwp_Element nwp_element,
+                       const Key& key) const
+{
+
+   const Size_2D& size_2d = size_2d_map.at (1000);
+cout << "GVD 3D " << size_2d << " " << tuple_p << " " << nwp_element << endl;
+   Geodetic_Vector_Data_3D* gvd_3d_ptr =
+      new Geodetic_Vector_Data_3D (1, tuple_p, size_2d, domain_2d);
+   Geodetic_Vector_Data_3D& gvd_3d = *gvd_3d_ptr;
+
+   const bool is_rh = (nwp_element == RELATIVE_HUMIDITY);
+   const bool is_zonal_wind = (nwp_element == ZONAL_WIND);
+   const bool is_meridional_wind = (nwp_element == MERIDIONAL_WIND);
+   const bool is_wind = (is_zonal_wind || is_meridional_wind);
+
+   for (Integer k = 0; k < tuple_p.size (); k++)
+   {
+
+      const Real p = tuple_p[k];
+      const denise::Level level (PRESSURE_LEVEL, p);
+      const Grib::Key& grib_key = get_grib_key (key, nwp_element, level);
+
+      Ecmwf::const_iterator iterator = find (grib_key);
+      if (iterator == end ())
+      {
+         //cout << key.base_time << " " << key.forecast_hour << " " <<
+         //        nwp_element << " " << level.get_string () <<
+         //        " throw exception " << endl;
+         throw Nwp_Exception ("Ecmwf::gvd_3d_ptr Not Available");
+      }
+      const Grib& grib = *(iterator->second);
+
+      Geodetic_Vector_Data_2D* grib_data_ptr =
+         get_grib_data_ptr (grib, grib_key);
+
+      if (is_rh) { grib_data_ptr->scale_offset (0, 0.01, 0); }
+
+      #pragma omp parallel for
+      for (Integer i = 0; i < size_2d.i; i++)
+      {
+         const Real latitude = gvd_3d_ptr->get_coordinate (1, i);
+         for (Integer j = 0; j < size_2d.j; j++)
+         {
+            const Real longitude = gvd_3d_ptr->get_coordinate (2, j);
+            const Integer jj = (j == size_2d.j - 1 ? j - 1 : j);
+            Real datum = grib_data_ptr->evaluate (0, latitude, longitude);
+            if (is_wind && fabs (datum) > 500) { datum = 0; }
+            gvd_3d.set_datum (0, k, i, j, datum);
+         }
+      }
+
+      delete grib_data_ptr;
+
+   }
+
+   return gvd_3d_ptr;
+
+}
+
+Geodetic_Vector_Data_2D*
+Ecmwf::get_grib_data_ptr (const Grib& grib,
+                          const Grib::Key& grib_key) const
+{
+
+   //const Size_2D& size_2d = size_2d_map.at (1000);
+
+   const Grib::Gds& gds = grib.get_header_ptr_map ().at (grib_key)->get_gds ();
+   const Size_2D& size_2d = gds.get_size_2d ();
+
+   typedef Geodetic_Vector_Data_2D Gvd_2d;
+   Gvd_2d* data_ptr = new Gvd_2d (1, size_2d, domain_2d);
+   grib.fill_data (*data_ptr, 0, grib_key);
+
+   typedef Geodetic_Vector_Data_2D Gvd_2d;
+   const Integer last_j = size_2d.j - 1;
+
+   typedef Geodetic_Vector_Data_2D Gvd_2d;
+   #pragma omp parallel for
+   for (Integer i = 0; i < size_2d.i; i++)
+   {
+      const Real datum = data_ptr->get_datum (0, i, 0);
+      data_ptr->set_datum (0, i, last_j, datum);
+   }
+
+   typedef Geodetic_Vector_Data_2D Gvd_2d;
+   return data_ptr;
+
+}
+
+void
+Ecmwf::fill_grib_data (Geodetic_Vector_Data_2D& gvd_2d,
+                       const Integer vector_index,
+                       const Nwp_Element nwp_element,
+                       const Key& key,
+                       const Level& level) const
+{
+
+   const Grib::Key& grib_key = get_grib_key (key, nwp_element, level);
+   const Nwp_Exception exception ("Ecmwf::fill_grib_data Not Available");
+
+   Ecmwf::const_iterator iterator = find (grib_key);
+   if (iterator == end ()) { throw exception; }
+   const Grib& grib = *(iterator->second);
+
+   Geodetic_Vector_Data_2D* grib_data_ptr = get_grib_data_ptr (grib, grib_key);
+
+   const bool is_zonal_wind = (nwp_element == ZONAL_WIND);
+   const bool is_meridional_wind = (nwp_element == MERIDIONAL_WIND);
+   const bool is_wind = (is_zonal_wind || is_meridional_wind);
+
+   const Size_2D& size_2d = gvd_2d.get_size_2d ();
+
+   #pragma omp parallel for
+   for (Integer i = 0; i < size_2d.i; i++)
+   {
+      const Real latitude = gvd_2d.get_coordinate (0, i);
+      for (Integer j = 0; j < size_2d.j; j++)
+      {
+         const Real longitude = gvd_2d.get_coordinate (1, j);
+         Real datum = grib_data_ptr->evaluate (0, latitude, longitude);
+         if (is_wind && fabs (datum) > 500) { datum = 0; }
+         gvd_2d.set_datum (vector_index, i, j, datum);
+      }
+   }
+
+   delete grib_data_ptr;
+
+}
+
+Ecmwf::Ecmwf (const string& description,
+              const string& data_path,
+              const string& search_string,
+              const bool omega_as_w)
+   : Nwp (description, data_path),
+     data_path (data_path),
+     search_string (search_string),
+     omega_as_w (omega_as_w)
+{
+
+   this->status = "Unloaded";
+
+   nwp_element_vector.push_back (denise::TEMPERATURE);
+   nwp_element_vector.push_back (denise::MIXING_RATIO);
+   nwp_element_vector.push_back (denise::GEOPOTENTIAL_HEIGHT);
+   nwp_element_vector.push_back (denise::ZONAL_WIND);
+   nwp_element_vector.push_back (denise::MERIDIONAL_WIND);
+   nwp_element_vector.push_back (denise::VERTICAL_VELOCITY);
+
+}
+
+Ecmwf::~Ecmwf ()
+{
+   clean_up ();
+}
+
+void
+Ecmwf::survey ()
+{
+
+   typedef map<Grib::Key, Grib::Header*> Header_Ptr_Map;
+
+   const vector<string>& dir_listing = get_dir_listing (path, search_string);
+   for (vector<string>::const_iterator iterator = dir_listing.begin ();
+        iterator != dir_listing.end (); iterator++)
+   {
+
+      const string& file_name = *(iterator);
+      const string& file_path = path + "/" + file_name;
+
+      Grib* grib_ptr = new Grib (file_path);
+      const Header_Ptr_Map& header_ptr_map = grib_ptr->get_header_ptr_map ();
+
+      for (Header_Ptr_Map::const_iterator i = header_ptr_map.begin ();
+           i != header_ptr_map.end (); i++)
+      {
+         const Grib::Header& header = *(i->second);
+         const Grib::Pds& pds = header.get_pds ();
+         const Dtime base_time = pds.get_base_time ();
+         const Integer forecast_hour = pds.get_forecast_time ().get_p1 ();
+
+         const Grib::Key grib_key (pds);
+         const Nwp::Key key (base_time, forecast_hour);
+
+         key_multimap.add (key);
+         insert (make_pair (grib_key, grib_ptr));
+
+      }
+
+      grib_ptr_set.insert (grib_ptr);
+
+   }
+
+   if (size () > 0)
+   {
+
+      set<uint16_t> set_p;
+      const Grib& grib = *(begin ()->second);
+      const Header_Ptr_Map& header_ptr_map = grib.get_header_ptr_map ();
+
+      const Grib::Header& first_header = *(header_ptr_map.begin ()->second);
+      const Grib::Gds& gds = first_header.get_gds ();
+      const Real latitude_0 = gds.get_int (10, 3) * 1e-3;
+      const Real longitude_0 = gds.get_int (13, 3) * 1e-3;
+      const Real latitude_1 = gds.get_int (17, 3) * 1e-3;
+      const Real longitude_1 = gds.get_int (20, 3) * 1e-3;
+
+      Domain_1D& domain_latitude = domain_2d.domain_x;
+      Domain_1D& domain_longitude = domain_2d.domain_y;
+      domain_latitude.start = std::min (latitude_0, latitude_1);
+      domain_latitude.end = std::max (latitude_0, latitude_1);
+      domain_longitude.start = std::min (longitude_0, longitude_1);
+      domain_longitude.end = std::max (longitude_0, longitude_1);
+
+      for (Header_Ptr_Map::const_iterator iterator = header_ptr_map.begin ();
+           iterator != header_ptr_map.end (); iterator++)
+      {
+
+         const Grib::Header& header = *(iterator->second);
+         const Grib::Pds& pds = header.get_pds ();
+         const Grib::Pds::Level& level = pds.get_level ();
+
+         const Grib::Gds& gds = header.get_gds ();
+
+         if (level.get_uint (0, 1) == 100)
+         {
+            const uint16_t p = level.get_uint (1, 2);
+            if (p < 100) { continue; }
+            size_2d_map[p] = gds.get_size_2d ();
+            set_p.insert (p);
+         }
+
+      }
+
+      for (set<uint16_t>::const_iterator iterator = set_p.begin ();
+           iterator != set_p.end (); iterator++)
+      {
+         const Real p = Real (*(iterator)) * 100;
+         tuple_p.push_back (p);
+      }
+
+   }
+
+   status = "";
+   const set<Dtime>& base_time_set = key_multimap.get_base_time_set ();
+   for (set<Dtime>::const_iterator iterator = base_time_set.begin ();
+        iterator != base_time_set.end (); iterator++)
+   {
+      const Dtime& base_time = *(iterator);
+      status += base_time.get_string () + " ";
+   }
+
+   for (Key_Multimap::const_iterator iterator = key_multimap.begin ();
+        iterator != key_multimap.end (); iterator++)
+   {
+      const Key key (iterator->first, iterator->second);
+      initialize_3d_data (key);
+   }
+
+}
+
+void
+Ecmwf::clean_up ()
+{
+
+   for (set<Grib*>::iterator iterator = grib_ptr_set.begin ();
+        iterator != grib_ptr_set.end (); iterator++)
+   {
+      Grib* grib_ptr = *(iterator);
+      delete grib_ptr;
+   }
+
+   key_multimap.clear ();
+   tuple_p.clear ();
+   clear_data_3d_ptr_map ();
+
+   clear ();
+   grib_ptr_set.clear ();
+
+}
+
+Gfs3::Data_3D::Data_3D (const vector<Nwp_Element>& nwp_element_vector,
+                        const Key& key)
+   : Nwp::Data_3D (nwp_element_vector, key)
+{
+}
+
+Real
+Gfs3::Data_3D::evaluate (const Nwp_Element element,
+                         const Real p,
+                         const Real latitude,
+                         const Real longitude,
+                         const Evaluate_Op evaluate_op) const
+{
+
+   typedef Nwp::Data_3D Nd_3d;
+   const Evaluate_Op& eo = evaluate_op;
+
+   switch (element)
+   {
+
+      case denise::DEW_POINT:
+      {
+         const Nwp_Element& T = denise::TEMPERATURE;
+         const Nwp_Element& RH = denise::RELATIVE_HUMIDITY;
+         const Real t = Nwp::Data_3D::evaluate (T, p, latitude, longitude);
+         const Real rh = Nwp::Data_3D::evaluate (RH, p, latitude, longitude);
+         return Moisture::get_t_d (t, rh);
+      }
+
+      case denise::VERTICAL_VELOCITY:
+      {
+
+         const Nwp_Element& T = denise::TEMPERATURE;
+         const Nwp_Element& O = denise::OMEGA;
+
+         if (evaluate_op == DX || evaluate_op == DY)
+         {
+            const Evaluate_Op& eo = evaluate_op;
+            const Real t = Nd_3d::evaluate (T, p, latitude, longitude);
+            const Real o = Nd_3d::evaluate (O, p, latitude, longitude);
+            const Real ts = Nd_3d::evaluate (T, p, latitude, longitude, eo);
+            const Real os = Nd_3d::evaluate (O, p, latitude, longitude, eo);
+            const Real rho = p / (R_d * t);
+            const Real oRdp = o * R_d / p;
+            return (oRdp * ts + os / rho) / -g;
+         }
+         else
+         {
+            const Real t = Nd_3d::evaluate (T, p, latitude, longitude);
+            const Real o = Nd_3d::evaluate (O, p, latitude, longitude);
+            const Real rho = p / (R_d * t);
+            return o / (-rho * g);
+         }
+
+      }
+
+   }
+
+   return Nd_3d::evaluate (element, p, latitude, longitude, eo);
+
+}
+
+Grib::Key
+Gfs3::get_grib_key (const Key& key,
+                    const Nwp_Element nwp_element,
+                    const Level& level) const
+{
+
+   const Dtime& base_time = key.base_time;
+   const Integer forecast_hour = key.forecast_hour;
+
+   Grib::Key grib_key;
+   set_grib_key (grib_key, base_time);
+   set_grib_key (grib_key, nwp_element, forecast_hour);
+   set_grib_key (grib_key, nwp_element);
+   set_grib_key (grib_key, nwp_element, level);
+
+   return grib_key;
+
+}
+
+void
+Gfs3::set_grib_key (Grib::Key& grib_key,
+                    const Dtime& base_time) const
+{
+
+   uint8_t* buffer = grib_key.buffer;
+
+   const Integer yyyy = base_time.get_year ();
+   const Integer mm = base_time.get_month ();
+   const Integer dd = base_time.get_day ();
+   const Integer HH = base_time.get_hour ();
+   const Integer MM = base_time.get_minute ();
+
+   buffer[0] = uint8_t (yyyy / 100) + 1;
+   buffer[1] = uint8_t (yyyy % 100);
+   buffer[2] = uint8_t (mm);
+   buffer[3] = uint8_t (dd);
+   buffer[4] = uint8_t (HH);
+   buffer[5] = uint8_t (MM);
+
+}
+
+void
+Gfs3::set_grib_key (Grib::Key& grib_key,
+                    const Nwp_Element nwp_element,
+                    const Integer forecast_hour) const
+{
+
+   uint8_t* buffer = grib_key.buffer;
+
+   buffer[6] = 1;
+   buffer[10] = 0;
+   buffer[11] = 0;
+
+   switch (nwp_element)
+   {
+
+      default:
+         buffer[7] = uint8_t (forecast_hour >> 8);
+         buffer[8] = uint8_t (forecast_hour % 256);
+         buffer[9] = 10;
+         buffer[10] = 0;
+         buffer[11] = 0;
+         break;
+
+      case PPT3:
+         buffer[7] = uint8_t (forecast_hour - 3);
+         buffer[8] = uint8_t (forecast_hour);
+         buffer[9] = 4;
+         break;
+
+      case PPT6:
+         buffer[7] = uint8_t (forecast_hour - 6);
+         buffer[8] = uint8_t (forecast_hour);
+         buffer[9] = 4;
+         break;
+
+      case PPTN:
+         buffer[7] = 0;
+         buffer[8] = uint8_t (forecast_hour);
+         buffer[9] = 4;
+         break;
+
+      case TOTAL_CLOUD:
+         buffer[7] = uint8_t (forecast_hour - 6);
+         buffer[8] = uint8_t (forecast_hour);
+         buffer[9] = 3;
+         break;
+
+      case HIGH_CLOUD:
+         buffer[7] = uint8_t (forecast_hour - 6);
+         buffer[8] = uint8_t (forecast_hour);
+         buffer[9] = 3;
+         break;
+
+      case MIDDLE_CLOUD:
+         buffer[7] = uint8_t (forecast_hour - 6);
+         buffer[8] = uint8_t (forecast_hour);
+         buffer[9] = 3;
+         break;
+
+      case LOW_CLOUD:
+         buffer[7] = uint8_t (forecast_hour - 6);
+         buffer[8] = uint8_t (forecast_hour);
+         buffer[9] = 3;
+         break;
+
+   }
+
+}
+
+void
+Gfs3::set_grib_key (Grib::Key& grib_key,
+                    const Nwp_Element nwp_element) const
+{
+
+   uint8_t* buffer = grib_key.buffer;
+   uint8_t& octet = buffer[12];
+
+   switch (nwp_element)
+   {
+      case PRESSURE:
+         octet = 1;
+         break;
+      case TEMPERATURE:
+         octet = 11;
+         break;
+      case TEMPERATURE_CELCIUS:
+         octet = 0;
+         break;
+      case MIX_DOWN_TEMPERATURE:
+         octet = 0;
+         break;
+      case ZONAL_WIND:
+         octet = 33;
+         break;
+      case MERIDIONAL_WIND:
+         octet = 34;
+         break;
+      case WIND_SPEED:
+         octet = 32;
+         break;
+      case VERTICAL_VELOCITY:
+         octet = 40;
+         break;
+      case GEOPOTENTIAL_HEIGHT:
+         octet = 7;
+         break;
+      case DEW_POINT:
+         octet = 17;
+         break;
+      case MEAN_SEA_LEVEL_PRESSURE:
+         octet = 2;
+         break;
+      case HIGH_CLOUD:
+         octet = 71;
+         break;
+      case MIDDLE_CLOUD:
+         octet = 71;
+         break;
+      case LOW_CLOUD:
+         octet = 71;
+         break;
+      case TOTAL_CLOUD:
+         octet = 71;
+         break;
+      case OMEGA:
+         octet = 39;
+         break;
+      case PPT3:
+         octet = 61;
+         break;
+      case PPT6:
+         octet = 61;
+         break;
+      case PPTN:
+         octet = 61;
+         break;
+      case RAINFALL_STEP:
+         octet = 0;
+         break;
+      case RELATIVE_HUMIDITY:
+         octet = 52;
+         break;
+      case DEW_POINT_DEPRESSION:
+         octet = 0;
+         break;
+      case POTENTIAL_TEMPERATURE:
+         octet = 13;
+         break;
+      case THETA:
+         octet = 13;
+         break;
+      case THETA_E:
+         octet = 14;
+         break;
+      case MIXING_RATIO:
+         octet = 53;
+         break;
+      case MONTGOMERY:
+         octet = 37;
+         break;
+      case SLI:
+         octet = 131;
+         break;
+      case SHOWALTER:
+         octet = 0;
+         break;
+      case LI_700:
+         octet = 0;
+         break;
+      case LI_THUNDER:
+         octet = 0;
+         break;
+      case K_INDEX:
+         octet = 133;
+         break;
+      case TOTAL_TOTALS:
+         octet = 0;
+         break;
+      case CAPE:
+         octet = 157;
+         break;
+      case PRECIPITABLE_WATER:
+         octet = 54;
+         break;
+      case FOG_FRACTION:
+         octet = 0;
+         break;
+      case THICKNESS:
+         octet = 0;
+         break;
+      case POTENTIAL_VORTICITY:
+         octet = 149;
+         break;
+      case ABSOLUTE_VORTICITY:
+         octet = 41;
+         break;
+      case SHEAR_VORTICITY:
+         octet = 0;
+         break;
+      case CURVATURE_VORTICITY:
+         octet = 0;
+         break;
+   }
+
+}
+
+void
+Gfs3::set_grib_key (Grib::Key& grib_key,
+                    const Nwp_Element nwp_element,
+                    const denise::Level& level) const
+{
+
+   uint8_t* buffer = grib_key.buffer;
+
+   switch (nwp_element)
+   {
+      case TOTAL_CLOUD:
+         buffer[13] = 200;
+         buffer[14] = 0;
+         buffer[15] = 0;
+         return;
+      case HIGH_CLOUD:
+         buffer[13] = 214;
+         buffer[14] = 0;
+         buffer[15] = 0;
+         return;
+      case MIDDLE_CLOUD:
+         buffer[13] = 224;
+         buffer[14] = 0;
+         buffer[15] = 0;
+         return;
+      case LOW_CLOUD:
+         buffer[13] = 234;
+         buffer[14] = 0;
+         buffer[15] = 0;
+         return;
+      case PRECIPITABLE_WATER:
+         buffer[13] = 200;
+         buffer[14] = 0;
+         buffer[15] = 0;
+         return;
+   }
+
+   switch (level.type)
+   {
+      case PRESSURE_LEVEL:
+      {
+         const uint16_t p = uint16_t (round (level.value * 1e-2));
+         buffer[13] = 100;
+         buffer[14] = uint8_t (p >> 8);
+         buffer[15] = uint8_t (p % 256);
+         break;
+      }
+      case THETA_LEVEL:
+      {
+         const uint16_t theta = uint16_t (round (level.value));
+         buffer[13] = 113;
+         buffer[14] = uint8_t (theta >> 8);
+         buffer[15] = uint8_t (theta % 256);
+         break;
+      }
+      case SIGMA_LEVEL:
+      {
+         const uint16_t sigma = uint16_t (round (level.value * 10000));
+         buffer[13] = 107;
+         buffer[14] = uint8_t (sigma >> 8);
+         buffer[15] = uint8_t (sigma % 256);
+         break;
+      }
+      case SCREEN_LEVEL:
+      {
+         const uint16_t z = uint16_t (2);
+         buffer[13] = 105;
+         buffer[14] = uint8_t (z >> 8);
+         buffer[15] = uint8_t (z % 256);
+         break;
+      }
+      case FIFTY_METRE_LEVEL:
+      {
+         const uint16_t z = uint16_t (50);
+         buffer[13] = 105;
+         buffer[14] = uint8_t (z >> 8);
+         buffer[15] = uint8_t (z % 256);
+         break;
+      }
+      case TEN_METRE_LEVEL:
+      {
+         const uint16_t z = uint16_t (10);
+         buffer[13] = 105;
+         buffer[14] = uint8_t (z >> 8);
+         buffer[15] = uint8_t (z % 256);
+         break;
+      }
+      case MEAN_SEA_LEVEL:
+      {
+         buffer[13] = 102;
+         buffer[14] = 0;
+         buffer[15] = 0;
+         break;
+      }
+      case SURFACE_LEVEL:
+      {
+         buffer[13] = 1;
+         buffer[14] = 0;
+         buffer[15] = 0;
+         break;
+      }
+      case NIL_LEVEL:
+      case NOT_A_LEVEL:
+      {
+         buffer[13] = 0;
+         buffer[14] = 0;
+         buffer[15] = 0;
+         break;
+      }
+   }
+
+}
+
+void
+Gfs3::initialize_3d_data (const Key& key)
+{
+   typedef Gfs3::Data_3D G3d_3d;
+   G3d_3d* g3d_3d_ptr = new G3d_3d (nwp_element_vector, key);
+   data_3d_ptr_map.insert (make_pair (key, g3d_3d_ptr));
+cout << "data_3d_ptr_map.size () = " << &data_3d_ptr_map << ": " << data_3d_ptr_map.size () << "  key = " << key.base_time.get_string () << " " << key.forecast_hour << endl;
+}
+
+void          
+Gfs3::load_3d_data (Nwp::Data_3D& data_3d)
+{
+
+   typedef vector<Nwp_Element>::const_iterator Iterator;
+   const Key& key = data_3d.key;
+
+   for (Iterator iterator = nwp_element_vector.begin ();
+        iterator != nwp_element_vector.end (); iterator++)
+   {
+      const Nwp_Element& nwp_element = *(iterator);
+      Geodetic_Vector_Data_3D* gvd_3d_ptr = get_gvd_3d_ptr (nwp_element, key);
+      data_3d.set_gvd_3d_ptr (nwp_element, gvd_3d_ptr);
+   }
+
+   data_3d.set_available ();
+
+}
+
+Geodetic_Vector_Data_2D*
+Gfs3::get_initialized_vd_2d (const Integer vector_size) const
+{
+
+   typedef Geodetic_Vector_Data_2D Gvd_2d;
+
+   Gvd_2d* data_ptr = new Gvd_2d (vector_size, size_2d, domain_2d, false);
+   return data_ptr;
+
+}
+
+void 
+Gfs3::fill_ts_diagnosis_data (Geodetic_Vector_Data_2D& gvd_2d,
+                              const Integer vector_index,
+                              const Key& key,
+                              const Level& level,
+                              const Nwp_Element nwp_element)
+{
+
+   const Integer vi = vector_index;
+
+   switch (nwp_element)
+   {
+
+      case CAPE:
+      case PRECIPITABLE_WATER:
+      {
+         const Level& surface = Level::surface_level ();
+         fill_grib_data (gvd_2d, vi, nwp_element, key, surface);
+         return;
+      }
+
+   }
+
+   Nwp::fill_ts_diagnosis_data (gvd_2d, vi, key, level, nwp_element);
+
+}
+
+void
+Gfs3::fill_cumulative_rain_data (Geodetic_Vector_Data_2D& gvd_2d,
+                                 const Integer vector_index,
+                                 const Key& key)
+{
+
+   const Integer forecast_hour = key.forecast_hour;
+
+   if (forecast_hour < 0)
+   {
+      throw Nwp_Exception ("Forecast Hour < 0");
+      return;
+   }
+
+   gvd_2d.initialize (vector_index, 0);
+   if (forecast_hour == 0) { return; }
+
+   const Size_2D& size_2d = gvd_2d.get_size_2d ();
+   const Level& surface_level = Level::surface_level ();
+
+   Geodetic_Vector_Data_2D* precip_data_ptr = get_initialized_vd_2d (1);
+   Geodetic_Vector_Data_2D& precip_data = *precip_data_ptr;
+
+   for (Integer fh = 0; fh < forecast_hour; fh += 6)
+   {
+      fill_grib_data (precip_data, 0, PPT6, key, surface_level);
+      #pragma omp parallel for
+      for (Integer i = 0; i < size_2d.i; i++)
+      {
+         for (Integer j = 0; j < size_2d.j; j++)
+         {
+            const Real precip = precip_data.get_datum (0, i, j);
+            gvd_2d.get_datum (vector_index, i, j) += precip;
+         }
+      }
+   }
+
+   if (forecast_hour % 6 != 0)
+   {
+      fill_grib_data (precip_data, 0, PPT3, key, surface_level);
+      #pragma omp parallel for
+      for (Integer i = 0; i < size_2d.i; i++)
+      {
+         for (Integer j = 0; j < size_2d.j; j++)
+         {
+            const Real precip = precip_data.get_datum (0, i, j);
+            gvd_2d.get_datum (vector_index, i, j) += precip;
+         }
+      }
+   }
+
+   delete precip_data_ptr;
+
+}
+
+void
+Gfs3::fill_step_rain_data (Geodetic_Vector_Data_2D& gvd_2d,
+                           const Integer vector_index,
+                           const Key& key)
+{
+
+   const Size_2D& size_2d = gvd_2d.get_size_2d ();
+   const Level& surface_level = Level::surface_level ();
+   const Integer forecast_hour = key.forecast_hour;
+
+   if (forecast_hour == 0)
+   {
+      gvd_2d.initialize (vector_index, 0);
+      return;
+   }
+
+   if (forecast_hour % 6 != 0)
+   {
+      fill_grib_data (gvd_2d, vector_index, PPT3, key, surface_level);
+   }
+   else
+   {
+
+      fill_grib_data (gvd_2d, vector_index, PPT6, key, surface_level);
+
+      Geodetic_Vector_Data_2D* precip_data_ptr = get_initialized_vd_2d (1);
+      Geodetic_Vector_Data_2D& precip_data = *precip_data_ptr;
+
+      try
+      {
+         const Dtime& base_time = key.base_time;
+         const Integer forecast_hour = key.forecast_hour;
+         const Key prev_key (base_time, forecast_hour - 3);
+         fill_grib_data (precip_data, 0, PPT3, prev_key, surface_level);
+         #pragma omp parallel for
+         for (Integer i = 0; i < size_2d.i; i++)
+         {
+            for (Integer j = 0; j < size_2d.j; j++)
+            {
+               const Real ppt3 = precip_data.get_datum (0, i, j);
+               gvd_2d.get_datum (vector_index, i, j) -= ppt3;
+            }
+         }
+      }
+      catch (const Nwp_Exception& ne)
+      {
+      }
+
+      delete precip_data_ptr;
+
+   }
+
+}
+
+void
+Gfs3::fill_rain_data (Geodetic_Vector_Data_2D& gvd_2d,
+                      const Integer vector_index,
+                      const Key& key,
+                      const Nwp_Element nwp_element)
+{
+
+   switch (nwp_element)
+   {
+
+      case RAINFALL_CUMULATIVE:
+      {
+         fill_cumulative_rain_data (gvd_2d, vector_index, key);
+         return;
+      }
+
+      case RAINFALL_STEP:
+      {
+         fill_step_rain_data (gvd_2d, vector_index, key);
+         return;
+      }
+
+   }
+
+   Nwp::fill_rain_data (gvd_2d, vector_index, key, nwp_element);
+
+}
+
+void
+Gfs3::fill_cloud_data (Geodetic_Vector_Data_2D& gvd_2d,
+                       const Integer vector_index,
+                       const Key& key,
+                       const Nwp_Element nwp_element)
+{
+   const Level& nil_level = Level::nil_level ();
+   fill_grib_data (gvd_2d, vector_index, nwp_element, key, nil_level);
+}
+
+void
+Gfs3::fill_screen_level_data (Geodetic_Vector_Data_2D& gvd_2d,
+                              const Integer vector_index,
+                              const Key& key,
+                              const Nwp_Element nwp_element)
+{
+
+   const Level& screen = Level::screen_level ();
+   const Level& surface = Level::surface_level ();
+
+   switch (nwp_element)
+   {
+
+      case TEMPERATURE:
+      {
+         fill_grib_data (gvd_2d, vector_index, TEMPERATURE, key, screen);
+         return;
+      }
+
+      case DEW_POINT:
+      {
+
+         typedef Geodetic_Vector_Data_2D Gvd_2d;
+         Gvd_2d* data_ptr = get_initialized_vd_2d (2);
+         fill_data (*data_ptr, 0, key, screen, TEMPERATURE);
+         fill_data (*data_ptr, 1, key, screen, RELATIVE_HUMIDITY);
+
+         #pragma omp parallel for
+         for (Integer i = 0; i < size_2d.i; i++)
+         {
+            for (Integer j = 0; j < size_2d.j; j++)
+            {
+               const Real t = data_ptr->get_datum (0, i, j);
+               const Real rh = data_ptr->get_datum (1, i, j);
+               const Real t_d = Moisture::get_t_d (t, rh);
+               gvd_2d.set_datum (vector_index, i, j, t_d);
+            }
+         }
+
+         delete data_ptr;
+         return;
+
+      }
+
+      case RELATIVE_HUMIDITY:
+      {
+         fill_grib_data (gvd_2d, vector_index, RELATIVE_HUMIDITY, key, screen);
+         return;
+      }
+
+   }
+
+   Nwp::fill_screen_level_data (gvd_2d, vector_index, key, nwp_element);
+
+}
+
+void
+Gfs3::fill_10m_level_data (Geodetic_Vector_Data_2D& gvd_2d,
+                           const Integer vector_index,
+                           const Key& key,
+                           const Nwp_Element nwp_element)
+{
+
+   const Level& ten = Level::ten_metre_level ();
+
+   switch (nwp_element)
+   {
+
+      case ZONAL_WIND:
+      {
+         fill_grib_data (gvd_2d, vector_index, ZONAL_WIND, key, ten);
+         return;
+      }
+
+      case MERIDIONAL_WIND:
+      {
+         fill_grib_data (gvd_2d, vector_index, MERIDIONAL_WIND, key, ten);
+         return;
+      }
+
+   }
+
+   Nwp::fill_10m_level_data (gvd_2d, vector_index, key, nwp_element);
+
+}
+
+void
+Gfs3::fill_msl_data (Geodetic_Vector_Data_2D& gvd_2d,
+                     const Integer vector_index,
+                     const Key& key,
+                     const Nwp_Element nwp_element)
+{
+
+   const Level& msl = Level::mean_sea_level ();
+
+   switch (nwp_element)
+   {
+
+      case PRESSURE:
+      case MEAN_SEA_LEVEL_PRESSURE:
+      {
+         const Nwp_Element mslp = MEAN_SEA_LEVEL_PRESSURE;
+         fill_grib_data (gvd_2d, vector_index, mslp, key, msl);
+         return;
+      }
+
+   }
+
+   Nwp::fill_msl_data (gvd_2d, vector_index, key, nwp_element);
+
+}
+
+void
+Gfs3::fill_surface_level_data (Geodetic_Vector_Data_2D& gvd_2d,
+                               const Integer vector_index,
+                               const Key& key,
+                               const Nwp_Element nwp_element)
+{
+
+   const Level& surface = Level::surface_level ();
+
+   switch (nwp_element)
+   {
+
+      case PRESSURE:
+      {
+         fill_grib_data (gvd_2d, vector_index, PRESSURE, key, surface);
+         return;
+      }
+
+   }
+
+   Nwp::fill_surface_level_data (gvd_2d, vector_index, key, nwp_element);
+
+}
+
+/*
+void
+Gfs3::fill_grib_data (Geodetic_Vector_Data_3D& gvd_3d,
+                      const Integer vector_index,
+                      const Nwp_Element nwp_element,
+                      const Key& key) const
+{
+
+   Gfs3::const_iterator iterator = find (key);
+   if (iterator == end ()) { throw Nwp_Exception ("Not Available"); }
+   const Grib& grib = *(iterator->second);
+
+   for (Integer k = 0; k < tuple_p.size (); k++)
+   {
+      const Real p = tuple_p[k];
+      const Level level (PRESSURE_LEVEL, p);
+      const Grib::Key& key = get_grib_key (key, nwp_element, level);
+      grib.fill_data (gvd_3d, vector_index, k, key);
+   }
+
+}
+*/
+
+Geodetic_Vector_Data_3D*
+Gfs3::get_gvd_3d_ptr (const Nwp_Element nwp_element,
+                      const Key& key) const
+{
+
+   Geodetic_Vector_Data_3D* gvd_3d_ptr =
+      new Geodetic_Vector_Data_3D (1, tuple_p, size_2d, domain_2d);
+   Geodetic_Vector_Data_3D& gvd_3d = *gvd_3d_ptr;
+
+   for (Integer k = 0; k < tuple_p.size (); k++)
+   {
+
+      const Real p = tuple_p[k];
+      const denise::Level level (PRESSURE_LEVEL, p);
+      const Grib::Key& grib_key = get_grib_key (key, nwp_element, level);
+
+      Gfs3::const_iterator iterator = find (key);
+      if (iterator == end ()) { throw Nwp_Exception ("Not Available"); }
+      const Grib& grib = *(iterator->second);
+
+      Geodetic_Vector_Data_2D* grib_data_ptr =
+         get_grib_data_ptr (grib, grib_key);
+
+      #pragma omp parallel for
+      for (Integer i = 0; i < size_2d.i; i++)
+      {
+         const Real latitude = grib_data_ptr->get_latitude (i);
+         for (Integer j = 0; j < size_2d.j; j++)
+         {
+            const Real longitude = grib_data_ptr->get_longitude (j);
+            const Real datum = grib_data_ptr->evaluate (0, latitude, longitude);
+            gvd_3d.set_datum (0, k, i, j, datum);
+         }
+      }
+
+      delete grib_data_ptr;
+
+   }
+
+   return gvd_3d_ptr;
+
+}
+
+Geodetic_Vector_Data_2D*
+Gfs3::get_grib_data_ptr (const Grib& grib,
+                         const Grib::Key& grib_key) const
+{
+
+   typedef Geodetic_Vector_Data_2D Gvd_2d;
+   Gvd_2d* data_ptr = new Gvd_2d (1, size_2d, domain_2d, true);
+   grib.fill_data (*data_ptr, 0, grib_key);
+
+   const Integer last_j = size_2d.j - 1;
+
+   #pragma omp parallel for
+   for (Integer i = 0; i < size_2d.i; i++)
+   {
+      const Real datum = data_ptr->get_datum (0, i, 0);
+      data_ptr->set_datum (0, i, last_j, datum);
+   }
+
+   return data_ptr;
+
+}
+
+void
+Gfs3::fill_grib_data (Geodetic_Vector_Data_2D& gvd_2d,
+                      const Integer vector_index,
+                      const Nwp_Element nwp_element,
+                      const Key& key,
+                      const Level& level) const
+{
+
+   Gfs3::const_iterator iterator = find (key);
+   if (iterator == end ()) { throw Nwp_Exception ("Not Available"); }
+   const Grib& grib = *(iterator->second);
+
+   const Grib::Key& grib_key = get_grib_key (key, nwp_element, level);
+   Geodetic_Vector_Data_2D* grib_data_ptr = get_grib_data_ptr (grib, grib_key);
+
+   Geodetic_Vector_Data_2D grib_data (1, size_2d, domain_2d, true);
+
+   #pragma omp parallel for
+   for (Integer i = 0; i < size_2d.i; i++)
+   {
+      const Real latitude = gvd_2d.get_latitude (i);
+      for (Integer j = 0; j < size_2d.j; j++)
+      {
+         const Real longitude = gvd_2d.get_longitude (j);
+         const Real datum = grib_data_ptr->evaluate (0, latitude, longitude);
+         gvd_2d.set_datum (vector_index, i, j, datum);
+      }
+   }
+
+   delete grib_data_ptr;
+
+}
+
+Gfs3::Gfs3 (const string& data_path)
+   : Nwp ("Gfs3", data_path),
+     data_path (data_path),
+     size_2d (181, 361),
+     domain_2d (Domain_1D (-90, 90), Domain_1D (0, 360))
+{
+
+   this->status = "Unloaded";
+
+   nwp_element_vector.push_back (denise::TEMPERATURE);
+   nwp_element_vector.push_back (denise::RELATIVE_HUMIDITY);
+   nwp_element_vector.push_back (denise::GEOPOTENTIAL_HEIGHT);
+   nwp_element_vector.push_back (denise::ZONAL_WIND);
+   nwp_element_vector.push_back (denise::MERIDIONAL_WIND);
+   nwp_element_vector.push_back (denise::OMEGA);
+
+}
+
+Gfs3::~Gfs3 ()
+{
+   clean_up ();
+}
+
+void
+Gfs3::survey ()
+{
+
+   const string re_ym ("[0-9].....");
+   const string re_ymd ("[0-9].......");
+   const string fmt ("gfs_3_[0-9]......._[0-9]..._[0-9]..\\.grb");
+
+   typedef map<Grib::Key, Grib::Header*> Header_Ptr_Map;
+
+   const vector<string>& dir_ym = get_dir_listing (path, re_ym);
+   for (vector<string>::const_iterator i = dir_ym.begin ();
+        i != dir_ym.end (); i++)
+   {
+
+      const string& ym = *(i);
+      const string& ym_path = path + "/" + ym;
+
+      const vector<string>& dir_ymd = get_dir_listing (ym_path, re_ymd);
+      for (vector<string>::const_iterator j = dir_ymd.begin ();
+           j != dir_ymd.end (); j++)
+      {
+
+         const string& ymd = *(j);
+         const string& ymd_path = ym_path + "/" + ymd;
+
+         const vector<string>& dir_listing = get_dir_listing (ymd_path, fmt);
+         for (vector<string>::const_iterator iterator = dir_listing.begin ();
+              iterator != dir_listing.end (); iterator++)
+         {
+
+            // fn = filename
+            const string& fn = *(iterator);
+            const string& file_path = ymd_path + "/" + fn;
+            const string& bt_str = fn.substr (6, 8) + fn.substr (15, 2);
+            const string& fh_str = fn.substr (20, 3);
+
+            const Dtime base_time (bt_str, string ("%Y%m%d%H"));
+            const Integer forecast_hour = atoi (fh_str.c_str ());
+            const Key key (base_time, forecast_hour);
+
+            key_multimap.add (key);
+            Grib* grib_ptr = new Grib (file_path);
+            insert (make_pair (key, grib_ptr));
+
+         }
+
+      }
+
+   }
+
+   if (size () > 0)
+   {
+
+      set<uint16_t> set_p;
+      const Grib& grib = *(begin ()->second);
+      const Header_Ptr_Map& header_ptr_map = grib.get_header_ptr_map ();
+
+      for (Header_Ptr_Map::const_iterator iterator = header_ptr_map.begin ();
+           iterator != header_ptr_map.end (); iterator++)
+      {
+
+         const Grib::Header& header = *(iterator->second);
+         const Grib::Pds& pds = header.get_pds ();
+         const Grib::Pds::Level& level = pds.get_level ();
+
+         if (level.get_uint (0, 1) == 100)
+         {
+            const uint16_t p = level.get_uint (1, 2);
+            if (p < 200) { continue; }
+            set_p.insert (p);
+         }
+
+      }
+
+      for (set<uint16_t>::const_iterator iterator = set_p.begin ();
+           iterator != set_p.end (); iterator++)
+      {
+         const Real p = Real (*(iterator)) * 100;
+         tuple_p.push_back (p);
+      }
+
+   }
+
+   status = "";
+   const set<Dtime>& base_time_set = key_multimap.get_base_time_set ();
+   for (set<Dtime>::const_iterator iterator = base_time_set.begin ();
+        iterator != base_time_set.end (); iterator++)
+   {
+      const Dtime& base_time = *(iterator);
+      status += base_time.get_string () + " ";
+   }
+
+   for (Key_Multimap::const_iterator iterator = key_multimap.begin ();
+        iterator != key_multimap.end (); iterator++)
+   {
+      const Key key (iterator->first, iterator->second);
+      initialize_3d_data (key);
+   }
+
+}
+
+void
+Gfs3::clear_3d_data ()
+{
+}
+
+void
+Gfs3::clean_up ()
+{
+   for (Gfs3::iterator iterator = begin (); iterator != end (); iterator++)
+   {
+      Grib* grib_ptr = iterator->second;
+      delete grib_ptr;
+   }
+   clear ();
+}
+
+vector<Dtime>
+Gfs3::get_valid_time_vector () const
+{
+
+   vector<Dtime> valid_time_vector;
+
+   for (Gfs3::const_iterator iterator = begin ();
+       iterator != end (); iterator++)
+   {
+      const Key& key = iterator->first;
+      const Dtime& bt = key.base_time;
+      const Integer fh = key.forecast_hour;
+      const Dtime dtime (bt.t + fh);
+      valid_time_vector.push_back (dtime);
+   }
+
+   return valid_time_vector;
+
+/*
+   vector<Dtime> valid_time_vector;
+   Dtime start_time ("2012011300");
+   Dtime end_time ("2012011400");
+   for (Real t = start_time.t; t < end_time.t; t += 3)
+   {
+      Dtime dtime (t);
+      valid_time_vector.push_back (dtime);
+   }
+   return valid_time_vector;
+*/
+}
+
+Nwp::Key
+Gfs3::get_key (const Dtime& dtime) const
+{
+
+   vector<Dtime> base_time_vector;
+
+   for (Gfs3::const_iterator iterator = begin ();
+        iterator != end (); iterator++)
+   {
+
+      const Key& key = iterator->first;
+      const Dtime& bt = key.base_time;
+      const Integer fh = key.forecast_hour;
+      const Dtime t (bt.t + fh);
+
+      if (fabs (t.t - dtime.t) < 0.5)
+      {
+         base_time_vector.push_back (bt);
+      }
+
+   }
+
+   if (base_time_vector.size () == 0)
+   {
+      throw Nwp_Exception ("timestep not available");
+   }
+
+   sort (base_time_vector.begin (), base_time_vector.end ());
+
+   const Dtime& base_time = base_time_vector.back ();
+   const Integer forecast_hour = Integer (round (dtime.t - base_time.t));
+
+   return Key (base_time, forecast_hour);
+
+}
+
+void
+Gfs3::acquire_base_time_forecast_hour (Dtime& base_time,
+                                       Integer& forecast_hour,
+                                       const Dtime& dtime) const
+{
+
+   vector<Dtime> base_time_vector;
+
+   for (Gfs3::const_iterator iterator = begin ();
+        iterator != end (); iterator++)
+   {
+
+      const Key& key = iterator->first;
+      const Dtime& bt = key.base_time;
+      const Integer fh = key.forecast_hour;
+      const Dtime t (bt.t + fh);
+
+      if (fabs (t.t - dtime.t) < 0.5)
+      {
+         base_time_vector.push_back (bt);
+      }
+
+   }
+
+   if (base_time_vector.size () == 0)
+   {
+      throw Nwp_Exception ("timestep not available");
+   }
+
+   sort (base_time_vector.begin (), base_time_vector.end ());
+   base_time.t = base_time_vector.back ().t;
+   forecast_hour = Integer (round (dtime.t - base_time.t));
+
+}
+
+Gfs4::Data_3D::Data_3D (const vector<Nwp_Element>& nwp_element_vector,
+                        const Key& key)
+   : Nwp::Data_3D (nwp_element_vector, key)
+{
+}
+
+Real
+Gfs4::Data_3D::evaluate (const Nwp_Element element,
+                         const Real p,
+                         const Real latitude,
+                         const Real longitude,
+                         const Evaluate_Op evaluate_op) const
+{
+
+   typedef Nwp::Data_3D Nd_3d;
+   const Evaluate_Op& eo = evaluate_op;
+
+   switch (element)
+   {
+
+      case denise::DEW_POINT:
+      {
+         const Nwp_Element& T = denise::TEMPERATURE;
+         const Nwp_Element& RH = denise::RELATIVE_HUMIDITY;
+         const Real t = Nwp::Data_3D::evaluate (T, p, latitude, longitude);
+         const Real rh = Nwp::Data_3D::evaluate (RH, p, latitude, longitude);
+         return Moisture::get_t_d (t, rh);
+      }
+
+      case denise::VERTICAL_VELOCITY:
+      {
+
+         const Nwp_Element& T = denise::TEMPERATURE;
+         const Nwp_Element& O = denise::OMEGA;
+
+         if (evaluate_op == DX || evaluate_op == DY)
+         {
+            const Evaluate_Op& eo = evaluate_op;
+            const Real t = Nd_3d::evaluate (T, p, latitude, longitude);
+            const Real o = Nd_3d::evaluate (O, p, latitude, longitude);
+            const Real ts = Nd_3d::evaluate (T, p, latitude, longitude, eo);
+            const Real os = Nd_3d::evaluate (O, p, latitude, longitude, eo);
+            const Real rho = p / (R_d * t);
+            const Real oRdp = o * R_d / p;
+            return (oRdp * ts + os / rho) / -g;
+         }
+         else
+         {
+            const Real t = Nd_3d::evaluate (T, p, latitude, longitude);
+            const Real o = Nd_3d::evaluate (O, p, latitude, longitude);
+            const Real rho = p / (R_d * t);
+            return o / (-rho * g);
+         }
+
+      }
+
+   }
+
+   return Nd_3d::evaluate (element, p, latitude, longitude, eo);
+
+}
+
+Grib2::Key
+Gfs4::get_grib_key (const Key& key,
+                    const Nwp_Element nwp_element,
+                    const Level& level) const
+{
+
+   const Dtime& base_time = key.base_time;
+   const Integer forecast_hour = key.forecast_hour;
+
+   Grib2::Key grib_key;
+   set_grib_key (grib_key, base_time);
+   set_grib_key (grib_key, nwp_element, forecast_hour);
+   set_grib_key (grib_key, nwp_element);
+   set_grib_key (grib_key, nwp_element, level);
+   return grib_key;
+
+}
+
+void
+Gfs4::set_grib_key (Grib2::Key& grib_key,
+                    const Dtime& base_time) const
+{
+
+   uint8_t* buffer = grib_key.buffer;
+
+   const Integer yyyy = base_time.get_year ();
+   const Integer mm = base_time.get_month ();
+   const Integer dd = base_time.get_day ();
+   const Integer HH = base_time.get_hour ();
+   const Integer MM = base_time.get_minute ();
+   const Integer SS = base_time.get_second ();
+
+   buffer[0] = uint8_t (yyyy / 256);
+   buffer[1] = uint8_t (yyyy % 256);
+   buffer[2] = uint8_t (mm);
+   buffer[3] = uint8_t (dd);
+   buffer[4] = uint8_t (HH);
+   buffer[5] = uint8_t (MM);
+   buffer[6] = uint8_t (SS);
+
+}
+
+void
+Gfs4::set_grib_key (Grib2::Key& grib_key,
+                    const Nwp_Element nwp_element,
+                    const Integer forecast_hour) const
+{
+
+   uint8_t* buffer = grib_key.buffer;
+   buffer[7] = 1;
+
+   switch (nwp_element)
+   {
+
+      default:
+      {
+         uint32_t value = forecast_hour;
+#ifndef WORDS_BIGENDIAN
+         swap_endian (&value, sizeof (uint32_t));
+#endif
+         memcpy (buffer + 8, &value, sizeof (uint32_t));
+         break;
+      }
+
+      case PPT3:
+      {
+         throw Nwp_Exception ("Not Available");
+         buffer[7] = uint8_t (forecast_hour - 3);
+         buffer[8] = uint8_t (forecast_hour);
+         buffer[9] = 4;
+         break;
+      }
+
+      case PPT6:
+      {
+         throw Nwp_Exception ("Not Available");
+         buffer[7] = uint8_t (forecast_hour - 6);
+         buffer[8] = uint8_t (forecast_hour);
+         buffer[9] = 4;
+         break;
+      }
+
+      case PPTN:
+      {
+         throw Nwp_Exception ("Not Available");
+         buffer[7] = 0;
+         buffer[8] = uint8_t (forecast_hour);
+         buffer[9] = 4;
+         break;
+      }
+
+      case TOTAL_CLOUD:
+      {
+         throw Nwp_Exception ("Not Available");
+         buffer[7] = uint8_t (forecast_hour - 6);
+         buffer[8] = uint8_t (forecast_hour);
+         buffer[9] = 3;
+         break;
+      }
+
+      case HIGH_CLOUD:
+      {
+         throw Nwp_Exception ("Not Available");
+         buffer[7] = uint8_t (forecast_hour - 6);
+         buffer[8] = uint8_t (forecast_hour);
+         buffer[9] = 3;
+         break;
+      }
+
+      case MIDDLE_CLOUD:
+      {
+         throw Nwp_Exception ("Not Available");
+         buffer[7] = uint8_t (forecast_hour - 6);
+         buffer[8] = uint8_t (forecast_hour);
+         buffer[9] = 3;
+         break;
+      }
+
+      case LOW_CLOUD:
+      {
+         throw Nwp_Exception ("Not Available");
+         buffer[7] = uint8_t (forecast_hour - 6);
+         buffer[8] = uint8_t (forecast_hour);
+         buffer[9] = 3;
+         break;
+      }
+
+   }
+
+}
+
+void
+Gfs4::set_grib_key (Grib2::Key& grib_key,
+                    const Nwp_Element nwp_element) const
+{
+
+   uint8_t* buffer = grib_key.buffer;
+
+   switch (nwp_element)
+   {
+      case PRESSURE:
+         buffer[12] = 3;
+         buffer[13] = 0;
+         break;
+      case TEMPERATURE:
+         buffer[12] = 0;
+         buffer[13] = 0;
+         break;
+      case TEMPERATURE_CELCIUS:
+         buffer[12] = 255;
+         buffer[13] = 255;
+         break;
+      case MIX_DOWN_TEMPERATURE:
+         buffer[12] = 255;
+         buffer[13] = 255;
+         break;
+      case ZONAL_WIND:
+         buffer[12] = 2;
+         buffer[13] = 2;
+         break;
+      case MERIDIONAL_WIND:
+         buffer[12] = 2;
+         buffer[13] = 3;
+         break;
+      case WIND_SPEED:
+         buffer[12] = 255;
+         buffer[13] = 255;
+         break;
+      case VERTICAL_VELOCITY:
+         buffer[12] = 2;
+         buffer[13] = 9;
+         break;
+      case GEOPOTENTIAL_HEIGHT:
+         buffer[12] = 3;
+         buffer[13] = 5;
+         break;
+      case DEW_POINT:
+         buffer[12] = 0;
+         buffer[13] = 6;
+         break;
+      case MEAN_SEA_LEVEL_PRESSURE:
+         buffer[12] = 3;
+         buffer[13] = 1;
+         break;
+      case HIGH_CLOUD:
+         buffer[12] = 6;
+         buffer[13] = 1;
+         break;
+      case MIDDLE_CLOUD:
+         buffer[12] = 6;
+         buffer[13] = 1;
+         break;
+      case LOW_CLOUD:
+         buffer[12] = 6;
+         buffer[13] = 1;
+         break;
+      case TOTAL_CLOUD:
+         buffer[12] = 6;
+         buffer[13] = 1;
+         break;
+      case OMEGA:
+         buffer[12] = 2;
+         buffer[13] = 8;
+         break;
+      case PPT3:
+         buffer[12] = 1;
+         buffer[13] = 8;
+         break;
+      case PPT6:
+         buffer[12] = 1;
+         buffer[13] = 8;
+         break;
+      case PPTN:
+         buffer[12] = 1;
+         buffer[13] = 8;
+         break;
+      case RAINFALL_STEP:
+         buffer[12] = 255;
+         buffer[13] = 255;
+         break;
+      case RELATIVE_HUMIDITY:
+         buffer[12] = 1;
+         buffer[13] = 1;
+         break;
+      case DEW_POINT_DEPRESSION:
+         buffer[12] = 0;
+         buffer[13] = 7;
+         break;
+      case POTENTIAL_TEMPERATURE:
+         buffer[12] = 0;
+         buffer[13] = 2;
+         break;
+      case THETA:
+         buffer[12] = 0;
+         buffer[13] = 2;
+         break;
+      case THETA_E:
+         buffer[12] = 0;
+         buffer[13] = 3;
+         break;
+      case MIXING_RATIO:
+         buffer[12] = 1;
+         buffer[13] = 2;
+         break;
+      case MONTGOMERY:
+         buffer[12] = 2;
+         buffer[13] = 6;
+         break;
+      case SLI:
+         buffer[12] = 7;
+         buffer[13] = 10;
+         break;
+      case SHOWALTER:
+         buffer[12] = 7;
+         buffer[13] = 13;
+         break;
+      case LI_700:
+         buffer[12] = 255;
+         buffer[13] = 255;
+         break;
+      case LI_THUNDER:
+         buffer[12] = 255;
+         buffer[13] = 255;
+         break;
+      case K_INDEX:
+         buffer[12] = 7;
+         buffer[13] = 2;
+         break;
+      case TOTAL_TOTALS:
+         buffer[12] = 7;
+         buffer[13] = 4;
+         break;
+      case CAPE:
+         buffer[12] = 7;
+         buffer[13] = 6;
+         break;
+      case PRECIPITABLE_WATER:
+         buffer[12] = 1;
+         buffer[13] = 3;
+         break;
+      case FOG_FRACTION:
+         buffer[12] = 255;
+         buffer[13] = 255;
+         break;
+      case THICKNESS:
+         buffer[12] = 3;
+         buffer[13] = 12;
+         break;
+      case POTENTIAL_VORTICITY:
+         buffer[12] = 2;
+         buffer[13] = 14;
+         break;
+      case ABSOLUTE_VORTICITY:
+         buffer[12] = 2;
+         buffer[13] = 10;
+         break;
+      case SHEAR_VORTICITY:
+         buffer[12] = 255;
+         buffer[13] = 255;
+         break;
+      case CURVATURE_VORTICITY:
+         buffer[12] = 255;
+         buffer[13] = 255;
+         break;
+   }
+
+}
+
+void
+Gfs4::set_grib_key (Grib2::Key& grib_key,
+                    const Nwp_Element nwp_element,
+                    const denise::Level& level) const
+{
+
+   uint8_t* buffer = grib_key.buffer;
+
+   switch (nwp_element)
+   {
+      case TOTAL_CLOUD:
+         buffer[14] = 200;
+         buffer[15] = 0;
+         buffer[16] = 0;
+         buffer[17] = 0;
+         buffer[18] = 0;
+         buffer[19] = 0;
+         buffer[20] = 255;
+         buffer[21] = 0;
+         buffer[22] = 0;
+         buffer[23] = 0;
+         buffer[24] = 0;
+         buffer[25] = 0;
+         return;
+      case HIGH_CLOUD:
+         buffer[14] = 214;
+         buffer[15] = 0;
+         buffer[16] = 0;
+         buffer[17] = 0;
+         buffer[18] = 0;
+         buffer[19] = 0;
+         buffer[20] = 255;
+         buffer[21] = 0;
+         buffer[22] = 0;
+         buffer[23] = 0;
+         buffer[24] = 0;
+         buffer[25] = 0;
+         return;
+      case MIDDLE_CLOUD:
+         buffer[14] = 224;
+         buffer[15] = 0;
+         buffer[16] = 0;
+         buffer[17] = 0;
+         buffer[18] = 0;
+         buffer[19] = 0;
+         buffer[20] = 255;
+         buffer[21] = 0;
+         buffer[22] = 0;
+         buffer[23] = 0;
+         buffer[24] = 0;
+         buffer[25] = 0;
+         return;
+      case LOW_CLOUD:
+         buffer[14] = 234;
+         buffer[15] = 0;
+         buffer[16] = 0;
+         buffer[17] = 0;
+         buffer[18] = 0;
+         buffer[19] = 0;
+         buffer[20] = 255;
+         buffer[21] = 0;
+         buffer[22] = 0;
+         buffer[23] = 0;
+         buffer[24] = 0;
+         buffer[25] = 0;
+         return;
+      case PRECIPITABLE_WATER:
+         buffer[13] = 200;
+         buffer[14] = 0;
+         buffer[15] = 0;
+         return;
+   }
+
+   switch (level.type)
+   {
+      case PRESSURE_LEVEL:
+      {
+         uint32_t p = uint32_t (round (level.value));
+         buffer[14] = 100;
+         buffer[15] = 0;
+#ifndef WORDS_BIGENDIAN
+         swap_endian (&p, sizeof (uint32_t));
+#endif
+         memcpy (buffer + 16, &p, sizeof (uint32_t));
+         buffer[20] = 255;
+         buffer[21] = 0;
+         buffer[22] = 0;
+         buffer[23] = 0;
+         buffer[24] = 0;
+         buffer[25] = 0;
+         break;
+      }
+      case THETA_LEVEL:
+      {
+         uint32_t theta = uint32_t (round (level.value));
+         buffer[14] = 107;
+         buffer[15] = 0;
+#ifndef WORDS_BIGENDIAN
+         swap_endian (&theta, sizeof (uint32_t));
+#endif
+         memcpy (buffer + 16, &theta, sizeof (uint32_t));
+         buffer[20] = 255;
+         buffer[21] = 0;
+         buffer[22] = 0;
+         buffer[23] = 0;
+         buffer[24] = 0;
+         buffer[25] = 0;
+         break;
+      }
+      case SIGMA_LEVEL:
+      {
+         uint32_t sigma = uint32_t (round (level.value * 10000));
+         buffer[14] = 113;
+         buffer[15] = 0;
+         buffer[20] = 255;
+         buffer[21] = 0;
+         buffer[22] = 0;
+         buffer[23] = 0;
+         buffer[24] = 0;
+         buffer[25] = 0;
+         break;
+      }
+      case SCREEN_LEVEL:
+      {
+         buffer[14] = 103;
+         buffer[15] = 0;
+         buffer[16] = 0;
+         buffer[17] = 0;
+         buffer[18] = 0;
+         buffer[19] = 2;
+         buffer[20] = 255;
+         buffer[21] = 0;
+         buffer[22] = 0;
+         buffer[23] = 0;
+         buffer[24] = 0;
+         buffer[25] = 0;
+         break;
+      }
+      case FIFTY_METRE_LEVEL:
+      {
+         buffer[14] = 103;
+         buffer[15] = 0;
+         buffer[16] = 0;
+         buffer[17] = 0;
+         buffer[18] = 0;
+         buffer[19] = 50;
+         buffer[20] = 255;
+         buffer[21] = 0;
+         buffer[22] = 0;
+         buffer[23] = 0;
+         buffer[24] = 0;
+         buffer[25] = 0;
+         break;
+      }
+      case TEN_METRE_LEVEL:
+      {
+         buffer[14] = 103;
+         buffer[15] = 0;
+         buffer[16] = 0;
+         buffer[17] = 0;
+         buffer[18] = 0;
+         buffer[19] = 10;
+         buffer[20] = 255;
+         buffer[21] = 0;
+         buffer[22] = 0;
+         buffer[23] = 0;
+         buffer[24] = 0;
+         buffer[25] = 0;
+         break;
+      }
+      case MEAN_SEA_LEVEL:
+      {
+         buffer[14] = 101;
+         buffer[15] = 0;
+         buffer[16] = 0;
+         buffer[17] = 0;
+         buffer[18] = 0;
+         buffer[19] = 0;
+         buffer[20] = 255;
+         buffer[21] = 0;
+         buffer[22] = 0;
+         buffer[23] = 0;
+         buffer[24] = 0;
+         buffer[25] = 0;
+         break;
+      }
+      case SURFACE_LEVEL:
+      {
+         buffer[14] = 1;
+         buffer[15] = 0;
+         buffer[16] = 0;
+         buffer[17] = 0;
+         buffer[18] = 0;
+         buffer[19] = 0;
+         buffer[20] = 255;
+         buffer[21] = 0;
+         buffer[22] = 0;
+         buffer[23] = 0;
+         buffer[24] = 0;
+         buffer[25] = 0;
+         break;
+      }
+      case NIL_LEVEL:
+      case NOT_A_LEVEL:
+      {
+         buffer[14] = 1;
+         buffer[15] = 0;
+         buffer[16] = 0;
+         buffer[17] = 0;
+         buffer[18] = 0;
+         buffer[19] = 0;
+         buffer[20] = 255;
+         buffer[21] = 0;
+         buffer[22] = 0;
+         buffer[23] = 0;
+         buffer[24] = 0;
+         buffer[25] = 0;
+         break;
+      }
+   }
+
+}
+
+void
+Gfs4::initialize_3d_data (const Key& key)
+{
+   typedef Gfs4::Data_3D G3d_3d;
+   G3d_3d* g3d_3d_ptr = new G3d_3d (nwp_element_vector, key);
+   data_3d_ptr_map.insert (make_pair (key, g3d_3d_ptr));
+}
+
+void          
+Gfs4::load_3d_data (Nwp::Data_3D& data_3d)
+{
+
+   typedef vector<Nwp_Element>::const_iterator Iterator;
+   const Key& key = data_3d.key;
+
+   for (Iterator iterator = nwp_element_vector.begin ();
+        iterator != nwp_element_vector.end (); iterator++)
+   {
+      const Nwp_Element& nwp_element = *(iterator);
+      Geodetic_Vector_Data_3D* gvd_3d_ptr = get_gvd_3d_ptr (nwp_element, key);
+      data_3d.set_gvd_3d_ptr (nwp_element, gvd_3d_ptr);
+   }
+
+   data_3d.set_available ();
+
+}
+
+Geodetic_Vector_Data_2D*
+Gfs4::get_initialized_vd_2d (const Integer vector_size) const
+{
+
+   typedef Geodetic_Vector_Data_2D Gvd_2d;
+
+   Gvd_2d* data_ptr = new Gvd_2d (vector_size, size_2d, domain_2d, false);
+   return data_ptr;
+
+}
+
+void 
+Gfs4::fill_ts_diagnosis_data (Geodetic_Vector_Data_2D& gvd_2d,
+                              const Integer vector_index,
+                              const Key& key,
+                              const Level& level,
+                              const Nwp_Element nwp_element)
+{
+
+   const Integer vi = vector_index;
+
+   switch (nwp_element)
+   {
+
+      case CAPE:
+      case PRECIPITABLE_WATER:
+      {
+         const Level& surface = Level::surface_level ();
+         fill_grib_data (gvd_2d, vi, nwp_element, key, surface);
+         return;
+      }
+
+   }
+
+   Nwp::fill_ts_diagnosis_data (gvd_2d, vi, key, level, nwp_element);
+
+}
+
+void
+Gfs4::fill_cumulative_rain_data (Geodetic_Vector_Data_2D& gvd_2d,
+                                 const Integer vector_index,
+                                 const Key& key)
+{
+
+   const Integer forecast_hour = key.forecast_hour;
+
+   if (forecast_hour < 0)
+   {
+      throw Nwp_Exception ("Forecast Hour < 0");
+      return;
+   }
+
+   gvd_2d.initialize (vector_index, 0);
+   if (forecast_hour == 0) { return; }
+
+   const Size_2D& size_2d = gvd_2d.get_size_2d ();
+   const Level& surface_level = Level::surface_level ();
+
+   Geodetic_Vector_Data_2D* precip_data_ptr = get_initialized_vd_2d (1);
+   Geodetic_Vector_Data_2D& precip_data = *precip_data_ptr;
+
+   for (Integer fh = 0; fh < forecast_hour; fh += 6)
+   {
+      fill_grib_data (precip_data, 0, PPT6, key, surface_level);
+      #pragma omp parallel for
+      for (Integer i = 0; i < size_2d.i; i++)
+      {
+         for (Integer j = 0; j < size_2d.j; j++)
+         {
+            const Real precip = precip_data.get_datum (0, i, j);
+            gvd_2d.get_datum (vector_index, i, j) += precip;
+         }
+      }
+   }
+
+   if (forecast_hour % 6 != 0)
+   {
+      fill_grib_data (precip_data, 0, PPT3, key, surface_level);
+      #pragma omp parallel for
+      for (Integer i = 0; i < size_2d.i; i++)
+      {
+         for (Integer j = 0; j < size_2d.j; j++)
+         {
+            const Real precip = precip_data.get_datum (0, i, j);
+            gvd_2d.get_datum (vector_index, i, j) += precip;
+         }
+      }
+   }
+
+   delete precip_data_ptr;
+
+}
+
+void
+Gfs4::fill_step_rain_data (Geodetic_Vector_Data_2D& gvd_2d,
+                           const Integer vector_index,
+                           const Key& key)
+{
+
+   const Size_2D& size_2d = gvd_2d.get_size_2d ();
+   const Level& surface_level = Level::surface_level ();
+   const Integer forecast_hour = key.forecast_hour;
+
+   if (forecast_hour == 0)
+   {
+      gvd_2d.initialize (vector_index, 0);
+      return;
+   }
+
+   if (forecast_hour % 6 != 0)
+   {
+      fill_grib_data (gvd_2d, vector_index, PPT3, key, surface_level);
+   }
+   else
+   {
+
+      fill_grib_data (gvd_2d, vector_index, PPT6, key, surface_level);
+
+      Geodetic_Vector_Data_2D* precip_data_ptr = get_initialized_vd_2d (1);
+      Geodetic_Vector_Data_2D& precip_data = *precip_data_ptr;
+
+      try
+      {
+
+         const Dtime& base_time = key.base_time;
+         const Integer forecast_hour = key.forecast_hour;
+         const Key prev_key (base_time, forecast_hour - 3);
+
+         fill_grib_data (precip_data, 0, PPT3, prev_key, surface_level);
+         #pragma omp parallel for
+         for (Integer i = 0; i < size_2d.i; i++)
+         {
+            for (Integer j = 0; j < size_2d.j; j++)
+            {
+               const Real ppt3 = precip_data.get_datum (0, i, j);
+               gvd_2d.get_datum (vector_index, i, j) -= ppt3;
+            }
+         }
+      }
+      catch (const Nwp_Exception& ne)
+      {
+      }
+
+      delete precip_data_ptr;
+
+   }
+
+}
+
+void
+Gfs4::fill_rain_data (Geodetic_Vector_Data_2D& gvd_2d,
+                      const Integer vector_index,
+                      const Key& key,
+                      const Nwp_Element nwp_element)
+{
+
+   switch (nwp_element)
+   {
+
+      case RAINFALL_CUMULATIVE:
+      {
+         fill_cumulative_rain_data (gvd_2d, vector_index, key);
+         return;
+      }
+
+      case RAINFALL_STEP:
+      {
+         fill_step_rain_data (gvd_2d, vector_index, key);
+         return;
+      }
+
+   }
+
+   Nwp::fill_rain_data (gvd_2d, vector_index, key, nwp_element);
+
+}
+
+void
+Gfs4::fill_cloud_data (Geodetic_Vector_Data_2D& gvd_2d,
+                       const Integer vector_index,
+                       const Key& key,
+                       const Nwp_Element nwp_element)
+{
+   const Level& nil_level = Level::nil_level ();
+   fill_grib_data (gvd_2d, vector_index, nwp_element, key, nil_level);
+}
+
+void
+Gfs4::fill_screen_level_data (Geodetic_Vector_Data_2D& gvd_2d,
+                              const Integer vector_index,
+                              const Key& key,
+                              const Nwp_Element nwp_element)
+{
+
+   const Level& screen = Level::screen_level ();
+   const Level& surface = Level::surface_level ();
+
+   switch (nwp_element)
+   {
+
+      case TEMPERATURE:
+      {
+         fill_grib_data (gvd_2d, vector_index, TEMPERATURE, key, screen);
+         return;
+      }
+
+      case DEW_POINT:
+      {
+
+         typedef Geodetic_Vector_Data_2D Gvd_2d;
+         Gvd_2d* data_ptr = get_initialized_vd_2d (2);
+         fill_data (*data_ptr, 0, key, screen, TEMPERATURE);
+         fill_data (*data_ptr, 1, key, screen, RELATIVE_HUMIDITY);
+
+         #pragma omp parallel for
+         for (Integer i = 0; i < size_2d.i; i++)
+         {
+            for (Integer j = 0; j < size_2d.j; j++)
+            {
+               const Real t = data_ptr->get_datum (0, i, j);
+               const Real rh = data_ptr->get_datum (1, i, j);
+               const Real t_d = Moisture::get_t_d (t, rh);
+               gvd_2d.set_datum (vector_index, i, j, t_d);
+            }
+         }
+
+         delete data_ptr;
+         return;
+
+      }
+
+      case RELATIVE_HUMIDITY:
+      {
+         fill_grib_data (gvd_2d, vector_index, RELATIVE_HUMIDITY, key, screen);
+         return;
+      }
+
+   }
+
+   Nwp::fill_screen_level_data (gvd_2d, vector_index, key, nwp_element);
+
+}
+
+void
+Gfs4::fill_10m_level_data (Geodetic_Vector_Data_2D& gvd_2d,
+                           const Integer vector_index,
+                           const Key& key,
+                           const Nwp_Element nwp_element)
+{
+
+   const Level& ten = Level::ten_metre_level ();
+
+   switch (nwp_element)
+   {
+
+      case ZONAL_WIND:
+      {
+         fill_grib_data (gvd_2d, vector_index, ZONAL_WIND, key, ten);
+         return;
+      }
+
+      case MERIDIONAL_WIND:
+      {
+         fill_grib_data (gvd_2d, vector_index, MERIDIONAL_WIND, key, ten);
+         return;
+      }
+
+   }
+
+   Nwp::fill_10m_level_data (gvd_2d, vector_index, key, nwp_element);
+
+}
+
+void
+Gfs4::fill_msl_data (Geodetic_Vector_Data_2D& gvd_2d,
+                     const Integer vector_index,
+                     const Key& key,
+                     const Nwp_Element nwp_element)
+{
+
+   const Level& msl = Level::mean_sea_level ();
+
+   switch (nwp_element)
+   {
+
+      case PRESSURE:
+      case MEAN_SEA_LEVEL_PRESSURE:
+      {
+         const Nwp_Element mslp = MEAN_SEA_LEVEL_PRESSURE;
+         fill_grib_data (gvd_2d, vector_index, mslp, key, msl);
+         return;
+      }
+
+   }
+
+   Nwp::fill_msl_data (gvd_2d, vector_index, key, nwp_element);
+
+}
+
+void
+Gfs4::fill_surface_level_data (Geodetic_Vector_Data_2D& gvd_2d,
+                               const Integer vector_index,
+                               const Key& key,
+                               const Nwp_Element nwp_element)
+{
+
+   const Level& surface = Level::surface_level ();
+
+   switch (nwp_element)
+   {
+
+      case PRESSURE:
+      {
+         fill_grib_data (gvd_2d, vector_index, PRESSURE, key, surface);
+         return;
+      }
+
+   }
+
+   Nwp::fill_surface_level_data (gvd_2d, vector_index, key, nwp_element);
+
+}
+
+/*
+void
+Gfs4::fill_grib_data (Geodetic_Vector_Data_3D& gvd_3d,
+                      const Integer vector_index,
+                      const Nwp_Element nwp_element,
+                      const Key& key) const
+{
+
+   const Key key (key);
+
+   Gfs4::const_iterator iterator = find (key);
+   if (iterator == end ()) { throw Nwp_Exception ("Not Available"); }
+   const Grib2& grib = *(iterator->second);
+
+   for (Integer k = 0; k < tuple_p.size (); k++)
+   {
+      const Real p = tuple_p[k];
+      const Level level (PRESSURE_LEVEL, p);
+      const Grib2::Key& key = get_grib_key (key, nwp_element, level);
+      grib.fill_data (gvd_3d, vector_index, k, key);
+   }
+
+}
+*/
+
+Geodetic_Vector_Data_3D*
+Gfs4::get_gvd_3d_ptr (const Nwp_Element nwp_element,
+                      const Key& key) const
+{
+
+   Geodetic_Vector_Data_3D* gvd_3d_ptr =
+      new Geodetic_Vector_Data_3D (1, tuple_p, size_2d, domain_2d);
+   Geodetic_Vector_Data_3D& gvd_3d = *gvd_3d_ptr;
+
+   for (Integer k = 0; k < tuple_p.size (); k++)
+   {
+
+      const Real p = tuple_p[k];
+      const denise::Level level (PRESSURE_LEVEL, p);
+      const Grib2::Key& grib_key = get_grib_key (key, nwp_element, level);
+
+      Gfs4::const_iterator iterator = find (key);
+      if (iterator == end ()) { throw Nwp_Exception ("Not Available"); }
+      const Grib2& grib = *(iterator->second);
+
+      Geodetic_Vector_Data_2D* grib_data_ptr =
+         get_grib_data_ptr (grib, grib_key);
+
+      #pragma omp parallel for
+      for (Integer i = 0; i < size_2d.i; i++)
+      {
+         const Real latitude = grib_data_ptr->get_latitude (i);
+         for (Integer j = 0; j < size_2d.j; j++)
+         {
+            const Real longitude = grib_data_ptr->get_longitude (j);
+            const Real datum = grib_data_ptr->evaluate (0, latitude, longitude);
+            gvd_3d.set_datum (0, k, i, j, datum);
+         }
+      }
+
+      delete grib_data_ptr;
+
+   }
+
+   return gvd_3d_ptr;
+
+}
+
+Geodetic_Vector_Data_2D*
+Gfs4::get_grib_data_ptr (const Grib2& grib,
+                         const Grib2::Key& grib_key) const
+{
+
+   typedef Geodetic_Vector_Data_2D Gvd_2d;
+   Gvd_2d* data_ptr = new Gvd_2d (1, grib_size_2d, grib_domain_2d, true);
+   grib.fill_data (*data_ptr, 0, grib_key);
+
+   const Integer last_j = grib_size_2d.j - 1;
+
+   #pragma omp parallel for
+   for (Integer i = 0; i < grib_size_2d.i; i++)
+   {
+      const Real datum = data_ptr->get_datum (0, i, 0);
+      data_ptr->set_datum (0, i, last_j, datum);
+   }
+
+   return data_ptr;
+
+}
+
+void
+Gfs4::fill_grib_data (Geodetic_Vector_Data_2D& gvd_2d,
+                      const Integer vector_index,
+                      const Nwp_Element nwp_element,
+                      const Key& key,
+                      const Level& level) const
+{
+
+   Gfs4::const_iterator iterator = find (key);
+   if (iterator == end ()) { throw Nwp_Exception ("Not Available"); }
+   const Grib2& grib = *(iterator->second);
+
+   const Grib2::Key& grib_key = get_grib_key (key, nwp_element, level);
+   Geodetic_Vector_Data_2D* grib_data_ptr = get_grib_data_ptr (grib, grib_key);
+
+   Geodetic_Vector_Data_2D grib_data (1, grib_size_2d, grib_domain_2d, true);
+
+   #pragma omp parallel for
+   for (Integer i = 0; i < size_2d.i; i++)
+   {
+      const Real latitude = gvd_2d.get_latitude (i);
+      for (Integer j = 0; j < size_2d.j; j++)
+      {
+         const Real longitude = gvd_2d.get_longitude (j);
+         const Real datum = grib_data_ptr->evaluate (0, latitude, longitude);
+         gvd_2d.set_datum (vector_index, i, j, datum);
+      }
+   }
+
+   delete grib_data_ptr;
+
+}
+
+Gfs4::Gfs4 (const string& data_path)
+   : Nwp ("Gfs4", data_path),
+     data_path (data_path),
+     grib_size_2d (361, 720),
+     grib_domain_2d (Domain_1D (-90, 90), Domain_1D (0, 360)),
+     size_2d (51, 71),
+     domain_2d (Domain_1D (-60, 0), Domain_1D (80, 160))
+{
+
+   this->status = "Unloaded";
+
+   nwp_element_vector.push_back (denise::TEMPERATURE);
+   nwp_element_vector.push_back (denise::RELATIVE_HUMIDITY);
+   nwp_element_vector.push_back (denise::GEOPOTENTIAL_HEIGHT);
+   nwp_element_vector.push_back (denise::ZONAL_WIND);
+   nwp_element_vector.push_back (denise::MERIDIONAL_WIND);
+   nwp_element_vector.push_back (denise::OMEGA);
+
+}
+
+Gfs4::~Gfs4 ()
+{
+   clean_up ();
+}
+
+void
+Gfs4::survey ()
+{
+
+   const string re_ym ("[0-9].....");
+   const string re_ymd ("[0-9].......");
+   const string fmt ("gfs_4_[0-9]......._[0-9]..._[0-9]..\\.grb");
+
+   typedef map<Grib2::Key, Grib2::Header*> Header_Ptr_Map;
+
+   const vector<string>& dir_ym = get_dir_listing (path, re_ym);
+   for (vector<string>::const_iterator i = dir_ym.begin ();
+        i != dir_ym.end (); i++)
+   {
+
+      const string& ym = *(i);
+      const string& ym_path = path + "/" + ym;
+
+      const vector<string>& dir_ymd = get_dir_listing (ym_path, re_ymd);
+      for (vector<string>::const_iterator j = dir_ymd.begin ();
+           j != dir_ymd.end (); j++)
+      {
+
+         const string& ymd = *(j);
+         const string& ymd_path = ym_path + "/" + ymd;
+
+         const vector<string>& dir_listing = get_dir_listing (ymd_path, fmt);
+         for (vector<string>::const_iterator iterator = dir_listing.begin ();
+              iterator != dir_listing.end (); iterator++)
+         {
+
+            // fn = filename
+            const string& fn = *(iterator);
+            const string& file_path = ymd_path + "/" + fn;
+            const string& bt_str = fn.substr (6, 8) + fn.substr (15, 2);
+            const string& fh_str = fn.substr (20, 3);
+
+            const Dtime base_time (bt_str, string ("%Y%m%d%H"));
+            const Integer forecast_hour = atoi (fh_str.c_str ());
+
+            const Key key (base_time, forecast_hour);
+            key_multimap.add (key);
+            Grib2* grib_ptr = new Grib2 (file_path);
+            insert (make_pair (key, grib_ptr));
+            //valid_time_set.insert (valid_time);
+            //key_set.insert (Key (base_time, fh));
+
+         }
+
+      }
+
+   }
+
+   if (size () > 0)
+   {
+
+      set<uint32_t> set_p;
+      const Grib2& grib = *(begin ()->second);
+      const Header_Ptr_Map& header_ptr_map = grib.get_header_ptr_map ();
+
+      for (Header_Ptr_Map::const_iterator iterator = header_ptr_map.begin ();
+           iterator != header_ptr_map.end (); iterator++)
+      {
+
+         const Grib2::Header& header = *(iterator->second);
+         const Grib2::Block_4& block_4 = header.block_4;
+         const Grib2::Block_4::Level& level = block_4.get_level ();
+
+         if (level.get_first_level_type () == 100)
+         {
+            const uint32_t p = level.get_first_level ();
+            if (p < 200) { continue; }
+            set_p.insert (p);
+         }
+
+      }
+
+      for (set<uint32_t>::const_iterator iterator = set_p.begin ();
+           iterator != set_p.end (); iterator++)
+      {
+         const Real p = Real (*(iterator));
+         tuple_p.push_back (p);
+      }
+
+   }
+
+   status = "";
+   const set<Dtime>& base_time_set = key_multimap.get_base_time_set ();
+   for (set<Dtime>::const_iterator iterator = base_time_set.begin ();
+        iterator != base_time_set.end (); iterator++)
+   {
+      const Dtime& base_time = *(iterator);
+      status += base_time.get_string () + " ";
+   }
+
+}
+
+void
+Gfs4::clean_up ()
+{
+   for (Gfs4::iterator iterator = begin (); iterator != end (); iterator++)
+   {
+      Grib2* grib_ptr = iterator->second;
+      delete grib_ptr;
+   }
+}
+
+void
+Gfs4::set_domain_2d (const Domain_2D& domain_2d)
+{
+
+   this->domain_2d.domain_x.start = ceil (domain_2d.domain_x.start);
+   this->domain_2d.domain_x.end = floor (domain_2d.domain_x.end);
+   this->domain_2d.domain_y.start = ceil (domain_2d.domain_y.start);
+   this->domain_2d.domain_y.end = floor (domain_2d.domain_y.end);
+
+   const Real& start_latitude = this->domain_2d.domain_x.start;
+   const Real& end_latitude = this->domain_2d.domain_x.end;
+   const Real& start_longitude = this->domain_2d.domain_y.start;
+   const Real& end_longitude = this->domain_2d.domain_y.end;
+ 
+   size_2d.i = Integer (round (end_latitude - start_latitude));
+   size_2d.j = Integer (round (end_longitude - start_longitude));
+
+}
+
+vector<Dtime>
+Gfs4::get_valid_time_vector () const
+{
+
+   vector<Dtime> valid_time_vector;
+
+   for (Gfs4::const_iterator iterator = begin ();
+       iterator != end (); iterator++)
+   {
+      const Key& key = iterator->first;
+      const Dtime& bt = key.base_time;
+      const Integer fh = key.forecast_hour;
+      const Dtime dtime (bt.t + fh);
+      valid_time_vector.push_back (dtime);
+   }
+
+   return valid_time_vector;
+
+/*
+   vector<Dtime> valid_time_vector;
+   Dtime start_time ("2012011300");
+   Dtime end_time ("2012011400");
+   for (Real t = start_time.t; t < end_time.t; t += 3)
+   {
+      Dtime dtime (t);
+      valid_time_vector.push_back (dtime);
+   }
+   return valid_time_vector;
+*/
+}
+
+Nwp::Key
+Gfs4::get_key (const Dtime& dtime) const
+{
+
+   vector<Dtime> base_time_vector;
+
+   for (Gfs4::const_iterator iterator = begin ();
+        iterator != end (); iterator++)
+   {
+
+      const Key& key = iterator->first;
+      const Dtime& bt = key.base_time;
+      const Integer fh = key.forecast_hour;
+      const Dtime t (bt.t + fh);
+
+      if (fabs (t.t - dtime.t) < 0.5)
+      {
+         base_time_vector.push_back (bt);
+      }
+
+   }
+
+   if (base_time_vector.size () == 0)
+   {
+      throw Nwp_Exception ("timestep not available");
+   }
+
+   sort (base_time_vector.begin (), base_time_vector.end ());
+
+   const Dtime& base_time = base_time_vector.back ();
+   const Integer forecast_hour = Integer (round (dtime.t - base_time.t));
+
+   return Key (base_time, forecast_hour);
+
+}
+
+void
+Gfs4::acquire_base_time_forecast_hour (Dtime& base_time,
+                                       Integer& forecast_hour,
+                                       const Dtime& dtime) const
+{
+
+   vector<Dtime> base_time_vector;
+
+   for (Gfs4::const_iterator iterator = begin ();
+        iterator != end (); iterator++)
+   {
+
+      const Key& key = iterator->first;
+      const Dtime& bt = key.base_time;
+      const Integer fh = key.forecast_hour;
+      const Dtime t (bt.t + fh);
+
+      if (fabs (t.t - dtime.t) < 0.5)
+      {
+         base_time_vector.push_back (bt);
+      }
+
+   }
+
+   if (base_time_vector.size () == 0)
+   {
+      throw Nwp_Exception ("timestep not available");
+   }
+
+   sort (base_time_vector.begin (), base_time_vector.end ());
+   base_time.t = base_time_vector.back ().t;
+   forecast_hour = Integer (round (dtime.t - base_time.t));
+
+}
+
+Gfs::Data_3D::Data_3D (const vector<Nwp_Element>& nwp_element_vector,
+                       const Key& key)
+   : Nwp::Data_3D (nwp_element_vector, key)
+{
+}
+
+Real
+Gfs::Data_3D::evaluate (const Nwp_Element element,
+                        const Real p,
+                        const Real latitude,
+                        const Real longitude,
+                        const Evaluate_Op evaluate_op) const
+{
+
+   typedef Nwp::Data_3D Nd_3d;
+   const Evaluate_Op& eo = evaluate_op;
+
+   switch (element)
+   {
+
+      case denise::DEW_POINT:
+      {
+         const Nwp_Element& T = denise::TEMPERATURE;
+         const Nwp_Element& RH = denise::RELATIVE_HUMIDITY;
+         const Real t = Nwp::Data_3D::evaluate (T, p, latitude, longitude);
+         const Real rh = Nwp::Data_3D::evaluate (RH, p, latitude, longitude);
+         return Moisture::get_t_d (t, rh);
+      }
+
+      case denise::VERTICAL_VELOCITY:
+      {
+
+         const Nwp_Element& T = denise::TEMPERATURE;
+         const Nwp_Element& O = denise::OMEGA;
+
+         if (evaluate_op == DX || evaluate_op == DY)
+         {
+            const Evaluate_Op& eo = evaluate_op;
+            const Real t = Nd_3d::evaluate (T, p, latitude, longitude);
+            const Real o = Nd_3d::evaluate (O, p, latitude, longitude);
+            const Real ts = Nd_3d::evaluate (T, p, latitude, longitude, eo);
+            const Real os = Nd_3d::evaluate (O, p, latitude, longitude, eo);
+            const Real rho = p / (R_d * t);
+            const Real oRdp = o * R_d / p;
+            return (oRdp * ts + os / rho) / -g;
+         }
+         else
+         {
+            const Real t = Nd_3d::evaluate (T, p, latitude, longitude);
+            const Real o = Nd_3d::evaluate (O, p, latitude, longitude);
+            const Real rho = p / (R_d * t);
+            return o / (-rho * g);
+         }
+
+      }
+
+   }
+
+   return Nd_3d::evaluate (element, p, latitude, longitude, eo);
+
+}
+
+Grib2::Key
+Gfs::get_grib_key (const Key& key,
+                   const Nwp_Element nwp_element,
+                   const Level& level) const
+{
+
+   const Dtime& base_time = key.base_time;
+   const Integer forecast_hour = key.forecast_hour;
+
+   Grib2::Key grib_key;
+   set_grib_key (grib_key, base_time);
+   set_grib_key (grib_key, nwp_element, forecast_hour);
+   set_grib_key (grib_key, nwp_element);
+   set_grib_key (grib_key, nwp_element, level);
+   return grib_key;
+
+}
+
+void
+Gfs::set_grib_key (Grib2::Key& grib_key,
+                   const Dtime& base_time) const
+{
+
+   uint8_t* buffer = grib_key.buffer;
+
+   const Integer yyyy = base_time.get_year ();
+   const Integer mm = base_time.get_month ();
+   const Integer dd = base_time.get_day ();
+   const Integer HH = base_time.get_hour ();
+   const Integer MM = base_time.get_minute ();
+   const Integer SS = base_time.get_second ();
+
+   buffer[0] = uint8_t (yyyy / 256);
+   buffer[1] = uint8_t (yyyy % 256);
+   buffer[2] = uint8_t (mm);
+   buffer[3] = uint8_t (dd);
+   buffer[4] = uint8_t (HH);
+   buffer[5] = uint8_t (MM);
+   buffer[6] = uint8_t (SS);
+
+}
+
+void
+Gfs::set_grib_key (Grib2::Key& grib_key,
+                   const Nwp_Element nwp_element,
+                   const Integer forecast_hour) const
+{
+
+   uint8_t* buffer = grib_key.buffer;
+   buffer[7] = 1;
+
+   switch (nwp_element)
+   {
+
+      default:
+      {
+         uint32_t value = forecast_hour;
+#ifndef WORDS_BIGENDIAN
+         swap_endian (&value, sizeof (uint32_t));
+#endif
+         memcpy (buffer + 8, &value, sizeof (uint32_t));
+         break;
+      }
+
+      case PPT3:
+      {
+         throw Nwp_Exception ("Not Available");
+         buffer[7] = uint8_t (forecast_hour - 3);
+         buffer[8] = uint8_t (forecast_hour);
+         buffer[9] = 4;
+         break;
+      }
+
+      case PPT6:
+      {
+         throw Nwp_Exception ("Not Available");
+         buffer[7] = uint8_t (forecast_hour - 6);
+         buffer[8] = uint8_t (forecast_hour);
+         buffer[9] = 4;
+         break;
+      }
+
+      case PPTN:
+      {
+         throw Nwp_Exception ("Not Available");
+         buffer[7] = 0;
+         buffer[8] = uint8_t (forecast_hour);
+         buffer[9] = 4;
+         break;
+      }
+
+      case TOTAL_CLOUD:
+      {
+         throw Nwp_Exception ("Not Available");
+         buffer[7] = uint8_t (forecast_hour - 6);
+         buffer[8] = uint8_t (forecast_hour);
+         buffer[9] = 3;
+         break;
+      }
+
+      case HIGH_CLOUD:
+      {
+         throw Nwp_Exception ("Not Available");
+         buffer[7] = uint8_t (forecast_hour - 6);
+         buffer[8] = uint8_t (forecast_hour);
+         buffer[9] = 3;
+         break;
+      }
+
+      case MIDDLE_CLOUD:
+      {
+         throw Nwp_Exception ("Not Available");
+         buffer[7] = uint8_t (forecast_hour - 6);
+         buffer[8] = uint8_t (forecast_hour);
+         buffer[9] = 3;
+         break;
+      }
+
+      case LOW_CLOUD:
+      {
+         throw Nwp_Exception ("Not Available");
+         buffer[7] = uint8_t (forecast_hour - 6);
+         buffer[8] = uint8_t (forecast_hour);
+         buffer[9] = 3;
+         break;
+      }
+
+   }
+
+}
+
+void
+Gfs::set_grib_key (Grib2::Key& grib_key,
+                   const Nwp_Element nwp_element) const
+{
+
+   uint8_t* buffer = grib_key.buffer;
+
+   switch (nwp_element)
+   {
+      case PRESSURE:
+         buffer[12] = 3;
+         buffer[13] = 0;
+         break;
+      case TEMPERATURE:
+         buffer[12] = 0;
+         buffer[13] = 0;
+         break;
+      case TEMPERATURE_CELCIUS:
+         buffer[12] = 255;
+         buffer[13] = 255;
+         break;
+      case MIX_DOWN_TEMPERATURE:
+         buffer[12] = 255;
+         buffer[13] = 255;
+         break;
+      case ZONAL_WIND:
+         buffer[12] = 2;
+         buffer[13] = 2;
+         break;
+      case MERIDIONAL_WIND:
+         buffer[12] = 2;
+         buffer[13] = 3;
+         break;
+      case WIND_SPEED:
+         buffer[12] = 255;
+         buffer[13] = 255;
+         break;
+      case VERTICAL_VELOCITY:
+         buffer[12] = 2;
+         buffer[13] = 9;
+         break;
+      case GEOPOTENTIAL_HEIGHT:
+         buffer[12] = 3;
+         buffer[13] = 5;
+         break;
+      case DEW_POINT:
+         buffer[12] = 0;
+         buffer[13] = 6;
+         break;
+      case MEAN_SEA_LEVEL_PRESSURE:
+         buffer[12] = 3;
+         buffer[13] = 1;
+         break;
+      case HIGH_CLOUD:
+         buffer[12] = 6;
+         buffer[13] = 1;
+         break;
+      case MIDDLE_CLOUD:
+         buffer[12] = 6;
+         buffer[13] = 1;
+         break;
+      case LOW_CLOUD:
+         buffer[12] = 6;
+         buffer[13] = 1;
+         break;
+      case TOTAL_CLOUD:
+         buffer[12] = 6;
+         buffer[13] = 1;
+         break;
+      case OMEGA:
+         buffer[12] = 2;
+         buffer[13] = 8;
+         break;
+      case PPT3:
+         buffer[12] = 1;
+         buffer[13] = 8;
+         break;
+      case PPT6:
+         buffer[12] = 1;
+         buffer[13] = 8;
+         break;
+      case PPTN:
+         buffer[12] = 1;
+         buffer[13] = 8;
+         break;
+      case RAINFALL_STEP:
+         buffer[12] = 255;
+         buffer[13] = 255;
+         break;
+      case RELATIVE_HUMIDITY:
+         buffer[12] = 1;
+         buffer[13] = 1;
+         break;
+      case DEW_POINT_DEPRESSION:
+         buffer[12] = 0;
+         buffer[13] = 7;
+         break;
+      case POTENTIAL_TEMPERATURE:
+         buffer[12] = 0;
+         buffer[13] = 2;
+         break;
+      case THETA:
+         buffer[12] = 0;
+         buffer[13] = 2;
+         break;
+      case THETA_E:
+         buffer[12] = 0;
+         buffer[13] = 3;
+         break;
+      case MIXING_RATIO:
+         buffer[12] = 1;
+         buffer[13] = 2;
+         break;
+      case MONTGOMERY:
+         buffer[12] = 2;
+         buffer[13] = 6;
+         break;
+      case SLI:
+         buffer[12] = 7;
+         buffer[13] = 10;
+         break;
+      case SHOWALTER:
+         buffer[12] = 7;
+         buffer[13] = 13;
+         break;
+      case LI_700:
+         buffer[12] = 255;
+         buffer[13] = 255;
+         break;
+      case LI_THUNDER:
+         buffer[12] = 255;
+         buffer[13] = 255;
+         break;
+      case K_INDEX:
+         buffer[12] = 7;
+         buffer[13] = 2;
+         break;
+      case TOTAL_TOTALS:
+         buffer[12] = 7;
+         buffer[13] = 4;
+         break;
+      case CAPE:
+         buffer[12] = 7;
+         buffer[13] = 6;
+         break;
+      case PRECIPITABLE_WATER:
+         buffer[12] = 1;
+         buffer[13] = 3;
+         break;
+      case FOG_FRACTION:
+         buffer[12] = 255;
+         buffer[13] = 255;
+         break;
+      case THICKNESS:
+         buffer[12] = 3;
+         buffer[13] = 12;
+         break;
+      case POTENTIAL_VORTICITY:
+         buffer[12] = 2;
+         buffer[13] = 14;
+         break;
+      case ABSOLUTE_VORTICITY:
+         buffer[12] = 2;
+         buffer[13] = 10;
+         break;
+      case SHEAR_VORTICITY:
+         buffer[12] = 255;
+         buffer[13] = 255;
+         break;
+      case CURVATURE_VORTICITY:
+         buffer[12] = 255;
+         buffer[13] = 255;
+         break;
+   }
+
+}
+
+void
+Gfs::set_grib_key (Grib2::Key& grib_key,
+                   const Nwp_Element nwp_element,
+                   const denise::Level& level) const
+{
+
+   uint8_t* buffer = grib_key.buffer;
+
+   switch (nwp_element)
+   {
+      case TOTAL_CLOUD:
+         buffer[14] = 200;
+         buffer[15] = 0;
+         buffer[16] = 0;
+         buffer[17] = 0;
+         buffer[18] = 0;
+         buffer[19] = 0;
+         buffer[20] = 255;
+         buffer[21] = 0;
+         buffer[22] = 0;
+         buffer[23] = 0;
+         buffer[24] = 0;
+         buffer[25] = 0;
+         return;
+      case HIGH_CLOUD:
+         buffer[14] = 214;
+         buffer[15] = 0;
+         buffer[16] = 0;
+         buffer[17] = 0;
+         buffer[18] = 0;
+         buffer[19] = 0;
+         buffer[20] = 255;
+         buffer[21] = 0;
+         buffer[22] = 0;
+         buffer[23] = 0;
+         buffer[24] = 0;
+         buffer[25] = 0;
+         return;
+      case MIDDLE_CLOUD:
+         buffer[14] = 224;
+         buffer[15] = 0;
+         buffer[16] = 0;
+         buffer[17] = 0;
+         buffer[18] = 0;
+         buffer[19] = 0;
+         buffer[20] = 255;
+         buffer[21] = 0;
+         buffer[22] = 0;
+         buffer[23] = 0;
+         buffer[24] = 0;
+         buffer[25] = 0;
+         return;
+      case LOW_CLOUD:
+         buffer[14] = 234;
+         buffer[15] = 0;
+         buffer[16] = 0;
+         buffer[17] = 0;
+         buffer[18] = 0;
+         buffer[19] = 0;
+         buffer[20] = 255;
+         buffer[21] = 0;
+         buffer[22] = 0;
+         buffer[23] = 0;
+         buffer[24] = 0;
+         buffer[25] = 0;
+         return;
+      case PRECIPITABLE_WATER:
+         buffer[13] = 200;
+         buffer[14] = 0;
+         buffer[15] = 0;
+         return;
+   }
+
+   switch (level.type)
+   {
+      case PRESSURE_LEVEL:
+      {
+         uint32_t p = uint32_t (round (level.value));
+         buffer[14] = 100;
+         buffer[15] = 0;
+#ifndef WORDS_BIGENDIAN
+         swap_endian (&p, sizeof (uint32_t));
+#endif
+         memcpy (buffer + 16, &p, sizeof (uint32_t));
+         buffer[20] = 255;
+         buffer[21] = 0;
+         buffer[22] = 0;
+         buffer[23] = 0;
+         buffer[24] = 0;
+         buffer[25] = 0;
+         break;
+      }
+      case THETA_LEVEL:
+      {
+         uint32_t theta = uint32_t (round (level.value));
+         buffer[14] = 107;
+         buffer[15] = 0;
+#ifndef WORDS_BIGENDIAN
+         swap_endian (&theta, sizeof (uint32_t));
+#endif
+         memcpy (buffer + 16, &theta, sizeof (uint32_t));
+         buffer[20] = 255;
+         buffer[21] = 0;
+         buffer[22] = 0;
+         buffer[23] = 0;
+         buffer[24] = 0;
+         buffer[25] = 0;
+         break;
+      }
+      case SIGMA_LEVEL:
+      {
+         uint32_t sigma = uint32_t (round (level.value * 10000));
+         buffer[14] = 113;
+         buffer[15] = 0;
+         buffer[20] = 255;
+         buffer[21] = 0;
+         buffer[22] = 0;
+         buffer[23] = 0;
+         buffer[24] = 0;
+         buffer[25] = 0;
+         break;
+      }
+      case SCREEN_LEVEL:
+      {
+         buffer[14] = 103;
+         buffer[15] = 0;
+         buffer[16] = 0;
+         buffer[17] = 0;
+         buffer[18] = 0;
+         buffer[19] = 2;
+         buffer[20] = 255;
+         buffer[21] = 0;
+         buffer[22] = 0;
+         buffer[23] = 0;
+         buffer[24] = 0;
+         buffer[25] = 0;
+         break;
+      }
+      case FIFTY_METRE_LEVEL:
+      {
+         buffer[14] = 103;
+         buffer[15] = 0;
+         buffer[16] = 0;
+         buffer[17] = 0;
+         buffer[18] = 0;
+         buffer[19] = 50;
+         buffer[20] = 255;
+         buffer[21] = 0;
+         buffer[22] = 0;
+         buffer[23] = 0;
+         buffer[24] = 0;
+         buffer[25] = 0;
+         break;
+      }
+      case TEN_METRE_LEVEL:
+      {
+         buffer[14] = 103;
+         buffer[15] = 0;
+         buffer[16] = 0;
+         buffer[17] = 0;
+         buffer[18] = 0;
+         buffer[19] = 10;
+         buffer[20] = 255;
+         buffer[21] = 0;
+         buffer[22] = 0;
+         buffer[23] = 0;
+         buffer[24] = 0;
+         buffer[25] = 0;
+         break;
+      }
+      case MEAN_SEA_LEVEL:
+      {
+         buffer[14] = 101;
+         buffer[15] = 0;
+         buffer[16] = 0;
+         buffer[17] = 0;
+         buffer[18] = 0;
+         buffer[19] = 0;
+         buffer[20] = 255;
+         buffer[21] = 0;
+         buffer[22] = 0;
+         buffer[23] = 0;
+         buffer[24] = 0;
+         buffer[25] = 0;
+         break;
+      }
+      case SURFACE_LEVEL:
+      {
+         buffer[14] = 1;
+         buffer[15] = 0;
+         buffer[16] = 0;
+         buffer[17] = 0;
+         buffer[18] = 0;
+         buffer[19] = 0;
+         buffer[20] = 255;
+         buffer[21] = 0;
+         buffer[22] = 0;
+         buffer[23] = 0;
+         buffer[24] = 0;
+         buffer[25] = 0;
+         break;
+      }
+      case NIL_LEVEL:
+      case NOT_A_LEVEL:
+      {
+         buffer[14] = 1;
+         buffer[15] = 0;
+         buffer[16] = 0;
+         buffer[17] = 0;
+         buffer[18] = 0;
+         buffer[19] = 0;
+         buffer[20] = 255;
+         buffer[21] = 0;
+         buffer[22] = 0;
+         buffer[23] = 0;
+         buffer[24] = 0;
+         buffer[25] = 0;
+         break;
+      }
+   }
+
+}
+
+void
+Gfs::initialize_3d_data (const Key& key)
+{
+   typedef Gfs::Data_3D G3d_3d;
+   G3d_3d* g3d_3d_ptr = new G3d_3d (nwp_element_vector, key);
+   data_3d_ptr_map.insert (make_pair (key, g3d_3d_ptr));
+}
+
+void          
+Gfs::load_3d_data (Nwp::Data_3D& data_3d)
+{
+
+   typedef vector<Nwp_Element>::const_iterator Iterator;
+   const Key& key = data_3d.key;
+
+   for (Iterator iterator = nwp_element_vector.begin ();
+        iterator != nwp_element_vector.end (); iterator++)
+   {
+      const Nwp_Element& nwp_element = *(iterator);
+      Geodetic_Vector_Data_3D* gvd_3d_ptr = get_gvd_3d_ptr (nwp_element, key);
+      data_3d.set_gvd_3d_ptr (nwp_element, gvd_3d_ptr);
+   }
+
+   data_3d.set_available ();
+
+}
+
+Geodetic_Vector_Data_2D*
+Gfs::get_initialized_vd_2d (const Integer vector_size) const
+{
+
+   typedef Geodetic_Vector_Data_2D Gvd_2d;
+
+   Gvd_2d* data_ptr = new Gvd_2d (vector_size, size_2d, domain_2d, false);
+   return data_ptr;
+
+}
+
+void 
+Gfs::fill_ts_diagnosis_data (Geodetic_Vector_Data_2D& gvd_2d,
+                              const Integer vector_index,
+                              const Key& key,
+                              const Level& level,
+                              const Nwp_Element nwp_element)
+{
+
+   const Integer vi = vector_index;
+
+   switch (nwp_element)
+   {
+
+      case CAPE:
+      case PRECIPITABLE_WATER:
+      {
+         const Level& surface = Level::surface_level ();
+         fill_grib_data (gvd_2d, vi, nwp_element, key, surface);
+         return;
+      }
+
+   }
+
+   Nwp::fill_ts_diagnosis_data (gvd_2d, vi, key, level, nwp_element);
+
+}
+
+void
+Gfs::fill_cumulative_rain_data (Geodetic_Vector_Data_2D& gvd_2d,
+                                 const Integer vector_index,
+                                 const Key& key)
+{
+
+   const Integer forecast_hour = key.forecast_hour;
+
+   if (forecast_hour < 0)
+   {
+      throw Nwp_Exception ("Forecast Hour < 0");
+      return;
+   }
+
+   gvd_2d.initialize (vector_index, 0);
+   if (forecast_hour == 0) { return; }
+
+   const Size_2D& size_2d = gvd_2d.get_size_2d ();
+   const Level& surface_level = Level::surface_level ();
+
+   Geodetic_Vector_Data_2D* precip_data_ptr = get_initialized_vd_2d (1);
+   Geodetic_Vector_Data_2D& precip_data = *precip_data_ptr;
+
+   for (Integer fh = 0; fh < forecast_hour; fh += 6)
+   {
+      fill_grib_data (precip_data, 0, PPT6, key, surface_level);
+      #pragma omp parallel for
+      for (Integer i = 0; i < size_2d.i; i++)
+      {
+         for (Integer j = 0; j < size_2d.j; j++)
+         {
+            const Real precip = precip_data.get_datum (0, i, j);
+            gvd_2d.get_datum (vector_index, i, j) += precip;
+         }
+      }
+   }
+
+   if (forecast_hour % 6 != 0)
+   {
+      fill_grib_data (precip_data, 0, PPT3, key, surface_level);
+      #pragma omp parallel for
+      for (Integer i = 0; i < size_2d.i; i++)
+      {
+         for (Integer j = 0; j < size_2d.j; j++)
+         {
+            const Real precip = precip_data.get_datum (0, i, j);
+            gvd_2d.get_datum (vector_index, i, j) += precip;
+         }
+      }
+   }
+
+   delete precip_data_ptr;
+
+}
+
+void
+Gfs::fill_step_rain_data (Geodetic_Vector_Data_2D& gvd_2d,
+                           const Integer vector_index,
+                           const Key& key)
+{
+
+   const Size_2D& size_2d = gvd_2d.get_size_2d ();
+   const Level& surface_level = Level::surface_level ();
+   const Integer forecast_hour = key.forecast_hour;
+
+   if (forecast_hour == 0)
+   {
+      gvd_2d.initialize (vector_index, 0);
+      return;
+   }
+
+   if (forecast_hour % 6 != 0)
+   {
+      fill_grib_data (gvd_2d, vector_index, PPT3, key, surface_level);
+   }
+   else
+   {
+
+      fill_grib_data (gvd_2d, vector_index, PPT6, key, surface_level);
+
+      Geodetic_Vector_Data_2D* precip_data_ptr = get_initialized_vd_2d (1);
+      Geodetic_Vector_Data_2D& precip_data = *precip_data_ptr;
+
+      try
+      {
+
+         const Dtime& base_time = key.base_time;
+         const Integer forecast_hour = key.forecast_hour;
+         const Key prev_key (base_time, forecast_hour - 3);
+
+         fill_grib_data (precip_data, 0, PPT3, prev_key, surface_level);
+         #pragma omp parallel for
+         for (Integer i = 0; i < size_2d.i; i++)
+         {
+            for (Integer j = 0; j < size_2d.j; j++)
+            {
+               const Real ppt3 = precip_data.get_datum (0, i, j);
+               gvd_2d.get_datum (vector_index, i, j) -= ppt3;
+            }
+         }
+      }
+      catch (const Nwp_Exception& ne)
+      {
+      }
+
+      delete precip_data_ptr;
+
+   }
+
+}
+
+void
+Gfs::fill_rain_data (Geodetic_Vector_Data_2D& gvd_2d,
+                      const Integer vector_index,
+                      const Key& key,
+                      const Nwp_Element nwp_element)
+{
+
+   switch (nwp_element)
+   {
+
+      case RAINFALL_CUMULATIVE:
+      {
+         fill_cumulative_rain_data (gvd_2d, vector_index, key);
+         return;
+      }
+
+      case RAINFALL_STEP:
+      {
+         fill_step_rain_data (gvd_2d, vector_index, key);
+         return;
+      }
+
+   }
+
+   Nwp::fill_rain_data (gvd_2d, vector_index, key, nwp_element);
+
+}
+
+void
+Gfs::fill_cloud_data (Geodetic_Vector_Data_2D& gvd_2d,
+                      const Integer vector_index,
+                      const Key& key,
+                      const Nwp_Element nwp_element)
+{
+   const Level& nil_level = Level::nil_level ();
+   fill_grib_data (gvd_2d, vector_index, nwp_element, key, nil_level);
+}
+
+void
+Gfs::fill_screen_level_data (Geodetic_Vector_Data_2D& gvd_2d,
+                             const Integer vector_index,
+                             const Key& key,
+                             const Nwp_Element nwp_element)
+{
+
+   const Level& screen = Level::screen_level ();
+   const Level& surface = Level::surface_level ();
+
+   switch (nwp_element)
+   {
+
+      case TEMPERATURE:
+      {
+         fill_grib_data (gvd_2d, vector_index, TEMPERATURE, key, screen);
+         return;
+      }
+
+      case DEW_POINT:
+      {
+
+         typedef Geodetic_Vector_Data_2D Gvd_2d;
+         Gvd_2d* data_ptr = get_initialized_vd_2d (2);
+         fill_data (*data_ptr, 0, key, screen, TEMPERATURE);
+         fill_data (*data_ptr, 1, key, screen, RELATIVE_HUMIDITY);
+
+         #pragma omp parallel for
+         for (Integer i = 0; i < size_2d.i; i++)
+         {
+            for (Integer j = 0; j < size_2d.j; j++)
+            {
+               const Real t = data_ptr->get_datum (0, i, j);
+               const Real rh = data_ptr->get_datum (1, i, j);
+               const Real t_d = Moisture::get_t_d (t, rh);
+               gvd_2d.set_datum (vector_index, i, j, t_d);
+            }
+         }
+
+         delete data_ptr;
+         return;
+
+      }
+
+      case RELATIVE_HUMIDITY:
+      {
+         fill_grib_data (gvd_2d, vector_index, RELATIVE_HUMIDITY, key, screen);
+         return;
+      }
+
+   }
+
+   Nwp::fill_screen_level_data (gvd_2d, vector_index, key, nwp_element);
+
+}
+
+void
+Gfs::fill_10m_level_data (Geodetic_Vector_Data_2D& gvd_2d,
+                          const Integer vector_index,
+                          const Key& key,
+                          const Nwp_Element nwp_element)
+{
+
+   const Level& ten = Level::ten_metre_level ();
+
+   switch (nwp_element)
+   {
+
+      case ZONAL_WIND:
+      {
+         fill_grib_data (gvd_2d, vector_index, ZONAL_WIND, key, ten);
+         return;
+      }
+
+      case MERIDIONAL_WIND:
+      {
+         fill_grib_data (gvd_2d, vector_index, MERIDIONAL_WIND, key, ten);
+         return;
+      }
+
+   }
+
+   Nwp::fill_10m_level_data (gvd_2d, vector_index, key, nwp_element);
+
+}
+
+void
+Gfs::fill_msl_data (Geodetic_Vector_Data_2D& gvd_2d,
+                    const Integer vector_index,
+                    const Key& key,
+                    const Nwp_Element nwp_element)
+{
+
+   const Level& msl = Level::mean_sea_level ();
+
+   switch (nwp_element)
+   {
+
+      case PRESSURE:
+      case MEAN_SEA_LEVEL_PRESSURE:
+      {
+         const Nwp_Element mslp = MEAN_SEA_LEVEL_PRESSURE;
+         fill_grib_data (gvd_2d, vector_index, mslp, key, msl);
+         return;
+      }
+
+   }
+
+   Nwp::fill_msl_data (gvd_2d, vector_index, key, nwp_element);
+
+}
+
+void
+Gfs::fill_surface_level_data (Geodetic_Vector_Data_2D& gvd_2d,
+                              const Integer vector_index,
+                              const Key& key,
+                              const Nwp_Element nwp_element)
+{
+
+   const Level& surface = Level::surface_level ();
+
+   switch (nwp_element)
+   {
+
+      case PRESSURE:
+      {
+         fill_grib_data (gvd_2d, vector_index, PRESSURE, key, surface);
+         return;
+      }
+
+   }
+
+   Nwp::fill_surface_level_data (gvd_2d, vector_index, key, nwp_element);
+
+}
+
+/*
+void
+Gfs::fill_grib_data (Geodetic_Vector_Data_3D& gvd_3d,
+                     const Integer vector_index,
+                     const Nwp_Element nwp_element,
+                     const Key& key) const
+{
+
+   const Key key (key);
+
+   Gfs::const_iterator iterator = find (key);
+   if (iterator == end ()) { throw Nwp_Exception ("Not Available"); }
+   const Grib2& grib = *(iterator->second);
+
+   for (Integer k = 0; k < tuple_p.size (); k++)
+   {
+      const Real p = tuple_p[k];
+      const Level level (PRESSURE_LEVEL, p);
+      const Grib2::Key& key = get_grib_key (key, nwp_element, level);
+      grib.fill_data (gvd_3d, vector_index, k, key);
+   }
+
+}
+*/
+
+Geodetic_Vector_Data_3D*
+Gfs::get_gvd_3d_ptr (const Nwp_Element nwp_element,
+                     const Key& key) const
+{
+
+   Geodetic_Vector_Data_3D* gvd_3d_ptr =
+      new Geodetic_Vector_Data_3D (1, tuple_p, size_2d, domain_2d);
+   Geodetic_Vector_Data_3D& gvd_3d = *gvd_3d_ptr;
+
+   for (Integer k = 0; k < tuple_p.size (); k++)
+   {
+
+      const Real p = tuple_p[k];
+      const denise::Level level (PRESSURE_LEVEL, p);
+      const Grib2::Key& grib_key = get_grib_key (key, nwp_element, level);
+
+      Gfs::const_iterator iterator = find (key);
+      if (iterator == end ()) { throw Nwp_Exception ("Not Available"); }
+      const Grib2& grib = *(iterator->second);
+
+      Geodetic_Vector_Data_2D* grib_data_ptr =
+         get_grib_data_ptr (grib, grib_key);
+
+      #pragma omp parallel for
+      for (Integer i = 0; i < size_2d.i; i++)
+      {
+         const Real latitude = grib_data_ptr->get_latitude (i);
+         for (Integer j = 0; j < size_2d.j; j++)
+         {
+            const Real longitude = grib_data_ptr->get_longitude (j);
+            const Real datum = grib_data_ptr->evaluate (0, latitude, longitude);
+            gvd_3d.set_datum (0, k, i, j, datum);
+         }
+      }
+
+      delete grib_data_ptr;
+
+   }
+
+   return gvd_3d_ptr;
+
+}
+
+Geodetic_Vector_Data_2D*
+Gfs::get_grib_data_ptr (const Grib2& grib,
+                        const Grib2::Key& grib_key) const
+{
+
+   typedef Geodetic_Vector_Data_2D Gvd_2d;
+   Gvd_2d* data_ptr = new Gvd_2d (1, grib_size_2d, grib_domain_2d, true);
+   grib.fill_data (*data_ptr, 0, grib_key);
+
+   const Integer last_j = grib_size_2d.j - 1;
+
+   #pragma omp parallel for
+   for (Integer i = 0; i < grib_size_2d.i; i++)
+   {
+      const Real datum = data_ptr->get_datum (0, i, 0);
+      data_ptr->set_datum (0, i, last_j, datum);
+   }
+
+   return data_ptr;
+
+}
+
+void
+Gfs::fill_grib_data (Geodetic_Vector_Data_2D& gvd_2d,
+                     const Integer vector_index,
+                     const Nwp_Element nwp_element,
+                     const Key& key,
+                     const Level& level) const
+{
+
+   Gfs::const_iterator iterator = find (key);
+   if (iterator == end ()) { throw Nwp_Exception ("Not Available"); }
+   const Grib2& grib = *(iterator->second);
+
+   const Grib2::Key& grib_key = get_grib_key (key, nwp_element, level);
+   Geodetic_Vector_Data_2D* grib_data_ptr = get_grib_data_ptr (grib, grib_key);
+
+   Geodetic_Vector_Data_2D grib_data (1, grib_size_2d, grib_domain_2d, true);
+
+   #pragma omp parallel for
+   for (Integer i = 0; i < size_2d.i; i++)
+   {
+      const Real latitude = gvd_2d.get_latitude (i);
+      for (Integer j = 0; j < size_2d.j; j++)
+      {
+         const Real longitude = gvd_2d.get_longitude (j);
+         const Real datum = grib_data_ptr->evaluate (0, latitude, longitude);
+         gvd_2d.set_datum (vector_index, i, j, datum);
+      }
+   }
+
+   delete grib_data_ptr;
+
+}
+
+Gfs::Gfs (const string& data_path)
+   : Nwp ("Gfs", data_path),
+     data_path (data_path),
+     grib_size_2d (361, 720),
+     grib_domain_2d (Domain_1D (-90, 90), Domain_1D (0, 360)),
+     size_2d (51, 71),
+     domain_2d (Domain_1D (-60, 0), Domain_1D (80, 160))
+{
+
+   this->status = "Unloaded";
+
+   nwp_element_vector.push_back (denise::TEMPERATURE);
+   nwp_element_vector.push_back (denise::RELATIVE_HUMIDITY);
+   nwp_element_vector.push_back (denise::GEOPOTENTIAL_HEIGHT);
+   nwp_element_vector.push_back (denise::ZONAL_WIND);
+   nwp_element_vector.push_back (denise::MERIDIONAL_WIND);
+   nwp_element_vector.push_back (denise::OMEGA);
+
+}
+
+Gfs::~Gfs ()
+{
+   clean_up ();
+}
+
+void
+Gfs::survey ()
+{
+
+   const string re_ym ("[0-9].....");
+   const string re_ymd ("[0-9].......");
+   const string fmt ("gfs_4_[0-9]......._[0-9]..._[0-9]..\\.grb");
+
+   typedef map<Grib2::Key, Grib2::Header*> Header_Ptr_Map;
+
+   const vector<string>& dir_ym = get_dir_listing (path, re_ym);
+   for (vector<string>::const_iterator i = dir_ym.begin ();
+        i != dir_ym.end (); i++)
+   {
+
+      const string& ym = *(i);
+      const string& ym_path = path + "/" + ym;
+
+      const vector<string>& dir_ymd = get_dir_listing (ym_path, re_ymd);
+      for (vector<string>::const_iterator j = dir_ymd.begin ();
+           j != dir_ymd.end (); j++)
+      {
+
+         const string& ymd = *(j);
+         const string& ymd_path = ym_path + "/" + ymd;
+
+         const vector<string>& dir_listing = get_dir_listing (ymd_path, fmt);
+         for (vector<string>::const_iterator iterator = dir_listing.begin ();
+              iterator != dir_listing.end (); iterator++)
+         {
+
+            // fn = filename
+            const string& fn = *(iterator);
+            const string& file_path = ymd_path + "/" + fn;
+            const string& bt_str = fn.substr (6, 8) + fn.substr (15, 2);
+            const string& fh_str = fn.substr (20, 3);
+
+            const Dtime base_time (bt_str, string ("%Y%m%d%H"));
+            const Integer forecast_hour = atoi (fh_str.c_str ());
+
+            const Key key (base_time, forecast_hour);
+            key_multimap.add (key);
+            Grib2* grib_ptr = new Grib2 (file_path);
+            insert (make_pair (key, grib_ptr));
+            //valid_time_set.insert (valid_time);
+            //key_set.insert (Key (base_time, fh));
+
+         }
+
+      }
+
+   }
+
+   if (size () > 0)
+   {
+
+      set<uint32_t> set_p;
+      const Grib2& grib = *(begin ()->second);
+      const Header_Ptr_Map& header_ptr_map = grib.get_header_ptr_map ();
+
+      for (Header_Ptr_Map::const_iterator iterator = header_ptr_map.begin ();
+           iterator != header_ptr_map.end (); iterator++)
+      {
+
+         const Grib2::Header& header = *(iterator->second);
+         const Grib2::Block_4& block_4 = header.block_4;
+         const Grib2::Block_4::Level& level = block_4.get_level ();
+
+         if (level.get_first_level_type () == 100)
+         {
+            const uint32_t p = level.get_first_level ();
+            if (p < 200) { continue; }
+            set_p.insert (p);
+         }
+
+      }
+
+      for (set<uint32_t>::const_iterator iterator = set_p.begin ();
+           iterator != set_p.end (); iterator++)
+      {
+         const Real p = Real (*(iterator));
+         tuple_p.push_back (p);
+      }
+
+   }
+
+   status = "";
+   const set<Dtime>& base_time_set = key_multimap.get_base_time_set ();
+   for (set<Dtime>::const_iterator iterator = base_time_set.begin ();
+        iterator != base_time_set.end (); iterator++)
+   {
+      const Dtime& base_time = *(iterator);
+      status += base_time.get_string () + " ";
+   }
+
+}
+
+void
+Gfs::clean_up ()
+{
+   for (Gfs::iterator iterator = begin (); iterator != end (); iterator++)
+   {
+      Grib2* grib_ptr = iterator->second;
+      delete grib_ptr;
+   }
+}
+
+void
+Gfs::set_domain_2d (const Domain_2D& domain_2d)
+{
+
+   this->domain_2d.domain_x.start = ceil (domain_2d.domain_x.start);
+   this->domain_2d.domain_x.end = floor (domain_2d.domain_x.end);
+   this->domain_2d.domain_y.start = ceil (domain_2d.domain_y.start);
+   this->domain_2d.domain_y.end = floor (domain_2d.domain_y.end);
+
+   const Real& start_latitude = this->domain_2d.domain_x.start;
+   const Real& end_latitude = this->domain_2d.domain_x.end;
+   const Real& start_longitude = this->domain_2d.domain_y.start;
+   const Real& end_longitude = this->domain_2d.domain_y.end;
+ 
+   size_2d.i = Integer (round (end_latitude - start_latitude));
+   size_2d.j = Integer (round (end_longitude - start_longitude));
+
+}
+
+vector<Dtime>
+Gfs::get_valid_time_vector () const
+{
+
+   vector<Dtime> valid_time_vector;
+
+   for (Gfs::const_iterator iterator = begin ();
+       iterator != end (); iterator++)
+   {
+      const Key& key = iterator->first;
+      const Dtime& bt = key.base_time;
+      const Integer fh = key.forecast_hour;
+      const Dtime dtime (bt.t + fh);
+      valid_time_vector.push_back (dtime);
+   }
+
+   return valid_time_vector;
+
+/*
+   vector<Dtime> valid_time_vector;
+   Dtime start_time ("2012011300");
+   Dtime end_time ("2012011400");
+   for (Real t = start_time.t; t < end_time.t; t += 3)
+   {
+      Dtime dtime (t);
+      valid_time_vector.push_back (dtime);
+   }
+   return valid_time_vector;
+*/
+}
+
+Nwp::Key
+Gfs::get_key (const Dtime& dtime) const
+{
+
+   vector<Dtime> base_time_vector;
+
+   for (Gfs::const_iterator iterator = begin ();
+        iterator != end (); iterator++)
+   {
+
+      const Key& key = iterator->first;
+      const Dtime& bt = key.base_time;
+      const Integer fh = key.forecast_hour;
+      const Dtime t (bt.t + fh);
+
+      if (fabs (t.t - dtime.t) < 0.5)
+      {
+         base_time_vector.push_back (bt);
+      }
+
+   }
+
+   if (base_time_vector.size () == 0)
+   {
+      throw Nwp_Exception ("timestep not available");
+   }
+
+   sort (base_time_vector.begin (), base_time_vector.end ());
+
+   const Dtime& base_time = base_time_vector.back ();
+   const Integer forecast_hour = Integer (round (dtime.t - base_time.t));
+
+   return Key (base_time, forecast_hour);
+
+}
+
+void
+Gfs::acquire_base_time_forecast_hour (Dtime& base_time,
+                                      Integer& forecast_hour,
+                                      const Dtime& dtime) const
+{
+
+   vector<Dtime> base_time_vector;
+
+   for (Gfs::const_iterator iterator = begin ();
+        iterator != end (); iterator++)
+   {
+
+      const Key& key = iterator->first;
+      const Dtime& bt = key.base_time;
+      const Integer fh = key.forecast_hour;
+      const Dtime t (bt.t + fh);
+
+      if (fabs (t.t - dtime.t) < 0.5)
+      {
+         base_time_vector.push_back (bt);
+      }
+
+   }
+
+   if (base_time_vector.size () == 0)
+   {
+      throw Nwp_Exception ("timestep not available");
+   }
+
+   sort (base_time_vector.begin (), base_time_vector.end ());
+   base_time.t = base_time_vector.back ().t;
+   forecast_hour = Integer (round (dtime.t - base_time.t));
+
+}
 
