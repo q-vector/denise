@@ -65,6 +65,10 @@ then
    AC_CHECK_HEADERS(jasper/jasper.h)
    AC_CHECK_LIB(jasper, main, [DENISE_LIBS="-ljasper $DENISE_LIBS"],
       AC_MSG_ERROR(jasper not found), )
+   PKG_CHECK_MODULES([NETCDF], [netcdf])
+   DENISE_REQUIRES="$DENISE_REQUIRES netcdf"
+   DENISE_CFLAGS="$DENISE_CFLAGS $NETCDF_CFLAGS"
+   DENISE_LIBS="$DENISE_LIBS $NETCDF_LIBS"
 fi
 
 dnl Checks for header files.
