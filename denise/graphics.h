@@ -185,6 +185,12 @@ namespace denise
          void
          scale_saturation (const Real percentage);
 
+         /// Scales the opacity of this Color
+         ///
+         /// @param percentage  the percentage difference
+         void
+         scale_opacity (const Real percentage);
+
          /// Returns the hue value of this Color
          Real
          get_hue () const;

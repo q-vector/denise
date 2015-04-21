@@ -175,7 +175,12 @@ namespace denise
    string_render (const char* format,
                   ...);
 
+   ostream&
+   operator << (ostream &out_file,
+                const Tokens& tokens);
+
 }
+
 
 #endif /* DENISE_DSTRING_H */
 

@@ -725,10 +725,14 @@ Bivariate_Gaussian_Distribution::get_inverse_covariance_matrix_ptr () const
    const Real determinant = variance_x*variance_y - covariance*covariance;
    Matrix* matrix_ptr = new Matrix (2, 2);
 
-   matrix_ptr->set_datum (0, 0, variance_y / determinant);
-   matrix_ptr->set_datum (1, 1, variance_x / determinant);
-   matrix_ptr->set_datum (0, 1, -covariance / determinant);
-   matrix_ptr->set_datum (1, 0, -covariance / determinant);
+   const Real a_00 = variance_y / determinant;
+   const Real a_11 = variance_x / determinant;
+   const Real a_01 = -covariance / determinant;
+
+   matrix_ptr->set_datum (0, 0, a_00);
+   matrix_ptr->set_datum (1, 1, a_11);
+   matrix_ptr->set_datum (0, 1, a_01);
+   matrix_ptr->set_datum (1, 0, a_01);
 
    return matrix_ptr;
 
@@ -752,7 +756,6 @@ Bivariate_Gaussian_Distribution::get_ellipse (const Real probability) const
    ellipse.translate (mean_x, mean_y);
 
    delete inverse_sigma_ptr;
-
    return ellipse;
 
 }

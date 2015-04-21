@@ -384,7 +384,7 @@ Grid_nD::standardize_coordinate (const Integer dimension,
 }
 
 Chunk::Chunk ()
-   : n (0),
+   : chunk_size (0),
      buffer (NULL)
 {
 }
@@ -396,18 +396,206 @@ Chunk::~Chunk ()
 }
 
 void
-Chunk::init (const Integer n)
+Chunk::read (ifstream& file,
+             const bool float_length)
 {
-   this->n = n;
-   buffer = new Real[n];
+
+   if (float_length)
+   {
+
+      float* temp_buffer = new float[chunk_size];
+      file.read ((char*)temp_buffer, sizeof (float) * chunk_size);
+
+      for (size_t i = 0; i < chunk_size; i++)
+      {
+         float& datum = temp_buffer[i];
+#ifndef WORDS_BIGENDIAN
+         swap_endian (&datum, sizeof (float));
+#endif
+         buffer[i] = Real (datum);
+      }
+
+      delete[] temp_buffer;
+
+   }
+   else
+   {
+
+#ifndef WORDS_BIGENDIAN
+      Real* temp_buffer = new Real[chunk_size];
+      file.read ((char*)temp_buffer, sizeof (Real) * chunk_size);
+
+      for (size_t i = 0; i < chunk_size; i++)
+      {
+         Real& datum = temp_buffer[i];
+         swap_endian (&datum, sizeof (Real));
+         buffer[i] = datum;
+      }
+
+      delete[] temp_buffer;
+#else
+      file.read ((char*)temp_buffer, sizeof (Real) * chunk_size);
+#endif
+
+   }
+
+}
+
+
+void
+Chunk::read (FILE* file,
+             const bool float_length)
+{
+
+   if (float_length)
+   {
+
+      float* temp_buffer = new float[chunk_size];
+      fread (temp_buffer, sizeof (float), chunk_size, file);
+
+      for (size_t i = 0; i < chunk_size; i++)
+      {
+         float& datum = temp_buffer[i];
+#ifndef WORDS_BIGENDIAN
+         swap_endian (&datum, sizeof (float));
+#endif
+         buffer[i] = Real (datum);
+      }
+
+      delete[] temp_buffer;
+
+   }
+   else
+   {
+
+#ifndef WORDS_BIGENDIAN
+      Real* temp_buffer = new Real[chunk_size];
+      fread (temp_buffer, sizeof (Real), chunk_size, file);
+
+      for (size_t i = 0; i < chunk_size; i++)
+      {
+         Real& datum = temp_buffer[i];
+         swap_endian (&datum, sizeof (Real));
+         buffer[i] = datum;
+      }
+
+      delete[] temp_buffer;
+#else
+      fread (buffer, sizeof (Real), chunk_size, file);
+#endif
+
+   }
+
+}
+
+
+void
+Chunk::write (ofstream& file,
+              const bool float_length) const
+{
+
+
+   if (float_length)
+   {
+
+      float* temp_buffer = new float[chunk_size];
+
+      for (size_t i = 0; i < chunk_size; i++)
+      {
+         float datum = float (buffer[i]);
+#ifndef WORDS_BIGENDIAN
+         swap_endian (&datum, sizeof (float));
+#endif
+         temp_buffer[i] = datum;
+      }
+
+      file.write ((char*)temp_buffer, sizeof (float) * chunk_size);
+      delete[] temp_buffer;
+
+   }
+   else
+   {
+
+#ifndef WORDS_BIGENDIAN
+      Real* temp_buffer = new Real[chunk_size];
+
+      for (size_t i = 0; i < chunk_size; i++)
+      {
+         Real datum = buffer[i];
+         swap_endian (&datum, sizeof (Real));
+         temp_buffer[i] = datum;
+      }
+
+      file.write ((char*)temp_buffer, sizeof (Real) * chunk_size);
+      delete[] temp_buffer;
+#else
+      file.write ((char*)temp_buffer, sizeof (Real) * chunk_size);
+#endif
+
+   }
+
+}
+
+
+void
+Chunk::write (FILE* file,
+              const bool float_length) const
+{
+
+   if (float_length)
+   {
+
+      float* temp_buffer = new float[chunk_size];
+
+      for (size_t i = 0; i < chunk_size; i++)
+      {
+         float datum = float (buffer[i]);
+#ifndef WORDS_BIGENDIAN
+         swap_endian (&datum, sizeof (float));
+#endif
+         temp_buffer[i] = datum;
+      }
+
+      fwrite (temp_buffer, sizeof (float), chunk_size, file);
+      delete[] temp_buffer;
+
+   }
+   else
+   {
+
+#ifndef WORDS_BIGENDIAN
+      Real* temp_buffer = new Real[chunk_size];
+
+      for (size_t i = 0; i < chunk_size; i++)
+      {
+         Real datum = buffer[i];
+         swap_endian (&datum, sizeof (Real));
+         temp_buffer[i] = datum;
+      }
+
+      fwrite (temp_buffer, sizeof (Real), chunk_size, file);
+      delete[] temp_buffer;
+#else
+      fwrite (buffer, sizeof (Real), chunk_size, file);
+#endif
+
+   }
+
+}
+
+void
+Chunk::init (const Integer chunk_size)
+{
+   this->chunk_size = chunk_size;
+   buffer = new Real[chunk_size];
 }
 
 void
 Chunk::copy (const Chunk& chunk,
              const Integer address)
 {
-   const Integer n = sizeof (Real) * chunk.n;
-   memcpy (buffer + address, chunk.buffer, n);
+   const Integer buffer_size = sizeof (Real) * chunk.chunk_size;
+   memcpy (buffer + address, chunk.buffer, buffer_size);
 }
 
 void
@@ -430,33 +618,51 @@ Chunk::get (const Integer i)
 }
 
 void
-Chunk::initialize (const Real datum)
+Chunk::initialize (const Real datum,
+                   const size_t address,
+                   const size_t size)
 {
-   for (Integer i = 0; i < n; i++)
+
+   const size_t ss = std::min (address, chunk_size - 1);
+   const size_t nn = std::min (address + size, chunk_size);
+
+   for (size_t i = ss; i < nn; i++)
    {
       buffer[i] = datum;
    }
+
 }
 
 void
 Chunk::scale_offset (const Real scale,
-                     const Real offset)
+                     const Real offset,
+                     const size_t address,
+                     const size_t size)
 {
-   for (Integer i = 0; i < n; i++)
+
+   const size_t ss = std::min (address, chunk_size - 1);
+   const size_t nn = std::min (address + size, chunk_size);
+
+   for (size_t i = ss; i < nn; i++)
    {
       buffer[i] = buffer[i] * scale + offset;
    }
+
 }
 
 Domain_1D
-Chunk::get_max_min () const
+Chunk::get_max_min (const size_t address,
+                    const size_t size) const
 {
 
    Domain_1D max_min (GSL_POSINF, GSL_NEGINF);
    Real& min = max_min.start;
    Real& max = max_min.end;
 
-   for (Integer i = 0; i < n; i++)
+   const size_t ss = std::min (address, chunk_size - 1);
+   const size_t nn = std::min (address + size, chunk_size);
+
+   for (size_t i = ss; i < nn; i++)
    {
       const Real& datum = buffer[i];
       if (!gsl_finite (datum)) { continue; }
@@ -469,29 +675,36 @@ Chunk::get_max_min () const
 }
 
 Real
-Chunk::get_mean () const
+Chunk::get_mean (const size_t address,
+                 const size_t size) const
 {
 
-   Integer nn = 0;
+   Integer nnn = 0;
    Real sigma = 0;
 
-   for (Integer i = 0; i < n; i++)
+   const size_t ss = std::min (address, chunk_size - 1);
+   const size_t nn = std::min (address + size, chunk_size);
+
+   for (size_t i = ss; i < nn; i++)
    {
       const Real& datum = buffer[i];
       if (!gsl_finite (datum)) { continue; }
       sigma += datum;
-      nn++;
+      nnn++;
    }
 
-   return sigma / nn;
+   return sigma / nnn;
 
 }
 
 Real
-Chunk::subtract_mean ()
+Chunk::subtract_mean (const size_t address,
+                      const size_t size)
 {
-   const Real mean = get_mean ();
-   for (Integer i = 0; i < n; i++) { buffer[i] -= mean; }
+   const Real mean = get_mean (address, size);
+   const size_t ss = std::min (address, chunk_size - 1);
+   const size_t nn = std::min (address + size, chunk_size);
+   for (size_t i = ss; i < nn; i++) { buffer[i] -= mean; }
 }
 
 void
@@ -511,6 +724,20 @@ Vector_Data_nD::Vector_Data_nD (const Integer vector_size,
 
 Vector_Data_nD::~Vector_Data_nD ()
 {
+}
+
+Chunk*
+Vector_Data_nD::get_chunk_ptr (const Integer vector_element) const
+{
+
+   const size_t size = Grid_nD::size ();
+   const size_t address = vector_element * size;
+
+   Chunk* chunk_ptr = new Chunk ();
+   chunk_ptr->init (size);
+   chunk_ptr->copy (*this, address);
+   return chunk_ptr;
+
 }
 
 const Integer&
@@ -541,8 +768,9 @@ Vector_Data_nD::get_epsilon (const Integer vector_element) const
 void
 Vector_Data_nD::subtract_mean (const Integer vector_element)
 {
-   Chunk& chunk = chunks[vector_element];
-   chunk.subtract_mean ();
+   const size_t size = Grid_nD::size ();
+   const size_t address = vector_element * size;
+   Chunk::subtract_mean (address, size);
 }
 
 void
@@ -561,13 +789,12 @@ Vector_Data_1D::init (const Tuple& coordinate_tuple,
    gs_ptrs = new gsl_spline*[vector_size];
 
    Vector_Data_nD::init (coordinate_tuples, spacings, periodics);
+   Chunk::init (vector_size * Grid_nD::size ());
 
-   chunks = new Chunk[vector_size];
    for (Integer i = 0; i < vector_size; i++)
    {
       gia_ptrs[i] = NULL;
       gs_ptrs[i] = NULL;
-      chunks[i].init (Grid_nD::size ());
    }
 
 }
@@ -604,8 +831,6 @@ Vector_Data_1D::~Vector_Data_1D ()
       if (gs_ptr != NULL) { gsl_spline_free (gs_ptr); }
       if (gia_ptr != NULL) { gsl_interp_accel_free (gia_ptr); }
    }
-
-   delete[] chunks;
 
    //this is useless... delete?
    //if (size () < 2) { return; }
@@ -665,7 +890,9 @@ void
 Vector_Data_1D::initialize (const Integer vector_element,
                             const Real datum)
 {
-   chunks[vector_element].initialize (datum);
+   const size_t size = Grid_nD::size ();
+   const size_t address = vector_element * size;
+   Chunk::initialize (datum, address, size);
 }
 
 void
@@ -673,13 +900,17 @@ Vector_Data_1D::scale_offset (const Integer vector_element,
                               const Real scale,
                               const Real offset)
 {
-   chunks[vector_element].scale_offset (scale, offset);
+   const size_t size = Grid_nD::size ();
+   const size_t address = vector_element * size;
+   Chunk::scale_offset (scale, offset, address, size);
 }
 
 Domain_1D
 Vector_Data_1D::get_max_min (const Integer vector_element) const
 {
-   return chunks[vector_element].get_max_min ();
+   const size_t size = Grid_nD::size ();
+   const size_t address = vector_element * size;
+   return Chunk::get_max_min (address, size);
 }
 
 void
@@ -687,21 +918,27 @@ Vector_Data_1D::set_datum (const Integer vector_element,
                            const Integer node,
                            const Real datum)
 {
-   chunks[vector_element].set (node, datum);
+   const size_t size = Grid_nD::size ();
+   const size_t address = vector_element * size + node;
+   Chunk::set (address, datum);
 }
 
 const Real&
 Vector_Data_1D::get_datum (const Integer vector_element,
                            const Integer node) const
 {
-   return chunks[vector_element].get (node);
+   const size_t size = Grid_nD::size ();
+   const size_t address = vector_element * size + node;
+   return Chunk::get (address);
 }
 
 Real&
 Vector_Data_1D::get_datum (const Integer vector_element,
                            const Integer node)
 {
-   return chunks[vector_element].get (node);
+   const size_t size = Grid_nD::size ();
+   const size_t address = vector_element * size + node;
+   return Chunk::get (address);
 }
 
 Real
@@ -1000,9 +1237,7 @@ Vector_Data_2D::init (const Tuple& coordinate_tuple_x,
    coordinate_tuples[1] = coordinate_tuple_y;
 
    Vector_Data_nD::init (coordinate_tuples, spacings, periodics);
-
-   chunks = new Chunk[vector_size];
-   for (Integer i = 0; i < vector_size; i++) { chunks[i].init (Grid_nD::size ()); }
+   Chunk::init (vector_size * Grid_nD::size ());
 
 }
 
@@ -1453,7 +1688,6 @@ Vector_Data_2D::~Vector_Data_2D ()
    }
 
    delete[] bicubic_coefficients_ptrs;
-   delete[] chunks;
 
 }
 
@@ -1473,15 +1707,16 @@ Vector_Data_2D::set_bicubic_interpolation (const Integer vector_element)
    if (bicubic_coefficients_ptrs[vector_element] == NULL)
    {
 
-      const Chunk& chunk = chunks[vector_element];
-      const Chunk* chunk_x_ptr = get_chunk_x_ptr (chunk);
-      const Chunk* chunk_y_ptr = get_chunk_y_ptr (chunk);
+      const Chunk* chunk_ptr = get_chunk_ptr (vector_element);
+      const Chunk* chunk_x_ptr = get_chunk_x_ptr (*chunk_ptr);
+      const Chunk* chunk_y_ptr = get_chunk_y_ptr (*chunk_ptr);
       const Chunk* chunk_xy_ptr = get_chunk_x_ptr (*chunk_y_ptr);
 
       bicubic_coefficients_ptrs[vector_element] =
-         get_bicubic_coefficients_ptr (chunk, *chunk_x_ptr,
+         get_bicubic_coefficients_ptr (*chunk_ptr, *chunk_x_ptr,
             *chunk_x_ptr, *chunk_x_ptr);
 
+      delete chunk_ptr;
       delete chunk_x_ptr;
       delete chunk_y_ptr;
       delete chunk_xy_ptr;
@@ -1532,7 +1767,9 @@ void
 Vector_Data_2D::initialize (const Integer vector_element,
                             const Real datum)
 {
-   chunks[vector_element].initialize (datum);
+   const size_t size = Grid_nD::size ();
+   const size_t address = vector_element * size;
+   Chunk::initialize (datum, address, size);
 }
 
 void
@@ -1540,13 +1777,17 @@ Vector_Data_2D::scale_offset (const Integer vector_element,
                               const Real scale,
                               const Real offset)
 {
-   chunks[vector_element].scale_offset (scale, offset);
+   const size_t size = Grid_nD::size ();
+   const size_t address = vector_element * size;
+   Chunk::scale_offset (scale, offset, address, size);
 }
 
 Domain_1D
 Vector_Data_2D::get_max_min (const Integer vector_element) const
 {
-   return chunks[vector_element].get_max_min ();
+   const size_t size = Grid_nD::size ();
+   const size_t address = vector_element * size;
+   return Chunk::get_max_min (address, size);
 }
 
 void
@@ -1555,8 +1796,10 @@ Vector_Data_2D::set_datum (const Integer vector_element,
                            const Integer node_y,
                            const Real datum)
 {
-   const Integer index = node_x * size_nd.buffer[1] + node_y;
-   chunks[vector_element].set (index, datum);
+   const size_t index = node_x * size_nd.buffer[1] + node_y;
+   const size_t size = Grid_nD::size ();
+   const size_t address = vector_element * size + index;
+   Chunk::set (address, datum);
 }
 
 const Real&
@@ -1564,8 +1807,10 @@ Vector_Data_2D::get_datum (const Integer vector_element,
                            const Integer node_x,
                            const Integer node_y) const
 {
-   const Integer index = node_x * size_nd.buffer[1] + node_y;
-   return chunks[vector_element].get (index);
+   const size_t index = node_x * size_nd.buffer[1] + node_y;
+   const size_t size = Grid_nD::size ();
+   const size_t address = vector_element * size + index;
+   return Chunk::get (address);
 }
 
 Real&
@@ -1573,8 +1818,10 @@ Vector_Data_2D::get_datum (const Integer vector_element,
                            const Integer node_x,
                            const Integer node_y)
 {
-   const Integer index = node_x * size_nd.buffer[1] + node_y;
-   return chunks[vector_element].get (index);
+   const size_t index = node_x * size_nd.buffer[1] + node_y;
+   const size_t size = Grid_nD::size ();
+   const size_t address = vector_element * size + index;
+   return Chunk::get (address);
 }
 
 Real
@@ -2436,12 +2683,7 @@ Vector_Data_3D::init (const Tuple& coordinate_tuple_z,
    coordinate_tuples[2] = coordinate_tuple_y;
 
    Vector_Data_nD::init (coordinate_tuples, spacings, periodics);
-
-   const Integer nk = size_nd.buffer[0];
-   const Integer nij = size_nd.buffer[1] * size_nd.buffer[2];
-
-   chunks = new Chunk[vector_size * nk];
-   for (Integer i = 0; i < vector_size * nk; i++) { chunks[i].init (nij); }
+   Chunk::init (vector_size * Grid_nD::size ());
 
 }
 
@@ -3108,7 +3350,6 @@ Vector_Data_3D::~Vector_Data_3D ()
    }
 
    delete[] tricubic_coefficients_ptrs;
-   delete[] chunks;
 
 }
 
@@ -3128,21 +3369,7 @@ Vector_Data_3D::set_tricubic_interpolation (const Integer vector_element)
    if (tricubic_coefficients_ptrs[vector_element] == NULL)
    {
 
-      const Integer nk = size_nd.buffer[0];
-      const Integer ni = size_nd.buffer[0];
-      const Integer nj = size_nd.buffer[0];
-      const Integer nkij = nk * ni * nj;
-      const Integer nij = ni * nj;
-
-      Chunk* chunk_ptr = new Chunk ();
-      chunk_ptr->init (nkij);
-
-      for (Integer k = 0; k < nk; k++)
-      {
-         const Integer address = vector_element * nkij;
-         chunk_ptr->copy (chunks[vector_element * nk + k], address);
-      }
-
+      Chunk* chunk_ptr = get_chunk_ptr (vector_element);
       Chunk* chunk_z_ptr = get_chunk_z_ptr (*chunk_ptr);
       Chunk* chunk_y_ptr = get_chunk_y_ptr (*chunk_ptr);
       Chunk* chunk_x_ptr = get_chunk_x_ptr (*chunk_ptr);
@@ -3240,11 +3467,9 @@ void
 Vector_Data_3D::initialize (const Integer vector_element,
                             const Real datum)
 {
-   const Integer nk = size_nd.buffer[0];
-   for (Integer k = 0; k < nk; k++)
-   {
-     chunks[vector_element * nk + k].initialize (datum);
-   }
+   const size_t size = Grid_nD::size ();
+   const size_t address = vector_element * size;
+   Chunk::initialize (datum, address, size);
 }
 
 void
@@ -3252,34 +3477,18 @@ Vector_Data_3D::scale_offset (const Integer vector_element,
                               const Real scale,
                               const Real offset)
 {
-   const Integer nk = size_nd.buffer[0];
-   for (Integer k = 0; k < nk; k++)
-   {
-     chunks[vector_element * nk + k].scale_offset (scale, offset);
-   }
+   const size_t size = Grid_nD::size ();
+   const size_t address = vector_element * size;
+   Chunk::scale_offset (scale, offset, address, size);
 }
 
 
 Domain_1D
 Vector_Data_3D::get_max_min (const Integer vector_element) const
 {
-
-   Domain_1D grand_max_min (GSL_POSINF, GSL_NEGINF);
-   Real& grand_min = grand_max_min.start;
-   Real& grand_max = grand_max_min.end;
-
-   const Integer nk = size_nd.buffer[0];
-   for (Integer k = 0; k < nk; k++)
-   {
-      const Domain_1D max_min = chunks[vector_element * nk + k].get_max_min ();
-      const Real& min = max_min.start;
-      const Real& max = max_min.end;
-      if (grand_min > min) { grand_min = min; }
-      if (grand_max > max) { grand_max = max; }
-   }
-
-   return grand_max_min;
-
+   const size_t size = Grid_nD::size ();
+   const size_t address = vector_element * size;
+   return Chunk::get_max_min (address, size);
 }
 
 void
@@ -3289,9 +3498,12 @@ Vector_Data_3D::set_datum (const Integer vector_element,
                            const Integer j,
                            const Real datum)
 {
-   const Integer nk = size_nd.buffer[0];
-   const Integer nj = size_nd.buffer[2];
-   chunks[vector_element * nk + k].set (i * nj + j, datum);
+   const size_t ni = size_nd.buffer[1];
+   const size_t nj = size_nd.buffer[2];
+   const size_t index = (k * ni + i) * nj + j;
+   const size_t size = Grid_nD::size ();
+   const size_t address = vector_element * size + index;
+   Chunk::set (address, datum);
 }
 
 const Real&
@@ -3300,9 +3512,12 @@ Vector_Data_3D::get_datum (const Integer vector_element,
                            const Integer i,
                            const Integer j) const
 {
-   const Integer nk = size_nd.buffer[0];
-   const Integer nj = size_nd.buffer[2];
-   return chunks[vector_element * nk + k].get (i * nj + j);
+   const size_t ni = size_nd.buffer[1];
+   const size_t nj = size_nd.buffer[2];
+   const size_t index = (k * ni + i) * nj + j;
+   const size_t size = Grid_nD::size ();
+   const size_t address = vector_element * size + index;
+   return Chunk::get (address);
 }
 
 Real&
@@ -3311,9 +3526,12 @@ Vector_Data_3D::get_datum (const Integer vector_element,
                            const Integer i,
                            const Integer j)
 {
-   const Integer nk = size_nd.buffer[0];
-   const Integer nj = size_nd.buffer[2];
-   return chunks[vector_element * nk + k].get (i * nj + j);
+   const size_t ni = size_nd.buffer[1];
+   const size_t nj = size_nd.buffer[2];
+   const size_t index = (k * ni + i) * nj + j;
+   const size_t size = Grid_nD::size ();
+   const size_t address = vector_element * size + index;
+   return Chunk::get (address);
 }
 
 Real

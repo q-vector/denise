@@ -1557,7 +1557,8 @@ Contour::render_label (const RefPtr<Context>& cr,
    const Tuple& clt = level_tuple;
    const Integer n = clt.size ();
 
-   Polygon* clip_polygon_ptr = new Polygon;
+//   Polygon* clip_polygon_ptr = new Polygon;
+   Polygon* clip_polygon_ptr = NULL;
    Label_Point_Set label_point_set (label_distance);
 
    //cr->save ();
@@ -1613,8 +1614,8 @@ Contour::render_label (const RefPtr<Context>& cr,
                      label.set_text_angle (theta);
                      label.cairo (cr);
 
-                     const Rect& rect = (const Rect&)label;
-                     clip_polygon_ptr->add (rect);
+//                     const Rect& rect = (const Rect&)label;
+//                     clip_polygon_ptr->add (rect);
 
                      //rect.cairo (cr);
                      //cr->stroke ();
@@ -2642,8 +2643,8 @@ Contour::~Contour ()
             Cell* cell_ptr = cell_ptrs[i];
             delete cell_ptr;
          }
-      delete[] cell_ptrs;
       }
+      delete[] cell_ptrs;
    }
 
    if (boundary_ptr != NULL) { delete boundary_ptr; }

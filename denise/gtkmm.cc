@@ -20,7 +20,9 @@
 
 #include <gtkmm.h>
 #include <gtkmm/accelkey.h>
+#include <gtkmm/adjustment.h>
 #include <gtkmm/calendar.h>
+#include <gtkmm/spinbutton.h>
 #include <gdkmm/cursor.h>
 #include <gtkmm/dialog.h>
 #include <gtkmm/main.h>
@@ -193,8 +195,11 @@ Image_Buffer::get_cr () const
 void
 Image_Buffer::blit (const RefPtr<Context>& cr)
 {
-   cr->set_source (image_surface, 0, 0);
-   cr->paint ();
+   if (image_surface != 0)
+   {
+      cr->set_source (image_surface, 0, 0);
+      cr->paint ();
+   }
 }
 
 void
@@ -1403,6 +1408,7 @@ Dcanvas::Dcanvas (Gtk::Window& gtk_window)
      title (*this),
      easter_egg ("")
 {
+   Glib::Mutex::Lock lock (mutex);
 }
 
 const RefPtr<Context>
@@ -1969,8 +1975,8 @@ Dbutton::on_mouse_button_pressed (const Dmouse_Button_Event& event)
 
    state = BUTTON_PRESSED;
    activate ();
-
    canvas.queue_draw ();
+
    return true;
 
 }
@@ -1987,9 +1993,9 @@ Dbutton::on_mouse_button_released (const Dmouse_Button_Event& event)
 
    state = BUTTON_OFF;
    deactivate ();
+   canvas.queue_draw ();
 
    clicked (event);
-   canvas.queue_draw ();
    return true;
 
 }
@@ -2355,6 +2361,34 @@ Dtoggle_Button::get_full_str_signal ()
    return full_str_signal;
 }
 
+Dbutton::Signal&
+Dtoggle_Button::get_click_signal ()
+{
+   Dbutton& dbutton = dynamic_cast<Dbutton&>(*this);
+   return dbutton.signal;
+}
+
+Dbutton::Str_Signal&
+Dtoggle_Button::get_click_str_signal ()
+{
+   Dbutton& dbutton = dynamic_cast<Dbutton&>(*this);
+   return dbutton.str_signal;
+}
+
+Dbutton::Full_Signal&
+Dtoggle_Button::get_click_full_signal ()
+{
+   Dbutton& dbutton = dynamic_cast<Dbutton&>(*this);
+   return dbutton.full_signal;
+}
+
+Dbutton::Full_Str_Signal&
+Dtoggle_Button::get_click_full_str_signal ()
+{
+   Dbutton& dbutton = dynamic_cast<Dbutton&>(*this);
+   return dbutton.full_str_signal;
+}
+
 void
 Dtoggle_Button::set (const bool switched_on)
 {
@@ -2381,7 +2415,7 @@ Dtoggle_Button::on_mouse_button_pressed (const Dmouse_Button_Event& event)
 
    const Point_2D point (event.point.x - anchor.x, event.point.y - anchor.y);
    if (out_of_bounds (point)) { return false; }
-   if (event.button != 1) { return false; }
+   //if (event.button != 1) { return false; }
 
    state = BUTTON_PRESSED;
    activate ();
@@ -2398,13 +2432,15 @@ Dtoggle_Button::on_mouse_button_released (const Dmouse_Button_Event& event)
 
    const Point_2D point (event.point.x - anchor.x, event.point.y - anchor.y);
    if (out_of_bounds (point)) { return false; }
-   if (event.button != 1) { return false; }
+   //if (event.button != 1) { return false; }
 
-   switched_on = !switched_on;
+   if (event.button == 1) { switched_on = !switched_on; }
    state = (switched_on ? BUTTON_ON : BUTTON_OFF);
    deactivate ();
 
-   toggled (event);
+   if (event.button == 1) { toggled (event); }
+   else { clicked (event); }
+
    canvas.queue_draw ();
    return true;
 
@@ -3289,8 +3325,8 @@ Time_Chooser::Shape::Shape (const Shape& shape)
    end_time = *(shape.rbegin ());
    if (start_time == end_time) { end_time.t = start_time.t + 3; }
 
-   const bool short_span = (get_span_t () < 36);
-   leap = (short_span ? 3 : 24);
+   //const bool short_span = (get_span_t () < 36);
+   //leap = (short_span ? 3 : 24);
 
 }
 
@@ -3307,8 +3343,8 @@ Time_Chooser::Shape::Shape (const set<Dtime>& time_set)
    end_time = *(time_set.rbegin ());
    if (start_time == end_time) { end_time.t = start_time.t + 3; }
 
-   const bool short_span = (get_span_t () < 36);
-   leap = (short_span ? 3 : 24);
+   //const bool short_span = (get_span_t () < 36);
+   //leap = (short_span ? 3 : 24);
 
 }
 
@@ -3641,8 +3677,28 @@ Time_Chooser::Data::dump () const
    cout << "===" << endl;
 }
 
+Real
+Time_Chooser::get_s (const Dtime& dtime) const
+{
+
+   const Real start_x = button_box.index_2d.i + button_box.size_2d.i + margin;
+   const Real start_y = button_box.index_2d.j + button_box.size_2d.j + margin;
+   const Real span_x = width - start_x - margin;
+   const Real span_y = height - start_y - margin;
+   const Real span = (vertical ? span_y : span_x);
+   const Real span_t = shape.get_span_t ();
+   const Real start = (vertical ? start_y : start_x);
+   const Real ratio = span / span_t;
+
+   const Real sign = boolean_sign (!reverse);
+   const Real dt = sign * (dtime.t - shape.start_time.t);
+   return start + dt * ratio;
+
+}
+
 Dtime
-Time_Chooser::get_time (const Point_2D& point) const
+Time_Chooser::get_time (const Point_2D& point,
+                        const bool snap_to_nearest) const
 {
 
    const Real w = 4;
@@ -3650,45 +3706,20 @@ Time_Chooser::get_time (const Point_2D& point) const
    const Real x = (vertical ? point.x : point.y);
    if (fabs (x - centre) > w) { return Dtime (GSL_NAN); }
 
-   const Real span_t = shape.get_span_t ();
    const Real start_x = button_box.index_2d.i + button_box.size_2d.i + margin;
    const Real start_y = button_box.index_2d.j + button_box.size_2d.j + margin;
    const Real span_x = width - start_x - margin;
    const Real span_y = height - start_y - margin;
-   const Real start = (vertical ? start_y : start_x);
    const Real span = (vertical ? span_y : span_x);
+   const Real span_t = shape.get_span_t ();
+   const Real start = (vertical ? start_y : start_x);
+   const Real ratio = span / span_t;
 
    const Real s = (vertical ? point.y : point.x);
-   const Real dt = (s - start) * span_t / span;
+   const Real dt = (s - start) / ratio;
    const Dtime dtime (shape.start_time.t + dt);
 
-cout << "dtime = " << dtime << endl;
-   return shape.get_nearest_time (dtime);
-
-
-/*
-   const Real node_size = margin / 3;
-   const Real node_size_2 = node_size * node_size;
-
-   for (Shape::const_iterator iterator = shape.begin ();
-        iterator != shape.end (); iterator++)
-   {
-
-      const Dtime& dtime = *(iterator);
-      const Point_2D& p = get_point (dtime);
-
-      const Real dx = p.x - point.x;
-      const Real dy = p.y - point.y;
-      const Real dx_2 = dx * dx;
-      const Real dy_2 = dy * dy;
-
-      const bool match = (dx_2 + dy_2 <= node_size_2);
-      if (match) { return dtime; }
-
-   }
-
-   return Dtime (GSL_NAN);
-*/
+   return (snap_to_nearest ? shape.get_nearest_time (dtime) : dtime);
 
 }
 
@@ -3925,8 +3956,15 @@ Time_Chooser::render_lines (const RefPtr<Context>& cr,
       if (dtime < start_time) { continue; }
 
       Point_2D point = get_point (dtime);
+
       if (vertical) { point.x = width - 2.0 * margin; }
       else          { point.y = 1.5 * margin; }
+
+      if (vertical)
+      {
+         Ring (1).cairo (cr, Point_2D (point.x + margin/3, point.y));
+         cr->stroke ();
+      }
 
       const string& str = dtime.get_string (format);
       Label label (str, point, 'r', 'c');
@@ -3943,6 +3981,7 @@ Time_Chooser::render_nodes (const RefPtr<Context>& cr) const
 
    typedef Point_2D P;
    const bool v = vertical;
+   const Real split = 0.25;
    const Real node_size = margin / 3;
 
    cr->set_line_width (1);
@@ -3956,7 +3995,8 @@ Time_Chooser::render_nodes (const RefPtr<Context>& cr) const
       const Dtime& dtime = *(iterator);
       if (shape.out_of_bounds (dtime)) { return; }
 
-      const Rect& rect = get_rect (dtime);
+      Rect rect = get_rect (dtime);
+      rect.grow (vertical ? 0 : -split, vertical ? -split : 0);
 
       if (dtime.get_minute () % 10 == 0)
       {
@@ -3968,18 +4008,31 @@ Time_Chooser::render_nodes (const RefPtr<Context>& cr) const
             Color (0, 0.8, 0, 0.5).cairo (cr);
          }
          else
-         if (data.matches (dtime) || data.contains (dtime))
+         if (data.matches (dtime))
          {
             Color (1, 0, 0, 0.5).cairo (cr);
          }
          else
+         if (data.contains (dtime))
          {
-            Color (0, 0, 0, 0.5).cairo (cr);
+            Color (0.7, 0.4, 0.4, 0.5).cairo (cr);
+         }
+         else
+         {
+            Color (0, 0, 0, 0.2).cairo (cr);
          }
 
          cr->fill ();
+
+         if (data.matches (dtime))
+         {
+            rect.grow (1.5, 1.5);
+            rect.cairo (cr);
+            cr->stroke ();
+         }
+
 //         cr->fill_preserve ();
-//         Color (0, 0, 0).cairo (cr);
+//         Color (0, 0, 0.4).cairo (cr);
 //         cr->stroke ();
 
       }
@@ -4008,34 +4061,80 @@ Time_Chooser::render_nodes (const RefPtr<Context>& cr) const
 }
 
 void
+Time_Chooser::render_now (const RefPtr<Context>& cr) const
+{
+   const Dtime now;
+   const Real s = get_s (now);
+
+   cr->save ();
+   cr->set_line_width (2.5);
+   cr->set_font_size (12);
+   Color (0.9, 0.2, 0.2, 0.5).cairo (cr);
+
+   if (vertical)
+   {
+      const Point_2D point (width - 3.0 * margin, s);
+      const Arrow arrow (0, 2*margin);
+      arrow.cairo (cr, point);
+      cr->stroke ();
+      Label ("NOW", point + Point_2D (-1.5 * margin, 0), 'r', 'c').cairo (cr);
+   }
+   else
+   {
+      const Point_2D point (s, 4.0 * margin);
+      const Arrow arrow (-M_PI/2, 2*margin);
+      arrow.cairo (cr, point);
+      cr->stroke ();
+      Label ("NOW", point + Point_2D (0, 1.5 * margin), 'c', 't').cairo (cr);
+   }
+
+   cr->restore ();
+
+}
+
+void
 Time_Chooser::init (const Real font_size)
 {
 
    set_font_size (font_size);
 
+   anim_button.get_full_signal ().connect (
+      sigc::mem_fun (*this, &Time_Chooser::handle_animate));
+   anim_button.get_click_full_signal ().connect (
+      sigc::mem_fun (*this, &Time_Chooser::handle_dwell));
    prev_button.get_full_signal ().connect (
       sigc::mem_fun (*this, &Time_Chooser::step_backward));
    next_button.get_full_signal ().connect (
       sigc::mem_fun (*this, &Time_Chooser::step_forward));
 
-   register_widget (sync_button);
+   register_widget (anim_button);
    register_widget (prev_button);
    register_widget (next_button);
 
 }
 
+void
+Time_Chooser::animate ()
+{
+   while (anim_button.is_switched_on ())
+   {
+      Glib::usleep (dwell);
+      step_forward ();
+   }
+}
+
 Time_Chooser::Time_Chooser (const Dcanvas& canvas,
                             const Real font_size,
-                            const bool observe_sync,
                             const bool reverse,
                             const bool vertical,
                             const Real line_interval)
    : Dcontainer (canvas),
-     sync_button (canvas, "SYNC", font_size, true),
+     anim_button (canvas, "ANIM", font_size, false),
      prev_button (canvas, "PREV", font_size),
      next_button (canvas, "NEXT", font_size),
      margin (font_size),
-     observe_sync (observe_sync),
+     thread_ptr (NULL),
+     dwell (400000),
      reverse (reverse),
      vertical (vertical),
      line_interval (line_interval)
@@ -4046,6 +4145,12 @@ Time_Chooser::Time_Chooser (const Dcanvas& canvas,
 
 Time_Chooser::~Time_Chooser ()
 {
+   if (thread_ptr != NULL)
+   {
+      anim_button.set (false);
+      thread_ptr->join ();
+      thread_ptr = NULL;
+   }
 }
 
 void
@@ -4118,9 +4223,8 @@ Time_Chooser::set_time_chooser (const Time_Chooser& time_chooser)
 bool
 Time_Chooser::set_data (const Time_Chooser::Data& data)
 {
-   const bool sync = sync_button.is_switched_on ();
-   if (sync) { this->data = data; return true; }
-   return false;
+   this->data = data;
+   return true;
 }
 
 void
@@ -4133,16 +4237,62 @@ Time_Chooser::set_shape (const Shape& shape)
    data.conform_to (shape);
 }
 
-bool
-Time_Chooser::is_sync () const
-{
-   return (!observe_sync || sync_button.is_switched_on ());
-}
-
 const Dtime&
 Time_Chooser::get_time () const
 {
    return data.dtime;
+}
+
+void
+Time_Chooser::handle_animate (const Devent& event)
+{
+   if (anim_button.is_switched_on ())
+   {
+      thread_ptr = Glib::Thread::create (
+         sigc::mem_fun (*this, &Time_Chooser::animate), true);
+   }
+   else
+   {
+      thread_ptr->join ();
+      thread_ptr = NULL;
+   }
+}
+
+void
+Time_Chooser::handle_dwell (const Devent& event)
+{
+
+   Gtk::Dialog dialog ("Change Dwell...", true);
+
+   Glib::RefPtr<Gtk::Adjustment> a (Gtk::Adjustment::create (
+      dwell / 1000.0, 200, 4000, 200, 500));
+   Gtk::SpinButton dwell_spin_button (a);
+
+   dialog.get_vbox ()->add (dwell_spin_button);
+   dialog.add_button ("Ok", Gtk::RESPONSE_OK);
+   dialog.add_button ("Cancel", Gtk::RESPONSE_CANCEL);
+
+   dialog.show_all_children ();
+   guint result = dialog.run ();
+
+   switch (result)
+   {
+      case Gtk::RESPONSE_OK:
+      {
+         //guint yyyy_f, mm_f, dd_f;
+         //guint yyyy_t, mm_t, dd_t;
+         //calendar_from.get_date (yyyy_f, mm_f, dd_f);
+         //calendar_to.get_date (yyyy_t, mm_t, dd_t);
+
+         //shape.start_time = Dtime (yyyy_f, mm_f + 1, dd_f);
+         //shape.end_time = Dtime (yyyy_t, mm_t + 1, dd_t);
+         dwell = Integer (round (dwell_spin_button.get_value ())) * 1000;
+         cout << "dwell is now " << dwell << endl;
+         canvas.queue_draw ();
+         break;
+      }
+   }
+
 }
 
 void
@@ -4230,32 +4380,28 @@ Time_Chooser::go_to_last ()
 }
 
 void
+Time_Chooser::toggle_anim_button ()
+{
+   anim_button.toggle ();
+}
+
+void
+Time_Chooser::set_dwell (const Integer dwell)
+{
+   this->dwell = dwell;
+}
+
+void
 Time_Chooser::set_leap (const Real leap)
 {
-   shape.leap = leap;
+   this->shape.leap = leap;
 }
 
 Point_2D
 Time_Chooser::get_point (const Dtime& dtime) const
 {
-
-   const Real span_t = shape.get_span_t ();
-
-   const Real start_x = button_box.index_2d.i + button_box.size_2d.i + margin;
-   const Real start_y = button_box.index_2d.j + button_box.size_2d.j + margin;
-
-   const Real span_x = width - start_x - margin;
-   const Real span_y = height - start_y - margin;
-
-   const Real sign = boolean_sign (!reverse);
-   const Real span = (vertical ? span_y : span_x);
-   const Real start = (vertical ? start_y : start_x);
-
-   const Real dt = sign * (dtime.t - shape.start_time.t);
-   const Real s = start + dt * span / span_t;
-
+   const Real s = get_s (dtime);
    return (vertical ? Point_2D (width - margin, s) : Point_2D (s, margin));
-
 }
 
 Rect
@@ -4270,14 +4416,6 @@ Time_Chooser::get_rect (const Dtime& dtime) const
 
    const bool first = (iterator == shape.begin ());
    const bool last = (next_iterator == shape.end ());
-
-   const Real span_t = shape.get_span_t ();
-   const Real start_x = button_box.index_2d.i + button_box.size_2d.i + margin;
-   const Real start_y = button_box.index_2d.j + button_box.size_2d.j + margin;
-   const Real span_x = width - start_x - margin;
-   const Real span_y = height - start_y - margin;
-   const Real start = (vertical ? start_y : start_x);
-   const Real span = (vertical ? span_y : span_x);
 
    Dtime prev_time, next_time;
 
@@ -4300,11 +4438,8 @@ Time_Chooser::get_rect (const Dtime& dtime) const
       next_time.t = (next_iterator->t + iterator->t) * 0.5;
    }
 
-   const Real sign = boolean_sign (!reverse);
-   const Real prev_dt = sign * (prev_time.t - shape.start_time.t);
-   const Real next_dt = sign * (next_time.t - shape.start_time.t);
-   const Real prev_s = start + prev_dt * span / span_t;
-   const Real next_s = start + next_dt * span / span_t;
+   const Real prev_s = get_s (prev_time);
+   const Real next_s = get_s (next_time);
 
    return vertical ?
       Rect (Point_2D (centre - w, prev_s), Point_2D (centre + w, next_s)) :
@@ -4321,6 +4456,7 @@ Time_Chooser::cairo (const RefPtr<Context>& cr)
 
    render_background (cr);
    render_nodes (cr);
+   render_now (cr);
 
    cr->translate (-anchor.x, -anchor.y);
    cr->restore ();
@@ -4387,7 +4523,7 @@ Time_Chooser::on_mouse_button_pressed (const Dmouse_Button_Event& event)
          return true;
       }
 
-      const Dtime& dtime = get_time (point);
+      const Dtime& dtime = get_time (point, true);
       if (!dtime.is_nat ())
       {
          activate ();
@@ -4417,7 +4553,7 @@ Time_Chooser::on_mouse_motion (const Dmouse_Motion_Event& event)
    const Point_2D point (event.point.x - anchor.x, event.point.y - anchor.y);
    //if (out_of_bounds (point)) { return false; }
 
-   if (get_time (point) != data.candidate_time)
+   if (get_time (point, true) != data.candidate_time)
    {
       deactivate ();
    }
@@ -4474,36 +4610,18 @@ Time_Chooser::pack ()
       button_box.index_2d.j = Integer (round (anchor_y));
       button_box.size_2d.i = Integer (round (width - margin));
 
-      if (observe_sync)
-      {
 
-         const Real sync_button_w = Real (button_box.size_2d.i);
-   
-         const Point_2D sync_anchor (anchor_x, anchor_y);
-         const Point_2D prev_anchor (anchor_x, margin + button_h);
-         const Point_2D next_anchor (margin + button_w, margin + button_h);
+      const Real anim_button_w = Real (button_box.size_2d.i);
 
-         sync_button.being_packed (sync_anchor, sync_button_w, button_h);
-         prev_button.being_packed (prev_anchor, button_w, button_h);
-         next_button.being_packed (next_anchor, button_w, button_h);
+      const Point_2D anim_anchor (anchor_x, anchor_y);
+      const Point_2D prev_anchor (anchor_x, margin + button_h);
+      const Point_2D next_anchor (margin + button_w, margin + button_h);
 
-         button_box.size_2d.j = Integer (round (2 * button_h + 0.5 * margin));
+      anim_button.being_packed (anim_anchor, anim_button_w, button_h);
+      prev_button.being_packed (prev_anchor, button_w, button_h);
+      next_button.being_packed (next_anchor, button_w, button_h);
 
-      }
-      else
-      {
-
-         const Point_2D sync_anchor (-10000, -10000);
-         const Point_2D prev_anchor (anchor_x, anchor_x);
-         const Point_2D next_anchor (margin + button_w, anchor_x);
-
-         sync_button.being_packed (sync_anchor, 0, 0);
-         prev_button.being_packed (prev_anchor, button_w, button_h);
-         next_button.being_packed (next_anchor, button_w, button_h);
-
-         button_box.size_2d.j = Integer (round (button_h));
-
-      }
+      button_box.size_2d.j = Integer (round (2 * button_h + 0.5 * margin));
 
    }
    else
@@ -4519,32 +4637,15 @@ Time_Chooser::pack ()
       button_box.size_2d.i = Integer (round (button_w));
       button_box.size_2d.j = Integer (round (height - 2 * margin));
 
-      const Real button_h = Real (button_box.size_2d.j) / 2;
+      const Real button_h = Real (button_box.size_2d.j) / 3;
 
-      if (observe_sync)
-      {
+      const Point_2D anim_anchor (anchor_x, 0.5 * margin);
+      const Point_2D prev_anchor (anchor_x, margin + button_h);
+      const Point_2D next_anchor (anchor_x, 1.5*margin + 2*button_h);
 
-         const Point_2D sync_anchor (anchor_x, anchor_y);
-         const Point_2D prev_anchor (anchor_x, margin + button_h);
-         const Point_2D next_anchor (anchor_x, 1.5 * margin + 2 * button_h);
-
-         sync_button.being_packed (sync_anchor, button_w, button_h);
-         prev_button.being_packed (prev_anchor, button_w, button_h);
-         next_button.being_packed (next_anchor, button_w, button_h);
-
-      }
-      else
-      {
-
-         const Point_2D sync_anchor (-10000, -10000);
-         const Point_2D prev_anchor (anchor_x, 0.5 * margin);
-         const Point_2D next_anchor (anchor_x, margin + button_h);
-
-         sync_button.being_packed (sync_anchor, 0, 0);
-         prev_button.being_packed (prev_anchor, button_w, button_h);
-         next_button.being_packed (next_anchor, button_w, button_h);
-
-      }
+      anim_button.being_packed (anim_anchor, button_w, button_h);
+      prev_button.being_packed (prev_anchor, button_w, button_h);
+      next_button.being_packed (next_anchor, button_w, button_h);
 
    }
 
@@ -4566,7 +4667,7 @@ Time_Chooser::on_mouse_button_released (const Dmouse_Button_Event& event)
       case 1:
       {
 
-         const Dtime& dtime = get_time (point);
+         const Dtime& dtime = get_time (point, true);
 
          if (dtime.is_nat ())
          {
@@ -4602,13 +4703,11 @@ Time_Chooser::selected ()
 
 Time_Canvas::Time_Canvas (const Dcanvas& canvas,
                           const Real font_size,
-                          const bool observe_sync,
                           const bool reverse,
                           const bool vertical,
                           const Real line_interval)
    : canvas (canvas),
-     time_chooser (canvas, font_size, observe_sync,
-                   reverse, vertical, line_interval)
+     time_chooser (canvas, font_size, reverse, vertical, line_interval)
 {
 }
 
@@ -4659,23 +4758,26 @@ Time_Canvas::on_key_pressed (const Dkey_Event& event)
          break;
       }
 
+      case GDK_KEY_a:
+      case GDK_KEY_A:
+      {
+         time_chooser.toggle_anim_button ();
+         time_chooser.handle_animate (event);
+         return true;
+         break;
+      }
+
    }
 
    return false;
 
 }
 
-bool
-Time_Canvas::is_sync () const
-{
-   return time_chooser.is_sync ();
-}
-
 const Level_Tuple&
 Level_Panel::get_level_tuple () const
 {
 
-   switch (level_type)
+   switch (level.type)
    {
       default:
       case PRESSURE_LEVEL: return level_tuple_p;
@@ -4724,10 +4826,13 @@ Level_Panel::get_level (const Real y) const
    }
    else
    {
-      switch (level_type)
+      switch (level.type)
       {
          default:
             return Level (NOT_A_LEVEL, GSL_NAN);
+         case SCREEN_LEVEL:
+         case TEN_METRE_LEVEL:
+         case FIFTY_METRE_LEVEL:
          case PRESSURE_LEVEL:
             return get_level_p (y);
          case THETA_LEVEL:
@@ -4864,7 +4969,7 @@ Level_Panel::get_y (const Level& level) const
       }
    }
 
-   switch (level_type)
+   switch (level.type)
    {
       default:
       case PRESSURE_LEVEL:
@@ -4927,17 +5032,17 @@ Level_Panel::get_y_sigma (const Real sigma) const
 }
 
 bool
-Level_Panel::is_close_to_layer_level_0 (const Real y) const
+Level_Panel::is_close_to_level_0 (const Real y) const
 {
-   const Level& level_0 = layer.get_level_0 ();
+   const Level& level_0 = level.get_level_0 ();
    const Real y_0 = get_y (level_0);
    return (fabs (y - y_0) < font_size / 2);
 }
 
 bool
-Level_Panel::is_close_to_layer_level_1 (const Real y) const
+Level_Panel::is_close_to_level_1 (const Real y) const
 {
-   const Level& level_1 = layer.get_level_1 ();
+   const Level& level_1 = level.get_level_1 ();
    const Real y_1 = get_y (level_1);
    return (fabs (y - y_1) < font_size / 2);
 }
@@ -4945,8 +5050,8 @@ Level_Panel::is_close_to_layer_level_1 (const Real y) const
 bool
 Level_Panel::is_within_layer (const Real y) const
 {
-   const Level& level_0 = layer.get_level_0 ();
-   const Level& level_1 = layer.get_level_1 ();
+   const Level& level_0 = level.get_level_0 ();
+   const Level& level_1 = level.get_level_1 ();
    const Real y_0 = get_y (level_0);
    const Real y_1 = get_y (level_1);
    return ((y - y_0) * (y - y_1) <= 0);
@@ -4959,22 +5064,31 @@ Level_Panel::render_background (const RefPtr<Context> cr) const
    cr->set_font_size (font_size);
    Color (0, 0, 0, 0.5).cairo (cr);
 
-   if (level_type == PRESSURE_LEVEL ||
-       level_type == THETA_LEVEL ||
-       level_type == SIGMA_LEVEL)
+//   if (level.type == PRESSURE_LEVEL ||
+//       level.type == THETA_LEVEL ||
+//       level.type == SIGMA_LEVEL)
    {
 
-      Level l;
-      l.type = level_type;
+
+      Level_Type level_type = level.type;
+
+      switch (level.type)
+      {
+         case SCREEN_LEVEL:   
+         case FIFTY_METRE_LEVEL:
+         case TEN_METRE_LEVEL:
+            level_type = PRESSURE_LEVEL;
+            break;
+      }
 
       const Level_Tuple& level_tuple = get_level_tuple ();
 
       for (Level_Tuple::const_iterator iterator = level_tuple.begin ();
            iterator != level_tuple.end (); iterator++)
       {
-         const Level level (level_type, *(iterator));
-         const Real y = get_y (level);
-         const string& str = level.get_string ();
+         const Level l (level_type, *(iterator), GSL_NAN);
+         const Real y = get_y (l);
+         const string& str = l.get_string ();
          Label label (str, Point_2D (width / 2, y), 'c', 'c');
          label.cairo (cr);
       }
@@ -4983,8 +5097,8 @@ Level_Panel::render_background (const RefPtr<Context> cr) const
 
    for (Integer i = 0; i < extra_level_vector.size (); i++)
    {
-      const Level& level = extra_level_vector[i];
-      const string& str = level.get_string ();
+      const Level& l = extra_level_vector[i];
+      const string& str = l.get_string ();
       const Real y = height - (2 * i + 1.5) * font_size;
       Label label (str, Point_2D (width / 2, y), 'c', 'c');
       label.cairo (cr);
@@ -5021,15 +5135,15 @@ Level_Panel::render_level (const RefPtr<Context> cr,
 
 void
 Level_Panel::render_layer (const RefPtr<Context> cr,
-                           const Layer& layer) const
+                           const Level& level) const
 {
 
-   if (layer.is_nal ()) { return; }
+   if (!level.is_layer ()) { return; }
 
    const Real ns = font_size / 2;
 
-   const Level& level_0 = layer.get_level_0 ();
-   const Level& level_1 = layer.get_level_1 ();
+   const Level& level_0 = level.get_level_0 ();
+   const Level& level_1 = level.get_level_1 ();
    const Real y_0 = get_y (level_0);
    const Real y_1 = get_y (level_1);
    const string& str_0 = level_0.get_string ();
@@ -5065,7 +5179,7 @@ bool
 Level_Panel::on_mouse_button_pressed (const Dmouse_Button_Event& event)
 {
 
-   if (level_type == NOT_A_LEVEL && layer.is_nal ())
+   if (level.type == NOT_A_LEVEL && !level.is_layer ())
    {
       return false;
    }
@@ -5073,11 +5187,11 @@ Level_Panel::on_mouse_button_pressed (const Dmouse_Button_Event& event)
    Point_2D point (event.point.x - anchor.x, event.point.y - anchor.y);
    if (out_of_bounds (point)) { return false; }
 
-   if (!layer.is_nal ())
+   if (level.is_layer ())
    {
 
       // It is a layer
-      setting_layer = true;
+      setting_level = true;
 
       if (is_within_layer (point.y))
       {
@@ -5085,19 +5199,20 @@ Level_Panel::on_mouse_button_pressed (const Dmouse_Button_Event& event)
          return true;
       }
 
-      if (is_close_to_layer_level_0 (point.y))
+      if (is_close_to_level_0 (point.y))
       {
-         setting_layer_level_0 = true;
+         setting_level_0 = true;
       }
       else
-      if (is_close_to_layer_level_1 (point.y))
+      if (is_close_to_level_1 (point.y))
       {
-         setting_layer_level_1 = true;
+         setting_level_1 = true;
       }
       else
       {
          const Level& l = get_level (point.y);
-         layer.set (l.get_value (), l.get_value ());
+         level.value = l.get_value ();
+         level.value_ = l.get_value ();
       }
       canvas.queue_draw ();
       return true;
@@ -5120,10 +5235,10 @@ Level_Panel::on_mouse_motion (const Dmouse_Motion_Event& event)
    const Real fs = font_size;
    Real y = event.point.y - anchor.y;
 
-   if (!layer.is_nal ())
+   if (level.is_layer ())
    {
 
-      if (!setting_layer) { return false; }
+      if (!setting_level) { return false; }
 
       const Level& l = get_level (y);
 
@@ -5132,22 +5247,22 @@ Level_Panel::on_mouse_motion (const Dmouse_Motion_Event& event)
          const Level& reference_level = get_level (reference_y);
          const Level& level = get_level (y);
          const Real d_value = level.value - reference_level.value;
-         layer.value += d_value;
-         layer.value_ += d_value;
+         this->level.value += d_value;
+         this->level.value_ += d_value;
          reference_y = y;
       }
       else
-      if (setting_layer_level_0)
+      if (setting_level_0)
       {
-         layer.value = l.get_value ();
+         level.value = l.get_value ();
       }
       else
       {
-         layer.value_ = l.get_value ();
+         level.value_ = l.get_value ();
       }
 
-      layer_signal.emit (get_layer ());
-      full_layer_signal.emit (get_layer (), event);
+      level_signal.emit (get_level ());
+      full_level_signal.emit (get_level (), event);
 
       canvas.queue_draw ();
       return true;
@@ -5180,10 +5295,10 @@ Level_Panel::on_mouse_button_released (const Dmouse_Button_Event& event)
    const Real fs = font_size;
    Real y = event.point.y - anchor.y;
 
-   if (!layer.is_nal ())
+   if (level.is_layer ())
    {
 
-      if (!setting_layer) { return false; }
+      if (!setting_level) { return false; }
 
       if (!gsl_isnan (reference_y))
       {
@@ -5192,17 +5307,17 @@ Level_Panel::on_mouse_button_released (const Dmouse_Button_Event& event)
       else
       {
          const Level& l = get_level (y);
-         if (setting_layer_level_0) { layer.value = l.get_value (); }
-         else                       { layer.value_ = l.get_value (); }
+         if (setting_level_0) { this->level.value = l.get_value (); }
+         else                 { this->level.value_ = l.get_value (); }
 
-         setting_layer_level_0 = false;
-         setting_layer_level_1 = false;
-         layer.order ();
+         setting_level_0 = false;
+         setting_level_1 = false;
+         level.order ();
       }
 
-      setting_layer = false;
-      layer_signal.emit (get_layer ());
-      full_layer_signal.emit (get_layer (), event);
+      setting_level = false;
+      level_signal.emit (get_level ());
+      full_level_signal.emit (get_level (), event);
       canvas.queue_draw ();
       return true;
 
@@ -5246,10 +5361,8 @@ Level_Panel::Level_Panel (Dcanvas& dcanvas,
 
      font_size (font_size),
 
-     setting_layer (false),
-     setting_layer_level_0 (false),
-     setting_layer_level_1 (false),
-     layer (NOT_A_LEVEL, GSL_NAN, GSL_NAN),
+     setting_level_0 (false),
+     setting_level_1 (false),
 
      pressure (850e2),
      theta (315),
@@ -5265,7 +5378,7 @@ Level_Panel::Level_Panel (Dcanvas& dcanvas,
      //sigma_button (dcanvas, "S", font_size)
 {
 
-   level_type = NOT_A_LEVEL;
+   level.type = NOT_A_LEVEL;
    candidate_level.type = NOT_A_LEVEL;
 
    //pressure_button.get_signal ().connect (
@@ -5292,29 +5405,17 @@ Level_Panel::get_level_signal ()
    return level_signal;
 }
 
-Level_Panel::Layer_Signal&
-Level_Panel::get_layer_signal ()
-{
-   return layer_signal;
-}
-
 Level_Panel::Full_Level_Signal&
 Level_Panel::get_full_level_signal ()
 {
    return full_level_signal;
 }
 
-Level_Panel::Full_Layer_Signal&
-Level_Panel::get_full_layer_signal ()
-{
-   return full_layer_signal;
-}
-
 void
 Level_Panel::cairo (const RefPtr<Context>& cr)
 {
-
-   if (level_type == NOT_A_LEVEL && layer.is_nal ())
+//   if (level.type == NOT_A_LEVEL && !level.is_layer ())
+   if (level.type == NOT_A_LEVEL)
    {
       return;
    }
@@ -5334,16 +5435,15 @@ Level_Panel::cairo (const RefPtr<Context>& cr)
 
    render_background (cr);
 
-   if (!layer.is_nal ())
+   if (level.is_layer ())
    {
-      render_layer (cr, layer);
+      render_layer (cr, level);
    }
    else
    {
       render_level (cr, candidate_level, false);
       render_level (cr, level, true);
    }
-
 
    cr->translate (-anchor.x, -anchor.y);
    cr->restore ();
@@ -5354,7 +5454,7 @@ void
 Level_Panel::set_level (const Level& level)
 {
    this->level = level;
-   switch (level_type)
+   switch (level.type)
    {
       case PRESSURE_LEVEL: pressure = level.value; break;
       case THETA_LEVEL: theta = level.value; break;
@@ -5374,18 +5474,6 @@ Level_Panel::get_level ()
    return this->level;
 }
 
-const Layer&
-Level_Panel::get_layer () const
-{
-   return this->layer;
-}
-
-Layer&
-Level_Panel::get_layer ()
-{
-   return this->layer;
-}
-
 void
 Level_Panel::clear ()
 {
@@ -5397,8 +5485,8 @@ void
 Level_Panel::set_no_buttons ()
 {
 
-   level_type = NOT_A_LEVEL;
-   layer.type = NOT_A_LEVEL;
+   level.type = NOT_A_LEVEL;
+   level.value_ = GSL_NAN;
    extra_level_vector.clear ();
 
 //   clear ();
@@ -5412,14 +5500,13 @@ void
 Level_Panel::set_theta_buttons ()
 {
 
-   if (level_type != THETA_LEVEL)
+   if (level.type != THETA_LEVEL)
    {
-      level_type = THETA_LEVEL;
-      level.type = THETA_LEVEL;
       level.value = theta;
    }
 
-   layer.type = NOT_A_LEVEL;
+   level.type = THETA_LEVEL;
+   level.value_ = GSL_NAN;
    extra_level_vector.clear ();
 
 //   clear ();
@@ -5433,14 +5520,13 @@ void
 Level_Panel::set_sigma_buttons ()
 {
 
-   if (level_type != SIGMA_LEVEL)
+   if (level.type != SIGMA_LEVEL)
    {
-      level_type = SIGMA_LEVEL;
-      level.type = SIGMA_LEVEL;
       level.value = sigma;
    }
 
-   layer.type = NOT_A_LEVEL;
+   level.type = SIGMA_LEVEL;
+   level.value_ = GSL_NAN;
    extra_level_vector.clear ();
 
 //   clear ();
@@ -5454,17 +5540,17 @@ void
 Level_Panel::set_p_buttons ()
 {
 
-   if (level_type != PRESSURE_LEVEL)
+   if (level.type == HEIGHT_LEVEL ||
+       level.type == THETA_LEVEL ||
+       level.type == SIGMA_LEVEL ||
+       level.type == NOT_A_LEVEL)
    {
-      level_type = PRESSURE_LEVEL;
-      level.type = PRESSURE_LEVEL;
       level.value = pressure;
+      level.type = PRESSURE_LEVEL;
+      level.value_ = GSL_NAN;
    }
 
-   layer.type = NOT_A_LEVEL;
    extra_level_vector.clear ();
-
-
 //   clear ();
 //   pack_back (switcher_panel);
 
@@ -5480,7 +5566,14 @@ Level_Panel::set_wind_level_buttons ()
    extra_level_vector.clear ();
    extra_level_vector.push_back (Level ("10m"));
    extra_level_vector.push_back (Level ("50m"));
-   extra_level_vector.push_back (Level ("0.995"));
+
+   if (level.type == SCREEN_LEVEL)
+   {
+      level.type = TEN_METRE_LEVEL;
+   }
+
+
+   //extra_level_vector.push_back (Level ("0.995"));
 
 //   clear ();
 //   pack_back (switcher_panel);
@@ -5508,6 +5601,12 @@ Level_Panel::set_temperature_level_buttons ()
    extra_level_vector.clear ();
    extra_level_vector.push_back (Level ("Screen"));
 
+   if (level.type == TEN_METRE_LEVEL ||
+       level.type == FIFTY_METRE_LEVEL)
+   {
+      level.type = SCREEN_LEVEL;
+   }
+
 //   clear ();
 //   pack_back (switcher_panel);
 //   typedef vector<Level_Button*>::const_iterator Iterator;
@@ -5525,17 +5624,6 @@ Level_Panel::set_temperature_level_buttons ()
 }
 
 void
-Level_Panel::set_layer (const Layer& layer)
-{
-
-   level_type = PRESSURE_LEVEL;
-   extra_level_vector.clear ();
-
-   this->layer = layer;
-
-}
-
-void
 Level_Panel::move_level_up (const Devent& event)
 {
 
@@ -5548,7 +5636,7 @@ Level_Panel::move_level_up (const Devent& event)
       {
          const Level_Tuple& level_tuple = get_level_tuple ();
          level.value = level_tuple.get_next_up (level.value);
-         switch (level_type)
+         switch (level.type)
          {
             case PRESSURE_LEVEL: pressure = level.value; break;
             case THETA_LEVEL: theta = level.value; break;
@@ -5596,7 +5684,7 @@ Level_Panel::move_level_down (const Devent& event)
          try
          {
             level.value = level_tuple.get_next_down (level.value);
-            switch (level_type)
+            switch (level.type)
             {
                case PRESSURE_LEVEL: pressure = level.value; break;
                case THETA_LEVEL: theta = level.value; break;
@@ -6046,12 +6134,6 @@ Console_2D::Hud::double_clicked ()
 {
 }
 
-string
-Console_2D::Marker::get_string () const
-{
-   return string_render ("%f %f", x, y);
-}
-
 Console_2D::Marker::Popup_Menu::Popup_Menu (Console_2D& console_2d,
                                             const Real font_size,
                                             const bool connect_default_signal)
@@ -6109,7 +6191,7 @@ Console_2D::Marker::cairo (const RefPtr<Context>& cr,
    const Transform_2D& transform = console_2d.get_transform ();
    const Point_2D& point = transform.transform (*this);
 
-   const string& str = get_string ();
+   const string& str = console_2d.get_string (*this);
 
    cr->save ();
 
@@ -7184,28 +7266,6 @@ Console_2D::post_manipulate ()
 }
 
 bool
-Console_2D::on_configure_event (GdkEventConfigure* event)
-{
-
-   const Size_2D size_2d (event->width, event->height);
-   if (get_size_2d () == size_2d) { return false; }
-
-   this->width = size_2d.i;
-   this->height = size_2d.j;
-
-   Console_2D::Zoom_Box& zoom_box = get_zoom_box ();
-
-   background_buffer.clear ();
-   image_buffer.clear ();
-   foreground_buffer.clear ();
-   initialize ();
-   render_queue_draw ();
-
-   return true;
-
-}
-
-bool
 Console_2D::on_key_pressed (const Dkey_Event& event)
 {
 
@@ -7504,6 +7564,12 @@ Console_2D::get_shape_popup_menu ()
    return shape_popup_menu;
 }
 
+string
+Console_2D::get_string (const Marker& marker) const
+{
+   return string_render ("Updated %f %f", marker.x, marker.y);
+}
+
 Console_2D::Console_2D (Gtk::Window& gtk_window,
                         const Size_2D& size_2d,
                         const bool computer_convention)
@@ -7518,6 +7584,8 @@ Console_2D::Console_2D (Gtk::Window& gtk_window,
      route_store (),
      shape_store ()
 {
+
+   Glib::Mutex::Lock lock (mutex);
 
    Gdk::EventMask event_mask = (Gdk::SCROLL_MASK);
    event_mask |= (Gdk::POINTER_MOTION_MASK);
@@ -7755,6 +7823,7 @@ Console_2D::render_huds_and_widgets (const RefPtr<Context>& cr)
 void
 Console_2D::cairo (const RefPtr<Context>& cr)
 {
+   Glib::Mutex::Lock lock (mutex);
    blit_background_buffer (cr);
    blit_image_buffer (cr);
    blit_foreground_buffer (cr);
@@ -8632,10 +8701,14 @@ Map_Console::Map_Console (Gtk::Window& gtk_window,
      geodetic_zoom_box (*this),
      option_panel (*this, zoom_str)
 {
+
+   Glib::Mutex::Lock lock (mutex);
+
    typedef Geodetic_Transform Gt;
    const Point_2D centre (size_2d.i/2, size_2d.j/2);
    Geodetic_Transform::Data gtd ((Tokens (zoom_str, "/"))[1]);
    geodetic_transform_ptr = Gt::get_transform_ptr (gtd, centre);
+
 }
 
 Map_Console::Map_Console (Gtk::Window& gtk_window,
@@ -8645,6 +8718,8 @@ Map_Console::Map_Console (Gtk::Window& gtk_window,
      geodetic_zoom_box (*this),
      option_panel (*this, zoom_str_vector)
 {
+
+   Glib::Mutex::Lock lock (mutex);
 
    typedef Geodetic_Transform Gt;
    const Point_2D centre (size_2d.i/2, size_2d.j/2);
@@ -8665,6 +8740,8 @@ Map_Console::Map_Console (Gtk::Window& gtk_window,
      option_panel (*this, zoom_str_vector)
 {
 
+   Glib::Mutex::Lock lock (mutex);
+
    typedef Geodetic_Transform Gt;
    const Point_2D centre (size_2d.i/2, size_2d.j/2);
    geodetic_transform_ptr = Gt::get_transform_ptr (gt.data, centre);
@@ -8682,6 +8759,8 @@ Map_Console::Map_Console (Gtk::Window& gtk_window,
      geodetic_zoom_box (*this),
      option_panel (*this, zoom_str_vector)
 {
+
+   Glib::Mutex::Lock lock (mutex);
 
    typedef Geodetic_Transform Gt;
    const Point_2D centre (size_2d.i/2, size_2d.j/2);

@@ -202,6 +202,9 @@ namespace denise
 
    }
 
+   void
+   print_mem_usage (const Integer indent = 0);
+
 }
 
 #endif /* DENISE_UTIL_H */

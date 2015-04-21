@@ -304,8 +304,8 @@ namespace denise
 
       private:
 
-         Integer
-         n;
+         size_t
+         chunk_size;
 
          Real*
          buffer;
@@ -317,7 +317,23 @@ namespace denise
          ~Chunk ();
 
          void
-         init (const Integer n);
+         read (FILE* file,
+               const bool float_length = true);
+
+         void
+         read (ifstream& file,
+               const bool float_length = true);
+
+         void
+         write (FILE* file,
+                const bool float_length = true) const;
+
+         void
+         write (ofstream& file,
+                const bool float_length = true) const;
+
+         void
+         init (const Integer chunk_size);
 
          void
          copy (const Chunk& chunk,
@@ -334,30 +350,35 @@ namespace denise
          get (const Integer i);
 
          void
-         initialize (const Real datum);
+         initialize (const Real datum,
+                     const size_t address = 0,
+                     const size_t size = -1);
 
          void
          scale_offset (const Real scale,
-                       const Real offset);
+                       const Real offset,
+                       const size_t address = 0,
+                       const size_t size = -1);
 
          Domain_1D
-         get_max_min () const;
+         get_max_min (const size_t address = 0,
+                      const size_t size = -1) const;
 
          Real
-         get_mean () const;
+         get_mean (const size_t address = 0,
+                   const size_t size = -1) const;
 
          Real
-         subtract_mean ();
+         subtract_mean (const size_t address = 0,
+                        const size_t size = -1);
 
    };
 
-   class Vector_Data_nD : public Grid_nD
+   class Vector_Data_nD : public Grid_nD,
+                          public Chunk
    {
 
       protected:
-
-         Chunk*
-         chunks;
 
          const Integer
          vector_size;
@@ -371,6 +392,9 @@ namespace denise
                          const Integer n);
 
          ~Vector_Data_nD ();
+
+         Chunk*
+         get_chunk_ptr (const Integer vector_element) const;
 
       public:
 

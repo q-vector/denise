@@ -22,6 +22,7 @@
 
 #include <map>
 #include <set>
+#include <glibmm.h>
 #include <gtkmm.h>
 #include <gtkmm/drawingarea.h>
 #include <denise/basics.h>
@@ -647,6 +648,9 @@ namespace denise
 
       protected:
 
+         Glib::Mutex
+         mutex;
+
          class Title : public Tokens
          {
 
@@ -838,6 +842,8 @@ namespace denise
 
    class Dbutton : public Dwidget
    {
+
+      friend class Dtoggle_Button;
 
       public:
 
@@ -1185,6 +1191,18 @@ namespace denise
 
          Full_Str_Signal&
          get_full_str_signal ();
+
+         Dbutton::Signal&
+         get_click_signal ();
+
+         Dbutton::Str_Signal&
+         get_click_str_signal ();
+
+         Dbutton::Full_Signal&
+         get_click_full_signal ();
+
+         Dbutton::Full_Str_Signal&
+         get_click_full_str_signal ();
 
          void
          set (const bool switched_on);
@@ -1820,9 +1838,6 @@ namespace denise
          bool
          vertical;
 
-         bool
-         observe_sync;
-
          Box_2D
          button_box;
 
@@ -1835,8 +1850,11 @@ namespace denise
          Data
          data;
 
+         Integer
+         dwell;
+
          Dtoggle_Button
-         sync_button;
+         anim_button;
 
          Dbutton
          prev_button;
@@ -1853,8 +1871,15 @@ namespace denise
          set<Integer>
          additional_indices;
 
+         Glib::Thread*
+         thread_ptr;
+
+         Real
+         get_s (const Dtime& dtime) const;
+
          Dtime
-         get_time (const Point_2D& point) const;
+         get_time (const Point_2D& point,
+                   const bool snap_to_nearest) const;
 
          void
          render_background (const RefPtr<Context>& cr);
@@ -1888,13 +1913,18 @@ namespace denise
          render_nodes (const RefPtr<Context>& cr) const;
 
          void
+         render_now (const RefPtr<Context>& cr) const;
+
+         void
          init (const Real font_size);
+
+         void
+         animate ();
 
       public:
 
          Time_Chooser (const Dcanvas& canvas,
                        const Real font_size,
-                       const bool observe_sync,
                        const bool reverse = false,
                        const bool vertical = true,
                        const Real line_interval = 6);
@@ -1940,14 +1970,17 @@ namespace denise
          void
          set_shape (const Shape& shape);
 
-         bool
-         is_sync () const;
-
          const Dtime&
          get_time () const;
 
          void
          advance (const Devent& event);
+
+         void
+         handle_animate (const Devent& event = Devent ());
+
+         void
+         handle_dwell (const Devent& event = Devent ());
 
          virtual void
          step_forward (const Devent& event = Devent ());
@@ -1960,6 +1993,12 @@ namespace denise
 
          virtual void
          go_to_last ();
+
+         void
+         toggle_anim_button ();
+
+         void
+         set_dwell (const Integer dwell);
 
          void
          set_leap (const Real leap);
@@ -2011,7 +2050,6 @@ namespace denise
 
          Time_Canvas (const Dcanvas& canvas,
                       const Real font_size,
-                      const bool observe_sync,
                       const bool reverse = false,
                       const bool vertical = true,
                       const Real line_interval = 6);
@@ -2024,9 +2062,6 @@ namespace denise
 
          bool
          on_key_pressed (const Dkey_Event& event);
-
-         bool
-         is_sync () const;
 
    };
 
@@ -2064,9 +2099,6 @@ namespace denise
          Level
          candidate_level;
 
-         Layer
-         layer;
-
          Real
          pressure;
 
@@ -2080,16 +2112,10 @@ namespace denise
          setting_level;
 
          bool
-         setting_layer;
+         setting_level_0;
 
          bool
-         setting_layer_level_0;
-
-         bool
-         setting_layer_level_1;
-
-         Level_Type
-         level_type;
+         setting_level_1;
 
          const Real
          start_margin;
@@ -2167,10 +2193,10 @@ namespace denise
          get_y_sigma (const Real sigma) const;
 
          bool
-         is_close_to_layer_level_0 (const Real y) const;
+         is_close_to_level_0 (const Real y) const;
 
          bool
-         is_close_to_layer_level_1 (const Real y) const;
+         is_close_to_level_1 (const Real y) const;
 
          bool
          is_within_layer (const Real y) const;
@@ -2185,7 +2211,7 @@ namespace denise
 
          void
          render_layer (const RefPtr<Context> cr,
-                       const Layer& layer) const;
+                       const Level& level) const;
 
          bool
          on_mouse_button_pressed (const Dmouse_Button_Event& event);
@@ -2204,14 +2230,8 @@ namespace denise
          Level_Signal&
          get_level_signal ();
 
-         Layer_Signal&
-         get_layer_signal ();
-
          Full_Level_Signal&
          get_full_level_signal ();
-
-         Full_Layer_Signal&
-         get_full_layer_signal ();
 
          void
          cairo (const RefPtr<Context>& cr);
@@ -2230,12 +2250,6 @@ namespace denise
 
          Level&
          get_level ();
-
-         const Layer&
-         get_layer () const;
-
-         Layer&
-         get_layer ();
 
          void
          clear ();
@@ -2257,9 +2271,6 @@ namespace denise
 
          void
          set_temperature_level_buttons ();
-
-         void
-         set_layer (const Layer& layer);
 
    };
 
@@ -2512,9 +2523,6 @@ namespace denise
 
                string
                str;
-
-               virtual string
-               get_string () const;
 
             public:
 
@@ -2920,9 +2928,6 @@ namespace denise
          post_manipulate ();
 
          virtual bool
-         on_configure_event (GdkEventConfigure* event);
-
-         virtual bool
          on_key_pressed (const Dkey_Event& event);
 
          virtual bool
@@ -2945,6 +2950,9 @@ namespace denise
 
          virtual Shape::Popup_Menu&
          get_shape_popup_menu ();
+
+         virtual string
+         get_string (const Marker& marker) const;
 
       public:
 

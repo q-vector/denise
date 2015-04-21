@@ -369,5 +369,15 @@ namespace denise
 
    }
 
+   void
+   print_mem_usage (const Integer indent)
+   {
+      pid_t pid = getpid ();
+      string s; for (Integer i = 0; i < indent; i++) { s += " "; }
+      const string& str = string_render (
+         "echo -n \"%s\"; pmap -x %i | tail -1", s.c_str (), pid);
+      system (str.c_str ());
+   }
+
 }
 

@@ -227,6 +227,16 @@ Color::scale_saturation (const Real percentage)
    set_hsb (get_hue (), scaled_saturation, get_brightness (), a);
 }
 
+void
+Color::scale_opacity (const Real percentage)
+{
+   Real scaled_opacity = a * percentage;
+   if (scaled_opacity > 1) { scaled_opacity = 1; }
+   if (scaled_opacity < 0) { scaled_opacity = 0; }
+
+   set_hsb (get_hue (), get_saturation (), get_brightness (), scaled_opacity);
+}
+
 Real
 Color::get_hue () const
 {

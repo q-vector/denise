@@ -427,3 +427,31 @@ namespace denise
 
 }
 
+namespace denise
+{
+
+   ostream&
+   operator << (ostream& out_file,
+                const Tokens& tokens)
+   {
+
+      out_file << "(";
+
+      for (Integer i = 0; i < tokens.size (); i++)
+      {
+
+         out_file << tokens[i];
+
+         if (i != tokens.size () - 1)
+         {
+            out_file << ", ";
+         }
+
+      }
+
+      out_file << ")";
+      return out_file;
+
+   }
+
+}

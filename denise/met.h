@@ -44,7 +44,7 @@ namespace denise
       TROPICAL_DEPRESSION   = 0, TD  = 0,
       TROPICAL_STORM        = 1, TS  = 1,
       SEVERE_TROPICAL_STORM = 2, STS = 2,
-      TYPHOON               = 3, TY = 3,
+      TYPHOON               = 3, T   = 3, TY = 3,
       LOW                   = 4,
       NUMBER_OF_TC_CATEGORIES = 5
    };
@@ -1036,6 +1036,9 @@ namespace denise
          Real
          value;
 
+         Real
+         value_;
+
          Level ();
 
          Level (const Level& level);
@@ -1044,6 +1047,16 @@ namespace denise
 
          Level (const Level_Type type,
                 const Real value = GSL_NAN);
+
+         Level (const Level_Type type,
+                const Real value_0,
+                const Real value_1);
+
+         bool
+         is_layer () const;
+
+         void
+         order ();
 
          static Level
          theta_level (const Real theta);
@@ -1108,36 +1121,6 @@ namespace denise
          string
          get_string () const;
 
-         void
-         set_nal ();
-
-         bool
-         is_nal () const;
-
-   };
-
-   class Layer : public Level
-   {
-
-      public:
-
-         Real
-         value_;
-
-         Layer (const Level_Type type,
-                const Real value_0,
-                const Real value_1);
-
-         void
-         order ();
-
-         void
-         set (const Real value_0,
-              const Real value_1);
-
-         string
-         get_string () const;
-
          Level
          get_level_0 () const;
 
@@ -1152,7 +1135,22 @@ namespace denise
 
    };
 
-   class Z_Layer : public Layer
+   class Layer : public Level
+   {
+
+      public:
+
+         Layer (const Level_Type type,
+                const Real value_0,
+                const Real value_1);
+
+         void
+         set (const Real value_0,
+              const Real value_1);
+
+   };
+
+   class Z_Layer : public Level
    {
 
       public:
@@ -1189,7 +1187,7 @@ namespace denise
 
    };
 
-   class P_Layer : public Layer
+   class P_Layer : public Level
    {
 
       public:
