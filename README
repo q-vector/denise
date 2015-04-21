@@ -1,0 +1,43 @@
+denise
+======
+
+denise is a scientific C++ library which as put some emphasis
+on fulfilling meteorological operational / research needs but
+are usable on other scientific fields, too.
+
+Prerequisite
+============
+
+C++
+---
+This is C++ library.  You need a C++ compiler.
+
+GSL
+---
+You need the GNU Scientific Library (GSL) to install and use kalman.
+GSL can be found at the GNU homepage:
+
+   *    http://www.gnu.org/software/gsl/gsl.html
+
+Author
+======
+Simon E. Ching <simon_ching@yahoo.com>
+
+Copyright
+=========
+Copyright (C) 2006 Simon E. Ching
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+

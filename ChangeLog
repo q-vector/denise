@@ -1,0 +1,5 @@
+2003-01-18  Simon E. Ching  <simon_ching@yahoo.com>
+
+        * Added AUTHORS ChangeLog NEWS README so it is now meeting
+          GNU Coding Standards in this respect
+
