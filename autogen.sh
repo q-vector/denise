@@ -6,5 +6,5 @@
 libtoolize --copy --force
 aclocal
 autoconf
-automake --add-missing --copy
+automake --add-missing --copy --foreign
 echo "Now you can run the configure script"
