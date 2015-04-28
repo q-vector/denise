@@ -7567,7 +7567,7 @@ Console_2D::get_shape_popup_menu ()
 string
 Console_2D::get_string (const Marker& marker) const
 {
-   return string_render ("Updated %f %f", marker.x, marker.y);
+   return string_render ("%f %f", marker.x, marker.y);
 }
 
 Console_2D::Console_2D (Gtk::Window& gtk_window,
@@ -8692,6 +8692,13 @@ Map_Console::Route::get_distance (const Geodesy& geodesy) const
 {
    const Multi_Journey multi_journey (*this);
    return multi_journey.get_distance (geodesy);
+}
+
+string
+Map_Console::get_string (const Marker& marker) const
+{
+   const Lat_Long lat_long (marker);
+   return lat_long.get_string (false, "%.4f\u00b0");
 }
 
 Map_Console::Map_Console (Gtk::Window& gtk_window,

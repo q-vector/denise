@@ -3356,6 +3356,13 @@ namespace denise
 
          };
 
+      protected:
+
+         virtual string
+         get_string (const Marker& marker) const;
+
+      public:
+
          Map_Console (Gtk::Window& gtk_window,
                       const Size_2D& size_2d,
                       const string& zoom_str);

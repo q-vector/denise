@@ -199,7 +199,8 @@ Nwp::Element_Vector::get_nwp_element (const Integer element_index) const
 Nwp::Data_3D::Data_3D (const vector<Nwp_Element>& nwp_element_vector,
                        const Key& key)
   : key (key),
-    available (false)
+    available (false),
+    nwp_element_vector (nwp_element_vector)
 {
 
    typedef vector<Nwp_Element>::const_iterator Iterator;
@@ -222,6 +223,85 @@ Nwp::Data_3D::~Data_3D ()
       Geodetic_Vector_Data_3D* gvd_3d_ptr = iterator->second;
       if (gvd_3d_ptr != NULL) { delete gvd_3d_ptr; }
    }
+}
+
+void
+Nwp::Data_3D::read (FILE* file,
+                    const bool float_length)
+{
+   typedef vector<Nwp_Element>::const_iterator Iterator;
+   for (Iterator iterator = nwp_element_vector.begin ();
+        iterator != nwp_element_vector.end (); iterator++)
+   {
+      const Nwp_Element nwp_element = *(iterator);
+      Geodetic_Vector_Data_3D* gvd_3d_ptr = at (nwp_element);
+      if (gvd_3d_ptr == NULL) { continue; }
+      gvd_3d_ptr->read (file, float_length);
+   }
+}
+
+void
+Nwp::Data_3D::read (ifstream& file,
+                    const bool float_length)
+{
+
+   typedef vector<Nwp_Element>::const_iterator Iterator;
+   for (Iterator iterator = nwp_element_vector.begin ();
+        iterator != nwp_element_vector.end (); iterator++)
+   {
+      const Nwp_Element nwp_element = *(iterator);
+      Geodetic_Vector_Data_3D* gvd_3d_ptr = at (nwp_element);
+      if (gvd_3d_ptr == NULL) { continue; }
+      gvd_3d_ptr->read (file, float_length);
+   }
+}
+
+void
+Nwp::Data_3D::write (FILE* file,
+                     const bool float_length) const
+{
+   typedef vector<Nwp_Element>::const_iterator Iterator;
+   for (Iterator iterator = nwp_element_vector.begin ();
+        iterator != nwp_element_vector.end (); iterator++)
+   {
+      const Nwp_Element nwp_element = *(iterator);
+      const Geodetic_Vector_Data_3D* gvd_3d_ptr = at (nwp_element);
+      if (gvd_3d_ptr == NULL) { continue; }
+      gvd_3d_ptr->write (file, float_length);
+   }
+}
+
+void
+Nwp::Data_3D::write (ofstream& file,
+                     const bool float_length) const
+{
+   typedef vector<Nwp_Element>::const_iterator Iterator;
+   for (Iterator iterator = nwp_element_vector.begin ();
+        iterator != nwp_element_vector.end (); iterator++)
+   {
+      const Nwp_Element nwp_element = *(iterator);
+      const Geodetic_Vector_Data_3D* gvd_3d_ptr = at (nwp_element);
+      if (gvd_3d_ptr == NULL) { continue; }
+      gvd_3d_ptr->write (file, float_length);
+   }
+}
+
+void
+Nwp::Data_3D::unload ()
+{
+   for (Nwp::Data_3D::iterator iterator = begin ();
+        iterator != end (); iterator++)
+   {
+      Geodetic_Vector_Data_3D* gvd_3d_ptr = iterator->second;
+      if (gvd_3d_ptr != NULL) { delete gvd_3d_ptr; iterator->second = NULL; }
+   }
+}
+
+void
+Nwp::Data_3D::unload (const Nwp_Element nwp_element)
+{
+   Geodetic_Vector_Data_3D* gvd_3d_ptr = at (nwp_element);
+   if (gvd_3d_ptr != NULL) { delete gvd_3d_ptr; at (nwp_element) = NULL; }
 }
 
 void
@@ -328,45 +408,6 @@ Nwp::Data_3D::initialize (const Real datum)
 
 Real
 Nwp::Data_3D::get_p_from_element (const Nwp_Element nwp_element,
-                                  const Integer i,
-                                  const Integer j,
-                                  const Real element_value) const
-{
-
-   const Geodetic_Vector_Data_3D* gvd_3d_ptr = at (nwp_element);
-   if (gvd_3d_ptr == NULL) { return GSL_NAN; }
-   const Geodetic_Vector_Data_3D& gvd_3d = *gvd_3d_ptr;
-
-   Real p = GSL_NAN;
-   const Real x = element_value;
-   const Tuple& tuple_p = get_tuple_p (nwp_element);
-
-   for (Integer k = 0; k < tuple_p.size () - 1; k++)
-   {
-
-      const Real lower_x = gvd_3d.get_datum (0, k, i, j); 
-      const Real upper_x = gvd_3d.get_datum (0, k+1, i, j); 
-      const Real delta_x = x - lower_x;
-      const bool match = (delta_x * (x - upper_x) <= 0);
-
-      if (match)
-      {
-         const Real lower_p = tuple_p[k];
-         const Real upper_p = tuple_p[k + 1];
-         const Real dp = upper_p - lower_p;
-         const Real dx = upper_x - lower_x;
-         p = lower_p + (delta_x  * dp / dx);
-         break;
-      }
-
-   }
-
-   return p;
-
-}
-
-Real
-Nwp::Data_3D::get_p_from_element (const Nwp_Element nwp_element,
                                   const Real latitude,
                                   const Real longitude,
                                   const Real element_value) const
@@ -383,15 +424,15 @@ Nwp::Data_3D::get_p_from_element (const Nwp_Element nwp_element,
    for (Integer k = 0; k < tuple_p.size () - 1; k++)
    {
 
-      const Real lower_x = evaluate (nwp_element, k, latitude, longitude); 
-      const Real upper_x = evaluate (nwp_element, k+1, latitude, longitude); 
+      const Real lower_p = tuple_p[k];
+      const Real upper_p = tuple_p[k + 1];
+      const Real lower_x = evaluate (nwp_element, lower_p, latitude, longitude);
+      const Real upper_x = evaluate (nwp_element, upper_p, latitude, longitude);
       const Real delta_x = x - lower_x;
       const bool match = (delta_x * (x - upper_x) <= 0);
 
       if (match)
       {
-         const Real lower_p = tuple_p[k];
-         const Real upper_p = tuple_p[k + 1];
          const Real dp = upper_p - lower_p;
          const Real dx = upper_x - lower_x;
          p = lower_p + (delta_x  * dp / dx);
@@ -402,498 +443,6 @@ Nwp::Data_3D::get_p_from_element (const Nwp_Element nwp_element,
 
    return p;
 
-}
-
-
-Real
-Nwp::Data_3D::evaluate (const Nwp_Element element,
-                        const Integer k,
-                        const Integer i,
-                        const Integer j,
-                        const Evaluate_Op evaluate_op) const
-{
-
-   switch (element)
-   {
-
-      case WIND_SPEED:
-      {
-         const Real u = evaluate (ZONAL_WIND, k, i, j);
-         const Real v = evaluate (MERIDIONAL_WIND, k, i, j);
-         return sqrt (u*u + v*v);
-      }
-
-      case WIND_DIRECTION:
-      {
-         const Real u = evaluate (ZONAL_WIND, k, i, j);
-         const Real v = evaluate (MERIDIONAL_WIND, k, i, j);
-         return Wind (u, v).get_direction ();
-      }
-
-      case DEW_POINT_DEPRESSION:
-      {
-         const Real t = evaluate (TEMPERATURE, k, i, j);
-         const Real t_d = evaluate (DEW_POINT, k, i, j);
-         return t - t_d;
-      }
-
-      case THETA:
-      {
-         const Real p = get_p (TEMPERATURE, k);
-         const Real t = evaluate (TEMPERATURE, k, i, j);
-         return Thermo_Point::t_p (t - K, p).get_theta () + K;
-      }
-
-      case THETA_E:
-      {
-         const Real p = get_p (TEMPERATURE, k);
-         const Real t = evaluate (TEMPERATURE, k, i, j);
-         const Real t_d = evaluate (DEW_POINT, k, i, j);
-         return Thermo_Point::normand (t - K, t_d - K, p).get_theta_e () + K;
-      }
-
-      case THETA_W:
-      {
-         const Real p = get_p (TEMPERATURE, k);
-         const Real t = evaluate (TEMPERATURE, k, i, j);
-         const Real t_d = evaluate (DEW_POINT, k, i, j);
-         return Thermo_Point::normand (t - K, t_d - K, p).get_theta_w () + K;
-      }
-
-      case TEMPERATURE_ADVECTION:
-      {
-         const Real t_x = evaluate (TEMPERATURE, k, i, j, DX);
-         const Real t_y = evaluate (TEMPERATURE, k, i, j, DY);
-         const Real u = evaluate (ZONAL_WIND, k, i, j);
-         const Real v = evaluate (MERIDIONAL_WIND, k, i, j);
-         return -(t_x * u + t_y * v);
-      }
-
-      case ADIABATIC_HEATING:
-      {
-         const Real p = get_p (TEMPERATURE, k);
-         const Real t = evaluate (TEMPERATURE, k, i, j);
-         const Real omega = evaluate (OMEGA, k, i, j);
-         const Real alpha = (R_d * t) / p;
-         return alpha / c_p * omega;
-      }
-
-      case LATENT_HEATING:
-      {
-         const Real rh = evaluate (RELATIVE_HUMIDITY, k, i, j);
-         if (rh < 0.9) { return 0; }
-         const Real p = get_p (TEMPERATURE, k);
-         const Real t = evaluate (TEMPERATURE, k, i, j);
-         const Real omega = evaluate (OMEGA, k, i, j);
-         const Thermo_Point& tp = Thermo_Point::t_p (t, p);
-         return tp.get_saturated_Q_dot (omega) * rh;
-      }
-
-      case MONTGOMERY:
-      {
-         const Real t = evaluate (TEMPERATURE, k, i, j);
-         const Real z = evaluate (GEOPOTENTIAL_HEIGHT, k, i, j);
-         return g * z + c_p * t;
-      }
-
-      case ABSOLUTE_VORTICITY:
-      {
-
-         const Nwp_Element U = ZONAL_WIND;
-         const Nwp_Element V = MERIDIONAL_WIND;
-
-         const Lat_Long& lat_long = get_lat_long (U, i, j);
-         const Real& latitude = lat_long.latitude;
-         const Real& longitude = lat_long.longitude;
-         const Real f = Geodetic_Vector_Data_2D::get_f (latitude);
-
-         const Real dv_dx = evaluate (V, k, latitude, longitude, DX);
-         const Real du_dy = evaluate (U, k, latitude, longitude, DY);
-
-         const Real zeta = dv_dx - du_dy + f;
-         return zeta;
-
-      };
-
-      case POTENTIAL_VORTICITY:
-      {
-
-         const Real p = get_p (TEMPERATURE, k);
-         const Real exner = pow (Real (p / 1000e2), Real (kappa));
-
-         const Lat_Long& lat_long = get_lat_long (TEMPERATURE, i, j);
-         const Real& latitude = lat_long.latitude;
-         const Real& longitude = lat_long.longitude;
-         const Real f = Geodetic_Vector_Data_2D::get_f (latitude);
-         const Real f_hat = Geodetic_Vector_Data_2D::get_f_hat (latitude);
-
-         const Nwp_Element T = TEMPERATURE;
-         const Nwp_Element U = ZONAL_WIND;
-         const Nwp_Element V = MERIDIONAL_WIND;
-         const Nwp_Element W = VERTICAL_VELOCITY;
-         const Nwp_Element Z = GEOPOTENTIAL_HEIGHT;
-
-         const Real t = evaluate (T, k, i, j);
-         const Real dt_dx = evaluate (T, k, latitude, longitude, DX);
-         const Real dt_dy = evaluate (T, k, latitude, longitude, DY);
-         const Real dt_dp = evaluate (T, k, latitude, longitude, DZ);
-         const Real dv_dx = evaluate (V, k, latitude, longitude, DX);
-         const Real dv_dp = evaluate (V, k, latitude, longitude, DZ);
-         const Real du_dy = evaluate (U, k, latitude, longitude, DY);
-         const Real du_dp = evaluate (U, k, latitude, longitude, DZ);
-         const Real dz_dp = evaluate (Z, k, latitude, longitude, DZ);
-
-         const Real rho = p / (R_d * t);
-         const Real rho_g = rho * g;
-
-         const Real dw_dx = evaluate (W, k, latitude, longitude, DX);
-         const Real dw_dy = evaluate (W, k, latitude, longitude, DY);
-
-         const Real dt_dz = (dt_dp - (kappa * t / p)) / dz_dp;
-
-         const Real xi = dw_dy - dv_dp / dz_dp;
-         const Real eta = du_dp / dz_dp - dw_dx + f_hat;
-         const Real zeta = dv_dx - du_dy + f;
-
-         const Real pv_x = xi * dt_dx;
-         const Real pv_y = eta * dt_dy;
-         const Real pv_z = zeta * dt_dz;
-         const Real pv = (pv_x + pv_y + pv_z) / (exner * rho);
-
-         return pv;
-
-      };
-
-   }
-
-}
-
-Real
-Nwp::Data_3D::evaluate (const Nwp_Element element,
-                        const Real p,
-                        const Integer i,
-                        const Integer j,
-                        const Evaluate_Op evaluate_op) const
-{
-
-   switch (element)
-   {
-
-      case WIND_SPEED:
-      {
-         const Real u = evaluate (ZONAL_WIND, p, i, j);
-         const Real v = evaluate (MERIDIONAL_WIND, p, i, j);
-         return sqrt (u*u + v*v);
-      }
-
-      case WIND_DIRECTION:
-      {
-         const Real u = evaluate (ZONAL_WIND, p, i, j);
-         const Real v = evaluate (MERIDIONAL_WIND, p, i, j);
-         return Wind (u, v).get_direction ();
-      }
-
-      case DEW_POINT_DEPRESSION:
-      {
-         const Real t = evaluate (TEMPERATURE, p, i, j);
-         const Real t_d = evaluate (DEW_POINT, p, i, j);
-         return t - t_d;
-      }
-
-      case THETA:
-      {
-         const Real t = evaluate (TEMPERATURE, p, i, j);
-         return Thermo_Point::t_p (t - K, p).get_theta () + K;
-      }
-
-      case THETA_E:
-      {
-         const Real t = evaluate (TEMPERATURE, p, i, j);
-         const Real t_d = evaluate (DEW_POINT, p, i, j);
-         return Thermo_Point::normand (t - K, t_d - K, p).get_theta_e () + K;
-      }
-
-      case THETA_W:
-      {
-         const Real t = evaluate (TEMPERATURE, p, i, j);
-         const Real t_d = evaluate (DEW_POINT, p, i, j);
-         return Thermo_Point::normand (t - K, t_d - K, p).get_theta_w () + K;
-      }
-
-      case TEMPERATURE_ADVECTION:
-      {
-         const Real t_x = evaluate (TEMPERATURE, p, i, j, DX);
-         const Real t_y = evaluate (TEMPERATURE, p, i, j, DY);
-         const Real u = evaluate (ZONAL_WIND, p, i, j);
-         const Real v = evaluate (MERIDIONAL_WIND, p, i, j);
-         return -(t_x * u + t_y * v);
-      }
-
-      case ADIABATIC_HEATING:
-      {
-         const Real t = evaluate (TEMPERATURE, p, i, j);
-         const Real omega = evaluate (OMEGA, p, i, j);
-         const Real alpha = (R_d * t) / p;
-         return alpha / c_p * omega;
-      }
-
-      case LATENT_HEATING:
-      {
-         const Real rh = evaluate (RELATIVE_HUMIDITY, p, i, j);
-         if (rh < 0.9) { return 0; }
-         const Real t = evaluate (TEMPERATURE, p, i, j);
-         const Real omega = evaluate (OMEGA, p, i, j);
-         const Thermo_Point& tp = Thermo_Point::t_p (t, p);
-         return tp.get_saturated_Q_dot (omega) * rh;
-      }
-
-      case MONTGOMERY:
-      {
-         const Real t = evaluate (TEMPERATURE, p, i, j, evaluate_op);
-         const Real z = evaluate (GEOPOTENTIAL_HEIGHT, p, i, j, evaluate_op);
-         return g * z + c_p * t;
-      }
-
-      case ABSOLUTE_VORTICITY:
-      {
-
-         const Lat_Long& lat_long = get_lat_long (MERIDIONAL_WIND, i, j);
-         const Real& latitude = lat_long.latitude;
-         const Real& longitude = lat_long.longitude;
-         const Real f = Geodetic_Vector_Data_2D::get_f (latitude);
-
-         const Real dv_dx = evaluate (MERIDIONAL_WIND, p, i, j, DX);
-         const Real du_dy = evaluate (ZONAL_WIND, p, i, j, DY);
-
-         const Real zeta = dv_dx - du_dy + f;
-         return zeta;
-
-      }
-
-      case POTENTIAL_VORTICITY:
-      {
-
-         const Real exner = pow (Real (p / 1000e2), Real (kappa));
-         const Lat_Long& lat_long = get_lat_long (TEMPERATURE, i, j);
-         const Real& latitude = lat_long.latitude;
-         const Real& longitude = lat_long.longitude;
-         const Real f = Geodetic_Vector_Data_2D::get_f (latitude);
-         const Real f_hat = Geodetic_Vector_Data_2D::get_f_hat (latitude);
-
-         const Real t = evaluate (TEMPERATURE, p, i, j);
-         const Real dt_dx = evaluate (TEMPERATURE, p, i, j, DX);
-         const Real dt_dy = evaluate (TEMPERATURE, p, i, j, DY);
-         const Real dt_dp = evaluate (TEMPERATURE, p, i, j, DZ);
-         const Real dv_dx = evaluate (MERIDIONAL_WIND, p, i, j, DX);
-         const Real dv_dp = evaluate (MERIDIONAL_WIND, p, i, j, DZ);
-         const Real du_dy = evaluate (ZONAL_WIND, p, i, j, DY);
-         const Real du_dp = evaluate (ZONAL_WIND, p, i, j, DZ);
-         const Real dz_dp = evaluate (GEOPOTENTIAL_HEIGHT, p, i, j, DZ);
-         const Real dw_dx = evaluate (VERTICAL_VELOCITY, p, i, j, DX);
-         const Real dw_dy = evaluate (VERTICAL_VELOCITY, p, i, j, DY);
-
-         const Real rho = p / (R_d * t);
-         const Real rho_g = rho * g;
-         const Real dt_dz = (dt_dp - (kappa * t / p)) / dz_dp;
-
-         const Real xi = dw_dy - dv_dp / dz_dp;
-         const Real eta = du_dp / dz_dp - dw_dx + f_hat;
-         const Real zeta = dv_dx - du_dy + f;
-
-         const Real pv_x = xi * dt_dx;
-         const Real pv_y = eta * dt_dy;
-         const Real pv_z = zeta * dt_dz;
-         const Real pv = (pv_x + pv_y + pv_z) / (exner * rho);
-
-         return pv;
-
-      };
-
-   }
-
-   Data_3D::const_iterator iterator = find (element);
-   if (iterator == end ()) { return GSL_NAN; }
-
-   const Geodetic_Vector_Data_3D* gvd_3d_ptr = iterator->second;
-   if (gvd_3d_ptr == NULL) { return GSL_NAN; }
-
-   const Geodetic_Vector_Data_3D& gvd_3d = *gvd_3d_ptr;
-   return gvd_3d.evaluate (0, p, i, j, evaluate_op);
-}
-
-Real
-Nwp::Data_3D::evaluate (const Nwp_Element element,
-                        const Integer k,
-                        const Real latitude,
-                        const Real longitude,
-                        const Evaluate_Op evaluate_op) const
-{
-
-   switch (element)
-   {
-
-      case WIND_SPEED:
-      {
-         const Real u = evaluate (ZONAL_WIND, k, latitude, longitude);
-         const Real v = evaluate (MERIDIONAL_WIND, k, latitude, longitude);
-         return sqrt (u*u + v*v);
-      }
-
-      case WIND_DIRECTION:
-      {
-         const Real u = evaluate (ZONAL_WIND, k, latitude, longitude);
-         const Real v = evaluate (MERIDIONAL_WIND, k, latitude, longitude);
-         return Wind (u, v).get_direction ();
-      }
-
-      case DEW_POINT_DEPRESSION:
-      {
-         const Real t = evaluate (TEMPERATURE, k, latitude, longitude);
-         const Real t_d = evaluate (DEW_POINT, k, latitude, longitude);
-         return t - t_d;
-      }
-
-      case THETA:
-      {
-         const Real p = get_p (TEMPERATURE, k);
-         const Real t = evaluate (TEMPERATURE, k, latitude, longitude);
-         return Thermo_Point::t_p (t - K, p).get_theta () + K;;
-      }
-
-      case THETA_E:
-      {
-         const Real p = get_p (TEMPERATURE, k);
-         const Real t = evaluate (TEMPERATURE, k, latitude, longitude);
-         const Real t_d = evaluate (DEW_POINT, k, latitude, longitude);
-         return Thermo_Point::normand (t - K, t_d - K, p).get_theta_e () + K;
-      }
-
-      case THETA_W:
-      {
-         const Real p = get_p (TEMPERATURE, k);
-         const Real t = evaluate (TEMPERATURE, k, latitude, longitude);
-         const Real t_d = evaluate (DEW_POINT, k, latitude, longitude);
-         return Thermo_Point::normand (t - K, t_d - K, p).get_theta_w () + K;
-      }
-
-      case TEMPERATURE_ADVECTION:
-      {
-         const Real t_x = evaluate (TEMPERATURE, k, latitude, longitude, DX);
-         const Real t_y = evaluate (TEMPERATURE, k, latitude, longitude, DY);
-         const Real u = evaluate (ZONAL_WIND, k, latitude, longitude);
-         const Real v = evaluate (MERIDIONAL_WIND, k, latitude, longitude);
-         return -(t_x * u + t_y * v);
-      }
-
-      case ADIABATIC_HEATING:
-      {
-         const Real p = get_p (TEMPERATURE, k);
-         const Real t = evaluate (TEMPERATURE, k, latitude, longitude);
-         const Real omega = evaluate (OMEGA, k, latitude, longitude);
-         const Real alpha = (R_d * t) / p;
-         return alpha / c_p * omega;
-      }
-
-      case LATENT_HEATING:
-      {
-         const Real rh = evaluate (RELATIVE_HUMIDITY, k, latitude, longitude);
-         if (rh < 0.9) { return 0; }
-         const Real p = get_p (TEMPERATURE, k);
-         const Real t = evaluate (TEMPERATURE, k, latitude, longitude);
-         const Real omega = evaluate (OMEGA, k, latitude, longitude);
-         const Thermo_Point& tp = Thermo_Point::t_p (t, p);
-         return tp.get_saturated_Q_dot (omega) * rh;
-      }
-
-      case MONTGOMERY:
-      {
-         const Nwp_Element T = TEMPERATURE;
-         const Nwp_Element Z = GEOPOTENTIAL_HEIGHT;
-         const Real t = evaluate (T, k, latitude, longitude, evaluate_op);
-         const Real z = evaluate (Z, k, latitude, longitude, evaluate_op);
-         return g * z + c_p * t;
-      }
-
-      case ABSOLUTE_VORTICITY:
-      {
-
-         const Real f = Geodetic_Vector_Data_2D::get_f (latitude);
-
-         const Nwp_Element U = ZONAL_WIND;
-         const Nwp_Element V = MERIDIONAL_WIND;
-
-         const Real dv_dx = evaluate (V, k, latitude, longitude, DX);
-         const Real du_dy = evaluate (U, k, latitude, longitude, DY);
-         const Real zeta = dv_dx - du_dy + f;
-         return zeta;
-
-      }
-
-      case POTENTIAL_VORTICITY:
-      {
-
-         const Real p = get_p (TEMPERATURE, k);
-         const Real exner = pow (Real (p / 1000e2), Real (kappa));
-         const Real f = Geodetic_Vector_Data_2D::get_f (latitude);
-         const Real f_hat = Geodetic_Vector_Data_2D::get_f_hat (latitude);
-
-         const Nwp_Element T = TEMPERATURE;
-         const Nwp_Element U = ZONAL_WIND;
-         const Nwp_Element V = MERIDIONAL_WIND;
-         const Nwp_Element W = VERTICAL_VELOCITY;
-         const Nwp_Element Z = GEOPOTENTIAL_HEIGHT;
-
-         const Real t = evaluate (T, k, latitude, longitude);
-         const Real dt_dx = evaluate (T, k, latitude, longitude, DX);
-         const Real dt_dy = evaluate (T, k, latitude, longitude, DY);
-         const Real dt_dp = evaluate (T, k, latitude, longitude, DZ);
-         const Real dv_dx = evaluate (V, k, latitude, longitude, DX);
-         const Real dv_dp = evaluate (V, k, latitude, longitude, DZ);
-         const Real du_dy = evaluate (U, k, latitude, longitude, DY);
-         const Real du_dp = evaluate (U, k, latitude, longitude, DZ);
-         const Real dz_dp = evaluate (Z, k, latitude, longitude, DZ);
-         const Real dw_dx = evaluate (W, k, latitude, longitude, DX);
-         const Real dw_dy = evaluate (W, k, latitude, longitude, DY);
-
-         const Real rho = p / (R_d * t);
-         const Real rho_g = rho * g;
-         const Real dt_dz = (dt_dp - (kappa * t / p)) / dz_dp;
-
-         const Real xi = dw_dy - dv_dp / dz_dp;
-         const Real eta = du_dp / dz_dp - dw_dx + f_hat;
-         const Real zeta = dv_dx - du_dy + f;
-
-         const Real pv_x = xi * dt_dx;
-         const Real pv_y = eta * dt_dy;
-         const Real pv_z = zeta * dt_dz;
-         const Real pv = (pv_x + pv_y + pv_z) / (exner * rho);
-
-         return pv;
-
-      }
-
-   }
-
-   Data_3D::const_iterator iterator = find (element);
-   if (iterator == end ()) { return GSL_NAN; }
-
-   const Geodetic_Vector_Data_3D* gvd_3d_ptr = iterator->second;
-   if (gvd_3d_ptr == NULL) { return GSL_NAN; }
-
-   const Geodetic_Vector_Data_3D& gvd_3d = *gvd_3d_ptr;
-   return gvd_3d.evaluate (0, k, latitude, longitude, evaluate_op);
-
-}
-
-Real
-Nwp::Data_3D::evaluate (const Nwp_Element element,
-                        const Integer k,
-                        const Lat_Long& lat_long,
-                        const Evaluate_Op evaluate_op) const
-{
-   const Real& latitude = lat_long.latitude;
-   const Real& longitude = lat_long.longitude;
-   return evaluate (element, k, latitude, longitude, evaluate_op);
 }
 
 Real
@@ -1070,60 +619,6 @@ Nwp::Data_3D::evaluate (const Nwp_Element element,
    const Real& latitude = lat_long.latitude;
    const Real& longitude = lat_long.longitude;
    return evaluate (element, p, latitude, longitude, evaluate_op);
-}
-
-Real
-Nwp::Data_3D::get_li_thunder (const Integer k,
-                              const Integer i,
-                              const Integer j,
-                              const Real thunder_p,
-                              const Real thunder_t) const
-{
-   const Real p = get_p (TEMPERATURE, k);
-   if (p < thunder_p) { return GSL_NAN; }
-   const Real t = evaluate (TEMPERATURE, k, i, j);
-   const Real td = evaluate (DEW_POINT, k, i, j);
-   return Instability::get_lifted_index (p, t, td, thunder_p, thunder_t-K) + K;
-}
-
-Real
-Nwp::Data_3D::get_li_thunder (const Real p,
-                              const Integer i,
-                              const Integer j,
-                              const Real thunder_p,
-                              const Real thunder_t) const
-{
-   if (p < thunder_p) { return GSL_NAN; }
-   const Real t = evaluate (TEMPERATURE, p, i, j);
-   const Real td = evaluate (DEW_POINT, p, i, j);
-   return Instability::get_lifted_index (p, t, td, thunder_p, thunder_t-K) + K;
-}
-
-Real
-Nwp::Data_3D::get_li_thunder (const Integer k,
-                              const Real latitude,
-                              const Real longitude,
-                              const Real thunder_p,
-                              const Real thunder_t) const
-{
-   const Real p = get_p (TEMPERATURE, k);
-   if (p < thunder_p) { return GSL_NAN; }
-   const Real t = evaluate (TEMPERATURE, k, latitude, longitude);
-   const Real td = evaluate (DEW_POINT, k, latitude, longitude);
-   return Instability::get_lifted_index (p, t, td, thunder_p, thunder_t-K) + K;
-}
-
-Real
-Nwp::Data_3D::get_li_thunder (const Integer k,
-                              const Lat_Long& lat_long,
-                              const Real thunder_p,
-                              const Real thunder_t) const
-{
-   const Real p = get_p (TEMPERATURE, k);
-   if (p < thunder_p) { return GSL_NAN; }
-   const Real t = evaluate (TEMPERATURE, k, lat_long);
-   const Real td = evaluate (DEW_POINT, k, lat_long);
-   return Instability::get_lifted_index (p, t, td, thunder_p, thunder_t-K) + K;
 }
 
 Real
@@ -1494,15 +989,17 @@ Nwp::fill_lapse_data (Geodetic_Vector_Data_2D& gvd_2d,
    const Size_2D& size_2d = gvd_2d.get_size_2d ();
 
    const Data_3D& data_3d = get_3d_data (key);
-   const Tuple& tuple_p = data_3d.get_tuple_p (TEMPERATURE);
+   const Nwp_Element T = TEMPERATURE;
 
    for (Integer i = 0; i < size_2d.i; i++)
    {
+      const Real latitude = gvd_2d.get_coordinate (0, i);
       for (Integer j = 0; j < size_2d.j; j++)
       {
-         const Real next_p = next_p_data_ptr->get_datum (0, i, j);
-         const Real next_t = data_3d.evaluate (TEMPERATURE, next_p, i, j);
-         const Real this_t = this_t_data_ptr->get_datum (0, i, j);
+         const Real longitude = gvd_2d.get_coordinate (1, j);
+         Real next_p = next_p_data_ptr->get_datum (0, latitude, longitude);
+         Real next_t = data_3d.evaluate (T, next_p, latitude, longitude);
+         Real this_t = this_t_data_ptr->get_datum (0, latitude, longitude);
          gvd_2d.set_datum (vector_index, i, j, next_t - this_t);
       }
    }
@@ -1625,12 +1122,15 @@ Nwp::fill_p_potential_vorticity_data (Geodetic_Vector_Data_2D& gvd_2d,
 
    const Size_2D& size_2d = gvd_2d.get_size_2d ();
    Nwp::Data_3D& data_3d = get_3d_data (key);
+   const Nwp_Element PV = POTENTIAL_VORTICITY;
 
    for (Integer i = 0; i < size_2d.i; i++)
    { 
+      const Real latitude = gvd_2d.get_coordinate (0, i);
       for (Integer j = 0; j < size_2d.j; j++)
       {
-         const Real pv = data_3d.evaluate (POTENTIAL_VORTICITY, p, i, j);
+         const Real longitude = gvd_2d.get_coordinate (1, j);
+         const Real pv = data_3d.evaluate (PV, p, latitude, longitude);
          gvd_2d.set_datum (vector_index, i, j, pv);
       }
    }
@@ -1702,15 +1202,18 @@ Nwp::fill_p_temperature_advection_data (Geodetic_Vector_Data_2D& gvd_2d,
                                         const Real p)
 {
 
+   const Nwp_Element TA = TEMPERATURE_ADVECTION;
    const Size_2D& size_2d = gvd_2d.get_size_2d ();
    Nwp::Data_3D& data_3d = get_3d_data (key);
 
    for (Integer i = 0; i < size_2d.i; i++)
    { 
+      const Real latitude = gvd_2d.get_coordinate (0, i);
       for (Integer j = 0; j < size_2d.j; j++)
       {
-         const Real pv = data_3d.evaluate (TEMPERATURE_ADVECTION, p, i, j);
-         gvd_2d.set_datum (vector_index, i, j, pv);
+         const Real longitude = gvd_2d.get_coordinate (1, j);
+         const Real ta = data_3d.evaluate (TA, p, latitude, longitude);
+         gvd_2d.set_datum (vector_index, i, j, ta);
       }
    }
 
@@ -1782,14 +1285,17 @@ Nwp::fill_p_adiabatic_heating_data (Geodetic_Vector_Data_2D& gvd_2d,
                                     const Real p)
 {
 
+   const Nwp_Element AH = ADIABATIC_HEATING;
    const Size_2D& size_2d = gvd_2d.get_size_2d ();
    Nwp::Data_3D& data_3d = get_3d_data (key);
 
    for (Integer i = 0; i < size_2d.i; i++)
    { 
+      const Real latitude = gvd_2d.get_coordinate (0, i);
       for (Integer j = 0; j < size_2d.j; j++)
       {
-         const Real pv = data_3d.evaluate (ADIABATIC_HEATING, p, i, j);
+         const Real longitude = gvd_2d.get_coordinate (1, j);
+         const Real pv = data_3d.evaluate (AH, p, latitude, longitude);
          gvd_2d.set_datum (vector_index, i, j, pv);
       }
    }
@@ -1863,14 +1369,17 @@ Nwp::fill_p_latent_heating_data (Geodetic_Vector_Data_2D& gvd_2d,
                                  const Real p)
 {
 
+   const Nwp_Element LH = LATENT_HEATING;
    const Size_2D& size_2d = gvd_2d.get_size_2d ();
    Nwp::Data_3D& data_3d = get_3d_data (key);
 
    for (Integer i = 0; i < size_2d.i; i++)
    { 
+      const Real latitude = gvd_2d.get_coordinate (0, i);
       for (Integer j = 0; j < size_2d.j; j++)
       {
-         const Real pv = data_3d.evaluate (LATENT_HEATING, p, i, j);
+         const Real longitude = gvd_2d.get_coordinate (1, j);
+         const Real pv = data_3d.evaluate (LH, p, latitude, longitude);
          gvd_2d.set_datum (vector_index, i, j, pv);
       }
    }
@@ -1954,8 +1463,9 @@ Nwp::fill_pv_p_data (Geodetic_Vector_Data_2D& gvd_2d,
 
    const Nwp_Element PV = POTENTIAL_VORTICITY;
 
-   const Integer nk = tuple_p.size ();
    const Data_3D& data_3d = get_3d_data (key);
+   const Tuple& tuple_p = data_3d.get_tuple_p (TEMPERATURE);
+   const Integer nk = tuple_p.size ();
 
    const Level& surface = Level::surface_level ();
    fill_data (gvd_2d, vector_index, key, surface, PRESSURE);
@@ -1979,8 +1489,8 @@ Nwp::fill_pv_p_data (Geodetic_Vector_Data_2D& gvd_2d,
 
             const Real lower_p = tuple_p[k]; 
             const Real upper_p = tuple_p[k + 1];
-            const Real lower_pv = data_3d.evaluate (PV, lower_p, i, j); 
-            const Real upper_pv = data_3d.evaluate (PV, upper_p, i, j);
+            Real lower_pv = data_3d.evaluate (PV, lower_p, latitude, longitude);
+            Real upper_pv = data_3d.evaluate (PV, upper_p, latitude, longitude);
 
             if (lower_p > lowest_p)
             {
@@ -2155,19 +1665,22 @@ Nwp::fill_snow_probability_data (Geodetic_Vector_Data_2D& gvd_2d,
    const Real b2 = 0.57193;
    const Real b3 = 0.0042365;
    const Real b4 = 0.02552;
+   const Real p_850 = 850e2;
    const Nwp_Element T = TEMPERATURE;
    const Nwp_Element Z = GEOPOTENTIAL_HEIGHT;
 
    const Size_2D& size_2d = gvd_2d.get_size_2d ();
    for (Integer i = 0; i < size_2d.i; i++)
    {
+      const Real latitude = gvd_2d.get_coordinate (0, i);
       for (Integer j = 0; j < size_2d.j; j++)
       {
-         const Real t = data_3d.evaluate (T, Real (850e2), i, j) - K;
-         const Real z = data_3d.evaluate (Z, Real (850e2), i, j);
+         const Real longitude = gvd_2d.get_coordinate (1, j);
+         const Real t = data_3d.evaluate (T, p_850, latitude, longitude) - K;
+         const Real z = data_3d.evaluate (Z, p_850, latitude, longitude);
          const Real thick = data_ptr->get_datum (0, i, j);
          const Real surface_p = data_ptr->get_datum (1, i, j);
-         const Real e = data_3d.evaluate (Z, surface_p, i, j);
+         const Real e = data_3d.evaluate (Z, surface_p, latitude, longitude);
          const Real p = 1 / (1 + exp (b0 + b1*e + b2*t + b3*z + b4*thick));
          gvd_2d.set_datum (vector_index, i, j, p);
       }
@@ -2640,16 +2153,15 @@ Nwp::fill_pressure_level_data (Geodetic_Vector_Data_2D& gvd_2d,
 
    }
 
+   //if ((p - tuple_p.front ()) * (p - tuple_p.back ()) > 0)
+   //{
+   //   string error_str = "Nwp::fill_pressure_level_data_ptr ";
+   //   error_str += string_render (" %f", p);
+   //   throw Nwp_Exception (error_str);
+   //}
+
    Nwp::Data_3D& data_3d = get_3d_data (key);
    const Nwp_Element element = nwp_element;
-
-   if ((p - tuple_p.front ()) * (p - tuple_p.back ()) > 0)
-   {
-      string error_str = "Nwp::fill_pressure_level_data_ptr ";
-      error_str += string_render (" %f", p);
-      throw Nwp_Exception (error_str);
-   }
-
    const Size_2D& size_2d = gvd_2d.get_size_2d ();
 
    for (Integer i = 0; i < size_2d.i; i++)
@@ -2705,11 +2217,12 @@ Nwp::fill_sigma_level_data (Geodetic_Vector_Data_2D& gvd_2d,
                             const Geodetic_Vector_Data_2D& surface_p_data)
 {
 
-   const Nwp_Element& ne = nwp_element;
+   const Data_3D& data_3d = get_3d_data (key);
+   const Tuple& tuple_p = data_3d.get_tuple_p (TEMPERATURE);
    const Real& start_p = tuple_p.front ();
    const Real& end_p = tuple_p.back ();
 
-   const Data_3D& data_3d = get_3d_data (key);
+   const Nwp_Element& ne = nwp_element;
    const Size_2D& size_2d = gvd_2d.get_size_2d ();
 
    for (Integer i = 0; i < size_2d.i; i++)
@@ -3295,52 +2808,54 @@ Nwp::get_3d_data (const Key& key)
 Geodetic_Vector_Data_2D*
 Nwp::get_ts_steering_data_ptr (const Key& key)
 {
-   const Layer layer (PRESSURE_LEVEL, 600e2, 800e2);
-   return get_steering_data_ptr (key, layer);
+   const Level level (PRESSURE_LEVEL, 600e2, 800e2);
+   return get_steering_data_ptr (key, level);
 }
 
 Geodetic_Vector_Data_2D*
 Nwp::get_steering_data_ptr (const Key& key,
-                            const Layer& layer)
+                            const Level& level)
 {
 
-   if (layer.type != PRESSURE_LEVEL)
+   if (level.type != PRESSURE_LEVEL)
    {
-      throw Nwp_Exception ("Can't do non-P Layer");
+      throw Nwp_Exception ("Can't do non-P Level");
    }
 
-   const Real p_a = layer.value;
-   const Real p_b = layer.value_;
-
-   Geodetic_Vector_Data_2D* data_ptr = get_initialized_vd_2d (2);
-   Geodetic_Vector_Data_2D* temp_data_ptr = get_initialized_vd_2d (2);
-
-   const Integer nk = tuple_p.size ();
-   const Size_2D& size_2d = data_ptr->get_size_2d ();
+   const Nwp_Element& U = ZONAL_WIND;
+   const Nwp_Element& V = MERIDIONAL_WIND;
+   const Data_3D& data_3d = get_3d_data (key);
 
    Integer n = 0;
+   Geodetic_Vector_Data_2D* data_ptr = get_initialized_vd_2d (2);
    data_ptr->initialize (0, 0);
    data_ptr->initialize (1, 0);
+
+   const Tuple& tuple_p = data_3d.get_tuple_p (ZONAL_WIND);
+   const Integer nk = tuple_p.size ();
+   const Size_2D& size_2d = data_ptr->get_size_2d ();
 
    for (Integer k = 0; k < nk; k++)
    {
 
+      // Iterate each level
+      // If this level is out of boundaries p_a, p_b, then continue
       const Real p = tuple_p[k];
-      if ((p - p_a) * (p - p_b) > 0) { continue; }
+      if ((p - level.value) * (p - level.value_) > 0) { continue; }
       const Level& level = Level::pressure_level (p);
 
       try
       {
 
-         fill_wind_data (*temp_data_ptr, 0, 1, key, level);
-
          for (Integer i = 0; i < size_2d.i; i++)
          {
+            const Real latitude = data_ptr->get_coordinate (0, i);
             for (Integer j = 0; j < size_2d.j; j++)
             {
+               const Real longitude = data_ptr->get_coordinate (1, j);
 
-               const Real u = temp_data_ptr->get_datum (0, i, j);
-               const Real v = temp_data_ptr->get_datum (1, i, j);
+               const Real u = data_3d.evaluate (U, p, latitude, longitude);
+               const Real v = data_3d.evaluate (V, p, latitude, longitude);
 
                data_ptr->get_datum (0, i, j) += u;
                data_ptr->get_datum (1, i, j) += v;
@@ -3357,8 +2872,6 @@ Nwp::get_steering_data_ptr (const Key& key,
 
    }
 
-   delete temp_data_ptr;
-
    const Real reciprocal = Real (1) / n;
    data_ptr->scale_offset (0, reciprocal, 0);
    data_ptr->scale_offset (1, reciprocal, 0);
@@ -3369,11 +2882,11 @@ Nwp::get_steering_data_ptr (const Key& key,
 
 Geodetic_Vector_Data_2D*
 Nwp::get_vertical_shear_data_ptr (const Key& key,
-                                  const Layer& layer)
+                                  const Level& level)
 {
 
-   const Level& level_a = layer.get_level_0 ();
-   const Level& level_b = layer.get_level_1 ();
+   const Level& level_a = level.get_level_0 ();
+   const Level& level_b = level.get_level_1 ();
 
    Geodetic_Vector_Data_2D* data_ptr = get_initialized_vd_2d (2);
    Geodetic_Vector_Data_2D* temp_data_ptr = get_initialized_vd_2d (2);
@@ -3403,6 +2916,69 @@ Nwp::get_vertical_shear_data_ptr (const Key& key,
 }
 
 Geodetic_Vector_Data_2D*
+Nwp::get_min_li_thunder_data_ptr (const Key& key,
+                                  const Real thunder_t)
+{
+
+   typedef Geodetic_Vector_Data_2D Gvd_2d;
+   const Nwp_Element T = TEMPERATURE;
+   const Nwp_Element TD = DEW_POINT;
+
+   const Data_3D& data_3d = get_3d_data (key);
+   const Tuple& tuple_p = data_3d.get_tuple_p (T);
+
+   Gvd_2d* data_ptr = get_initialized_vd_2d (2);
+   const Size_2D& size_2d = data_ptr->get_size_2d ();
+
+   Gvd_2d* p_data_ptr = get_temperature_p_data_ptr (key, thunder_t);
+
+   #pragma omp parallel for
+   for (Integer i = 0; i < size_2d.i; i++)
+   {
+      const Real latitude = data_ptr->get_coordinate (0, i);
+
+      for (Integer j = 0; j < size_2d.j; j++)
+      {
+         const Real longitude = data_ptr->get_coordinate (1, j);
+
+         Real min_li_thunder_p = GSL_NAN;
+         Real min_li_thunder = GSL_POSINF;
+
+         for (Integer k = 0; k < tuple_p.size (); k++)
+         {
+
+            const Real p = tuple_p[k];
+            const Real end_p = p_data_ptr->evaluate (0, i, j);
+            if (p < end_p || gsl_isnan (end_p)) { continue; }
+
+            const Real start_t = data_3d.evaluate (T, p, latitude, longitude);
+            const Real start_td = data_3d.evaluate (TD, p, latitude, longitude);
+            const Real li_thunder = Instability::get_lifted_index (
+               p, start_t, start_td, end_p, thunder_t - K) + K;
+
+            if (gsl_finite (li_thunder))
+            {
+               if (li_thunder < min_li_thunder)
+               {
+                  min_li_thunder = li_thunder;
+                  min_li_thunder_p = p;
+               }
+            }
+
+         }
+
+         data_ptr->set_datum (0, i, j, min_li_thunder);
+         data_ptr->set_datum (1, i, j, min_li_thunder_p);
+
+      }
+   }
+
+   delete p_data_ptr;
+   return data_ptr;
+
+}
+
+Geodetic_Vector_Data_2D*
 Nwp::get_freezing_level_data_ptr (const Key& key)
 
 {
@@ -3411,8 +2987,6 @@ Nwp::get_freezing_level_data_ptr (const Key& key)
    const Nwp_Element Z = GEOPOTENTIAL_HEIGHT;
 
    const Data_3D& data_3d = get_3d_data (key);
-   const Geodetic_Vector_Data_3D& t_data_3d = data_3d.get_gvd_3d (T);
-   const Geodetic_Vector_Data_3D& z_data_3d = data_3d.get_gvd_3d (Z);
    const Tuple& tuple_p = data_3d.get_tuple_p (T);
    const Integer nk = tuple_p.size ();
 
@@ -3423,6 +2997,7 @@ Nwp::get_freezing_level_data_ptr (const Key& key)
    {
 
       Real* array = new Real[3];
+      const Real latitude = data_ptr->get_coordinate (0, i);
 
       for (Integer j = 0; j < size_2d.j; j++)
       {
@@ -3431,24 +3006,25 @@ Nwp::get_freezing_level_data_ptr (const Key& key)
          array[0] = GSL_NAN;
          array[1] = GSL_NAN;
          array[2] = GSL_NAN;
+         const Real longitude = data_ptr->get_coordinate (1, j);
 
          for (Integer k = 0; k < nk - 1; k++)
          {
 
             const Real lower_p = tuple_p[k];
             const Real upper_p = tuple_p[k + 1];
-            const Real lower_t = t_data_3d.evaluate (0, lower_p, i, j) - K; 
-            const Real upper_t = t_data_3d.evaluate (0, upper_p, i, j) - K;
+            Real lt = data_3d.evaluate (T, lower_p, latitude, longitude) - K; 
+            Real ut = data_3d.evaluate (T, upper_p, latitude, longitude) - K;
 
-            if (lower_t * upper_t <= 0)
+            if (lt * ut <= 0)
             {
 
-               const Real lower_z = z_data_3d.evaluate (0, lower_p, i, j);
-               const Real upper_z = z_data_3d.evaluate (0, upper_p, i, j);
-               const Real dz = upper_z - lower_z;
-               const Real dt = upper_t - lower_t;
+               Real lz = data_3d.evaluate (Z, lower_p, latitude, longitude);
+               Real uz = data_3d.evaluate (Z, upper_p, latitude, longitude);
+               const Real dz = uz - lz;
+               const Real dt = ut - lt;
 
-               const Real z = lower_z - (lower_t * dz / dt);
+               const Real z = lz - (lt * dz / dt);
 
                array[filled] = z;
                if (filled < 2) { filled++; }
@@ -3490,10 +3066,13 @@ Nwp::get_temperature_p_data_ptr (const Key& key,
    for (Integer i = 0; i < size_2d.i; i++)
    {
 
+      const Real latitude = data_ptr->get_coordinate (0, i);
+
       for (Integer j = 0; j < size_2d.j; j++)
       {
 
          Real p = GSL_NAN;
+         const Real longitude = data_ptr->get_coordinate (1, j);
 
          for (Integer k = 0; k < nk - 1; k++)
          {
@@ -3689,14 +3268,15 @@ Nwp::get_cloud_base_data_ptr (const Key& key,
 
    const Nwp_Element T = TEMPERATURE;
    const Nwp_Element Z = GEOPOTENTIAL_HEIGHT;
+   const Nwp_Element U = ZONAL_WIND;
+   const Nwp_Element V = MERIDIONAL_WIND;
 
    const Data_3D& data_3d = get_3d_data (key);
 
-   const Geodetic_Vector_Data_3D& z_data_3d = data_3d.get_gvd_3d (Z);
    const Tuple& tuple_p = data_3d.get_tuple_p (Z);
    const Integer nk = tuple_p.size ();
 
-   Geodetic_Vector_Data_2D* data_ptr = get_initialized_vd_2d (1);
+   Geodetic_Vector_Data_2D* data_ptr = get_initialized_vd_2d (3);
    const Size_2D& size_2d = data_ptr->get_size_2d ();
 
    const Level& surface = Level::surface_level ();
@@ -3714,6 +3294,8 @@ Nwp::get_cloud_base_data_ptr (const Key& key,
 
          const Real surface_p = data_ptr->get_datum (0, i, j);
          data_ptr->set_datum (0, i, j, GSL_NAN);
+         data_ptr->set_datum (1, i, j, GSL_NAN);
+         data_ptr->set_datum (2, i, j, GSL_NAN);
 
          for (Integer k = nk - 1; k >= 0; k--)
          {
@@ -3722,14 +3304,18 @@ Nwp::get_cloud_base_data_ptr (const Key& key,
             if (p > surface_p || p > level.value) { continue; }
 
             const Real rh = data_3d.evaluate (
-               RELATIVE_HUMIDITY, k, latitude, longitude);
+               RELATIVE_HUMIDITY, p, latitude, longitude);
 
             if ((rh >= 0.85) ||
                 (p < 850e2 && rh >= 0.8) ||
                 (p < 600e2 && rh >= 0.75))
             {
-               const Real datum = z_data_3d.evaluate (0, p, i, j);
+               const Real datum = data_3d.evaluate (Z, p, latitude, longitude);
+               const Real u = data_3d.evaluate (U, p, latitude, longitude);
+               const Real v = data_3d.evaluate (V, p, latitude, longitude);
                data_ptr->set_datum (0, i, j, datum);
+               data_ptr->set_datum (1, i, j, u);
+               data_ptr->set_datum (2, i, j, v);
                break;
             }
 
@@ -4233,16 +3819,23 @@ Nwp::get_stratus_data_ptr (const Key& key,
 
    Gvd_2d& gvd_2d = *data_ptr;
    const Data_3D& data_3d = get_3d_data (key);
-   const Tuple& tuple_p = data_3d.get_tuple_p (TEMPERATURE);
    const Size_2D& size_2d = gvd_2d.get_size_2d ();
 
    for (Integer i = 0; i < size_2d.i; i++)
    {
+
+      const Real latitude = data_ptr->get_coordinate (0, i);
+
       for (Integer j = 0; j < size_2d.j; j++)
       {
+
+         const Real longitude = data_ptr->get_coordinate (0, longitude);
+
          const Real next_p = next_p_data_ptr->get_datum (0, i, j);
-         const Real next_t = data_3d.evaluate (TEMPERATURE, next_p, i, j);
-         const Real next_td = data_3d.evaluate (DEW_POINT, next_p, i, j);
+         const Real next_t = data_3d.evaluate (TEMPERATURE,
+            next_p, latitude, longitude);
+         const Real next_td = data_3d.evaluate (DEW_POINT,
+            next_p, latitude, longitude);
          const Real this_t = this_t_data_ptr->get_datum (0, i, j);
          const Real this_td = this_td_data_ptr->get_datum (0, i, j);
          const Real next_ttd = next_t - next_td;
@@ -4868,6 +4461,36 @@ Nwp::get_rainfall_data_ptr (const Key& key,
 }
 
 Geodetic_Vector_Data_2D*
+Nwp::get_isallobar_data_ptr (const Key& key)
+{
+
+   Geodetic_Vector_Data_2D* data_ptr = get_initialized_vd_2d (1);
+
+   Geodetic_Vector_Data_2D* mslp_data_ptr = get_initialized_vd_2d (2);
+   const Level& msl = Level::mean_sea_level ();
+   const Key& prev_key = key_multimap.get_previous_key (key);
+
+   fill_data (*mslp_data_ptr, 0, prev_key, msl, PRESSURE);
+   fill_data (*mslp_data_ptr, 1, key, msl, PRESSURE);
+
+   const Size_2D& size_2d = data_ptr->get_size_2d ();
+
+   for (Integer i = 0; i < size_2d.i; i++)
+   {
+      for (Integer j = 0; j < size_2d.j; j++)
+      {
+         const Real this_mslp = mslp_data_ptr->get_datum (1, i, j); 
+         const Real prev_mslp = mslp_data_ptr->get_datum (0, i, j); 
+         data_ptr->set_datum (0, i, j, this_mslp - prev_mslp);
+      }
+   }
+
+   delete mslp_data_ptr;
+   return data_ptr;
+
+}
+
+Geodetic_Vector_Data_2D*
 Nwp::get_sutcliffe_data_ptr (const Key& key)
 {
 
@@ -5250,7 +4873,6 @@ Nwp::get_cross_section_ptr (const Key& key,
 
             try
             {
-
                const Real datum = (nwp_element == LI_THUNDER) ?
                   data_3d.get_li_thunder (p, lat_long, thunder_p, thunder_t) :
                   data_3d.evaluate (nwp_element, p, lat_long);
@@ -5298,10 +4920,12 @@ Nwp::get_cross_section_ptr (const Key& key,
          for (Integer k = 0; k < tuple_p.size (); k++)
          {
 
+            const Real p = tuple_p[k];
+
             try
             {
-               const Real u = data_3d.evaluate (U, k, latitude, longitude);
-               const Real v = data_3d.evaluate (V, k, latitude, longitude);
+               const Real u = data_3d.evaluate (U, p, latitude, longitude);
+               const Real v = data_3d.evaluate (V, p, latitude, longitude);
                const Real uu = u * s + v * c;
                const Real vv = v * s - u * c;
                s_sd_2d.set_datum (ii, k, uu);
@@ -5315,7 +4939,7 @@ Nwp::get_cross_section_ptr (const Key& key,
 
             try
             {
-               const Real o = data_3d.evaluate (O, k, latitude, longitude);
+               const Real o = data_3d.evaluate (O, p, latitude, longitude);
                o_sd_2d.set_datum (ii, k, o);
             }
             catch (const std::exception& se)
@@ -5396,7 +5020,7 @@ Nwp::get_sounding_ptr (const Lat_Long& lat_long,
    {
       const Real p = t_tuple_p[k];
       if (p > surface_p) { continue; }
-      const Real t = data_3d.evaluate (TEMPERATURE, k, latitude, longitude);
+      const Real t = data_3d.evaluate (TEMPERATURE, p, latitude, longitude);
       const bool invalid = gsl_isnan (t) || (t > 350) || (t < -150);
       if (!invalid) { sounding_ptr->get_t_line ().add (p, t - K); }
    }
@@ -5405,7 +5029,7 @@ Nwp::get_sounding_ptr (const Lat_Long& lat_long,
    {
       const Real p = td_tuple_p[k];
       if (p > surface_p) { continue; }
-      const Real t_d = data_3d.evaluate (DEW_POINT, k, latitude, longitude);
+      const Real t_d = data_3d.evaluate (DEW_POINT, p, latitude, longitude);
       const bool invalid = gsl_isnan (t_d) || (t_d > 350) || (t_d < -150);
       if (!invalid) { sounding_ptr->get_t_d_line ().add (p, t_d - K); }
    }
@@ -5414,7 +5038,7 @@ Nwp::get_sounding_ptr (const Lat_Long& lat_long,
    {
       const Real p = z_tuple_p[k];
       if (p > surface_p) { continue; }
-      const Real z = data_3d.evaluate (GEOPOTENTIAL_HEIGHT, k, latitude, longitude);
+      const Real z = data_3d.evaluate (GEOPOTENTIAL_HEIGHT, p, latitude, longitude);
       const bool invalid = gsl_isnan (z) || (z > 30000) || (z < -500);
       if (!invalid) { sounding_ptr->get_height_profile ().add (p, z); }
    }
@@ -5423,8 +5047,8 @@ Nwp::get_sounding_ptr (const Lat_Long& lat_long,
    {
       const Real p = u_tuple_p[k];
       if (p > surface_p) { continue; }
-      const Real u = data_3d.evaluate (ZONAL_WIND, k, latitude, longitude);
-      const Real v = data_3d.evaluate (MERIDIONAL_WIND, k, latitude, longitude);
+      const Real u = data_3d.evaluate (ZONAL_WIND, p, latitude, longitude);
+      const Real v = data_3d.evaluate (MERIDIONAL_WIND, p, latitude, longitude);
       const bool invalid_u = gsl_isnan (u) || (u > 300) || (u < -300);
       const bool invalid_v = gsl_isnan (v) || (v > 300) || (v < -300);
       const bool valid = !invalid_u && !invalid_v;
@@ -5594,12 +5218,14 @@ Nwp::get_time_cross_data_ptr (const Lat_Long& lat_long,
          for (Integer k = 0; k < tuple_p.size (); k++)
          {
 
+            const Real p = tuple_p[k];
+
             try
             {
 
                const Real datum = (nwp_element == LI_THUNDER) ?
-                  data_3d.get_li_thunder (k, lat_long, thunder_p, thunder_t) :
-                  data_3d.evaluate (nwp_element, k, lat_long);
+                  data_3d.get_li_thunder (p, lat_long, thunder_p, thunder_t) :
+                  data_3d.evaluate (nwp_element, p, lat_long);
                sd_2d.set_datum (i, k, datum);
             }
             catch (const std::exception& se)

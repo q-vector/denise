@@ -90,7 +90,7 @@ namespace denise
       ADIABATIC_HEATING,
       LATENT_HEATING,
       VARIANCE_TEMPERATURE,
-      VARIANCE_RELATIVE_HUMIDITY,
+      VARIANCE_DEW_POINT,
       VARIANCE_GEOPOTENTIAL_HEIGHT,
       VARIANCE_ZONAL_WIND,
       VARIANCE_MERIDIONAL_WIND,
@@ -217,6 +217,9 @@ namespace denise
                bool
                available;
 
+               const vector<Nwp_Element>
+               nwp_element_vector;
+
             public:
 
                const Key
@@ -226,6 +229,28 @@ namespace denise
                         const Key& key);
 
                ~Data_3D ();
+
+               void
+               read (FILE* file,
+                     const bool float_length = true);
+
+               void
+               read (ifstream& file,
+                     const bool float_length = true);
+
+               void
+               write (FILE* file,
+                      const bool float_length = true) const;
+
+               void
+               write (ofstream& file,
+                      const bool float_length = true) const;
+
+               void
+               unload ();
+
+               void
+               unload (const Nwp_Element nwp_element);
 
                void
                set_gvd_3d_ptr (const Nwp_Element nwp_element,
@@ -260,45 +285,12 @@ namespace denise
 
                virtual Real
                get_p_from_element (const Nwp_Element nwp_element,
-                                   const Integer i,
-                                   const Integer j,
-                                   const Real element_value) const;
-
-               virtual Real
-               get_p_from_element (const Nwp_Element nwp_element,
                                    const Real latitude,
                                    const Real longitude,
                                    const Real element_value) const;
 
                virtual Real
                evaluate (const Nwp_Element element,
-                         const Integer k,
-                         const Integer i,
-                         const Integer j,
-                         const Evaluate_Op evaluate_op = VALUE) const;
-
-               virtual Real
-               evaluate (const Nwp_Element element,
-                         const Real p,
-                         const Integer i,
-                         const Integer j,
-                         const Evaluate_Op evaluate_op = VALUE) const;
-
-               virtual Real
-               evaluate (const Nwp_Element element,
-                         const Integer k,
-                         const Real latitude,
-                         const Real longitude,
-                         const Evaluate_Op evaluate_op = VALUE) const;
-
-               virtual Real
-               evaluate (const Nwp_Element element,
-                         const Integer k,
-                         const Lat_Long& lat_long,
-                         const Evaluate_Op evaluate_op = VALUE) const;
-
-               virtual Real
-               evaluate (const Nwp_Element element,
                          const Real p,
                          const Real latitude,
                          const Real longitude,
@@ -309,33 +301,6 @@ namespace denise
                          const Real p,
                          const Lat_Long& lat_long,
                          const Evaluate_Op evaluate_op = VALUE) const;
-
-               Real
-               get_li_thunder (const Integer k,
-                               const Integer i,
-                               const Integer j,
-                               const Real thunder_p,
-                               const Real thunder_t) const;
-
-               Real
-               get_li_thunder (const Real p,
-                               const Integer i,
-                               const Integer j,
-                               const Real thunder_p,
-                               const Real thunder_t) const;
-
-               Real
-               get_li_thunder (const Integer k,
-                               const Real latitude,
-                               const Real longitude,
-                               const Real thunder_p,
-                               const Real thunder_t) const;
-
-               Real
-               get_li_thunder (const Integer k,
-                               const Lat_Long& lat_long,
-                               const Real thunder_p,
-                               const Real thunder_t) const;
 
                Real
                get_li_thunder (const Real p,
@@ -480,8 +445,14 @@ namespace denise
 
       protected:
 
+         typedef map<Key, Data_3D*>
+         Data_3d_Ptr_Map;
+
          vector<Nwp_Element>
          nwp_element_vector;
+
+         Tuple
+         tuple_p;
 
          const string
          path;
@@ -495,10 +466,7 @@ namespace denise
          Key_Multimap
          key_multimap;
 
-         Tuple
-         tuple_p;
-
-         map<Key, Data_3D*>
+         Data_3d_Ptr_Map
          data_3d_ptr_map;
 
          virtual Geodetic_Vector_Data_2D*
@@ -816,11 +784,15 @@ namespace denise
 
          virtual Geodetic_Vector_Data_2D*
          get_steering_data_ptr (const Key& key,
-                                const Layer& layer);
+                                const Level& level);
 
          virtual Geodetic_Vector_Data_2D*
          get_vertical_shear_data_ptr (const Key& key,
-                                      const Layer& layer);
+                                      const Level& level);
+
+         virtual Geodetic_Vector_Data_2D*
+         get_min_li_thunder_data_ptr (const Key& key,
+                                      const Real thunder_t = -20 + K);
 
          virtual Geodetic_Vector_Data_2D*
          get_freezing_level_data_ptr (const Key& key);
@@ -953,6 +925,9 @@ namespace denise
          virtual Geodetic_Vector_Data_2D*
          get_rainfall_data_ptr (const Key& key,
                                 const Integer hours = -1);
+
+         virtual Geodetic_Vector_Data_2D*
+         get_isallobar_data_ptr (const Key& key);
 
          virtual Geodetic_Vector_Data_2D*
          get_sutcliffe_data_ptr (const Key& key);
