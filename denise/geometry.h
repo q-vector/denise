@@ -783,6 +783,10 @@ namespace denise
          Polygon (const Ellipse& ellipse,
                   const Integer n = 360);
 
+         Polygon (const Domain_2D& domain_2d,
+                  const Real delta_x = 0.1,
+                  Real delta_y = GSL_NAN);
+
          ~Polygon ();
 
          void

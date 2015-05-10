@@ -556,20 +556,6 @@ namespace denise
 
    };
 
-   class Lat_Long_Frame : public Polygon
-   {
-
-      public:
-
-         Lat_Long_Frame (const Real start_latitude,
-                         const Real end_latitude,
-                         const Real start_longitude,
-                         const Real end_longitude,
-                         const Real delta_latitude = 0.1,
-                         const Real delta_longitude = 0.1);
-
-   };
-
    class Range_Circle : public Polygon
    {
 

@@ -2499,6 +2499,55 @@ Polygon::Polygon (const Ellipse& ellipse,
 
 }
 
+Polygon::Polygon (const Domain_2D& domain_2d,
+                  const Real delta_x,
+                  Real delta_y)
+   : first_handle_ptr (NULL),
+     domain_x (GSL_POSINF, GSL_NEGINF),
+     domain_y (GSL_POSINF, GSL_NEGINF),
+     min_edge_length (GSL_POSINF)
+{
+
+   if (!gsl_finite (delta_y)) { delta_y = delta_x; }
+
+   const Real start_x = domain_2d.domain_x.start;
+   const Real end_x = domain_2d.domain_x.end;
+   const Real start_y = domain_2d.domain_y.start;
+   const Real end_y = domain_2d.domain_y.end;
+   const Real span_x = end_x - start_x;
+   const Real span_y = end_y - start_y;
+   const Integer n_x = Integer (ceil (span_x / delta_x)) + 1;
+   const Integer n_y = Integer (ceil (span_y / delta_y)) + 1;
+   const Real d_x = span_x / (n_x - 1);
+   const Real d_y = span_y / (n_y - 1);
+
+   for (Integer i = 0; i < n_x; i++)
+   {
+      const Real x = start_x + i * d_x;
+      add (Point_2D (x, start_y));
+   }
+
+   for (Integer j = 1; j < n_y; j++)
+   {
+      const Real y = start_y + j * d_y;
+      add (Point_2D (end_x, y));
+   }
+
+   for (Integer i = n_x - 1; i > 0; i--)
+   {
+      const Real x = start_x  + i * d_x;
+      add (Point_2D (x, end_y));
+   }
+
+   for (Integer j = n_y - 1; j > 0; j--)
+   {
+      const Real y = start_y  + j * d_y;
+      add (Point_2D (start_x, y));
+   }
+
+
+}
+
 Polygon::~Polygon ()
 {
    clear ();

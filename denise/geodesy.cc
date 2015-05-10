@@ -1469,47 +1469,6 @@ Degree_Geodetic_Attractor::nearest (const Lat_Long& lat_long) const
    return make_pair ("", Lat_Long (latitude, longitude));
 }
 
-Lat_Long_Frame::Lat_Long_Frame (const Real start_latitude,
-                                const Real end_latitude,
-                                const Real start_longitude,
-                                const Real end_longitude,
-                                const Real delta_latitude,
-                                const Real delta_longitude)
-{
-
-   const Real latitude_span = end_latitude - start_latitude;
-   const Real longitude_span = end_longitude - start_longitude;
-   const Integer n_lat = Integer (ceil (latitude_span / delta_latitude)) + 1;
-   const Integer n_long = Integer (ceil (longitude_span / delta_longitude)) + 1;
-   const Real d_latitude = latitude_span / (n_lat - 1);
-   const Real d_longitude = longitude_span / (n_long - 1);
-
-   for (Integer i = 0; i < n_lat; i++)
-   {
-      const Real latitude = start_latitude + i * d_latitude;
-      add (Point_2D (latitude, start_longitude));
-   }
-
-   for (Integer j = 1; j < n_long; j++)
-   {
-      const Real longitude = start_longitude + j * d_longitude;
-      add (Point_2D (end_latitude, longitude));
-   }
-
-   for (Integer i = n_lat - 1; i > 0; i--)
-   {
-      const Real latitude = start_latitude  + i * d_latitude;
-      add (Point_2D (latitude, end_longitude));
-   }
-
-   for (Integer j = n_long - 1; j > 0; j--)
-   {
-      const Real longitude = start_longitude  + j * d_longitude;
-      add (Point_2D (start_latitude, longitude));
-   }
-
-}
-
 Range_Circle::Range_Circle (const Lat_Long& lat_long,
                             const Real range,
                             const Real standard_longitude,
