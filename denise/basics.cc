@@ -951,6 +951,14 @@ Domain_1D::translate (const Real delta)
    end += delta;
 }
 
+Real
+Domain_1D::normalize (const Real x,
+                      const Real gamma) const
+{
+   const Real f = std::min (std::max ((x - start) / (end - start), 0.0), 1.0);
+   return pow (f, gamma);
+}
+
 Domain_2D::Domain_2D (const Real start_x,
                       const Real end_x,
                       const Real start_y,

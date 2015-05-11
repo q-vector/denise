@@ -64,6 +64,12 @@ namespace denise
    imodulo (const Integer i,
             const Integer j);
 
+   Real
+   normalize (const Real x,
+              const Real min,
+              const Real max,
+              const Real gamma);
+
    /// Returns a random number between max and min.
    ///
    /// Returns a random number between max and min.

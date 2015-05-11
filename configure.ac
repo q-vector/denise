@@ -1,6 +1,6 @@
 dnl Process this file with autoconf to produce a configure script.
-AC_INIT([denise], [736])
-AM_INIT_AUTOMAKE([denise], [736])
+AC_INIT([denise], [0.1.0])
+AM_INIT_AUTOMAKE([denise], [0.1.0])
 
 dnl Check for options.
 AC_ARG_ENABLE(fft, AC_HELP_STRING([--enable-fft],

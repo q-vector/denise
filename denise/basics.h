@@ -709,6 +709,10 @@ namespace denise
          void
          translate (const Real delta);
 
+         Real
+         normalize (const Real x,
+                    const Real gamma = 1) const;
+
    };
 
    class Domain_2D

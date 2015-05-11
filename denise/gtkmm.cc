@@ -3690,7 +3690,6 @@ Time_Chooser::get_s (const Dtime& dtime) const
    const Real start = (vertical ? start_y : start_x);
    const Real ratio = span / span_t;
 
-cout << "get_s time_chooser.shape.start_time " << shape.start_time.get_string () << endl;
    const Real sign = boolean_sign (!reverse);
    const Real dt = sign * (dtime.t - shape.start_time.t);
    return start + dt * ratio;
@@ -3994,9 +3993,7 @@ Time_Chooser::render_nodes (const RefPtr<Context>& cr) const
    {
 
       const Dtime& dtime = *(iterator);
-cout << "Time_Chooser render_nodes " << dtime.get_string () << endl;
       if (shape.out_of_bounds (dtime)) { return; }
-cout << "    is not out of bounds" << endl;
 
       Rect rect = get_rect (dtime);
       rect.grow (vertical ? 0 : -split, vertical ? -split : 0);
