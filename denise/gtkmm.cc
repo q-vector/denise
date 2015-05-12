@@ -3998,7 +3998,7 @@ Time_Chooser::render_nodes (const RefPtr<Context>& cr) const
       Rect rect = get_rect (dtime);
       rect.grow (vertical ? 0 : -split, vertical ? -split : 0);
 
-      if (dtime.get_minute () % 10 == 0)
+      if (dtime.get_minute () % 1 == 0)
       {
 
          rect.cairo (cr);
