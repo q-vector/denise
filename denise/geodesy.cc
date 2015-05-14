@@ -1637,6 +1637,30 @@ Geodetic_Transform::Data::standardize (Lat_Long& lat_long) const
    lat_long.standardize (standard_longitude);
 }
 
+string
+Geodetic_Transform::Data::get_string () const
+{
+
+   string str;
+
+   switch (genre)
+   {
+      case MERCATOR:                  str = "MERCATOR"; break;
+      case LAMBERT_CONIC_NORTH:       str = "LAMBERT_CONIC_NORTH"; break;
+      case LAMBERT_CONIC_SOUTH:       str = "LAMBERT_CONIC_SOUTH"; break;
+      case POLAR_STEREOGRAPHIC_NORTH: str = "POLAR_STEREOGRAPHIC_NORTH"; break;
+      case POLAR_STEREOGRAPHIC_SOUTH: str = "POLAR_STEREOGRAPHIC_SOUTH"; break;
+      case GEOS:                      str = "GOES"; break;
+      case MOLLWEIDE:                 str = "MOLLWEIDE"; break;
+   }
+
+   const Real latitude = lat_long.latitude;
+   const Real longitude = lat_long.longitude;
+   str += string_render (":%.0f:%.2f:%.2f", scale, latitude, longitude);
+   return str;
+
+}
+
 Geodetic_Transform::Geodetic_Transform (const Geodetic_Transform::Genre genre,
                                         const Real scale,
                                         const Lat_Long& lat_long)

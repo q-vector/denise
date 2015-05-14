@@ -1868,6 +1868,188 @@ Raster::blit (const RefPtr<Context>& cr,
    cr->paint_with_alpha (alpha);
 }
 
+void
+Title::cairo (const RefPtr<Context>& cr,
+              const string& string_l,
+              const string& string_c,
+              const string& string_r) const
+{
+
+   const Real width = Real (i);
+   const Real title_height = get_height ();
+   const Real font_size = title_height / 2;
+   const Real y = title_height * 0.875;
+   const Point_2D origin (0, 0);
+   const Point_2D shadow_offset (2, -2);
+   
+   cr->save ();
+   cr->set_font_size (font_size);
+   
+   Label label_l (string_l, Point_2D (10, y), 'l', 'b');
+   Label label_c (string_c, Point_2D (width / 2, y), 'c', 'b');
+   Label label_r (string_r, Point_2D (width - 10, y), 'r', 'b');
+   
+   shadow_color.cairo (cr);
+   label_l.set_offset (shadow_offset);
+   label_l.cairo (cr);
+   label_c.set_offset (shadow_offset);
+   label_c.cairo (cr);
+   label_r.set_offset (shadow_offset);
+   label_r.cairo (cr); 
+   
+   fg_color.cairo (cr);
+   label_l.set_offset (origin);
+   label_l.cairo (cr); 
+   label_c.set_offset (origin);
+   label_c.cairo (cr); 
+   label_r.set_offset (origin);
+   label_r.cairo (cr);
+
+   cr->restore ();
+
+}
+
+void
+Title::cairo (const RefPtr<Context>& cr,
+              const string& string_ul,
+              const string& string_ll,
+              const string& string_c,
+              const string& string_ur,
+              const string& string_lr) const
+{
+
+   const Real width = Real (i);
+   const Real title_height = get_height ();
+   const Real large_font_size = title_height * 0.5;
+   const Real small_font_size = title_height * 0.4;
+   const Real upper_y = title_height * 0.125;
+   const Real lower_y = title_height * 0.875;
+   const Point_2D origin (0, 0);
+   const Point_2D shadow_offset (2, -2);
+
+   cr->save ();
+
+   Label label_ul (string_ul, Point_2D (10, upper_y), 'l', 't');
+   Label label_ll (string_ll, Point_2D (10, lower_y), 'l', 'b');
+   Label label_c (string_c, Point_2D (width / 2, lower_y), 'c', 'b');
+   Label label_ur (string_ur, Point_2D (width - 10, upper_y), 'r', 't');
+   Label label_lr (string_lr, Point_2D (width - 10, lower_y), 'r', 'b');
+
+   shadow_color.cairo (cr);
+   cr->set_font_size (large_font_size);
+   label_c.set_offset (shadow_offset);
+   label_c.cairo (cr);
+   cr->set_font_size (small_font_size);
+   label_ul.set_offset (shadow_offset);
+   label_ul.cairo (cr);
+   label_ll.set_offset (shadow_offset);
+   label_ll.cairo (cr);
+   label_ur.set_offset (shadow_offset);
+   label_ur.cairo (cr);
+   label_lr.set_offset (shadow_offset);
+   label_lr.cairo (cr);
+
+   fg_color.cairo (cr);
+   cr->set_font_size (large_font_size);
+   label_c.set_offset (origin);
+   label_c.cairo (cr);
+   cr->set_font_size (small_font_size);
+   label_ul.set_offset (origin);
+   label_ul.cairo (cr);
+   label_ll.set_offset (origin);
+   label_ll.cairo (cr);
+   label_ur.set_offset (origin);
+   label_ur.cairo (cr);
+   label_lr.set_offset (origin);
+   label_lr.cairo (cr);
+
+   cr->restore ();
+
+}
+
+Title::Title (const Size_2D& size_2d,
+              const Color& bg_color,
+              const Color& fg_color,
+              const Color& shadow_color)
+   : Size_2D (size_2d),
+     bg_color (bg_color),
+     fg_color (fg_color),
+     shadow_color (shadow_color)
+{
+}
+
+void
+Title::set_size_2d (const Size_2D& size_2d)
+{
+   this->i = size_2d.i;
+   this->j = size_2d.j;
+}
+
+Real
+Title::get_height () const
+{
+   const Real h = j * 0.042;
+   return std::max (std::min (h, 40.0), 25.0);
+}
+
+void
+Title::set (const string& string_l,
+            const string& string_c,
+            const string& string_r)
+{
+   clear ();
+   push_back (string_l);
+   push_back (string_c);
+   push_back (string_r);
+}
+
+void
+Title::set (const string& string_ul,
+            const string& string_ll,
+            const string& string_c,
+            const string& string_ur,
+            const string& string_lr)
+{
+   clear ();
+   push_back (string_ul);
+   push_back (string_ll);
+   push_back (string_c);
+   push_back (string_ur);
+   push_back (string_lr);
+}
+
+void
+Title::cairo (const RefPtr<Context>& cr)
+{
+
+   const Real width = Real (i);
+   const Real height = Real (j);
+   const Real title_height = get_height ();
+
+   cr->save ();
+   bg_color.cairo (cr);
+   Rect (Point_2D (0, 0), width, title_height).cairo (cr);
+   cr->fill ();
+   cr->set_line_width (6);
+   Rect (Point_2D (0, 0), width, height).cairo (cr);
+   cr->stroke ();
+
+   const Tokens& tokens = *(this);
+
+   if (size () == 3)
+   {
+      cairo (cr, tokens[0], tokens[1], tokens[2]);
+   }
+   else
+   if (size () == 5)
+   {
+      cairo (cr, tokens[0], tokens[1], tokens[2], tokens[3], tokens[4]);
+   }
+
+   cr->restore ();
+
+}
+
 namespace denise
 {
 

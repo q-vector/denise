@@ -651,7 +651,7 @@ namespace denise
          Glib::Mutex
          mutex;
 
-         class Title : public Tokens
+         class Title : public denise::Title
          {
 
             protected:
@@ -659,50 +659,12 @@ namespace denise
                Dcanvas&
                dcanvas;
 
-               Color
-               bg_color;
-
-               Color
-               fg_color;
-
-               Color
-               shadow_color;
-
-               virtual void
-               cairo (const RefPtr<Context>& cr,
-                      const string& string_l,
-                      const string& string_c,
-                      const string& string_r) const;
-
-               virtual void
-               cairo (const RefPtr<Context>& cr,
-                      const string& string_ul,
-                      const string& string_ll,
-                      const string& string_c,
-                      const string& string_ur,
-                      const string& string_lr) const;
-
             public:
 
                Title (Dcanvas& dcanvas,
                       const Color& bg_color = Color (0, 0, 0, 0.5),
                       const Color& fg_color = Color (1, 1, 1),
                       const Color& shadow_color = Color (0, 0, 0, 0.25));
-
-               Real
-               get_height () const;
-               
-               void
-               set (const string& string_l,
-                    const string& string_c,
-                    const string& string_r);
-
-               void
-               set (const string& string_ul,
-                    const string& string_ll,
-                    const string& string_c,
-                    const string& string_ur,
-                    const string& string_lr);
 
                void
                cairo (const RefPtr<Context>& cr);
@@ -3409,9 +3371,6 @@ namespace denise
 
          virtual void
          set_geodetic_transform_data (const Geodetic_Transform::Data& gtd);
-
-         void
-         set_gtd (const Geodetic_Transform::Data& gtd);
 
          virtual void
          apply_zoom_box ();

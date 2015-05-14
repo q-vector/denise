@@ -1150,6 +1150,68 @@ namespace denise
 
    };
 
+   class Title : public Tokens,
+                 private Size_2D
+   {
+
+      protected:
+
+         Size_2D
+         size_2d;
+
+         Color
+         bg_color;
+
+         Color
+         fg_color;
+
+         Color
+         shadow_color;
+
+         virtual void
+         cairo (const RefPtr<Context>& cr,
+                const string& string_l,
+                const string& string_c,
+                const string& string_r) const;
+
+         virtual void
+         cairo (const RefPtr<Context>& cr,
+                const string& string_ul,
+                const string& string_ll,
+                const string& string_c,
+                const string& string_ur,
+                const string& string_lr) const;
+
+      public:
+
+         Title (const Size_2D& size_2d,
+                const Color& bg_color = Color (0, 0, 0, 0.5),
+                const Color& fg_color = Color (1, 1, 1),
+                const Color& shadow_color = Color (0, 0, 0, 0.25));
+
+         void
+         set_size_2d (const Size_2D& size_2d);
+
+         Real
+         get_height () const;
+
+         void
+         set (const string& string_l,
+              const string& string_c,
+              const string& string_r);
+
+         void
+         set (const string& string_ul,
+              const string& string_ll,
+              const string& string_c,
+              const string& string_ur,
+              const string& string_lr);
+
+         void
+         cairo (const RefPtr<Context>& cr);
+
+   };
+
    ostream&
    operator << (ostream &out_file,
                 const Color& color);

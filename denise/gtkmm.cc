@@ -1176,182 +1176,20 @@ Progress::Progress (const Real fraction,
 {
 }
 
-void
-Dcanvas::Title::cairo (const RefPtr<Context>& cr,
-                       const string& string_l,
-                       const string& string_c,
-                       const string& string_r) const
-{
-
-   const Size_2D& size_2d = dcanvas.get_size_2d ();
-   const Real width = Real (size_2d.i);
-   const Real title_height = get_height ();
-   const Real font_size = title_height / 2;
-   const Real y = title_height * 0.875;
-   const Point_2D origin (0, 0);
-   const Point_2D shadow_offset (2, -2);
-
-   cr->save ();
-   cr->set_font_size (font_size);
-
-   Label label_l (string_l, Point_2D (10, y), 'l', 'b');
-   Label label_c (string_c, Point_2D (width / 2, y), 'c', 'b');
-   Label label_r (string_r, Point_2D (width - 10, y), 'r', 'b');
-
-   shadow_color.cairo (cr);
-   label_l.set_offset (shadow_offset);
-   label_l.cairo (cr);
-   label_c.set_offset (shadow_offset);
-   label_c.cairo (cr);
-   label_r.set_offset (shadow_offset);
-   label_r.cairo (cr);
-
-   fg_color.cairo (cr);
-   label_l.set_offset (origin);
-   label_l.cairo (cr);
-   label_c.set_offset (origin);
-   label_c.cairo (cr);
-   label_r.set_offset (origin);
-   label_r.cairo (cr);
-
-   cr->restore ();
-
-}
-
-void
-Dcanvas::Title::cairo (const RefPtr<Context>& cr,
-                       const string& string_ul,
-                       const string& string_ll,
-                       const string& string_c,
-                       const string& string_ur,
-                       const string& string_lr) const
-{
-
-   const Size_2D& size_2d = dcanvas.get_size_2d ();
-   const Real width = Real (size_2d.i);
-   const Real title_height = get_height ();
-   const Real large_font_size = title_height * 0.5;
-   const Real small_font_size = title_height * 0.4;
-   const Real upper_y = title_height * 0.125;
-   const Real lower_y = title_height * 0.875;
-   const Point_2D origin (0, 0);
-   const Point_2D shadow_offset (2, -2);
-
-   cr->save ();
-
-   Label label_ul (string_ul, Point_2D (10, upper_y), 'l', 't');
-   Label label_ll (string_ll, Point_2D (10, lower_y), 'l', 'b');
-   Label label_c (string_c, Point_2D (width / 2, lower_y), 'c', 'b');
-   Label label_ur (string_ur, Point_2D (width - 10, upper_y), 'r', 't');
-   Label label_lr (string_lr, Point_2D (width - 10, lower_y), 'r', 'b');
-
-   shadow_color.cairo (cr);
-   cr->set_font_size (large_font_size);
-   label_c.set_offset (shadow_offset);
-   label_c.cairo (cr);
-   cr->set_font_size (small_font_size);
-   label_ul.set_offset (shadow_offset);
-   label_ul.cairo (cr);
-   label_ll.set_offset (shadow_offset);
-   label_ll.cairo (cr);
-   label_ur.set_offset (shadow_offset);
-   label_ur.cairo (cr);
-   label_lr.set_offset (shadow_offset);
-   label_lr.cairo (cr);
-
-   fg_color.cairo (cr);
-   cr->set_font_size (large_font_size);
-   label_c.set_offset (origin);
-   label_c.cairo (cr);
-   cr->set_font_size (small_font_size);
-   label_ul.set_offset (origin);
-   label_ul.cairo (cr);
-   label_ll.set_offset (origin);
-   label_ll.cairo (cr);
-   label_ur.set_offset (origin);
-   label_ur.cairo (cr);
-   label_lr.set_offset (origin);
-   label_lr.cairo (cr);
-
-   cr->restore ();
-
-}
-
 Dcanvas::Title::Title (Dcanvas& dcanvas,
                        const Color& bg_color,
                        const Color& fg_color,
                        const Color& shadow_color)
-   : dcanvas (dcanvas),
-     bg_color (bg_color),
-     fg_color (fg_color),
-     shadow_color (shadow_color)
+   : denise::Title (dcanvas.get_size_2d (), bg_color, fg_color, shadow_color),
+     dcanvas (dcanvas)
 {
-}
-
-Real
-Dcanvas::Title::get_height () const
-{
-   const Real h = dcanvas.get_size_2d ().j * 0.042;
-   return std::max (std::min (h, 40.0), 25.0);
-}
-
-void
-Dcanvas::Title::set (const string& string_l,
-                     const string& string_c,
-                     const string& string_r)
-{
-   clear ();
-   push_back (string_l);
-   push_back (string_c);
-   push_back (string_r);
-}
-
-void
-Dcanvas::Title::set (const string& string_ul,
-                     const string& string_ll,
-                     const string& string_c,
-                     const string& string_ur,
-                     const string& string_lr)
-{
-   clear ();
-   push_back (string_ul);
-   push_back (string_ll);
-   push_back (string_c);
-   push_back (string_ur);
-   push_back (string_lr);
 }
 
 void
 Dcanvas::Title::cairo (const RefPtr<Context>& cr)
 {
-
-   const Size_2D& size_2d = dcanvas.get_size_2d ();
-   const Real width = Real (size_2d.i);
-   const Real height = Real (size_2d.j);
-   const Real title_height = get_height ();
-
-   cr->save ();
-   bg_color.cairo (cr);
-   Rect (Point_2D (0, 0), width, title_height).cairo (cr);
-   cr->fill ();
-   cr->set_line_width (6);
-   Rect (Point_2D (0, 0), width, height).cairo (cr);
-   cr->stroke ();
-
-   const Tokens& tokens = *(this);
-
-   if (size () == 3)
-   {
-      cairo (cr, tokens[0], tokens[1], tokens[2]);
-   }
-   else
-   if (size () == 5)
-   {
-      cairo (cr, tokens[0], tokens[1], tokens[2], tokens[3], tokens[4]);
-   }
-
-   cr->restore ();
-
+   set_size_2d (dcanvas.get_size_2d ());
+   denise::Title::cairo (cr);
 }
 
 bool     
@@ -8836,25 +8674,7 @@ Map_Console::set_geodetic_transform_data (const Geodetic_Transform::Data& gtd)
    delete geodetic_transform_ptr;
    geodetic_transform_ptr =
       Gt::get_transform_ptr (gtd.genre, gtd.scale, gtd.lat_long, middle);
-
-   zoom_box.reset ();
-   set_background_ready (false);
-   set_foreground_ready (false);
-   render_queue_draw ();
-
-}
-
-void
-Map_Console::set_gtd (const Geodetic_Transform::Data& gtd)
-{
-
-   typedef Geodetic_Transform Gt;
-   const Size_2D& size_2d = get_size_2d ();
-   const Point_2D middle (size_2d.i / 2, size_2d.j / 2);
-
-   delete geodetic_transform_ptr;
-   geodetic_transform_ptr =
-      Gt::get_transform_ptr (gtd.genre, gtd.scale, gtd.lat_long, middle);
+   cout << geodetic_transform_ptr->data.get_string () << endl;
 
    zoom_box.reset ();
    set_background_ready (false);

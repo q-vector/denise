@@ -630,6 +630,9 @@ namespace denise
                void
                standardize (Lat_Long& lat_long) const;
 
+               string
+               get_string () const;
+
          };
 
          Data
