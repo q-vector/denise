@@ -1544,8 +1544,8 @@ namespace denise
          Orientation
          orientation;
 
-         vector<string>
-         string_vector;
+         Tokens
+         tokens;
 
          Real
          font_size;
@@ -1579,7 +1579,7 @@ namespace denise
          append (const string& str);
 
          void
-         set_string_vector (const vector<string>& string_vector);
+         set_tokens (const Tokens& tokens);
 
          void
          set_shape (const Point_2D& anchor,
@@ -2915,6 +2915,9 @@ namespace denise
 
          virtual string
          get_string (const Marker& marker) const;
+
+         virtual Tokens
+         get_tokens (const Marker& marker) const;
 
       public:
 

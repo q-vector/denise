@@ -2851,7 +2851,7 @@ Popup::cairo (const RefPtr<Context>& cr,
 {
 
    const Real fe_h = fe.height;
-   const string& str = string_vector[index];
+   const string& str = tokens[index];
    const Real dy = (index + 0.5) * fe_h;
 
    switch (orientation)
@@ -2915,25 +2915,25 @@ Popup::hide ()
 void
 Popup::clear ()
 {
-   string_vector.clear ();
+   tokens.clear ();
    hide ();
 }
 
 void
 Popup::append (const string& str)
 {
-   string_vector.push_back (str);
+   tokens.push_back (str);
 }
 
 void
-Popup::set_string_vector (const vector<string>& string_vector)
+Popup::set_tokens (const Tokens& tokens)
 {
-   this->string_vector.clear ();
-   for (vector<string>::const_iterator iterator = string_vector.begin ();
-        iterator != string_vector.end (); iterator++)
+   this->tokens.clear ();
+   for (Tokens::const_iterator iterator = tokens.begin ();
+        iterator != tokens.end (); iterator++)
    {
       const string& str = *(iterator);
-      this->string_vector.push_back (str);
+      this->tokens.push_back (str);
    }
 }
 
@@ -2965,7 +2965,7 @@ Popup::get_preferred_height () const
    cr->get_font_extents (fe);
    cr->restore ();
    
-   return string_vector.size () * fe.height + 2 * margin;
+   return tokens.size () * fe.height + 2 * margin;
 
 }
 
@@ -3024,7 +3024,7 @@ Popup::cairo (const RefPtr<Context>& cr)
    cr->get_font_extents (fe);
    const Real fe_h = fe.height;
 
-   for (Integer i = 0; i < string_vector.size (); i++)
+   for (Integer i = 0; i < tokens.size (); i++)
    {
       if (i == index) { Color (1, 0, 0, 1).cairo (cr); }
       else            { Color (0, 0, 0, 1).cairo (cr); }
@@ -3039,7 +3039,7 @@ void
 Popup_Menu::emit_signal (const Integer index) const
 {
    signal_vector[index].emit ();
-   str_signal_vector[index].emit (string_vector[index]);
+   str_signal_vector[index].emit (tokens[index]);
 }
 
 Popup_Menu::Popup_Menu (const Dcanvas& canvas,
@@ -6029,14 +6029,10 @@ Console_2D::Marker::cairo (const RefPtr<Context>& cr,
    const Transform_2D& transform = console_2d.get_transform ();
    const Point_2D& point = transform.transform (*this);
 
-   const string& str = console_2d.get_string (*this);
-
    cr->save ();
 
-   vector<string> text_vector;
-   text_vector.push_back (str);
    Popup popup (console_2d, 12);
-   popup.set_string_vector (text_vector);
+   popup.set_tokens (console_2d.get_tokens (*this));
    const Point_2D anchor = point + Point_2D (6, -6);
    const Real popup_width = popup.get_preferred_width ();
    const Real popup_height = popup.get_preferred_height ();
@@ -7406,6 +7402,14 @@ string
 Console_2D::get_string (const Marker& marker) const
 {
    return string_render ("%f %f", marker.x, marker.y);
+}
+
+Tokens
+Console_2D::get_tokens (const Marker& marker) const
+{
+   Tokens tokens;
+   tokens.push_back (get_string (marker));
+   return tokens;
 }
 
 Console_2D::Console_2D (Gtk::Window& gtk_window,
