@@ -2567,12 +2567,12 @@ Fire::get_ffdi (const Real t,
                 const Real kph,
                 const Real df)
 {
-   const Real a = log (2) - 0.45;
+   const Real a = -0.45;
    const Real b = 0.987 * log (df);
    const Real c = -0.0345 * rh;
    const Real d = 0.0338 * t;
    const Real e = 0.0234 * kph;
-   return exp (a + b + c + d + e);
+   return 2 * exp (a + b + c + d + e);
 }
 
 Level::Level ()
