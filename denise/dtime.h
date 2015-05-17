@@ -74,7 +74,8 @@ namespace denise
          Dtime ();
 
          /// Constructor that accepts t
-         Dtime (const double t);
+         Dtime (const double t,
+                const bool snap_to_minute = true);
 
          Dtime (const Dtime& time);
 

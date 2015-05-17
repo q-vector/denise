@@ -211,8 +211,9 @@ Dtime::Dtime ()
 {
 }
 
-Dtime::Dtime (const double t)
-         : t (t)
+Dtime::Dtime (const double t,
+              const bool snap_to_minute)
+         : t (snap_to_minute ? round (t*60) / 60 : t)
 {
 }
 
