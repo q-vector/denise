@@ -8213,13 +8213,13 @@ Map_Console::Option_Panel::Overlay_Drawer::set_on_off (const string& str,
 void
 Map_Console::Option_Panel::setup_zoom (const string& zoom_str)
 {
-   vector<string> zoom_str_vector;
-   zoom_str_vector.push_back (zoom_str);
-   setup_zoom (zoom_str_vector);
+   Tokens zoom_tokens;
+   zoom_tokens.push_back (zoom_str);
+   setup_zoom (zoom_tokens);
 }
 
 void
-Map_Console::Option_Panel::setup_zoom (const vector<string>& zoom_str_vector)
+Map_Console::Option_Panel::setup_zoom (const Tokens& zoom_tokens)
 {
 
    const Real font_size = 12;
@@ -8239,8 +8239,8 @@ Map_Console::Option_Panel::setup_zoom (const vector<string>& zoom_str_vector)
    drawer_ptr->add_widget_ptr (button_ptr);
 
    // Make Zoom buttons for default Zooms
-   for (vector<string>::const_iterator iterator = zoom_str_vector.begin ();
-        iterator != zoom_str_vector.end (); iterator++)
+   for (vector<string>::const_iterator iterator = zoom_tokens.begin ();
+        iterator != zoom_tokens.end (); iterator++)
    {
 
       const string& zoom_str = *(iterator);
@@ -8299,13 +8299,13 @@ Map_Console::Option_Panel::Option_Panel (Map_Console& map_console,
 }
 
 Map_Console::Option_Panel::Option_Panel (Map_Console& map_console,
-                                         const vector<string>& zoom_str_vector)
+                                         const Tokens& zoom_tokens)
    : Drawer_Panel (map_console, false, 12),
      map_console (map_console)
 {
    Overlay_Drawer* drawer_ptr = new Overlay_Drawer (*this);
    add_drawer_ptr (drawer_ptr, true);
-   setup_zoom (zoom_str_vector);
+   setup_zoom (zoom_tokens);
 }
 
 void
@@ -8562,17 +8562,17 @@ Map_Console::Map_Console (Gtk::Window& gtk_window,
 
 Map_Console::Map_Console (Gtk::Window& gtk_window,
                           const Size_2D& size_2d,
-                          const vector<string>& zoom_str_vector)
+                          const Tokens& zoom_tokens)
    : Console_2D (gtk_window, size_2d),
      geodetic_zoom_box (*this),
-     option_panel (*this, zoom_str_vector)
+     option_panel (*this, zoom_tokens)
 {
 
    Glib::Mutex::Lock lock (mutex);
 
    typedef Geodetic_Transform Gt;
    const Point_2D centre (size_2d.i/2, size_2d.j/2);
-   Gt::Data gtd ((Tokens (zoom_str_vector.front (), "/"))[1]);
+   Gt::Data gtd ((Tokens (zoom_tokens.front (), "/"))[1]);
    geodetic_transform_ptr = Gt::get_transform_ptr (gtd, centre);
 
    Map_Console::Zoom_Box& zoom_box = get_zoom_box ();
@@ -8582,11 +8582,11 @@ Map_Console::Map_Console (Gtk::Window& gtk_window,
 
 Map_Console::Map_Console (Gtk::Window& gtk_window,
                           const Size_2D& size_2d,
-                          const vector<string>& zoom_str_vector,
+                          const Tokens& zoom_tokens,
                           const Geodetic_Transform& gt)
    : Console_2D (gtk_window, size_2d),
      geodetic_zoom_box (*this),
-     option_panel (*this, zoom_str_vector)
+     option_panel (*this, zoom_tokens)
 {
 
    Glib::Mutex::Lock lock (mutex);
@@ -8602,11 +8602,11 @@ Map_Console::Map_Console (Gtk::Window& gtk_window,
 
 Map_Console::Map_Console (Gtk::Window& gtk_window,
                           const Size_2D& size_2d,
-                          const vector<string>& zoom_str_vector,
+                          const Tokens& zoom_tokens,
                           const Geodetic_Transform::Data& gtd)
    : Console_2D (gtk_window, size_2d),
      geodetic_zoom_box (*this),
-     option_panel (*this, zoom_str_vector)
+     option_panel (*this, zoom_tokens)
 {
 
    Glib::Mutex::Lock lock (mutex);

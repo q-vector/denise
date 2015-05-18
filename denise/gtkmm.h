@@ -3199,7 +3199,7 @@ namespace denise
                setup_zoom (const string& zoom_str);
 
 	       void
-               setup_zoom (const vector<string>& zoom_str_vector);
+               setup_zoom (const Tokens& zoom_tokens);
 
                const Map_Console::Option_Panel::Zoom_Drawer&
                get_zoom_drawer () const;
@@ -3219,7 +3219,7 @@ namespace denise
                              const string& zoom_str);
 
                Option_Panel (Map_Console& map_console,
-                             const vector<string>& zoom_str_vector);
+                             const Tokens& zoom_tokens);
 
                void
                setup_overlay ();
@@ -3334,16 +3334,16 @@ namespace denise
 
          Map_Console (Gtk::Window& gtk_window,
                       const Size_2D& size_2d,
-                      const vector<string>& zoom_str_vector);
+                      const Tokens& zoom_tokens);
 
          Map_Console (Gtk::Window& gtk_window,
                       const Size_2D& size_2d,
-                      const vector<string>& zoom_str_vector,
+                      const Tokens& zoom_tokens,
                       const Geodetic_Transform& geodetic_transform);
 
          Map_Console (Gtk::Window& gtk_window,
                       const Size_2D& size_2d,
-                      const vector<string>& zoom_str_vector,
+                      const Tokens& zoom_tokens,
                       const Geodetic_Transform::Data& geodetic_transform_data);
 
          ~Map_Console ();
