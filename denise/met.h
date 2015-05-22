@@ -1068,6 +1068,9 @@ namespace denise
          pressure_level (const Real pressure);
 
          static Level
+         z_level (const Real z);
+
+         static Level
          screen_level ();
 
          static Level
@@ -1084,6 +1087,9 @@ namespace denise
 
          static Level
          surface_level ();
+
+         void
+         set_height (const Real z);
 
          void
          set_pressure (const Real pressure);

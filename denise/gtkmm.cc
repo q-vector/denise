@@ -4618,6 +4618,7 @@ Level_Panel::get_level_tuple () const
    switch (level.type)
    {
       default:
+      case HEIGHT_LEVEL:   return level_tuple_z;
       case PRESSURE_LEVEL: return level_tuple_p;
       case SIGMA_LEVEL:    return level_tuple_sigma;
       case THETA_LEVEL:    return level_tuple_theta;
@@ -4671,6 +4672,8 @@ Level_Panel::get_level (const Real y) const
          case SCREEN_LEVEL:
          case TEN_METRE_LEVEL:
          case FIFTY_METRE_LEVEL:
+         case HEIGHT_LEVEL:
+            return get_level_z (y);
          case PRESSURE_LEVEL:
             return get_level_p (y);
          case THETA_LEVEL:
@@ -4683,18 +4686,57 @@ Level_Panel::get_level (const Real y) const
 }
 
 Level
+Level_Panel::get_level_z (const Real y) const
+{
+
+   const Real z0 = level_tuple_z.front ();
+   const Real z1 = level_tuple_z.back ();
+
+   const Real c = 400;
+
+   const Real span_y = height - end_margin - start_margin;
+   const Real x0 = log (fabs (c - z0));
+   const Real x1 = log (fabs (c - z1));
+   const Real m = span_y / (x1 - x0);
+
+   const Real z = (exp ((y - start_margin) / m + x0) - c);
+
+   Real nearest_y, nearest_z;
+   Real min_delta_y = GSL_POSINF;
+   for (Level_Tuple::const_iterator iterator = level_tuple_z.begin ();
+        iterator != level_tuple_z.end (); iterator++)
+   {
+      const Real z_i = *(iterator);
+      const Real y_i = get_y_z (z_i);
+      const Real delta_y = fabs (y - y_i);
+      if (min_delta_y > delta_y)
+      {
+         nearest_y = y_i;
+         nearest_z = z_i;
+         min_delta_y = delta_y;
+      }
+   }
+
+   const bool close = (fabs (nearest_y - y) < font_size / 2);
+   return Level::z_level (close ? nearest_z : z);
+
+}
+
+Level
 Level_Panel::get_level_p (const Real y) const
 {
 
    const Real p0 = level_tuple_p.front ();
    const Real p1 = level_tuple_p.back ();
 
+   const Real c = 1400e2;
+
    const Real span_y = height - end_margin - start_margin;
-   const Real x0 = log (1400e2 - p0);
-   const Real x1 = log (1400e2 - p1);
+   const Real x0 = log (c - p0);
+   const Real x1 = log (c - p1);
    const Real m = span_y / (x1 - x0);
 
-   const Real p = -(exp ((y - start_margin) / m + x0) - 1400e2);
+   const Real p = -(exp ((y - start_margin) / m + x0) - c);
 
    Real nearest_y, nearest_p;
    Real min_delta_y = GSL_POSINF;
@@ -4712,7 +4754,6 @@ Level_Panel::get_level_p (const Real y) const
       }
    }
 
-   const Real font_size = 12;
    const bool close = (fabs (nearest_y - y) < font_size / 2);
    return Level::pressure_level (close ? nearest_p : p);
 
@@ -4810,6 +4851,8 @@ Level_Panel::get_y (const Level& level) const
    switch (level.type)
    {
       default:
+      case HEIGHT_LEVEL:
+         return get_y_z (level.value);
       case PRESSURE_LEVEL:
          return get_y_p (level.value);
       case THETA_LEVEL:
@@ -4820,18 +4863,38 @@ Level_Panel::get_y (const Level& level) const
 }
 
 Real
+Level_Panel::get_y_z (const Real z) const
+{
+
+   const Real z0 = level_tuple_z.front ();
+   const Real z1 = level_tuple_z.back ();
+
+   const Real c = 400;
+
+   const Real span_y = height - end_margin - start_margin;
+   const Real x0 = log (fabs (c - z0));
+   const Real x1 = log (fabs (c - z1));
+   const Real m = span_y / (x1 - x0);
+
+   return (log (c + z) - x0) * m + start_margin; 
+
+}
+
+Real
 Level_Panel::get_y_p (const Real p) const
 {
 
    const Real p0 = level_tuple_p.front ();
    const Real p1 = level_tuple_p.back ();
 
+   const Real c = 1400e2;
+
    const Real span_y = height - end_margin - start_margin;
-   const Real x0 = log (1400e2 - p0);
-   const Real x1 = log (1400e2 - p1);
+   const Real x0 = log (c - p0);
+   const Real x1 = log (c - p1);
    const Real m = span_y / (x1 - x0);
 
-   return (log (1400e2 - p) - x0) * m + start_margin; 
+   return (log (c - p) - x0) * m + start_margin; 
 
 }
 
@@ -5191,6 +5254,7 @@ Level_Panel::Level_Panel (Dcanvas& dcanvas,
                           const Real font_size)
    : Dv_Pack_Box (dcanvas, 0, 6/*margin*/),
      dcanvas (dcanvas),
+     level_tuple_z (HEIGHT_LEVEL, "40000:36000:32000:28000:24000:20000:18000:16000:14000:12000:10000:9000:8000:7000:6000:5000:4500:4000:3500:3000:2500:2000:1800:1600:1400:1200:1000:900:800:700:600:500:400:350:300:250:200:150:100:75:45:20:5:0"),
      level_tuple_sigma (SIGMA_LEVEL, "0.2:0.25:0.3:0.35:0.4:0.45:0.5:0.55:0.6:0.65:0.7:0.75:0.8:0.85:0.875:0.9:0.925:0.95:0.975:0.9943:0.9975:0.9988"),
      level_tuple_theta (THETA_LEVEL, "355:350:345:340:335:330:325:320:315:310:305:300:295:290:285:280:275:270"),
      level_tuple_p (PRESSURE_LEVEL, "200e2:250e2:300e2:350e2:400e2:450e2:500e2:550e2:600e2:650e2:700e2:750e2:800e2:850e2:900e2:925e2:950e2:975e2:995e2:1000e2"),
@@ -5202,6 +5266,7 @@ Level_Panel::Level_Panel (Dcanvas& dcanvas,
      setting_level_0 (false),
      setting_level_1 (false),
 
+     z (500),
      pressure (850e2),
      theta (315),
      sigma (0.5),

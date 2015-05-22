@@ -2623,21 +2623,28 @@ Level::Level (const string& str)
       type = SURFACE_LEVEL;
    }
    else
+   if (str.find ("m") != string::npos)
+   {
+      type = HEIGHT_LEVEL;
+      value = stof (str);
+cout << "height " << value << " " << str << endl;
+   }
+   else
    if (str.find ("hPa") != string::npos)
    {
       type = PRESSURE_LEVEL;
-      value = atof (str.c_str ()) * 1e2;
+      value = stof (str) * 1e2;
    }
    else
    if (str.find ("K") != string::npos)
    {
       type = THETA_LEVEL;
-      value = atof (str.c_str ());
+      value = stof (str);
    }
    else
    {
       type = SIGMA_LEVEL;
-      value = atof (str.c_str ());
+      value = stof (str);
    }
 }
 
@@ -2690,6 +2697,12 @@ Level::pressure_level (const Real pressure)
 }
 
 Level
+Level::z_level (const Real z)
+{
+   return Level (HEIGHT_LEVEL, z, GSL_NAN);
+}
+
+Level
 Level::screen_level ()
 {
    return Level (SCREEN_LEVEL);
@@ -2722,6 +2735,13 @@ Level
 Level::surface_level ()
 {
    return Level (SURFACE_LEVEL);
+}
+
+void
+Level::set_height (const Real z)
+{
+   this->type = HEIGHT_LEVEL;
+   this->value = z;
 }
 
 void
@@ -2807,6 +2827,8 @@ Level::get_string () const
             return string_render ("%.4f", value);
          case PRESSURE_LEVEL:
             return string_render ("%.0fhPa", round (value * 1e-2));
+         case HEIGHT_LEVEL:
+            return string_render ("%.0fm", round (value));
          case SCREEN_LEVEL:
             return "Screen";
          case FIFTY_METRE_LEVEL:
@@ -2847,6 +2869,11 @@ Level::get_string () const
             const Real p_0 = round (value * 1e-2);
             const Real p_1 = round (value_ * 1e-2);
             return string_render ("%.0fhPa to %.0fhPa", p_0, p_1);
+         }
+
+         case HEIGHT_LEVEL:
+         {
+            return string_render ("%.0fm to %.0fm", value, value_);
          }
 
       }

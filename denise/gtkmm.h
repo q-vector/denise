@@ -2062,6 +2062,9 @@ namespace denise
          candidate_level;
 
          Real
+         z;
+
+         Real
          pressure;
 
          Real
@@ -2084,6 +2087,9 @@ namespace denise
 
          const Real
          end_margin;
+
+         const Level_Tuple
+         level_tuple_z;
 
          const Level_Tuple
          level_tuple_p;
@@ -2134,6 +2140,9 @@ namespace denise
          get_level_extra (const Real y) const;
 
          Level
+         get_level_z (const Real y) const;
+
+         Level
          get_level_p (const Real y) const;
 
          Level
@@ -2144,6 +2153,9 @@ namespace denise
 
          Real
          get_y (const Level& level) const;
+
+         Real
+         get_y_z (const Real z) const;
 
          Real
          get_y_p (const Real p) const;

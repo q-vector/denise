@@ -25,7 +25,6 @@ AC_PROG_INSTALL
 AC_PROG_LIBTOOL
 AC_C_BIGENDIAN
 AC_LANG(C++)
-
 AC_CHECK_LIBM
 
 dnl Checks for libraries.
