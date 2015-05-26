@@ -2964,9 +2964,6 @@ namespace denise
          clear_shape (const Integer shape_id);
 
          virtual void
-         render ();
-
-         virtual void
          refresh_all ();
 
          virtual void

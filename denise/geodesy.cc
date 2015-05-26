@@ -1189,6 +1189,37 @@ Multi_Journey::get_tuple_x (const Geodesy& geodesy) const
 
 }
 
+Lat_Long
+Multi_Journey::get_lat_long (const Real x,
+                             const Geodesy& geodesy) const
+{
+
+   Real distance = 0;
+   if (x < 0) { return Lat_Long (GSL_NAN, GSL_NAN); }
+
+   for (Multi_Journey::const_iterator i = begin (); i != end (); i++)
+   {
+
+      if (!closed && is_last (i)) { continue; }
+      Journey journey = get_journey (i);
+      geodesy.complete (journey);
+      const Real d_distance = journey.get_distance ();
+
+      if (x >= distance && x <= distance + d_distance)
+      {
+         const Real azimuth = journey.get_azimuth_forward ();
+         const Lat_Long& origin = journey.get_origin ();
+         return geodesy.get_destination (origin, x - distance, azimuth);
+      }
+
+      distance += d_distance;
+
+   }
+
+   return Lat_Long (GSL_NAN, GSL_NAN);
+
+}
+
 Real
 Multi_Journey::get_azimuth_forward (Multi_Journey::const_iterator iterator,
                                     const Geodesy& geodesy) const

@@ -7585,22 +7585,6 @@ Console_2D::clear_shape (const Integer shape_id)
 }
 
 void
-Console_2D::render ()
-{
-
-   if (!packed) { pack (); }
-
-   if (image_surface != 0)
-   {
-      const RefPtr<Context>& cr = Context::create (image_surface);
-      blit_background_buffer (cr);
-      cairo (cr);
-      blit_foreground_buffer (cr);
-   }
-
-}
-
-void
 Console_2D::refresh_all ()
 {
    queue_draw ();

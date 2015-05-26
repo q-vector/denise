@@ -453,6 +453,10 @@ namespace denise
          Tuple
          get_tuple_x (const Geodesy& geodesy) const;
 
+         Lat_Long
+         get_lat_long (const Real x,
+                       const Geodesy& geodesy) const;
+
          Real
          get_azimuth_forward (Multi_Journey::const_iterator iterator,
                               const Geodesy& geodesy) const;
