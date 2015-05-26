@@ -3036,10 +3036,10 @@ Popup::cairo (const RefPtr<Context>& cr)
 }
 
 void
-Popup_Menu::emit_signal (const Integer index) const
+Popup_Menu::emit_signal (const string& str) const
 {
-   signal_vector[index].emit ();
-   str_signal_vector[index].emit (tokens[index]);
+   signal_map.at (str).emit ();
+   str_signal_map.at (str).emit (tokens[index]);
 }
 
 Popup_Menu::Popup_Menu (const Dcanvas& canvas,
@@ -3064,8 +3064,8 @@ void
 Popup_Menu::clear ()
 {
    Popup::clear ();
-   signal_vector.clear ();
-   str_signal_vector.clear ();
+   signal_map.clear ();
+   str_signal_map.clear ();
 }
 
 void
@@ -3074,20 +3074,20 @@ Popup_Menu::append (const string& str)
    Popup::append (str);
    Popup_Menu::Signal signal;
    Popup_Menu::Str_Signal str_signal;
-   signal_vector.push_back (signal);
-   str_signal_vector.push_back (str_signal);
+   signal_map.insert (make_pair (str, signal));
+   str_signal_map.insert (make_pair (str, str_signal));
 }
 
 Popup_Menu::Signal&
-Popup_Menu::get_signal (const Integer i)
+Popup_Menu::get_signal (const string& str)
 {
-   return signal_vector.at (i);
+   return signal_map.at (str);
 }
 
 Popup_Menu::Str_Signal&
-Popup_Menu::get_str_signal (const Integer i)
+Popup_Menu::get_str_signal (const string& str)
 {
-   return str_signal_vector.at (i);
+   return str_signal_map.at (str);
 }
 
 bool
@@ -3124,11 +3124,7 @@ Popup_Menu::on_mouse_button_released (const Dmouse_Button_Event& event)
    if (out_of_bounds (point)) { return false; }
 
    const Integer i = get_index (point);
-
-   if (i >= 0 && i < signal_vector.size ())
-   {
-      emit_signal (i);
-   }
+   if (i >= 0 && i < tokens.size ()) { emit_signal (tokens[i]); }
 
    hide ();
    return true;
@@ -5975,9 +5971,10 @@ Console_2D::Zoom_Box::cairo (const RefPtr<Context>& cr)
 }
 
 void
-Console_2D::Hud::Popup_Menu::emit_signal (const Integer index) const
+Console_2D::Hud::Popup_Menu::emit_signal (const string& str) const
 {
    if (index == 0) { clear_signal.emit (id); }
+   str_signal_map.at (str).emit (str);
 }
 
 Console_2D::Hud::Popup_Menu::Popup_Menu (Console_2D& console_2d,

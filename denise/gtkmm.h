@@ -1617,14 +1617,14 @@ namespace denise
          bool
          fresh;
 
-         vector<Signal>
-         signal_vector;
+         map<string, Signal>
+         signal_map;
 
-         vector<Str_Signal>
-         str_signal_vector;
+         map<string, Str_Signal>
+         str_signal_map;
 
          virtual void
-         emit_signal (const Integer index) const;
+         emit_signal (const string& str) const;
 
       public:
 
@@ -1644,10 +1644,10 @@ namespace denise
          append (const string& str);
 
          Signal&
-         get_signal (const Integer i);
+         get_signal (const string& str);
 
          Str_Signal&
-         get_str_signal (const Integer i);
+         get_str_signal (const string& str);
 
          bool
          is_on () const;
@@ -2449,7 +2449,7 @@ namespace denise
                      clear_signal;
 
                      virtual void
-                     emit_signal (const Integer index) const;
+                     emit_signal (const string& str) const;
 
                   public:
 
