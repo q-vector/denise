@@ -166,6 +166,18 @@ namespace denise
    right_trim (string& s,
                const string& white_string = string (" \f\n\t"));
 
+   string
+   get_trimmed (const string s,
+                const string& white_string = string (" \f\n\t"));
+
+   string
+   get_left_trimmed (const string s, 
+                     const string& white_string = string (" \f\n\t"));
+
+   string
+   get_right_trimmed (const string s,
+                      const string& white_string = string (" \f\n\t"));
+
    /// Returns file extension
    string
    get_file_extension (const string& file_path);

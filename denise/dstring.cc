@@ -389,6 +389,33 @@ namespace denise
    }
 
    string
+   get_trimmed (const string s,
+                const string& white_string)
+   {
+      string trimmed = s;
+      trim (trimmed);
+      return trimmed;
+   }
+
+   string
+   get_left_trimmed (const string s,
+                     const string& white_string)
+   {
+      string trimmed = s;
+      left_trim (trimmed);
+      return trimmed;
+   }
+
+   string
+   get_right_trimmed (const string s,
+                      const string& white_string)
+   {
+      string trimmed = s;
+      right_trim (trimmed);
+      return trimmed;
+   }
+
+   string
    get_file_extension (const string& file_path)
    {
 
