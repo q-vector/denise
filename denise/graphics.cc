@@ -343,6 +343,7 @@ Checkered::init (const Paintable& paintable_0,
 
    RefPtr<ImageSurface> surface = ImageSurface::create (FORMAT_ARGB32, w2, w2);
    RefPtr<Context> cr = Context::create (surface);
+   cr->select_font_face ("Verdana", FONT_SLANT_NORMAL, FONT_WEIGHT_NORMAL);
 
    Color (1, 1, 1, 0.0).cairo (cr);
    cr->paint ();
@@ -388,6 +389,7 @@ Stripped::init (const Paintable& paintable_0,
 
    RefPtr<ImageSurface> surface = ImageSurface::create (FORMAT_ARGB32, w2, w2);
    RefPtr<Context> cr = Context::create (surface);
+   cr->select_font_face ("Verdana", FONT_SLANT_NORMAL, FONT_WEIGHT_NORMAL);
 
    Color (1, 1, 1, 0.0).cairo (cr);
    cr->paint ();

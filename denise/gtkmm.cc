@@ -180,6 +180,7 @@ Image_Buffer::initialize (const Dwidget& widget)
    }
 
    RefPtr<Context> cr = get_cr ();
+   cr->select_font_face ("Verdana", FONT_SLANT_NORMAL, FONT_WEIGHT_NORMAL);
    transparent.cairo (cr);
    cr->set_operator (Cairo::OPERATOR_SOURCE);
    cr->paint ();
@@ -459,6 +460,7 @@ Dwidget::render_background_buffer ()
 {
    background_buffer.initialize (*this);
    const RefPtr<Context> cr = background_buffer.get_cr ();
+   cr->select_font_face ("Verdana", FONT_SLANT_NORMAL, FONT_WEIGHT_NORMAL);
    render_background_buffer (cr);
    set_background_ready (true);
 }
@@ -1292,6 +1294,7 @@ Dcanvas::save_image (const string& file_path)
    RefPtr<ImageSurface> surface = Cairo::ImageSurface::create (
       FORMAT_RGB24, size_2d.i, size_2d.j);
    const RefPtr<Context> cr = Context::create (surface);
+   cr->select_font_face ("Verdana", FONT_SLANT_NORMAL, FONT_WEIGHT_NORMAL);
 
    cr->set_source (image_surface, 0, 0);
    cr->paint ();
@@ -1521,6 +1524,7 @@ Dcanvas::refresh (const RefPtr<Context>& cr)
    if (widget_surface == 0) { return; }
 
    const RefPtr<Context> widget_cr = Context::create (widget_surface);
+   widget_cr->select_font_face ("Verdana", FONT_SLANT_NORMAL, FONT_WEIGHT_NORMAL);
    widget_cr->set_source (image_surface, 0, 0);
    widget_cr->paint ();
 
@@ -1557,6 +1561,7 @@ Dcanvas::refresh (const RefPtr<Context>& cr,
    const Rect rect (point, width, height);
 
    const RefPtr<Context> widget_cr = Context::create (widget_surface);
+   widget_cr->select_font_face ("Verdana", FONT_SLANT_NORMAL, FONT_WEIGHT_NORMAL);
    widget_cr->set_source (image_surface, 0, 0);
    rect.cairo (widget_cr);
    widget_cr->fill ();
@@ -1580,6 +1585,7 @@ Dcanvas::render ()
    if (image_surface != 0)
    {
       const RefPtr<Context>& cr = Context::create (image_surface);
+      cr->select_font_face ("Verdana", FONT_SLANT_NORMAL, FONT_WEIGHT_NORMAL);
       cairo (cr);
    }
 
@@ -1611,6 +1617,7 @@ Dcanvas::render_image_buffer ()
 {
    image_buffer.initialize (*this);
    const RefPtr<Context> cr = image_buffer.get_cr ();
+   cr->select_font_face ("Verdana", FONT_SLANT_NORMAL, FONT_WEIGHT_NORMAL);
    render_image_buffer (cr);
    set_image_ready (true);
 }
@@ -1638,6 +1645,7 @@ Dcanvas::render_foreground_buffer ()
 {
    foreground_buffer.initialize (*this);
    const RefPtr<Context> cr = foreground_buffer.get_cr ();
+   cr->select_font_face ("Verdana", FONT_SLANT_NORMAL, FONT_WEIGHT_NORMAL);
    render_foreground_buffer (cr);
    set_foreground_ready (true);
 }
@@ -2776,6 +2784,7 @@ Dtitle::get_preferred_height () const
 
    FontExtents fe;
    const RefPtr<Context> cr = canvas.get_widget_cr ();
+   cr->select_font_face ("Verdana", FONT_SLANT_NORMAL, FONT_WEIGHT_NORMAL);
 
    cr->save ();
    cr->set_font_size (font_size);
@@ -2826,6 +2835,7 @@ Popup::get_index (const Point_2D& point) const
 
    FontExtents fe;
    const RefPtr<Context> cr = canvas.get_widget_cr ();
+   cr->select_font_face ("Verdana", FONT_SLANT_NORMAL, FONT_WEIGHT_NORMAL);
    
    cr->save ();
    cr->set_font_size (font_size);
@@ -2959,6 +2969,7 @@ Popup::get_preferred_height () const
 
    FontExtents fe;
    const RefPtr<Context> cr = canvas.get_widget_cr ();
+   cr->select_font_face ("Verdana", FONT_SLANT_NORMAL, FONT_WEIGHT_NORMAL);
    
    cr->save ();
    cr->set_font_size (font_size);
@@ -7746,6 +7757,7 @@ Console_2D::save_svg (const string& file_path)
    Cairo::RefPtr<Cairo::SvgSurface> surface =
        Cairo::SvgSurface::create (file_path, size_2d.i, size_2d.j);
    Cairo::RefPtr<Cairo::Context> cr = Cairo::Context::create (surface);
+   cr->select_font_face ("Verdana", FONT_SLANT_NORMAL, FONT_WEIGHT_NORMAL);
 
    render_background_buffer (cr);
    render_image_buffer (cr);
