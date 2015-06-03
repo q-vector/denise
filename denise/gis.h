@@ -205,6 +205,11 @@ namespace denise
          cairo (const RefPtr<Context> cr,
                 const Geodetic_Transform& transform) const;
 
+         virtual void
+         cairo (const RefPtr<Context> cr,
+                const Geodetic_Transform& transform,
+                const Polygon& clip_polygon);
+
    };
 
    class Gshhs2 : public Gshhs

@@ -2301,6 +2301,12 @@ Perspective_Transform::clone () const
    return new Perspective_Transform (*this);
 }
 
+const Range_Circle&
+Perspective_Transform::get_domain () const
+{
+   return range_circle;
+}
+
 bool
 Perspective_Transform::out_of_domain (const Real latitude,
                                       const Real longitude) const

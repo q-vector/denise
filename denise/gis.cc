@@ -486,9 +486,19 @@ Gshhs::clip (const Domain_1D& domain_latitude,
 
 void
 Gshhs::cairo (const RefPtr<Context> cr,
-              const Geodetic_Transform& geodetic_transform) const
+              const Geodetic_Transform& transform) const
 {
-   geodetic_transform.cairo (cr, *this);
+   transform.cairo (cr, *this);
+}
+
+void
+Gshhs::cairo (const RefPtr<Context> cr,
+              const Geodetic_Transform& transform,
+              const Polygon& clip_polygon)
+{
+   Gshhs* clipped_gshhs_ptr = this->clip (clip_polygon);
+   transform.cairo (cr, *clipped_gshhs_ptr);
+   delete clipped_gshhs_ptr;
 }
 
 string

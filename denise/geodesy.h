@@ -982,6 +982,9 @@ namespace denise
          virtual Geodetic_Transform*
          clone () const;
 
+         const Range_Circle&
+         get_domain () const;
+
          virtual bool
          out_of_domain (const Real latitude,
                         const Real longitude) const;
