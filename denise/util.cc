@@ -18,6 +18,7 @@
 // You should have received a copy of the GNU General Public License
 // along with libdenise.  If not, see <http://www.gnu.org/licenses/>.
 
+#include <fstream>
 #include <cstdlib>
 #include <cmath>
 #include <stdint.h>
@@ -199,6 +200,26 @@ namespace denise
       closedir (dp);
 
       return dir_listing;
+
+   }
+
+   Tokens
+   read_config_file (const string& file_path)
+   {
+
+      Tokens file_content;
+
+      string input_string;
+      ifstream file (file_path);
+
+      while (getline (file, input_string))
+      {
+         if (input_string.size () == 0) { continue; }
+         if (input_string.c_str ()[0] == '#') { continue; }
+         file_content.push_back (input_string);
+      }
+
+      return file_content;
 
    }
 

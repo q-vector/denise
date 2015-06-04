@@ -140,6 +140,9 @@ namespace denise
                     const bool prepend_dir_path = false)
              throw (IO_Exception);
 
+   Tokens
+   read_config_file (const string& file_path);
+
    string
    read_line (FILE* file,
               int max_length = 2048,
