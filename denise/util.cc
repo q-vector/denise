@@ -18,9 +18,10 @@
 // You should have received a copy of the GNU General Public License
 // along with libdenise.  If not, see <http://www.gnu.org/licenses/>.
 
-#include <fstream>
 #include <cstdlib>
 #include <cmath>
+#include <fstream>
+#include <map>
 #include <stdint.h>
 #include "util.h"
 
@@ -212,13 +213,40 @@ namespace denise
       string input_string;
       ifstream file (file_path);
 
+      size_t found;
+      map<string, string> dictionary;
+
       while (getline (file, input_string))
       {
+
          if (input_string.size () == 0) { continue; }
          if (input_string.c_str ()[0] == '#') { continue; }
+
+         const Tokens variable_tokens (input_string, "=");
+         if (variable_tokens.size () == 2)
+         {
+            const string& variable = get_trimmed (variable_tokens[0]);
+            const string& value = get_trimmed (variable_tokens[1]);
+            dictionary.insert (make_pair (variable, value));
+            continue;
+         }
+
+         for (auto iterator = dictionary.begin ();
+              iterator != dictionary.end (); iterator++)
+         {
+            const string variable ("$" + iterator->first);
+            while ((found = input_string.find (variable)) != string::npos)
+            {
+               const size_t var_length = variable.length ();
+               input_string.replace (found, var_length, iterator->second);
+            }
+         }
+
          file_content.push_back (input_string);
+
       }
 
+      file.close ();
       return file_content;
 
    }

@@ -41,10 +41,10 @@ namespace denise
    {
       UNKNOWN_TC_CATEGORY   = -2,
       ALL_TC_CATEGORIES     = -1,
-      TROPICAL_DEPRESSION   = 0, TD  = 0,
-      TROPICAL_STORM        = 1, TS  = 1,
-      SEVERE_TROPICAL_STORM = 2, STS = 2,
-      TYPHOON               = 3, T   = 3, TY = 3,
+      TROPICAL_DEPRESSION   = 0, TC_TD  = 0,
+      TROPICAL_STORM        = 1, TC_TS  = 1,
+      SEVERE_TROPICAL_STORM = 2, TC_STS = 2,
+      TYPHOON               = 3, TC_T   = 3, TC_TY = 3,
       LOW                   = 4,
       NUMBER_OF_TC_CATEGORIES = 5
    };

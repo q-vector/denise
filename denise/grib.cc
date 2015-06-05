@@ -3774,9 +3774,6 @@ Gfs3::set_grib_key (Grib::Key& grib_key,
       case POTENTIAL_TEMPERATURE:
          octet = 13;
          break;
-      case THETA:
-         octet = 13;
-         break;
       case THETA_E:
          octet = 14;
          break;
@@ -4949,10 +4946,6 @@ Gfs4::set_grib_key (Grib2::Key& grib_key,
          buffer[13] = 7;
          break;
       case POTENTIAL_TEMPERATURE:
-         buffer[12] = 0;
-         buffer[13] = 2;
-         break;
-      case THETA:
          buffer[12] = 0;
          buffer[13] = 2;
          break;
@@ -6268,10 +6261,6 @@ Gfs::set_grib_key (Grib2::Key& grib_key,
          buffer[13] = 7;
          break;
       case POTENTIAL_TEMPERATURE:
-         buffer[12] = 0;
-         buffer[13] = 2;
-         break;
-      case THETA:
          buffer[12] = 0;
          buffer[13] = 2;
          break;

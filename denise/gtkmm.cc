@@ -5322,6 +5322,12 @@ Level_Panel::get_full_level_signal ()
 }
 
 void
+Level_Panel::add_extra_level (const Level& level)
+{
+   extra_level_vector.push_back (level);
+}
+
+void
 Level_Panel::cairo (const RefPtr<Context>& cr)
 {
 //   if (level.type == NOT_A_LEVEL && !level.is_layer ())
@@ -5986,6 +5992,7 @@ Console_2D::Hud::Popup_Menu::emit_signal (const string& str) const
 {
    if (index == 0) { clear_signal.emit (id); }
    str_signal_map.at (str).emit (str);
+   id_signal_map.at (str).emit (id);
 }
 
 Console_2D::Hud::Popup_Menu::Popup_Menu (Console_2D& console_2d,
@@ -5995,6 +6002,27 @@ Console_2D::Hud::Popup_Menu::Popup_Menu (Console_2D& console_2d,
 {
    clear ();
    append ("Clear");
+}
+
+void
+Console_2D::Hud::Popup_Menu::clear ()
+{
+   denise::Popup_Menu::clear ();
+   id_signal_map.clear ();
+}
+
+void
+Console_2D::Hud::Popup_Menu::append (const string& str)
+{
+   denise::Popup_Menu::append (str);
+   Console_2D::Hud::Popup_Menu::Id_Signal id_signal;
+   id_signal_map.insert (make_pair (str, id_signal));
+}
+
+Console_2D::Hud::Popup_Menu::Id_Signal&
+Console_2D::Hud::Popup_Menu::get_id_signal (const string& str)
+{
+   return id_signal_map.at (str);
 }
 
 void

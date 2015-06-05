@@ -2044,7 +2044,7 @@ namespace denise
          typedef sigc::signal<void, const Layer&, const Devent&>
          Full_Layer_Signal;
 
-      private:
+      protected:
 
          Dcanvas&
          dcanvas;
@@ -2206,6 +2206,9 @@ namespace denise
 
          Full_Level_Signal&
          get_full_level_signal ();
+
+         void
+         add_extra_level (const Level& level);
 
          void
          cairo (const RefPtr<Context>& cr);
@@ -2437,6 +2440,11 @@ namespace denise
                class Popup_Menu : public denise::Popup_Menu
                {
 
+                  public:
+
+                     typedef sigc::signal<void, const Integer>
+                     Id_Signal;
+
                   protected:
 
                      Integer
@@ -2448,6 +2456,9 @@ namespace denise
                      sigc::signal<void, const Integer>
                      clear_signal;
 
+                     std::map<string, Id_Signal>
+                     id_signal_map;
+
                      virtual void
                      emit_signal (const string& str) const;
 
@@ -2455,6 +2466,15 @@ namespace denise
 
                      Popup_Menu (Console_2D& console_ed,
                                  const Real font_size);
+
+                     void
+                     clear ();
+
+                     virtual void
+                     append (const string& str);
+
+                     Id_Signal&
+                     get_id_signal (const string& str);
 
                      virtual void
                      setup (const Hud& hud,

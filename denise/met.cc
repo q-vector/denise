@@ -31,16 +31,16 @@ namespace denise
 
       Tc_Category tc_category = LOW;
 
-      if (max_wind >= 32.7) { tc_category = T; }
+      if (max_wind >= 32.7) { tc_category = TC_T; }
 
       else
-      if (max_wind >= 24.5) { tc_category = STS; }
+      if (max_wind >= 24.5) { tc_category = TC_STS; }
 
       else
-      if (max_wind >= 17.2) { tc_category = TS; }
+      if (max_wind >= 17.2) { tc_category = TC_TS; }
 
       else
-      if (max_wind >= 10.8) { tc_category = TD; }
+      if (max_wind >= 10.8) { tc_category = TC_TD; }
 
       return tc_category;
 
@@ -68,21 +68,21 @@ namespace denise
       if (((tc_category_string == "TD")) ||
           ((tc_category_string == "TROPICAL_DEPRESSION")))
       {
-         tc_category = TD;
+         tc_category = TC_TD;
       }
 
       else
       if (((tc_category_string == "TS")) ||
           ((tc_category_string == "TROPICAL_STORM")))
       {
-         tc_category = TS;
+         tc_category = TC_TS;
       }
 
       else
       if (((tc_category_string == "STS")) ||
           ((tc_category_string == "SEVERE_TROPICAL_STORM")))
       {
-         tc_category = STS;
+         tc_category = TC_STS;
       }
 
       else
@@ -90,7 +90,7 @@ namespace denise
           ((tc_category_string == "TY")) ||
           ((tc_category_string == "TYPHOON")))
       {
-         tc_category = T;
+         tc_category = TC_T;
       }
 
       return tc_category;
@@ -105,10 +105,10 @@ namespace denise
 
       switch (tc_category)
       {
-         case TD:  intensity = 17.0; break;
-         case TS:  intensity = 24.3; break;
-         case STS: intensity = 32.5; break;
-         case T:   intensity = 99.9; break;
+         case TC_TD:  intensity = 17.0; break;
+         case TC_TS:  intensity = 24.3; break;
+         case TC_STS: intensity = 32.5; break;
+         case TC_T:   intensity = 99.9; break;
       }
 
       return intensity;
@@ -123,10 +123,10 @@ namespace denise
 
       switch (tc_category)
       {
-         case TD:  intensity =  0.0; break;
-         case TS:  intensity = 17.4; break;
-         case STS: intensity = 24.7; break;
-         case T:   intensity = 32.9; break;
+         case TC_TD:  intensity =  0.0; break;
+         case TC_TS:  intensity = 17.4; break;
+         case TC_STS: intensity = 24.7; break;
+         case TC_T:   intensity = 32.9; break;
       }
 
       return intensity;
@@ -171,11 +171,11 @@ namespace denise
 
       switch (tc_category)
       {
-         case LOW: s.assign ("LOW"); break;
-         case TD:  s.assign ("TD");  break;
-         case TS:  s.assign ("TS");  break;
-         case STS: s.assign ("STS"); break;
-         case T:   s.assign ("T");   break;
+         case LOW:    s.assign ("LOW"); break;
+         case TC_TD:  s.assign ("TD");  break;
+         case TC_TS:  s.assign ("TS");  break;
+         case TC_STS: s.assign ("STS"); break;
+         case TC_T:   s.assign ("T");   break;
          case ALL_TC_CATEGORIES: s.append ("ALL_TC_CATEGORIES"); break;
       }
 
