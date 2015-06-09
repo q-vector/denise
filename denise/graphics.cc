@@ -1922,8 +1922,8 @@ Title::cairo (const RefPtr<Context>& cr,
 
    const Real width = Real (i);
    const Real title_height = get_height ();
-   const Real large_font_size = title_height * 0.5;
-   const Real small_font_size = title_height * 0.4;
+   const Real large_font_size = title_height * 0.500;
+   const Real small_font_size = title_height * 0.400;
    const Real upper_y = title_height * 0.125;
    const Real lower_y = title_height * 0.875;
    const Point_2D origin (0, 0);

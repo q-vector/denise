@@ -705,10 +705,8 @@ Geodesy::complete (Journey& journey) const
 Real
 Geodesy::get_angle (const Lat_Long& lat_long_a,
                     const Lat_Long& lat_long_b,
-                    const Geodesy_Model geodesy_model,
-                    const Real epsilon_v)
+                    const Geodesy& geodesy)
 {
-   Geodesy geodesy (geodesy_model, epsilon_v);
    Journey journey (lat_long_a, lat_long_b);
    geodesy.complete (journey);
    return journey.get_distance () / EARTH_RADIUS;
@@ -717,10 +715,8 @@ Geodesy::get_angle (const Lat_Long& lat_long_a,
 Real
 Geodesy::get_distance (const Lat_Long& lat_long_a,
                        const Lat_Long& lat_long_b,
-                       const Geodesy_Model geodesy_model,
-                       const Real epsilon_v)
+                       const Geodesy& geodesy)
 {
-   Geodesy geodesy (geodesy_model, epsilon_v);
    Journey journey (lat_long_a, lat_long_b);
    geodesy.complete (journey);
    return journey.get_distance ();
@@ -730,13 +726,31 @@ Lat_Long
 Geodesy::get_destination (const Lat_Long& origin,
                           const Real distance,
                           const Real azimuth_forward,
-                          const Geodesy_Model geodesy_model,
-                          const Real epsilon_v)
+                          const Geodesy& geodesy)
 {
-   Geodesy geodesy (geodesy_model, epsilon_v);
    Journey journey (origin, distance, azimuth_forward);
    geodesy.complete (journey);
    return journey.get_destination ();
+}
+
+Real
+Geodesy::get_azimuth_forward (const Lat_Long& origin,
+                              const Lat_Long& destination,
+                              const Geodesy& geodesy)
+{
+   Journey journey (origin, destination);
+   geodesy.complete (journey);
+   return journey.get_azimuth_forward ();
+}
+
+Real
+Geodesy::get_azimuth_backward (const Lat_Long& origin,
+                               const Lat_Long& destination,
+                               const Geodesy& geodesy)
+{
+   Journey journey (origin, destination);
+   geodesy.complete (journey);
+   return journey.get_azimuth_backward ();
 }
 
 Journey::Journey (const Lat_Long& origin,
@@ -1118,6 +1132,25 @@ Multi_Journey::translate (const Real distance,
 }
 
 Journey
+Multi_Journey::get_journey (const Real x,
+                            const Geodesy& geodesy) const
+{
+
+   if (x < 0) { throw Exception ("Before Lat Point"); }
+   Real distance = 0;
+
+   for (Multi_Journey::const_iterator i = begin (); i != end (); i++)
+   {
+      if (!closed && is_last (i)) { throw Exception ("Beyond Lat Point"); }
+      Journey journey = get_journey (i);
+      geodesy.complete (journey);
+      distance += journey.get_distance ();
+      if (x < distance) { return journey; }
+   }
+
+}
+
+Journey
 Multi_Journey::get_journey (Multi_Journey::iterator iterator) const
 {
    if (is_last (iterator))
@@ -1218,6 +1251,15 @@ Multi_Journey::get_lat_long (const Real x,
 
    return Lat_Long (GSL_NAN, GSL_NAN);
 
+}
+
+Real
+Multi_Journey::get_azimuth_forward (const Real x,
+                                    const Geodesy& geodesy) const
+{
+   const Lat_Long lat_long = get_lat_long (x, geodesy);
+   const Lat_Long& destination = get_journey (x, geodesy).get_destination ();
+   return Geodesy::get_azimuth_forward (lat_long, destination, geodesy);
 }
 
 Real

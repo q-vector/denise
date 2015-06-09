@@ -164,6 +164,11 @@ namespace denise
                     const Real x,
                     const Real y) const;
 
+         virtual Real
+         get_theta (const Real u,
+                    const Real v,
+                    const Point_2D& point_2d) const;
+
          virtual void
          cairo (const Cairo::RefPtr<Cairo::Context>& cr,
                 const Edge& edge) const;

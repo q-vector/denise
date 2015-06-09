@@ -326,6 +326,18 @@ Transform_2D::get_theta (const Real u,
                          const Real x,
                          const Real y) const
 {
+   Real uu = u, vv = v;
+   transform_uv (uu, vv, x, y);
+   return atan2 (vv, uu);
+}
+
+Real
+Transform_2D::get_theta (const Real u,
+                         const Real v,
+                         const Point_2D& point_2d) const
+{
+   Real uu = u, vv = v;
+   transform_uv (uu, vv, point_2d);
    return atan2 (v, u);
 }
 

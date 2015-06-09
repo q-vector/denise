@@ -286,21 +286,28 @@ namespace denise
           static Real
           get_angle (const Lat_Long& lat_long_a,
                      const Lat_Long& lat_long_b,
-                     const Geodesy_Model geodesy_model = SPHERE,
-                     const Real epsilon_v = 5e-12);
+                     const Geodesy& geodesy = Geodesy ());
 
           static Real
           get_distance (const Lat_Long& lat_long_a,
                         const Lat_Long& lat_long_b,
-                        const Geodesy_Model geodesy_model = SPHERE,
-                        const Real epsilon_v = 5e-12);
+                        const Geodesy& geodesy = Geodesy ());
 
           static Lat_Long
           get_destination (const Lat_Long& origin,
                            const Real distance,
                            const Real azimuth_forward,
-                           const Geodesy_Model geodesy_model = SPHERE,
-                           const Real epsilon_v = 5e-12);
+                           const Geodesy& geodesy = Geodesy ());
+
+          static Real
+          get_azimuth_forward (const Lat_Long& lat_long_a,
+                               const Lat_Long& lat_long_b,
+                               const Geodesy& geodesy = Geodesy ());
+
+          static Real
+          get_azimuth_backward (const Lat_Long& lat_long_a,
+                                const Lat_Long& lat_long_b,
+                                const Geodesy& geodesy = Geodesy ());
 
    };
 
@@ -442,6 +449,10 @@ namespace denise
                     const Real azimuth);
 
          Journey
+         get_journey (const Real x,
+                      const Geodesy& geodesy) const;
+
+         Journey
          get_journey (Multi_Journey::iterator iterator) const;
 
          Journey
@@ -456,6 +467,10 @@ namespace denise
          Lat_Long
          get_lat_long (const Real x,
                        const Geodesy& geodesy) const;
+
+         Real
+         get_azimuth_forward (const Real x,
+                              const Geodesy& geodesy) const;
 
          Real
          get_azimuth_forward (Multi_Journey::const_iterator iterator,

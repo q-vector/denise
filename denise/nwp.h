@@ -90,6 +90,7 @@ namespace denise
       TEMPERATURE_ADVECTION,
       ADIABATIC_HEATING,
       LATENT_HEATING,
+      DENSITY = 56, RHO = 56,
       P_THETA,
       P_RHO,
       VARIANCE_TEMPERATURE,
