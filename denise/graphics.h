@@ -1027,7 +1027,7 @@ namespace denise
    class Mesh_2D : protected vector<Simple_Mesh_2D>
    {
 
-      private:
+      protected:
 
          Size_2D
          size_2d;

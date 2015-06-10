@@ -2627,7 +2627,6 @@ Level::Level (const string& str)
    {
       type = HEIGHT_LEVEL;
       value = stof (str);
-cout << "height " << value << " " << str << endl;
    }
    else
    if (str.find ("hPa") != string::npos)

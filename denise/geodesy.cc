@@ -3474,20 +3474,69 @@ Track::get_lat_long (const Real tau,
 
 }
 
-
 Geodetic_Mesh::Geodetic_Mesh (const Size_2D& size_2d,
                               const Domain_2D& domain_2d)
    : Mesh_2D (size_2d, domain_2d)
 {
-   add (Simple_Mesh_2D (Color (0, 0, 0, 0.05), 0.2, 0.2));
-   add (Simple_Mesh_2D (Color (0, 0, 0, 0.1), 1, 1));
-   add (Simple_Mesh_2D (Color (0, 0, 0, 0.4), 10, 10));
+}
+
+Geodetic_Mesh::Geodetic_Mesh (const Simple_Mesh_2D& simple_mesh_2d,
+                              const Size_2D& size_2d,
+                              const Domain_2D& domain_2d)
+   : Mesh_2D (size_2d, domain_2d, simple_mesh_2d)
+{
+}
+
+Geodetic_Mesh::Geodetic_Mesh (const Simple_Mesh_2D& simple_mesh_2d_a,
+                              const Simple_Mesh_2D& simple_mesh_2d_b,
+                              const Size_2D& size_2d,
+                              const Domain_2D& domain_2d)
+   : Mesh_2D (size_2d, domain_2d, simple_mesh_2d_a, simple_mesh_2d_b)
+{
+}
+
+Geodetic_Mesh::Geodetic_Mesh (const Simple_Mesh_2D& simple_mesh_2d_a,
+                              const Simple_Mesh_2D& simple_mesh_2d_b,
+                              const Simple_Mesh_2D& simple_mesh_2d_c,
+                              const Size_2D& size_2d,
+                              const Domain_2D& domain_2d)
+   : Mesh_2D (size_2d, domain_2d, simple_mesh_2d_a,
+              simple_mesh_2d_b, simple_mesh_2d_c)
+{
+}
+
+Geodetic_Mesh::Geodetic_Mesh (const Simple_Mesh_2D& simple_mesh_2d_a,
+                              const Simple_Mesh_2D& simple_mesh_2d_b,
+                              const Simple_Mesh_2D& simple_mesh_2d_c,
+                              const Simple_Mesh_2D& simple_mesh_2d_d,
+                              const Size_2D& size_2d,
+                              const Domain_2D& domain_2d)
+   : Mesh_2D (size_2d, domain_2d, simple_mesh_2d_a,
+              simple_mesh_2d_b, simple_mesh_2d_c, simple_mesh_2d_d)
+{
 }
 
 void
 Geodetic_Mesh::cairo (const RefPtr<Context> cr,
                       const Geodetic_Transform& transform) const
 {
+
+   const Real start_latitude = domain_2d.domain_x.start;
+   const Real end_latitude = domain_2d.domain_x.end;
+   const Real start_longitude = domain_2d.domain_y.start;
+   const Real end_longitude = domain_2d.domain_y.end;
+   const Real latitude_span = domain_2d.domain_x.get_span ();
+   const Real longitude_span = domain_2d.domain_y.get_span ();
+   const Real anchor_lat_a = start_latitude + latitude_span * 0.2;
+   const Real anchor_long_a = start_longitude + longitude_span * 0.2;
+   const Real anchor_lat_b = start_latitude + latitude_span * 0.8;
+   const Real anchor_long_b = start_longitude + longitude_span * 0.8;
+   const Lat_Long anchor_lat_long_a (anchor_lat_a, anchor_long_a);
+   const Lat_Long anchor_lat_long_b (anchor_lat_b, anchor_long_b);
+
    Mesh_2D::render (cr, transform);
+   render_label_lat_long (cr, transform, 1, anchor_lat_long_a, "%.0f");
+   render_label_lat_long (cr, transform, 1, anchor_lat_long_b, "%.0f");
+
 }
 

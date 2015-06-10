@@ -1418,8 +1418,30 @@ namespace denise
 
       public:
 
-         Geodetic_Mesh (const Size_2D& size_2d = Size_2D (100, 100),
-                        const Domain_2D& domain_2d = Domain_2D (-89, 89, -180, 179.999)) ;
+         Geodetic_Mesh (const Size_2D& s = Size_2D (100, 100),
+                        const Domain_2D& d = Domain_2D (-89, 89, -180, 179.9));
+
+         Geodetic_Mesh (const Simple_Mesh_2D& simple_mesh_2d,
+                        const Size_2D& s = Size_2D (100, 100),
+                        const Domain_2D& d = Domain_2D (-89, 89, -180, 179.9));
+
+         Geodetic_Mesh (const Simple_Mesh_2D& simple_mesh_2d_a,
+                        const Simple_Mesh_2D& simple_mesh_2d_b,
+                        const Size_2D& s = Size_2D (100, 100),
+                        const Domain_2D& d = Domain_2D (-89, 89, -180, 179.9));
+
+         Geodetic_Mesh (const Simple_Mesh_2D& simple_mesh_2d_a,
+                        const Simple_Mesh_2D& simple_mesh_2d_b,
+                        const Simple_Mesh_2D& simple_mesh_2d_c,
+                        const Size_2D& s = Size_2D (100, 100),
+                        const Domain_2D& d = Domain_2D (-89, 89, -180, 179.9));
+
+         Geodetic_Mesh (const Simple_Mesh_2D& simple_mesh_2d_a,
+                        const Simple_Mesh_2D& simple_mesh_2d_b,
+                        const Simple_Mesh_2D& simple_mesh_2d_c,
+                        const Simple_Mesh_2D& simple_mesh_2d_d,
+                        const Size_2D& s = Size_2D (100, 100),
+                        const Domain_2D& d = Domain_2D (-89, 89, -180, 179.9));
 
          void
          cairo (const RefPtr<Context> cr,

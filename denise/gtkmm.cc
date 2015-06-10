@@ -6132,13 +6132,16 @@ Console_2D::Marker::cairo (const RefPtr<Context>& cr,
 
    cr->save ();
 
-   Popup popup (console_2d, 12);
-   popup.set_tokens (console_2d.get_tokens (*this));
-   const Point_2D anchor = point + Point_2D (6, -6);
-   const Real popup_width = popup.get_preferred_width ();
-   const Real popup_height = popup.get_preferred_height ();
-   popup.set_shape (anchor, ORIENTATION_NE, popup_width, popup_height);
-   popup.cairo (cr);
+   if (console_2d.get_tokens (*this).size () > 0)
+   {
+      Popup popup (console_2d, 12);
+      popup.set_tokens (console_2d.get_tokens (*this));
+      const Point_2D anchor = point + Point_2D (6, -6);
+      const Real popup_width = popup.get_preferred_width ();
+      const Real popup_height = popup.get_preferred_height ();
+      popup.set_shape (anchor, ORIENTATION_NE, popup_width, popup_height);
+      popup.cairo (cr);
+   }
 
    const Real hue = (str == "" ? 0.667 : 0.000);
    const Color& bg_color = Color::hsb (hue, 0.5, 1, 0.7);
@@ -7940,39 +7943,25 @@ void
 Map_Console::render_mesh (const RefPtr<Context>& cr)
 {
 
-   const Geodetic_Transform& transform = get_geodetic_transform ();
+   const Size_2D size_2d (100, 100);
    const Domain_2D domain_2d = get_domain_2d ();
-
-   const Real start_latitude = domain_2d.domain_x.start;
-   const Real end_latitude = domain_2d.domain_x.end;
-   const Real start_longitude = domain_2d.domain_y.start;
-   const Real end_longitude = domain_2d.domain_y.end;
-   const Real latitude_span = domain_2d.domain_x.get_span ();
-   const Real longitude_span = domain_2d.domain_y.get_span ();
-   const Real anchor_lat_a = start_latitude + latitude_span * 0.2;
-   const Real anchor_long_a = start_longitude + longitude_span * 0.2;
-   const Real anchor_lat_b = start_latitude + latitude_span * 0.8;
-   const Real anchor_long_b = start_longitude + longitude_span * 0.8;
-   const Lat_Long anchor_lat_long_a (anchor_lat_a, anchor_long_a);
-   const Lat_Long anchor_lat_long_b (anchor_lat_b, anchor_long_b);
+   const Geodetic_Transform& transform = get_geodetic_transform ();
 
    const Simple_Mesh_2D sm0_2 (Color (0, 0, 0, 0.05), 0.2, 0.2);
    const Simple_Mesh_2D sm1 (Color (0, 0, 0, 0.1), 1, 1);
    const Simple_Mesh_2D sm5 (Color (0, 0, 0, 0.1), 5, 5);
    const Simple_Mesh_2D sm10 (Color (0, 0, 0, 0.4), 10, 10);
    const Simple_Mesh_2D sm30 (Color (0, 0, 0, 0.4), 30, 30);
-   const Mesh_2D mesh_2d_small (Size_2D (100, 100), domain_2d, sm1, sm10);
-   const Mesh_2D mesh_2d_large (Size_2D (100, 100), domain_2d, sm5, sm30);
+   const Geodetic_Mesh mesh_small (sm1, sm10, size_2d, domain_2d);
+   const Geodetic_Mesh mesh_large (sm5, sm30, size_2d, domain_2d);
 
+   const Real latitude_span = domain_2d.domain_x.get_span ();
+   const Real longitude_span = domain_2d.domain_y.get_span ();
    const Real span = std::min (latitude_span, longitude_span);
-   const Mesh_2D& mesh_2d = (span > 90 ? mesh_2d_large : mesh_2d_small);
+   const Geodetic_Mesh& mesh = (span > 90 ? mesh_large : mesh_small);
 
    cr->save ();
-
-   mesh_2d.render (cr, transform);
-   mesh_2d.render_label_lat_long (cr, transform, 1, anchor_lat_long_a, "%.0f");
-   mesh_2d.render_label_lat_long (cr, transform, 1, anchor_lat_long_b, "%.0f");
-
+   mesh.cairo (cr, transform);
    cr->restore ();
 
 }
@@ -8186,7 +8175,6 @@ Map_Console::Overlay_Store::cairo (const RefPtr<Context>& cr,
    cr->save ();
    cr->set_line_join (LINE_JOIN_ROUND);
 
-cout << "overlay_store size = " << size () << endl;
    for (Overlay_Store::const_iterator iterator = begin ();
         iterator != end (); iterator++)
    {

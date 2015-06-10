@@ -291,7 +291,7 @@ Dtime::get_string (const string& format,
 
    int inf;
 
-   if (isnan (t))
+   if (gsl_isnan (t))
    {
       return string ("nat");
    }
