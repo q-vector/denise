@@ -1029,6 +1029,9 @@ namespace denise
 
       private:
 
+         Size_2D
+         size_2d;
+
          Domain_2D
          domain_2d;
 
@@ -1036,28 +1039,37 @@ namespace denise
 
          Mesh_2D ();
 
-         Mesh_2D (const Domain_2D& domain_2d);
+         Mesh_2D (const Size_2D& size_2d,
+                  const Domain_2D& domain_2d);
 
-         Mesh_2D (const Domain_2D& domain_2d,
+         Mesh_2D (const Size_2D& size_2d,
+                  const Domain_2D& domain_2d,
                   const Simple_Mesh_2D& simple_mesh_2d);
 
-         Mesh_2D (const Domain_2D& domain_2d,
+         Mesh_2D (const Size_2D& size_2d,
+                  const Domain_2D& domain_2d,
                   const Simple_Mesh_2D& simple_mesh_2d_a,
                   const Simple_Mesh_2D& simple_mesh_2d_b);
 
-         Mesh_2D (const Domain_2D& domain_2d,
+         Mesh_2D (const Size_2D& size_2d,
+                  const Domain_2D& domain_2d,
                   const Simple_Mesh_2D& simple_mesh_2d_a,
                   const Simple_Mesh_2D& simple_mesh_2d_b,
                   const Simple_Mesh_2D& simple_mesh_2d_c);
 
-         Mesh_2D (const Domain_2D& domain_2d,
+         Mesh_2D (const Size_2D& size_2d,
+                  const Domain_2D& domain_2d,
                   const Simple_Mesh_2D& simple_mesh_2d_a,
                   const Simple_Mesh_2D& simple_mesh_2d_b,
                   const Simple_Mesh_2D& simple_mesh_2d_c,
                   const Simple_Mesh_2D& simple_mesh_2d_d);
 
-         Mesh_2D (const Domain_2D& domain_2d,
+         Mesh_2D (const Size_2D& size_2d,
+                  const Domain_2D& domain_2d,
                   const vector<Simple_Mesh_2D>& simple_mesh_2d_vector);
+
+         void
+         set_size_2d (const Size_2D& size_2d);
 
          void
          set_domain_2d (const Domain_2D& domain_2d);
@@ -1074,8 +1086,7 @@ namespace denise
 
          void
          render (const RefPtr<Context>& cr,
-                 const Transform_2D& transform,
-                 const Size_2D& size_2d) const;
+                 const Transform_2D& transform) const;
 
          void
          render_label_x (const RefPtr<Context>& cr,

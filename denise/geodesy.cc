@@ -3474,3 +3474,20 @@ Track::get_lat_long (const Real tau,
 
 }
 
+
+Geodetic_Mesh::Geodetic_Mesh (const Size_2D& size_2d,
+                              const Domain_2D& domain_2d)
+   : Mesh_2D (size_2d, domain_2d)
+{
+   add (Simple_Mesh_2D (Color (0, 0, 0, 0.05), 0.2, 0.2));
+   add (Simple_Mesh_2D (Color (0, 0, 0, 0.1), 1, 1));
+   add (Simple_Mesh_2D (Color (0, 0, 0, 0.4), 10, 10));
+}
+
+void
+Geodetic_Mesh::cairo (const RefPtr<Context> cr,
+                      const Geodetic_Transform& transform) const
+{
+   Mesh_2D::render (cr, transform);
+}
+

@@ -1412,6 +1412,21 @@ namespace denise
 
    };
 
+   class Geodetic_Mesh : public Mesh_2D,
+                         public Geodetic_Cairoable
+   {
+
+      public:
+
+         Geodetic_Mesh (const Size_2D& size_2d = Size_2D (100, 100),
+                        const Domain_2D& domain_2d = Domain_2D (-89, 89, -180, 179.999)) ;
+
+         void
+         cairo (const RefPtr<Context> cr,
+                const Geodetic_Transform& transform) const;
+
+   };
+
 }
 
 #endif /* DENISE_GEODESY_H */ 

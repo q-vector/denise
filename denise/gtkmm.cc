@@ -7961,15 +7961,15 @@ Map_Console::render_mesh (const RefPtr<Context>& cr)
    const Simple_Mesh_2D sm5 (Color (0, 0, 0, 0.1), 5, 5);
    const Simple_Mesh_2D sm10 (Color (0, 0, 0, 0.4), 10, 10);
    const Simple_Mesh_2D sm30 (Color (0, 0, 0, 0.4), 30, 30);
-   const Mesh_2D mesh_2d_small (domain_2d, sm1, sm10);
-   const Mesh_2D mesh_2d_large (domain_2d, sm5, sm30);
+   const Mesh_2D mesh_2d_small (Size_2D (100, 100), domain_2d, sm1, sm10);
+   const Mesh_2D mesh_2d_large (Size_2D (100, 100), domain_2d, sm5, sm30);
 
    const Real span = std::min (latitude_span, longitude_span);
    const Mesh_2D& mesh_2d = (span > 90 ? mesh_2d_large : mesh_2d_small);
 
    cr->save ();
 
-   mesh_2d.render (cr, transform, Size_2D (100, 100));
+   mesh_2d.render (cr, transform);
    mesh_2d.render_label_lat_long (cr, transform, 1, anchor_lat_long_a, "%.0f");
    mesh_2d.render_label_lat_long (cr, transform, 1, anchor_lat_long_b, "%.0f");
 
@@ -8150,7 +8150,7 @@ Map_Console::Overlay_Store::add (const string& identifier,
                                  const bool heavy)
 {
    push_back (identifier);
-   on_off_map.insert (make_pair (identifier, heavy));
+   on_off_map.insert (make_pair (identifier, !heavy));
    Overlay* o_ptr = new Overlay (gc_ptr, filled, line_width, color, heavy);
    overlay_ptr_map.insert (make_pair (identifier, o_ptr));
 }
@@ -8186,19 +8186,20 @@ Map_Console::Overlay_Store::cairo (const RefPtr<Context>& cr,
    cr->save ();
    cr->set_line_join (LINE_JOIN_ROUND);
 
+cout << "overlay_store size = " << size () << endl;
    for (Overlay_Store::const_iterator iterator = begin ();
         iterator != end (); iterator++)
    {
 
       const string& identifier = *(iterator);
       On_Off_Map::const_iterator i = on_off_map.find (identifier);
-      if (i == on_off_map.end ()) { continue; }
+      if (i == on_off_map.end ()) { cout << "cont a " << endl; continue; }
 
       const bool on = i->second;
-      if (!on) { continue; }
+      if (!on) { cout << "cont b " << endl; continue; }
 
       const Overlay& overlay = get_overlay (identifier);
-      if (ignore_heavy && overlay.heavy) { continue; }
+      if (ignore_heavy && overlay.heavy) { cout << "cont c " << endl; continue; }
       overlay.cairo (cr, transform);
 
    }
@@ -8981,7 +8982,7 @@ Time_Series_Canvas::render_background_buffer (const RefPtr<Context>& cr)
 
    const string fmt_t ("%HZ");
 
-   mesh_2d.render (cr, transform, Size_2D (2, 2));
+   mesh_2d.render (cr, transform);
 
    Color (0, 0, 0).cairo (cr);
 

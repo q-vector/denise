@@ -1621,44 +1621,54 @@ Mesh_2D::Mesh_2D ()
 {
 }
 
-Mesh_2D::Mesh_2D (const Domain_2D& domain_2d)
-   : domain_2d (domain_2d)
+Mesh_2D::Mesh_2D (const Size_2D& size_2d,
+                  const Domain_2D& domain_2d)
+   : size_2d (size_2d),
+     domain_2d (domain_2d)
 {
 }
 
-Mesh_2D::Mesh_2D (const Domain_2D& domain_2d,
+Mesh_2D::Mesh_2D (const Size_2D& size_2d,
+                  const Domain_2D& domain_2d,
                   const Simple_Mesh_2D& simple_mesh_2d)
-   : domain_2d (domain_2d)
+   : size_2d (size_2d),
+     domain_2d (domain_2d)
 {
    add (simple_mesh_2d);
 }
 
-Mesh_2D::Mesh_2D (const Domain_2D& domain_2d,
+Mesh_2D::Mesh_2D (const Size_2D& size_2d,
+                  const Domain_2D& domain_2d,
                   const Simple_Mesh_2D& simple_mesh_2d_a,
                   const Simple_Mesh_2D& simple_mesh_2d_b)
-   : domain_2d (domain_2d)
+   : size_2d (size_2d),
+     domain_2d (domain_2d)
 {
    add (simple_mesh_2d_a);
    add (simple_mesh_2d_b);
 }
 
-Mesh_2D::Mesh_2D (const Domain_2D& domain_2d,
+Mesh_2D::Mesh_2D (const Size_2D& size_2d,
+                  const Domain_2D& domain_2d,
                   const Simple_Mesh_2D& simple_mesh_2d_a,
                   const Simple_Mesh_2D& simple_mesh_2d_b,
                   const Simple_Mesh_2D& simple_mesh_2d_c)
-   : domain_2d (domain_2d)
+   : size_2d (size_2d),
+     domain_2d (domain_2d)
 {
    add (simple_mesh_2d_a);
    add (simple_mesh_2d_b);
    add (simple_mesh_2d_c);
 }
 
-Mesh_2D::Mesh_2D (const Domain_2D& domain_2d,
+Mesh_2D::Mesh_2D (const Size_2D& size_2d,
+                  const Domain_2D& domain_2d,
                   const Simple_Mesh_2D& simple_mesh_2d_a,
                   const Simple_Mesh_2D& simple_mesh_2d_b,
                   const Simple_Mesh_2D& simple_mesh_2d_c,
                   const Simple_Mesh_2D& simple_mesh_2d_d)
-   : domain_2d (domain_2d)
+   : size_2d (size_2d),
+     domain_2d (domain_2d)
 {
    add (simple_mesh_2d_a);
    add (simple_mesh_2d_b);
@@ -1666,9 +1676,11 @@ Mesh_2D::Mesh_2D (const Domain_2D& domain_2d,
    add (simple_mesh_2d_d);
 }
 
-Mesh_2D::Mesh_2D (const Domain_2D& domain_2d,
+Mesh_2D::Mesh_2D (const Size_2D& size_2d,
+                  const Domain_2D& domain_2d,
                   const vector<Simple_Mesh_2D>& simple_mesh_2d_vector)
-   : domain_2d (domain_2d)
+   : size_2d (size_2d),
+     domain_2d (domain_2d)
 {
 
    typedef vector<Simple_Mesh_2D>::const_iterator Iterator;
@@ -1680,6 +1692,12 @@ Mesh_2D::Mesh_2D (const Domain_2D& domain_2d,
       add (simple_mesh_2d);
    }
 
+}
+
+void
+Mesh_2D::set_size_2d (const Size_2D& size_2d)
+{
+   this->size_2d = size_2d;
 }
 
 void
@@ -1710,8 +1728,7 @@ Mesh_2D::get_domain_2d () const
 
 void
 Mesh_2D::render (const RefPtr<Context>& cr,
-                 const Transform_2D& transform,
-                 const Size_2D& size_2d) const
+                 const Transform_2D& transform) const
 {
 
    cr->save ();
