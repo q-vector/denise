@@ -21,6 +21,7 @@
 #ifndef DENISE_DTIME_H
 #define DENISE_DTIME_H
 
+#include <set>
 #include <ctime>
 #include <denise/basics.h>
 #include <denise/exception.h>
@@ -207,11 +208,74 @@ namespace denise
          bool
          operator >= (const Dtime& time) const;
 
+         class Span
+         {
+
+            public:
+
+               Real
+               start_t;
+
+               Real
+               end_t;
+
+            public:
+
+               Span ();
+
+               Span (const string& str);
+
+               Span (const Dtime& start,
+                     const Dtime& end);
+
+               Dtime
+               get_start (const bool snap_to_minute = false) const; 
+
+               Dtime
+               get_end (const bool snap_to_minute = false) const; 
+
+               bool
+               match (const Dtime& dtime) const;
+
+               bool
+               operator == (const Span& span) const;
+
+               bool
+               operator != (const Span& span) const;
+
+               bool
+               operator < (const Span& span) const;
+
+               bool
+               operator > (const Span& span) const;
+
+         };
+
+         class Set : public set<Span>
+         {
+
+            public: 
+
+               Set (const string& str);
+
+               virtual bool
+               match (const Dtime& dtime) const;
+
+         };
+
    };
 
    ostream&
-   operator << (ostream &out_file,
+   operator << (ostream& out,
                 const Dtime& time);
+
+   ostream&
+   operator << (ostream& out,
+                const Dtime::Span& span);
+
+   ostream&
+   operator << (ostream& out,
+                const Dtime::Set& set);
 
 }
 

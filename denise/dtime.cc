@@ -30,6 +30,8 @@ Dtime::init (const string& time_string,
              bool is_local)
 {
 
+   if (time_string == "big_bang") { this->t = GSL_NEGINF; return; }
+   if (time_string == "big_crunch") { this->t = GSL_POSINF; return; }
    if (time_string == "nat") { this->t = GSL_NAN; return; }
 
    Integer year  = atoi (time_string.substr (0, 4).c_str ());
@@ -62,6 +64,8 @@ Dtime::init (const string& time_string,
              bool is_local)
 {
 
+   if (time_string == "big_bang") { this->t = GSL_NEGINF; return; }
+   if (time_string == "big_crunch") { this->t = GSL_POSINF; return; }
    if (time_string == "nat") { this->t = GSL_NAN; return; }
 
    struct tm ts;
@@ -285,11 +289,18 @@ Dtime::get_string (const string& format,
                    const bool is_local) const
 {
 
-   if (!finite (t))
+   int inf;
+
+   if (isnan (t))
    {
       return string ("nat");
    }
-
+   else
+   if ((inf = gsl_isinf (t)) != 0)
+   {
+      const bool future = (inf > 0);
+      return string (future ? "big_crunch" : "big_bang");
+   }
    else
    {
 
@@ -522,15 +533,144 @@ Dtime::operator >= (const Dtime& time) const
    return (t - time.t - t) > -0.01;
 }
 
+Dtime::Span::Span ()
+   : start_t (GSL_NEGINF),
+     end_t (GSL_POSINF)
+{
+   this->start_t = GSL_NEGINF;
+   this->end_t = GSL_POSINF;
+}
+
+Dtime::Span::Span (const string& str)
+   : start_t (GSL_NEGINF),
+     end_t (GSL_POSINF)
+{
+   const Tokens tokens (str, "-");
+   if (tokens.size () == 1)
+   {
+      const Real t = Dtime (tokens[0]).t;
+      const bool dash_at_front = (str[0] == '-');
+      const bool dash_at_back = (str[str.length () - 1] == '-');
+           if (dash_at_front) { end_t = t; }
+      else if (dash_at_back)  { start_t = t; }
+      else                    { start_t = t; end_t = t; }
+   }
+   else
+   if (tokens.size () == 2)
+   { 
+      start_t = Dtime (tokens[0]).t;
+      end_t = Dtime (tokens[1]).t;
+   }
+}
+
+Dtime::Span::Span (const Dtime& start,
+                   const Dtime& end)
+   : start_t (start.t),
+     end_t (end.t)
+{
+}
+
+Dtime
+Dtime::Span::get_start (const bool snap_to_minute) const
+{
+   return Dtime (start_t, snap_to_minute);
+}
+
+Dtime
+Dtime::Span::get_end (const bool snap_to_minute) const
+{
+   return Dtime (end_t, snap_to_minute);
+}
+
+bool
+Dtime::Span::match (const Dtime& dtime) const
+{
+   return (dtime.t >= start_t) && (dtime.t <= end_t);
+}
+
+bool
+Dtime::Span::operator == (const Dtime::Span& span) const
+{
+   return (start_t == span.start_t) && (end_t == span.end_t);
+}
+
+bool
+Dtime::Span::operator != (const Dtime::Span& span) const
+{
+   return (start_t != span.start_t) || (end_t != span.end_t);
+}
+
+bool
+Dtime::Span::operator < (const Dtime::Span& span) const
+{
+   if (start_t == span.start_t) { return end_t < span.end_t; }
+   else                         { return start_t < span.start_t; }
+}
+
+bool
+Dtime::Span::operator > (const Dtime::Span& span) const
+{
+   if (start_t == span.start_t) { return end_t > span.end_t; }
+   else                         { return start_t > span.start_t; }
+}
+
+bool
+Dtime::Set::match (const Dtime& dtime) const
+{
+   if (size () == 0) { return true; }
+   for (auto iterator = begin (); iterator != end (); iterator++)
+   {
+      const Dtime::Span& span = *(iterator);
+      if (span.match (dtime)) { return true; }
+   }
+   return false;
+}
+
+Dtime::Set::Set (const string& str)
+{
+
+   const Tokens tokens (str, ":");
+
+   for (auto iterator = tokens.begin (); iterator != tokens.end (); iterator++)
+   {
+      const string& token = *(iterator);
+      insert (Dtime::Span (token));
+   }
+
+}
+
 namespace denise
 {
 
    ostream&
-   operator << (ostream &out_file,
+   operator << (ostream &out,
                 const Dtime& time)
    {
-      out_file << time.get_string ();
-      return out_file;
+      out << time.get_string ();
+      return out;
+   }
+
+   ostream&
+   operator << (ostream &out,
+                const Dtime::Span& span)
+   {
+      const Dtime& start = span.get_start ();
+      const Dtime& end = span.get_end ();
+      if (start == end) { out << start; }
+      else { out << start << "-" << end; }
+      return out;
+   }
+
+   ostream&
+   operator << (ostream &out,
+                const Dtime::Set& set)
+   {
+      for (auto iterator = set.begin (); iterator != set.end (); iterator++)
+      {
+         if (iterator != set.begin ()) { out << ":"; }
+         out << *(iterator);
+      }
+      return out;
    }
 
 }

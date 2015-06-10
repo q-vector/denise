@@ -1991,7 +1991,7 @@ Real
 Title::get_height () const
 {
    const Real h = j * 0.042;
-   return std::max (std::min (h, 40.0), 25.0);
+   return std::max (std::min (h, 45.0), 35.0);
 }
 
 void
