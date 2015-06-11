@@ -129,6 +129,10 @@ namespace denise
          standardize (const Real standard_longitude);
 
          string
+         get_string (const Integer decimal_places,
+                     const bool with_parenthesis = true) const;
+
+         string
          get_string (const bool with_parenthesis = true,
                      const string& number_format = "%.1f\u00b0") const;
 

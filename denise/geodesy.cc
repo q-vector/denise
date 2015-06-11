@@ -130,6 +130,14 @@ Lat_Long::standardize (const Real standard_longitude)
 }
 
 string
+Lat_Long::get_string (const Integer decimal_places,
+                      const bool with_parenthesis) const
+{
+   const string& number_format = string_render ("%%.%df\u00b0", decimal_places);
+   return get_string (with_parenthesis, number_format);
+}
+
+string
 Lat_Long::get_string (const bool with_parenthesis,
                       const string& number_format) const
 {

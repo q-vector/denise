@@ -6134,13 +6134,32 @@ Console_2D::Marker::cairo (const RefPtr<Context>& cr,
 
    if (console_2d.get_tokens (*this).size () > 0)
    {
+
       Popup popup (console_2d, 12);
       popup.set_tokens (console_2d.get_tokens (*this));
-      const Point_2D anchor = point + Point_2D (6, -6);
-      const Real popup_width = popup.get_preferred_width ();
-      const Real popup_height = popup.get_preferred_height ();
-      popup.set_shape (anchor, ORIENTATION_NE, popup_width, popup_height);
+      const Real popup_w = popup.get_preferred_width ();
+      const Real popup_h = popup.get_preferred_height ();
+      const Size_2D& size_2d = console_2d.get_size_2d ();
+
+      Point_2D off (6, 6);
+      Orientation o = ORIENTATION_SE;
+
+      const Real x = point.x;
+      const Real y = point.y;
+      const Real w = size_2d.i;
+      const Real h = size_2d.j;
+
+      const bool over_x = (x + popup_w + 2 * off.x) > w;
+      const bool over_y = (y + popup_h + 2 * off.y) > h;
+
+      if (over_x && over_y) { o = ORIENTATION_NW; off.x *= -1; off.y *= -1; }
+      else if (over_x) { o = ORIENTATION_SW; off.x *= -1; }
+      else if (over_y) { o = ORIENTATION_NE; off.y *= -1; }
+
+      const Point_2D anchor (x + off.x, y + off.y);
+      popup.set_shape (anchor, o, popup_w, popup_h);
       popup.cairo (cr);
+
    }
 
    const Real hue = (str == "" ? 0.667 : 0.000);
@@ -8148,7 +8167,10 @@ bool
 Map_Console::Overlay_Store::is_on (const string& identifier) const
 {
    On_Off_Map::const_iterator iterator = on_off_map.find (identifier);
-   if (iterator == on_off_map.end ()) { throw Exception ("Invalid overlay identifier"); }
+   if (iterator == on_off_map.end ())
+   {
+      throw Exception ("Invalid overlay identifier");
+   }
    return iterator->second;
 }
 
