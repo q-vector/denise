@@ -2381,11 +2381,10 @@ Drawer::pack ()
 
    if (switched_on)
    {
-      typedef vector<Dwidget*>::const_iterator Iterator;
-      for (Iterator iterator = widget_ptr_vector.begin ();
-           iterator != widget_ptr_vector.end (); iterator++)
+      for (auto iterator = widget_ptr_map.begin ();
+           iterator != widget_ptr_map.end (); iterator++)
       {
-         const Dwidget& widget = **(iterator);
+         const Dwidget& widget = *(iterator->second);
          widget_panel.pack_back (widget);
       }
 
@@ -2400,17 +2399,17 @@ void
 Drawer::clear ()
 {
 
-   typedef std::set<Dwidget*>::iterator Iterator;
-
-   for (Iterator iterator = widget_ptr_set.begin ();
-        iterator != widget_ptr_set.end (); iterator++)
+   for (auto iterator = widget_ptr_map.begin ();
+        iterator != widget_ptr_map.end (); iterator++)
    {
-      Dwidget* widget_ptr = *(iterator);
+      const Integer id = iterator->first;
+      if (ref_only_map.at (id)) { continue; }
+      Dwidget* widget_ptr = iterator->second;
       delete widget_ptr;
    }
 
-   widget_ptr_vector.clear ();
-   widget_ptr_set.clear ();
+   ref_only_map.clear ();
+   widget_ptr_map.clear ();
 
 }
 
@@ -2433,6 +2432,18 @@ Drawer::~Drawer ()
    clear ();
 }
 
+const Dwidget&
+Drawer::get_widget (const Integer index) const
+{
+   return *(widget_ptr_map.at (index));
+}
+
+Dwidget&
+Drawer::get_widget (const Integer index)
+{
+   return *(widget_ptr_map.at (index));
+}
+
 void
 Drawer::set_hidable (const bool hidable)
 {
@@ -2443,14 +2454,17 @@ Drawer::set_hidable (const bool hidable)
 void
 Drawer::add_widget (Dwidget& widget)
 {
-   widget_ptr_vector.push_back (&widget);
+   const Integer id = widget_ptr_map.size ();
+   widget_ptr_map.insert (make_pair (id, &widget));
+   ref_only_map.insert (make_pair (id, true));
 }
 
 void
 Drawer::add_widget_ptr (Dwidget* widget_ptr)
 {
-   widget_ptr_vector.push_back (widget_ptr);
-   widget_ptr_set.insert (widget_ptr);
+   const Integer id = widget_ptr_map.size ();
+   widget_ptr_map.insert (make_pair (id, widget_ptr));
+   ref_only_map.insert (make_pair (id, false));
 }
 
 void
@@ -2462,7 +2476,7 @@ Drawer::being_packed (const Point_2D& anchor,
    Dwidget::being_packed (anchor, width, height);
 
    const Real margin = 6;
-   const Integer n = widget_ptr_vector.size ();
+   const Integer n = widget_ptr_map.size ();
 
    const Real wp_width = width;
    const Real wp_height = n * height + (n - 1) * margin;
@@ -7464,7 +7478,7 @@ bool
 Console_2D::on_mouse_motion (const Dmouse_Motion_Event& event)
 {
 
-   if (Gtk::Main::events_pending ()) { return true; }
+   //if (Gtk::Main::events_pending ()) { return true; }
    if (Dcontainer::on_mouse_motion (event)) { return true; }
 
    const Point_2D& point = event.point;
@@ -8245,18 +8259,15 @@ void
 Map_Console::Option_Panel::Zoom_Drawer::switch_off_zoom_button ()
 {
 
-   typedef Dtoggle_Button Tb;
-   typedef vector<Dwidget*>::iterator Iterator;
-
-   for (Iterator iterator = widget_ptr_vector.begin ();
-        iterator != widget_ptr_vector.begin (); iterator++)
+   for (auto iterator = widget_ptr_map.begin ();
+        iterator != widget_ptr_map.begin (); iterator++)
    {
 
-      Dwidget& widget = **(iterator);
+      Dwidget& widget = *(iterator->second);
 
       try
       {
-         Tb& tb = dynamic_cast<Tb&>(widget);
+         Dtoggle_Button& tb = dynamic_cast<Dtoggle_Button&>(widget);
          if (tb.get_str () != "Custom") { continue; }
          tb.set (false);
          break;
@@ -8286,18 +8297,15 @@ bool
 Map_Console::Option_Panel::Overlay_Drawer::is_on (const string& str) const
 {
 
-   typedef Dtoggle_Button Tb;
-   typedef vector<Dwidget*>::const_iterator Iterator;
-
-   for (Iterator iterator = widget_ptr_vector.begin ();
-        iterator != widget_ptr_vector.end (); iterator++)
+   for (auto iterator = widget_ptr_map.begin ();
+        iterator != widget_ptr_map.end (); iterator++)
    {
 
-      const Dwidget& widget = **(iterator);
+      const Dwidget& widget = *(iterator->second);
 
       try
       {
-         const Tb& tb = dynamic_cast<const Tb&>(widget);
+         const Dtoggle_Button& tb = dynamic_cast<const Dtoggle_Button&>(widget);
          if (tb.get_str () != str) { continue; }
          return tb.is_switched_on ();
       }
@@ -8320,21 +8328,13 @@ Map_Console::Option_Panel::Overlay_Drawer::set_on_off (const string& str,
    if (iterator == index_map.end ()) { return ; }
    
    const Integer index = iterator->second;
-   Dtoggle_Button& tb = (Dtoggle_Button&)(*(widget_ptr_vector[index]));
+   Dtoggle_Button& tb = (Dtoggle_Button&)(*(widget_ptr_map.at (index)));
    tb.set (on_off);
 
 }
 
 void
-Map_Console::Option_Panel::setup_zoom (const string& zoom_str)
-{
-   Tokens zoom_tokens;
-   zoom_tokens.push_back (zoom_str);
-   setup_zoom (zoom_tokens);
-}
-
-void
-Map_Console::Option_Panel::setup_zoom (const Tokens& zoom_tokens)
+Map_Console::Option_Panel::setup_zoom (const Tokens& config_file_content)
 {
 
    const Real font_size = 12;
@@ -8354,15 +8354,16 @@ Map_Console::Option_Panel::setup_zoom (const Tokens& zoom_tokens)
    drawer_ptr->add_widget_ptr (button_ptr);
 
    // Make Zoom buttons for default Zooms
-   for (vector<string>::const_iterator iterator = zoom_tokens.begin ();
-        iterator != zoom_tokens.end (); iterator++)
+   for (auto iterator = config_file_content.begin ();
+        iterator != config_file_content.end (); iterator++)
    {
 
-      const string& zoom_str = *(iterator);
-      const Tokens tokens (zoom_str, "/");
+      const Tokens tokens (*(iterator));
+      if (tokens.size () != 3) { continue; }
+      if (tokens[0] != "geodetic_transform") { continue; }
 
-      const string& identifier = tokens[0];
-      const Geodetic_Transform::Data gtd (tokens[1]);
+      const string& identifier = tokens[1];
+      const Geodetic_Transform::Data gtd (tokens[2]);
 
       Gtdb* gtdb_ptr = new Gtdb (map_console, gtd, identifier, font_size);
       Gtdb::T_Signal& signal = gtdb_ptr->get_t_signal ();
@@ -8375,52 +8376,14 @@ Map_Console::Option_Panel::setup_zoom (const Tokens& zoom_tokens)
 
 }
 
-const Map_Console::Option_Panel::Zoom_Drawer&
-Map_Console::Option_Panel::get_zoom_drawer () const
-{
-   const Drawer& drawer = *(drawer_ptr_map.find ("Zoom")->second);
-   return dynamic_cast<const Zoom_Drawer&>(drawer);
-}
-
-Map_Console::Option_Panel::Zoom_Drawer&
-Map_Console::Option_Panel::get_zoom_drawer ()
-{
-   Drawer& drawer = *(drawer_ptr_map.find ("Zoom")->second);
-   return dynamic_cast<Zoom_Drawer&>(drawer);
-}
-
-const Map_Console::Option_Panel::Overlay_Drawer&
-Map_Console::Option_Panel::get_overlay_drawer () const
-{
-   const Drawer& drawer = *(drawer_ptr_map.find ("Overlay")->second);
-   return dynamic_cast<const Overlay_Drawer&>(drawer);
-}
-
-Map_Console::Option_Panel::Overlay_Drawer&
-Map_Console::Option_Panel::get_overlay_drawer ()
-{
-   Drawer& drawer = *(drawer_ptr_map.find ("Overlay")->second);
-   return dynamic_cast<Overlay_Drawer&>(drawer);
-}
-
 Map_Console::Option_Panel::Option_Panel (Map_Console& map_console,
-                                         const string& zoom_str)
+                                         const Tokens& config_file_content)
    : Drawer_Panel (map_console, false, 12),
      map_console (map_console)
 {
    Overlay_Drawer* drawer_ptr = new Overlay_Drawer (*this);
    add_drawer_ptr (drawer_ptr, true);
-   setup_zoom (zoom_str);
-}
-
-Map_Console::Option_Panel::Option_Panel (Map_Console& map_console,
-                                         const Tokens& zoom_tokens)
-   : Drawer_Panel (map_console, false, 12),
-     map_console (map_console)
-{
-   Overlay_Drawer* drawer_ptr = new Overlay_Drawer (*this);
-   add_drawer_ptr (drawer_ptr, true);
-   setup_zoom (zoom_tokens);
+   setup_zoom (config_file_content);
 }
 
 void
@@ -8488,6 +8451,34 @@ Map_Console::Option_Panel::overlay_is_on (const string& overlay_str) const
 {
    const Overlay_Drawer& overlay_drawer = get_overlay_drawer ();
    return overlay_drawer.is_on (overlay_str);
+}
+
+const Map_Console::Option_Panel::Zoom_Drawer&
+Map_Console::Option_Panel::get_zoom_drawer () const
+{
+   const Drawer& drawer = *(drawer_ptr_map.find ("Zoom")->second);
+   return dynamic_cast<const Zoom_Drawer&>(drawer);
+}
+
+Map_Console::Option_Panel::Zoom_Drawer&
+Map_Console::Option_Panel::get_zoom_drawer ()
+{
+   Drawer& drawer = *(drawer_ptr_map.find ("Zoom")->second);
+   return dynamic_cast<Zoom_Drawer&>(drawer);
+}
+
+const Map_Console::Option_Panel::Overlay_Drawer&
+Map_Console::Option_Panel::get_overlay_drawer () const
+{
+   const Drawer& drawer = *(drawer_ptr_map.find ("Overlay")->second);
+   return dynamic_cast<const Overlay_Drawer&>(drawer);
+}
+
+Map_Console::Option_Panel::Overlay_Drawer&
+Map_Console::Option_Panel::get_overlay_drawer ()
+{
+   Drawer& drawer = *(drawer_ptr_map.find ("Overlay")->second);
+   return dynamic_cast<Overlay_Drawer&>(drawer);
 }
 
 Console_2D::Route*
@@ -8677,75 +8668,41 @@ Map_Console::get_string (const Marker& marker) const
 
 Map_Console::Map_Console (Gtk::Window& gtk_window,
                           const Size_2D& size_2d,
-                          const string& zoom_str)
+                          const Tokens& config_file_content)
    : Console_2D (gtk_window, size_2d),
      geodetic_zoom_box (*this),
-     option_panel (*this, zoom_str)
+     option_panel (*this, config_file_content)
 {
 
    Glib::Mutex::Lock lock (mutex);
 
    typedef Geodetic_Transform Gt;
+   typedef Geodetic_Transform::Data Gtd;
+   typedef Template_Button<Gtd> Gtdb;
    const Point_2D centre (size_2d.i/2, size_2d.j/2);
-   Geodetic_Transform::Data gtd ((Tokens (zoom_str, "/"))[1]);
-   geodetic_transform_ptr = Gt::get_transform_ptr (gtd, centre);
 
-}
+//   auto zoom_drawer = option_panel.get_zoom_drawer ();
+//   const Gtdb& zoom_widget = (const Gtdb&)(zoom_drawer.get_widget (0));
+//   const Gt::Data& gtd = zoom_widget.get_t ();
+//   geodetic_transform_ptr = Gt::get_transform_ptr (gtd, centre);
 
-Map_Console::Map_Console (Gtk::Window& gtk_window,
-                          const Size_2D& size_2d,
-                          const Tokens& zoom_tokens)
-   : Console_2D (gtk_window, size_2d),
-     geodetic_zoom_box (*this),
-     option_panel (*this, zoom_tokens)
-{
+   for (auto iterator = config_file_content.begin ();
+        iterator != config_file_content.end (); iterator++)
+   {
 
-   Glib::Mutex::Lock lock (mutex);
+      const Tokens tokens (*(iterator));
+      if (tokens.size () != 3) { continue; }
+      if (tokens[0] != "geodetic_transform") { continue; }
 
-   typedef Geodetic_Transform Gt;
-   const Point_2D centre (size_2d.i/2, size_2d.j/2);
-   Gt::Data gtd ((Tokens (zoom_tokens.front (), "/"))[1]);
-   geodetic_transform_ptr = Gt::get_transform_ptr (gtd, centre);
+      const string& identifier = tokens[1];
+      const Geodetic_Transform::Data gtd (tokens[2]);
+      geodetic_transform_ptr = Gt::get_transform_ptr (gtd, centre);
 
-   Map_Console::Zoom_Box& zoom_box = get_zoom_box ();
-   zoom_box.reset ();
+      break;
 
-}
+   }
 
-Map_Console::Map_Console (Gtk::Window& gtk_window,
-                          const Size_2D& size_2d,
-                          const Tokens& zoom_tokens,
-                          const Geodetic_Transform& gt)
-   : Console_2D (gtk_window, size_2d),
-     geodetic_zoom_box (*this),
-     option_panel (*this, zoom_tokens)
-{
 
-   Glib::Mutex::Lock lock (mutex);
-
-   typedef Geodetic_Transform Gt;
-   const Point_2D centre (size_2d.i/2, size_2d.j/2);
-   geodetic_transform_ptr = Gt::get_transform_ptr (gt.data, centre);
-
-   Map_Console::Zoom_Box& zoom_box = get_zoom_box ();
-   zoom_box.reset ();
-
-}
-
-Map_Console::Map_Console (Gtk::Window& gtk_window,
-                          const Size_2D& size_2d,
-                          const Tokens& zoom_tokens,
-                          const Geodetic_Transform::Data& gtd)
-   : Console_2D (gtk_window, size_2d),
-     geodetic_zoom_box (*this),
-     option_panel (*this, zoom_tokens)
-{
-
-   Glib::Mutex::Lock lock (mutex);
-
-   typedef Geodetic_Transform Gt;
-   const Point_2D centre (size_2d.i/2, size_2d.j/2);
-   geodetic_transform_ptr = Gt::get_transform_ptr (gtd, centre);
 
    Map_Console::Zoom_Box& zoom_box = get_zoom_box ();
    zoom_box.reset ();

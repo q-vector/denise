@@ -1332,11 +1332,11 @@ namespace denise
          bool
          open_upwards;
 
-         vector<Dwidget*>
-         widget_ptr_vector;
+         map<Integer, bool>
+         ref_only_map;
 
-         std::set<Dwidget*>
-         widget_ptr_set;
+         map<Integer, Dwidget*>
+         widget_ptr_map;
 
          void
          pack ();
@@ -1353,6 +1353,12 @@ namespace denise
                  const Real font_size);
 
          ~Drawer ();
+
+         const Dwidget&
+         get_widget (const Integer index) const;
+
+         Dwidget&
+         get_widget (const Integer index);
 
          virtual void
          set_hidable (const bool hidable);
@@ -3216,8 +3222,8 @@ namespace denise
 
                   private:
 
-                    std::map<string, Integer>
-                    index_map;
+                     std::map<string, Integer>
+                     index_map;
 
                   public:
 
@@ -3239,31 +3245,13 @@ namespace denise
                Map_Console&
                map_console;
 
-               void
-               setup_zoom (const string& zoom_str);
-
 	       void
-               setup_zoom (const Tokens& zoom_tokens);
-
-               const Map_Console::Option_Panel::Zoom_Drawer&
-               get_zoom_drawer () const;
-
-               Map_Console::Option_Panel::Zoom_Drawer&
-               get_zoom_drawer ();
-
-               const Map_Console::Option_Panel::Overlay_Drawer&
-               get_overlay_drawer () const;
-
-               Map_Console::Option_Panel::Overlay_Drawer&
-               get_overlay_drawer ();
+               setup_zoom (const Tokens& config_file_content);
 
             public:   
 
                Option_Panel (Map_Console& map_console,
-                             const string& zoom_str);
-
-               Option_Panel (Map_Console& map_console,
-                             const Tokens& zoom_tokens);
+                             const Tokens& config_file_content);
 
                void
                setup_overlay ();
@@ -3276,6 +3264,18 @@ namespace denise
 
                bool
                overlay_is_on (const string& overlay_str) const;
+
+               const Map_Console::Option_Panel::Zoom_Drawer&
+               get_zoom_drawer () const;
+
+               Map_Console::Option_Panel::Zoom_Drawer&
+               get_zoom_drawer ();
+
+               const Map_Console::Option_Panel::Overlay_Drawer&
+               get_overlay_drawer () const;
+
+               Map_Console::Option_Panel::Overlay_Drawer&
+               get_overlay_drawer ();
 
          };
 
@@ -3385,21 +3385,7 @@ namespace denise
 
          Map_Console (Gtk::Window& gtk_window,
                       const Size_2D& size_2d,
-                      const string& zoom_str);
-
-         Map_Console (Gtk::Window& gtk_window,
-                      const Size_2D& size_2d,
-                      const Tokens& zoom_tokens);
-
-         Map_Console (Gtk::Window& gtk_window,
-                      const Size_2D& size_2d,
-                      const Tokens& zoom_tokens,
-                      const Geodetic_Transform& geodetic_transform);
-
-         Map_Console (Gtk::Window& gtk_window,
-                      const Size_2D& size_2d,
-                      const Tokens& zoom_tokens,
-                      const Geodetic_Transform::Data& geodetic_transform_data);
+                      const Tokens& config_file_content);
 
          ~Map_Console ();
 
