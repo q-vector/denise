@@ -317,16 +317,8 @@ namespace denise
          ~Chunk ();
 
          void
-         read (FILE* file,
-               const bool float_length = true);
-
-         void
          read (ifstream& file,
                const bool float_length = true);
-
-         void
-         write (FILE* file,
-                const bool float_length = true) const;
 
          void
          write (ofstream& file,

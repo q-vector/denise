@@ -176,11 +176,10 @@ Image_Buffer::initialize (const Dwidget& widget)
    {
       const Integer w = Integer (round (widget.get_width ()));
       const Integer h = Integer (round (widget.get_height ()));
-      image_surface = ImageSurface::create (FORMAT_ARGB32, w, h);
+      image_surface = denise::get_surface (Size_2D (w, h));
    }
 
-   RefPtr<Context> cr = get_cr ();
-   cr->select_font_face ("Verdana", FONT_SLANT_NORMAL, FONT_WEIGHT_NORMAL);
+   RefPtr<Context> cr = denise::get_cr (image_surface);
    transparent.cairo (cr);
    cr->set_operator (Cairo::OPERATOR_SOURCE);
    cr->paint ();
@@ -190,7 +189,7 @@ Image_Buffer::initialize (const Dwidget& widget)
 const RefPtr<Context>
 Image_Buffer::get_cr () const
 {
-   return Context::create (image_surface);
+   return denise::get_cr (image_surface);
 }
 
 void
@@ -460,7 +459,6 @@ Dwidget::render_background_buffer ()
 {
    background_buffer.initialize (*this);
    const RefPtr<Context> cr = background_buffer.get_cr ();
-   cr->select_font_face ("Verdana", FONT_SLANT_NORMAL, FONT_WEIGHT_NORMAL);
    render_background_buffer (cr);
    set_background_ready (true);
 }
@@ -1254,14 +1252,13 @@ Dcanvas::Dcanvas (Gtk::Window& gtk_window)
 const RefPtr<Context>
 Dcanvas::get_widget_cr () const
 {
-   return Context::create (widget_surface);
+   return denise::get_cr (widget_surface);
 }
 
 const RefPtr<Context>
 Dcanvas::get_image_surface_cr () const
 {
-   return Context::create (widget_surface);
-   return Context::create (image_surface);
+   return denise::get_cr (image_surface);
 }
 
 bool
@@ -1276,12 +1273,13 @@ Dcanvas::initialize ()
 
    const Integer w = Integer (round (width));
    const Integer h = Integer (round (height));
+   const Size_2D size_2d (w, h);
 
    image_surface.clear ();
    widget_surface.clear ();
 
-   image_surface = ImageSurface::create (FORMAT_ARGB32, w, h);
-   widget_surface = ImageSurface::create (FORMAT_ARGB32, w, h);
+   image_surface = denise::get_surface (size_2d);
+   widget_surface = denise::get_surface (size_2d);
 
 }
 
@@ -1290,11 +1288,8 @@ Dcanvas::save_image (const string& file_path)
 {
 
    const Size_2D& size_2d = get_size_2d ();
-
-   RefPtr<ImageSurface> surface = Cairo::ImageSurface::create (
-      FORMAT_RGB24, size_2d.i, size_2d.j);
-   const RefPtr<Context> cr = Context::create (surface);
-   cr->select_font_face ("Verdana", FONT_SLANT_NORMAL, FONT_WEIGHT_NORMAL);
+   RefPtr<ImageSurface> surface = denise::get_surface (size_2d);
+   const RefPtr<Context> cr = denise::get_cr (surface);
 
    cr->set_source (image_surface, 0, 0);
    cr->paint ();
@@ -1518,13 +1513,12 @@ void
 Dcanvas::refresh (const RefPtr<Context>& cr)
 {
 
-   gdk_threads_enter ();
+   //gdk_threads_enter ();
 
    if (image_surface == 0) { return; }
    if (widget_surface == 0) { return; }
 
-   const RefPtr<Context> widget_cr = Context::create (widget_surface);
-   widget_cr->select_font_face ("Verdana", FONT_SLANT_NORMAL, FONT_WEIGHT_NORMAL);
+   const RefPtr<Context> widget_cr = get_widget_cr ();
    widget_cr->set_source (image_surface, 0, 0);
    widget_cr->paint ();
 
@@ -1542,7 +1536,7 @@ Dcanvas::refresh (const RefPtr<Context>& cr)
       cr->restore ();
    }
 
-   gdk_threads_leave ();
+   //gdk_threads_leave ();
 
 }
 
@@ -1553,15 +1547,14 @@ Dcanvas::refresh (const RefPtr<Context>& cr,
                   const Real height)
 {
 
-   gdk_threads_enter ();
+   //gdk_threads_enter ();
 
    if (image_surface == 0) { return; }
    if (widget_surface == 0) { return; }
 
    const Rect rect (point, width, height);
 
-   const RefPtr<Context> widget_cr = Context::create (widget_surface);
-   widget_cr->select_font_face ("Verdana", FONT_SLANT_NORMAL, FONT_WEIGHT_NORMAL);
+   const RefPtr<Context> widget_cr = get_widget_cr ();
    widget_cr->set_source (image_surface, 0, 0);
    rect.cairo (widget_cr);
    widget_cr->fill ();
@@ -1572,7 +1565,7 @@ Dcanvas::refresh (const RefPtr<Context>& cr,
    rect.cairo (cr);
    cr->fill ();
 
-   gdk_threads_leave ();
+   //gdk_threads_leave ();
 
 }
 
@@ -1617,7 +1610,6 @@ Dcanvas::render_image_buffer ()
 {
    image_buffer.initialize (*this);
    const RefPtr<Context> cr = image_buffer.get_cr ();
-   cr->select_font_face ("Verdana", FONT_SLANT_NORMAL, FONT_WEIGHT_NORMAL);
    render_image_buffer (cr);
    set_image_ready (true);
 }
@@ -1645,7 +1637,6 @@ Dcanvas::render_foreground_buffer ()
 {
    foreground_buffer.initialize (*this);
    const RefPtr<Context> cr = foreground_buffer.get_cr ();
-   cr->select_font_face ("Verdana", FONT_SLANT_NORMAL, FONT_WEIGHT_NORMAL);
    render_foreground_buffer (cr);
    set_foreground_ready (true);
 }
@@ -2784,7 +2775,6 @@ Dtitle::get_preferred_height () const
 
    FontExtents fe;
    const RefPtr<Context> cr = canvas.get_widget_cr ();
-   cr->select_font_face ("Verdana", FONT_SLANT_NORMAL, FONT_WEIGHT_NORMAL);
 
    cr->save ();
    cr->set_font_size (font_size);
@@ -2835,7 +2825,6 @@ Popup::get_index (const Point_2D& point) const
 
    FontExtents fe;
    const RefPtr<Context> cr = canvas.get_widget_cr ();
-   cr->select_font_face ("Verdana", FONT_SLANT_NORMAL, FONT_WEIGHT_NORMAL);
    
    cr->save ();
    cr->set_font_size (font_size);
@@ -2969,7 +2958,6 @@ Popup::get_preferred_height () const
 
    FontExtents fe;
    const RefPtr<Context> cr = canvas.get_widget_cr ();
-   cr->select_font_face ("Verdana", FONT_SLANT_NORMAL, FONT_WEIGHT_NORMAL);
    
    cr->save ();
    cr->set_font_size (font_size);
@@ -6204,6 +6192,17 @@ Console_2D::Route::Route (const Integer id,
    push_back (point);
 }
 
+Console_2D::Route::Route (const Integer id,
+                          const Point_2D& point_a,
+                          const Point_2D& point_b,
+                          const Real node_size)
+   : Hud (id, node_size),
+     origin (GSL_NAN, GSL_NAN)
+{
+   push_back (point_a);
+   push_back (point_b);
+}
+
 bool
 Console_2D::Route::is_too_short () const
 {
@@ -6575,7 +6574,7 @@ Console_2D::Hud_Store::get_id (const Transform_2D& transform,
 
 void
 Console_2D::Hud_Store::insert (const Integer id,
-                                Hud* hud_ptr)
+                               Hud* hud_ptr)
 {
    std::map<Integer, Hud*>::insert (make_pair (id, hud_ptr));
 }
@@ -6760,6 +6759,15 @@ Console_2D::Route_Store::new_route_ptr (const Integer id,
    return new Console_2D::Route (id, point, node_size);
 }
 
+Console_2D::Route*
+Console_2D::Route_Store::new_route_ptr (const Integer id,
+                                        const Point_2D& point_a,
+                                        const Point_2D& point_b,
+                                        const Real node_size)
+{
+   return new Console_2D::Route (id, point_a, point_b, node_size);
+}
+
 Console_2D::Route_Store::Route_Store ()
    : dummy (-2),
      node (dummy.end ())
@@ -6810,6 +6818,17 @@ Console_2D::Route_Store::insert (const Point_2D& point)
 {
    const Integer& id = get_first_available_id ();
    Route* route_ptr = this->new_route_ptr (id, point);
+   Hud_Store::insert (id, route_ptr);
+   node = (--route_ptr->end ());
+   return id;
+}
+
+Integer
+Console_2D::Route_Store::insert (const Point_2D& point_a,
+                                 const Point_2D& point_b)
+{
+   const Integer& id = get_first_available_id ();
+   Route* route_ptr = this->new_route_ptr (id, point_a, point_b);
    Hud_Store::insert (id, route_ptr);
    node = (--route_ptr->end ());
    return id;
@@ -7806,8 +7825,7 @@ Console_2D::save_svg (const string& file_path)
    const Size_2D& size_2d = get_size_2d ();
    Cairo::RefPtr<Cairo::SvgSurface> surface =
        Cairo::SvgSurface::create (file_path, size_2d.i, size_2d.j);
-   Cairo::RefPtr<Cairo::Context> cr = Cairo::Context::create (surface);
-   cr->select_font_face ("Verdana", FONT_SLANT_NORMAL, FONT_WEIGHT_NORMAL);
+   Cairo::RefPtr<Cairo::Context> cr = denise::get_cr (surface);
 
    render_background_buffer (cr);
    render_image_buffer (cr);
@@ -8480,10 +8498,27 @@ Map_Console::Route_Store::new_route_ptr (const Integer id,
    return new Map_Console::Route (id, point, node_size);
 }
 
+Console_2D::Route*
+Map_Console::Route_Store::new_route_ptr (const Integer id,
+                                         const Point_2D& point_a,
+                                         const Point_2D& point_b,
+                                         const Real node_size)
+{
+   return new Map_Console::Route (id, point_a, point_b, node_size);
+}
+
 Map_Console::Route::Route (const Integer id,
                            const Point_2D& point,
                            const Real node_size)
    : Console_2D::Route (id, point, node_size)
+{
+}
+
+Map_Console::Route::Route (const Integer id,
+                           const Point_2D& point_a,
+                           const Point_2D& point_b,
+                           const Real node_size)
+   : Console_2D::Route (id, point_a, point_b, node_size)
 {
 }
 
@@ -8637,7 +8672,7 @@ string
 Map_Console::get_string (const Marker& marker) const
 {
    const Lat_Long lat_long (marker);
-   return lat_long.get_string (false, "%.4f\u00b0");
+   return lat_long.get_string (false, string ("%.4f\u00b0"));
 }
 
 Map_Console::Map_Console (Gtk::Window& gtk_window,

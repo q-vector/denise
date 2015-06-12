@@ -72,6 +72,12 @@ namespace denise
    get_hue (const Integer i,
             const Integer n);
 
+   RefPtr<ImageSurface>
+   get_surface (const Size_2D& size_2d);
+
+   RefPtr<Context>
+   get_cr (const RefPtr<Surface> surface);
+
    class Dashes : public Tuple
    {
 
