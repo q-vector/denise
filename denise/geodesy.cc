@@ -131,14 +131,14 @@ Lat_Long::standardize (const Real standard_longitude)
 
 string
 Lat_Long::get_string (const Integer decimal_places,
-                      const bool with_parenthesis) const
+                      const bool plain) const
 {
    const string& number_format = string_render ("%%.%df\u00b0", decimal_places);
-   return get_string (with_parenthesis, number_format);
+   return get_string (plain, number_format);
 }
 
 string
-Lat_Long::get_string (const bool with_parenthesis,
+Lat_Long::get_string (const bool plain,
                       const string& number_format) const
 {
 
@@ -157,14 +157,8 @@ Lat_Long::get_string (const bool with_parenthesis,
       string_render ((number_format + "E").c_str (), longitude) :
       string_render ((number_format + "W").c_str (), -longitude));
 
-   if (with_parenthesis)
-   {
-      return "(" + latitude_string + ", " + longitude_string + ")";
-   }
-   else
-   {
-      return latitude_string + ", " + longitude_string;
-   }
+   if (plain) { return latitude_string + longitude_string; }
+   else { return "(" + latitude_string + ", " + longitude_string + ")"; }
 
 }
 

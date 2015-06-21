@@ -226,21 +226,6 @@ Nwp::Data_3D::~Data_3D ()
 }
 
 void
-Nwp::Data_3D::read (FILE* file,
-                    const bool float_length)
-{
-   typedef vector<Nwp_Element>::const_iterator Iterator;
-   for (Iterator iterator = nwp_element_vector.begin ();
-        iterator != nwp_element_vector.end (); iterator++)
-   {
-      const Nwp_Element nwp_element = *(iterator);
-      Geodetic_Vector_Data_3D* gvd_3d_ptr = at (nwp_element);
-      if (gvd_3d_ptr == NULL) { continue; }
-      gvd_3d_ptr->read (file, float_length);
-   }
-}
-
-void
 Nwp::Data_3D::read (ifstream& file,
                     const bool float_length)
 {
@@ -253,21 +238,6 @@ Nwp::Data_3D::read (ifstream& file,
       Geodetic_Vector_Data_3D* gvd_3d_ptr = at (nwp_element);
       if (gvd_3d_ptr == NULL) { continue; }
       gvd_3d_ptr->read (file, float_length);
-   }
-}
-
-void
-Nwp::Data_3D::write (FILE* file,
-                     const bool float_length) const
-{
-   typedef vector<Nwp_Element>::const_iterator Iterator;
-   for (Iterator iterator = nwp_element_vector.begin ();
-        iterator != nwp_element_vector.end (); iterator++)
-   {
-      const Nwp_Element nwp_element = *(iterator);
-      const Geodetic_Vector_Data_3D* gvd_3d_ptr = at (nwp_element);
-      if (gvd_3d_ptr == NULL) { continue; }
-      gvd_3d_ptr->write (file, float_length);
    }
 }
 

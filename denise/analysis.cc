@@ -441,54 +441,6 @@ Chunk::read (ifstream& file,
 
 }
 
-
-void
-Chunk::read (FILE* file,
-             const bool float_length)
-{
-
-   if (float_length)
-   {
-
-      float* temp_buffer = new float[chunk_size];
-      fread (temp_buffer, sizeof (float), chunk_size, file);
-
-      for (size_t i = 0; i < chunk_size; i++)
-      {
-         float& datum = temp_buffer[i];
-#ifndef WORDS_BIGENDIAN
-         swap_endian (&datum, sizeof (float));
-#endif
-         buffer[i] = Real (datum);
-      }
-
-      delete[] temp_buffer;
-
-   }
-   else
-   {
-
-#ifndef WORDS_BIGENDIAN
-      Real* temp_buffer = new Real[chunk_size];
-      fread (temp_buffer, sizeof (Real), chunk_size, file);
-
-      for (size_t i = 0; i < chunk_size; i++)
-      {
-         Real& datum = temp_buffer[i];
-         swap_endian (&datum, sizeof (Real));
-         buffer[i] = datum;
-      }
-
-      delete[] temp_buffer;
-#else
-      fread (buffer, sizeof (Real), chunk_size, file);
-#endif
-
-   }
-
-}
-
-
 void
 Chunk::write (ofstream& file,
               const bool float_length) const
@@ -530,53 +482,6 @@ Chunk::write (ofstream& file,
       delete[] temp_buffer;
 #else
       file.write ((char*)temp_buffer, sizeof (Real) * chunk_size);
-#endif
-
-   }
-
-}
-
-
-void
-Chunk::write (FILE* file,
-              const bool float_length) const
-{
-
-   if (float_length)
-   {
-
-      float* temp_buffer = new float[chunk_size];
-
-      for (size_t i = 0; i < chunk_size; i++)
-      {
-         float datum = float (buffer[i]);
-#ifndef WORDS_BIGENDIAN
-         swap_endian (&datum, sizeof (float));
-#endif
-         temp_buffer[i] = datum;
-      }
-
-      fwrite (temp_buffer, sizeof (float), chunk_size, file);
-      delete[] temp_buffer;
-
-   }
-   else
-   {
-
-#ifndef WORDS_BIGENDIAN
-      Real* temp_buffer = new Real[chunk_size];
-
-      for (size_t i = 0; i < chunk_size; i++)
-      {
-         Real datum = buffer[i];
-         swap_endian (&datum, sizeof (Real));
-         temp_buffer[i] = datum;
-      }
-
-      fwrite (temp_buffer, sizeof (Real), chunk_size, file);
-      delete[] temp_buffer;
-#else
-      fwrite (buffer, sizeof (Real), chunk_size, file);
 #endif
 
    }

@@ -39,7 +39,22 @@ namespace denise
 
    }
 
-}
+
+   RefPtr<ImageSurface>
+   get_surface (const Size_2D& size_2d)
+   {
+      return ImageSurface::create (FORMAT_ARGB32, size_2d.i, size_2d.j);
+   }
+
+   RefPtr<Context>
+   get_cr (const RefPtr<Surface> surface)
+   {
+      RefPtr<Context> cr = Context::create (surface);
+      cr->select_font_face ("Verdana", FONT_SLANT_NORMAL, FONT_WEIGHT_NORMAL);
+      return cr;
+   }
+
+};
 
 Dashes::Dashes (const string& str,
                 const string& delimiter)
@@ -340,10 +355,10 @@ Checkered::init (const Paintable& paintable_0,
 
    const Integer w = Integer (round (width));
    const Integer w2 = Integer (round (width * 2));
+   const Size_2D size_2d (w2, w2);
 
-   RefPtr<ImageSurface> surface = ImageSurface::create (FORMAT_ARGB32, w2, w2);
-   RefPtr<Context> cr = Context::create (surface);
-   cr->select_font_face ("Verdana", FONT_SLANT_NORMAL, FONT_WEIGHT_NORMAL);
+   RefPtr<ImageSurface> surface = denise::get_surface (Size_2D (w2, w2));
+   RefPtr<Context> cr = denise::get_cr (surface);
 
    Color (1, 1, 1, 0.0).cairo (cr);
    cr->paint ();
@@ -387,9 +402,8 @@ Stripped::init (const Paintable& paintable_0,
    const Integer w = Integer (round (width));
    const Integer w2 = Integer (round (width * 2));
 
-   RefPtr<ImageSurface> surface = ImageSurface::create (FORMAT_ARGB32, w2, w2);
-   RefPtr<Context> cr = Context::create (surface);
-   cr->select_font_face ("Verdana", FONT_SLANT_NORMAL, FONT_WEIGHT_NORMAL);
+   RefPtr<ImageSurface> surface = denise::get_surface (Size_2D (w2, w2));
+   RefPtr<Context> cr = denise::get_cr (surface);
 
    Color (1, 1, 1, 0.0).cairo (cr);
    cr->paint ();

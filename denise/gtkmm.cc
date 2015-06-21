@@ -176,11 +176,10 @@ Image_Buffer::initialize (const Dwidget& widget)
    {
       const Integer w = Integer (round (widget.get_width ()));
       const Integer h = Integer (round (widget.get_height ()));
-      image_surface = ImageSurface::create (FORMAT_ARGB32, w, h);
+      image_surface = denise::get_surface (Size_2D (w, h));
    }
 
-   RefPtr<Context> cr = get_cr ();
-   cr->select_font_face ("Verdana", FONT_SLANT_NORMAL, FONT_WEIGHT_NORMAL);
+   RefPtr<Context> cr = denise::get_cr (image_surface);
    transparent.cairo (cr);
    cr->set_operator (Cairo::OPERATOR_SOURCE);
    cr->paint ();
@@ -190,7 +189,7 @@ Image_Buffer::initialize (const Dwidget& widget)
 const RefPtr<Context>
 Image_Buffer::get_cr () const
 {
-   return Context::create (image_surface);
+   return denise::get_cr (image_surface);
 }
 
 void
@@ -460,7 +459,6 @@ Dwidget::render_background_buffer ()
 {
    background_buffer.initialize (*this);
    const RefPtr<Context> cr = background_buffer.get_cr ();
-   cr->select_font_face ("Verdana", FONT_SLANT_NORMAL, FONT_WEIGHT_NORMAL);
    render_background_buffer (cr);
    set_background_ready (true);
 }
@@ -1254,14 +1252,13 @@ Dcanvas::Dcanvas (Gtk::Window& gtk_window)
 const RefPtr<Context>
 Dcanvas::get_widget_cr () const
 {
-   return Context::create (widget_surface);
+   return denise::get_cr (widget_surface);
 }
 
 const RefPtr<Context>
 Dcanvas::get_image_surface_cr () const
 {
-   return Context::create (widget_surface);
-   return Context::create (image_surface);
+   return denise::get_cr (image_surface);
 }
 
 bool
@@ -1276,12 +1273,13 @@ Dcanvas::initialize ()
 
    const Integer w = Integer (round (width));
    const Integer h = Integer (round (height));
+   const Size_2D size_2d (w, h);
 
    image_surface.clear ();
    widget_surface.clear ();
 
-   image_surface = ImageSurface::create (FORMAT_ARGB32, w, h);
-   widget_surface = ImageSurface::create (FORMAT_ARGB32, w, h);
+   image_surface = denise::get_surface (size_2d);
+   widget_surface = denise::get_surface (size_2d);
 
 }
 
@@ -1290,11 +1288,8 @@ Dcanvas::save_image (const string& file_path)
 {
 
    const Size_2D& size_2d = get_size_2d ();
-
-   RefPtr<ImageSurface> surface = Cairo::ImageSurface::create (
-      FORMAT_RGB24, size_2d.i, size_2d.j);
-   const RefPtr<Context> cr = Context::create (surface);
-   cr->select_font_face ("Verdana", FONT_SLANT_NORMAL, FONT_WEIGHT_NORMAL);
+   RefPtr<ImageSurface> surface = denise::get_surface (size_2d);
+   const RefPtr<Context> cr = denise::get_cr (surface);
 
    cr->set_source (image_surface, 0, 0);
    cr->paint ();
@@ -1518,13 +1513,12 @@ void
 Dcanvas::refresh (const RefPtr<Context>& cr)
 {
 
-   gdk_threads_enter ();
+   //gdk_threads_enter ();
 
    if (image_surface == 0) { return; }
    if (widget_surface == 0) { return; }
 
-   const RefPtr<Context> widget_cr = Context::create (widget_surface);
-   widget_cr->select_font_face ("Verdana", FONT_SLANT_NORMAL, FONT_WEIGHT_NORMAL);
+   const RefPtr<Context> widget_cr = get_widget_cr ();
    widget_cr->set_source (image_surface, 0, 0);
    widget_cr->paint ();
 
@@ -1542,7 +1536,7 @@ Dcanvas::refresh (const RefPtr<Context>& cr)
       cr->restore ();
    }
 
-   gdk_threads_leave ();
+   //gdk_threads_leave ();
 
 }
 
@@ -1553,15 +1547,14 @@ Dcanvas::refresh (const RefPtr<Context>& cr,
                   const Real height)
 {
 
-   gdk_threads_enter ();
+   //gdk_threads_enter ();
 
    if (image_surface == 0) { return; }
    if (widget_surface == 0) { return; }
 
    const Rect rect (point, width, height);
 
-   const RefPtr<Context> widget_cr = Context::create (widget_surface);
-   widget_cr->select_font_face ("Verdana", FONT_SLANT_NORMAL, FONT_WEIGHT_NORMAL);
+   const RefPtr<Context> widget_cr = get_widget_cr ();
    widget_cr->set_source (image_surface, 0, 0);
    rect.cairo (widget_cr);
    widget_cr->fill ();
@@ -1572,7 +1565,7 @@ Dcanvas::refresh (const RefPtr<Context>& cr,
    rect.cairo (cr);
    cr->fill ();
 
-   gdk_threads_leave ();
+   //gdk_threads_leave ();
 
 }
 
@@ -1617,7 +1610,6 @@ Dcanvas::render_image_buffer ()
 {
    image_buffer.initialize (*this);
    const RefPtr<Context> cr = image_buffer.get_cr ();
-   cr->select_font_face ("Verdana", FONT_SLANT_NORMAL, FONT_WEIGHT_NORMAL);
    render_image_buffer (cr);
    set_image_ready (true);
 }
@@ -1645,7 +1637,6 @@ Dcanvas::render_foreground_buffer ()
 {
    foreground_buffer.initialize (*this);
    const RefPtr<Context> cr = foreground_buffer.get_cr ();
-   cr->select_font_face ("Verdana", FONT_SLANT_NORMAL, FONT_WEIGHT_NORMAL);
    render_foreground_buffer (cr);
    set_foreground_ready (true);
 }
@@ -2390,11 +2381,10 @@ Drawer::pack ()
 
    if (switched_on)
    {
-      typedef vector<Dwidget*>::const_iterator Iterator;
-      for (Iterator iterator = widget_ptr_vector.begin ();
-           iterator != widget_ptr_vector.end (); iterator++)
+      for (auto iterator = widget_ptr_map.begin ();
+           iterator != widget_ptr_map.end (); iterator++)
       {
-         const Dwidget& widget = **(iterator);
+         const Dwidget& widget = *(iterator->second);
          widget_panel.pack_back (widget);
       }
 
@@ -2409,17 +2399,17 @@ void
 Drawer::clear ()
 {
 
-   typedef std::set<Dwidget*>::iterator Iterator;
-
-   for (Iterator iterator = widget_ptr_set.begin ();
-        iterator != widget_ptr_set.end (); iterator++)
+   for (auto iterator = widget_ptr_map.begin ();
+        iterator != widget_ptr_map.end (); iterator++)
    {
-      Dwidget* widget_ptr = *(iterator);
+      const Integer id = iterator->first;
+      if (ref_only_map.at (id)) { continue; }
+      Dwidget* widget_ptr = iterator->second;
       delete widget_ptr;
    }
 
-   widget_ptr_vector.clear ();
-   widget_ptr_set.clear ();
+   ref_only_map.clear ();
+   widget_ptr_map.clear ();
 
 }
 
@@ -2442,6 +2432,18 @@ Drawer::~Drawer ()
    clear ();
 }
 
+const Dwidget&
+Drawer::get_widget (const Integer index) const
+{
+   return *(widget_ptr_map.at (index));
+}
+
+Dwidget&
+Drawer::get_widget (const Integer index)
+{
+   return *(widget_ptr_map.at (index));
+}
+
 void
 Drawer::set_hidable (const bool hidable)
 {
@@ -2452,14 +2454,17 @@ Drawer::set_hidable (const bool hidable)
 void
 Drawer::add_widget (Dwidget& widget)
 {
-   widget_ptr_vector.push_back (&widget);
+   const Integer id = widget_ptr_map.size ();
+   widget_ptr_map.insert (make_pair (id, &widget));
+   ref_only_map.insert (make_pair (id, true));
 }
 
 void
 Drawer::add_widget_ptr (Dwidget* widget_ptr)
 {
-   widget_ptr_vector.push_back (widget_ptr);
-   widget_ptr_set.insert (widget_ptr);
+   const Integer id = widget_ptr_map.size ();
+   widget_ptr_map.insert (make_pair (id, widget_ptr));
+   ref_only_map.insert (make_pair (id, false));
 }
 
 void
@@ -2471,7 +2476,7 @@ Drawer::being_packed (const Point_2D& anchor,
    Dwidget::being_packed (anchor, width, height);
 
    const Real margin = 6;
-   const Integer n = widget_ptr_vector.size ();
+   const Integer n = widget_ptr_map.size ();
 
    const Real wp_width = width;
    const Real wp_height = n * height + (n - 1) * margin;
@@ -2784,7 +2789,6 @@ Dtitle::get_preferred_height () const
 
    FontExtents fe;
    const RefPtr<Context> cr = canvas.get_widget_cr ();
-   cr->select_font_face ("Verdana", FONT_SLANT_NORMAL, FONT_WEIGHT_NORMAL);
 
    cr->save ();
    cr->set_font_size (font_size);
@@ -2835,7 +2839,6 @@ Popup::get_index (const Point_2D& point) const
 
    FontExtents fe;
    const RefPtr<Context> cr = canvas.get_widget_cr ();
-   cr->select_font_face ("Verdana", FONT_SLANT_NORMAL, FONT_WEIGHT_NORMAL);
    
    cr->save ();
    cr->set_font_size (font_size);
@@ -2969,7 +2972,6 @@ Popup::get_preferred_height () const
 
    FontExtents fe;
    const RefPtr<Context> cr = canvas.get_widget_cr ();
-   cr->select_font_face ("Verdana", FONT_SLANT_NORMAL, FONT_WEIGHT_NORMAL);
    
    cr->save ();
    cr->set_font_size (font_size);
@@ -6204,6 +6206,17 @@ Console_2D::Route::Route (const Integer id,
    push_back (point);
 }
 
+Console_2D::Route::Route (const Integer id,
+                          const Point_2D& point_a,
+                          const Point_2D& point_b,
+                          const Real node_size)
+   : Hud (id, node_size),
+     origin (GSL_NAN, GSL_NAN)
+{
+   push_back (point_a);
+   push_back (point_b);
+}
+
 bool
 Console_2D::Route::is_too_short () const
 {
@@ -6575,7 +6588,7 @@ Console_2D::Hud_Store::get_id (const Transform_2D& transform,
 
 void
 Console_2D::Hud_Store::insert (const Integer id,
-                                Hud* hud_ptr)
+                               Hud* hud_ptr)
 {
    std::map<Integer, Hud*>::insert (make_pair (id, hud_ptr));
 }
@@ -6760,6 +6773,15 @@ Console_2D::Route_Store::new_route_ptr (const Integer id,
    return new Console_2D::Route (id, point, node_size);
 }
 
+Console_2D::Route*
+Console_2D::Route_Store::new_route_ptr (const Integer id,
+                                        const Point_2D& point_a,
+                                        const Point_2D& point_b,
+                                        const Real node_size)
+{
+   return new Console_2D::Route (id, point_a, point_b, node_size);
+}
+
 Console_2D::Route_Store::Route_Store ()
    : dummy (-2),
      node (dummy.end ())
@@ -6810,6 +6832,17 @@ Console_2D::Route_Store::insert (const Point_2D& point)
 {
    const Integer& id = get_first_available_id ();
    Route* route_ptr = this->new_route_ptr (id, point);
+   Hud_Store::insert (id, route_ptr);
+   node = (--route_ptr->end ());
+   return id;
+}
+
+Integer
+Console_2D::Route_Store::insert (const Point_2D& point_a,
+                                 const Point_2D& point_b)
+{
+   const Integer& id = get_first_available_id ();
+   Route* route_ptr = this->new_route_ptr (id, point_a, point_b);
    Hud_Store::insert (id, route_ptr);
    node = (--route_ptr->end ());
    return id;
@@ -7445,7 +7478,7 @@ bool
 Console_2D::on_mouse_motion (const Dmouse_Motion_Event& event)
 {
 
-   if (Gtk::Main::events_pending ()) { return true; }
+   //if (Gtk::Main::events_pending ()) { return true; }
    if (Dcontainer::on_mouse_motion (event)) { return true; }
 
    const Point_2D& point = event.point;
@@ -7806,8 +7839,7 @@ Console_2D::save_svg (const string& file_path)
    const Size_2D& size_2d = get_size_2d ();
    Cairo::RefPtr<Cairo::SvgSurface> surface =
        Cairo::SvgSurface::create (file_path, size_2d.i, size_2d.j);
-   Cairo::RefPtr<Cairo::Context> cr = Cairo::Context::create (surface);
-   cr->select_font_face ("Verdana", FONT_SLANT_NORMAL, FONT_WEIGHT_NORMAL);
+   Cairo::RefPtr<Cairo::Context> cr = denise::get_cr (surface);
 
    render_background_buffer (cr);
    render_image_buffer (cr);
@@ -8227,18 +8259,15 @@ void
 Map_Console::Option_Panel::Zoom_Drawer::switch_off_zoom_button ()
 {
 
-   typedef Dtoggle_Button Tb;
-   typedef vector<Dwidget*>::iterator Iterator;
-
-   for (Iterator iterator = widget_ptr_vector.begin ();
-        iterator != widget_ptr_vector.begin (); iterator++)
+   for (auto iterator = widget_ptr_map.begin ();
+        iterator != widget_ptr_map.begin (); iterator++)
    {
 
-      Dwidget& widget = **(iterator);
+      Dwidget& widget = *(iterator->second);
 
       try
       {
-         Tb& tb = dynamic_cast<Tb&>(widget);
+         Dtoggle_Button& tb = dynamic_cast<Dtoggle_Button&>(widget);
          if (tb.get_str () != "Custom") { continue; }
          tb.set (false);
          break;
@@ -8268,18 +8297,15 @@ bool
 Map_Console::Option_Panel::Overlay_Drawer::is_on (const string& str) const
 {
 
-   typedef Dtoggle_Button Tb;
-   typedef vector<Dwidget*>::const_iterator Iterator;
-
-   for (Iterator iterator = widget_ptr_vector.begin ();
-        iterator != widget_ptr_vector.end (); iterator++)
+   for (auto iterator = widget_ptr_map.begin ();
+        iterator != widget_ptr_map.end (); iterator++)
    {
 
-      const Dwidget& widget = **(iterator);
+      const Dwidget& widget = *(iterator->second);
 
       try
       {
-         const Tb& tb = dynamic_cast<const Tb&>(widget);
+         const Dtoggle_Button& tb = dynamic_cast<const Dtoggle_Button&>(widget);
          if (tb.get_str () != str) { continue; }
          return tb.is_switched_on ();
       }
@@ -8302,21 +8328,13 @@ Map_Console::Option_Panel::Overlay_Drawer::set_on_off (const string& str,
    if (iterator == index_map.end ()) { return ; }
    
    const Integer index = iterator->second;
-   Dtoggle_Button& tb = (Dtoggle_Button&)(*(widget_ptr_vector[index]));
+   Dtoggle_Button& tb = (Dtoggle_Button&)(*(widget_ptr_map.at (index)));
    tb.set (on_off);
 
 }
 
 void
-Map_Console::Option_Panel::setup_zoom (const string& zoom_str)
-{
-   Tokens zoom_tokens;
-   zoom_tokens.push_back (zoom_str);
-   setup_zoom (zoom_tokens);
-}
-
-void
-Map_Console::Option_Panel::setup_zoom (const Tokens& zoom_tokens)
+Map_Console::Option_Panel::setup_zoom (const Tokens& config_file_content)
 {
 
    const Real font_size = 12;
@@ -8336,15 +8354,16 @@ Map_Console::Option_Panel::setup_zoom (const Tokens& zoom_tokens)
    drawer_ptr->add_widget_ptr (button_ptr);
 
    // Make Zoom buttons for default Zooms
-   for (vector<string>::const_iterator iterator = zoom_tokens.begin ();
-        iterator != zoom_tokens.end (); iterator++)
+   for (auto iterator = config_file_content.begin ();
+        iterator != config_file_content.end (); iterator++)
    {
 
-      const string& zoom_str = *(iterator);
-      const Tokens tokens (zoom_str, "/");
+      const Tokens tokens (*(iterator));
+      if (tokens.size () != 3) { continue; }
+      if (tokens[0] != "geodetic_transform") { continue; }
 
-      const string& identifier = tokens[0];
-      const Geodetic_Transform::Data gtd (tokens[1]);
+      const string& identifier = tokens[1];
+      const Geodetic_Transform::Data gtd (tokens[2]);
 
       Gtdb* gtdb_ptr = new Gtdb (map_console, gtd, identifier, font_size);
       Gtdb::T_Signal& signal = gtdb_ptr->get_t_signal ();
@@ -8357,52 +8376,14 @@ Map_Console::Option_Panel::setup_zoom (const Tokens& zoom_tokens)
 
 }
 
-const Map_Console::Option_Panel::Zoom_Drawer&
-Map_Console::Option_Panel::get_zoom_drawer () const
-{
-   const Drawer& drawer = *(drawer_ptr_map.find ("Zoom")->second);
-   return dynamic_cast<const Zoom_Drawer&>(drawer);
-}
-
-Map_Console::Option_Panel::Zoom_Drawer&
-Map_Console::Option_Panel::get_zoom_drawer ()
-{
-   Drawer& drawer = *(drawer_ptr_map.find ("Zoom")->second);
-   return dynamic_cast<Zoom_Drawer&>(drawer);
-}
-
-const Map_Console::Option_Panel::Overlay_Drawer&
-Map_Console::Option_Panel::get_overlay_drawer () const
-{
-   const Drawer& drawer = *(drawer_ptr_map.find ("Overlay")->second);
-   return dynamic_cast<const Overlay_Drawer&>(drawer);
-}
-
-Map_Console::Option_Panel::Overlay_Drawer&
-Map_Console::Option_Panel::get_overlay_drawer ()
-{
-   Drawer& drawer = *(drawer_ptr_map.find ("Overlay")->second);
-   return dynamic_cast<Overlay_Drawer&>(drawer);
-}
-
 Map_Console::Option_Panel::Option_Panel (Map_Console& map_console,
-                                         const string& zoom_str)
+                                         const Tokens& config_file_content)
    : Drawer_Panel (map_console, false, 12),
      map_console (map_console)
 {
    Overlay_Drawer* drawer_ptr = new Overlay_Drawer (*this);
    add_drawer_ptr (drawer_ptr, true);
-   setup_zoom (zoom_str);
-}
-
-Map_Console::Option_Panel::Option_Panel (Map_Console& map_console,
-                                         const Tokens& zoom_tokens)
-   : Drawer_Panel (map_console, false, 12),
-     map_console (map_console)
-{
-   Overlay_Drawer* drawer_ptr = new Overlay_Drawer (*this);
-   add_drawer_ptr (drawer_ptr, true);
-   setup_zoom (zoom_tokens);
+   setup_zoom (config_file_content);
 }
 
 void
@@ -8472,6 +8453,34 @@ Map_Console::Option_Panel::overlay_is_on (const string& overlay_str) const
    return overlay_drawer.is_on (overlay_str);
 }
 
+const Map_Console::Option_Panel::Zoom_Drawer&
+Map_Console::Option_Panel::get_zoom_drawer () const
+{
+   const Drawer& drawer = *(drawer_ptr_map.find ("Zoom")->second);
+   return dynamic_cast<const Zoom_Drawer&>(drawer);
+}
+
+Map_Console::Option_Panel::Zoom_Drawer&
+Map_Console::Option_Panel::get_zoom_drawer ()
+{
+   Drawer& drawer = *(drawer_ptr_map.find ("Zoom")->second);
+   return dynamic_cast<Zoom_Drawer&>(drawer);
+}
+
+const Map_Console::Option_Panel::Overlay_Drawer&
+Map_Console::Option_Panel::get_overlay_drawer () const
+{
+   const Drawer& drawer = *(drawer_ptr_map.find ("Overlay")->second);
+   return dynamic_cast<const Overlay_Drawer&>(drawer);
+}
+
+Map_Console::Option_Panel::Overlay_Drawer&
+Map_Console::Option_Panel::get_overlay_drawer ()
+{
+   Drawer& drawer = *(drawer_ptr_map.find ("Overlay")->second);
+   return dynamic_cast<Overlay_Drawer&>(drawer);
+}
+
 Console_2D::Route*
 Map_Console::Route_Store::new_route_ptr (const Integer id,
                                          const Point_2D& point,
@@ -8480,10 +8489,27 @@ Map_Console::Route_Store::new_route_ptr (const Integer id,
    return new Map_Console::Route (id, point, node_size);
 }
 
+Console_2D::Route*
+Map_Console::Route_Store::new_route_ptr (const Integer id,
+                                         const Point_2D& point_a,
+                                         const Point_2D& point_b,
+                                         const Real node_size)
+{
+   return new Map_Console::Route (id, point_a, point_b, node_size);
+}
+
 Map_Console::Route::Route (const Integer id,
                            const Point_2D& point,
                            const Real node_size)
    : Console_2D::Route (id, point, node_size)
+{
+}
+
+Map_Console::Route::Route (const Integer id,
+                           const Point_2D& point_a,
+                           const Point_2D& point_b,
+                           const Real node_size)
+   : Console_2D::Route (id, point_a, point_b, node_size)
 {
 }
 
@@ -8637,80 +8663,46 @@ string
 Map_Console::get_string (const Marker& marker) const
 {
    const Lat_Long lat_long (marker);
-   return lat_long.get_string (false, "%.4f\u00b0");
+   return lat_long.get_string (false, string ("%.4f\u00b0"));
 }
 
 Map_Console::Map_Console (Gtk::Window& gtk_window,
                           const Size_2D& size_2d,
-                          const string& zoom_str)
+                          const Tokens& config_file_content)
    : Console_2D (gtk_window, size_2d),
      geodetic_zoom_box (*this),
-     option_panel (*this, zoom_str)
+     option_panel (*this, config_file_content)
 {
 
    Glib::Mutex::Lock lock (mutex);
 
    typedef Geodetic_Transform Gt;
+   typedef Geodetic_Transform::Data Gtd;
+   typedef Template_Button<Gtd> Gtdb;
    const Point_2D centre (size_2d.i/2, size_2d.j/2);
-   Geodetic_Transform::Data gtd ((Tokens (zoom_str, "/"))[1]);
-   geodetic_transform_ptr = Gt::get_transform_ptr (gtd, centre);
 
-}
+//   auto zoom_drawer = option_panel.get_zoom_drawer ();
+//   const Gtdb& zoom_widget = (const Gtdb&)(zoom_drawer.get_widget (0));
+//   const Gt::Data& gtd = zoom_widget.get_t ();
+//   geodetic_transform_ptr = Gt::get_transform_ptr (gtd, centre);
 
-Map_Console::Map_Console (Gtk::Window& gtk_window,
-                          const Size_2D& size_2d,
-                          const Tokens& zoom_tokens)
-   : Console_2D (gtk_window, size_2d),
-     geodetic_zoom_box (*this),
-     option_panel (*this, zoom_tokens)
-{
+   for (auto iterator = config_file_content.begin ();
+        iterator != config_file_content.end (); iterator++)
+   {
 
-   Glib::Mutex::Lock lock (mutex);
+      const Tokens tokens (*(iterator));
+      if (tokens.size () != 3) { continue; }
+      if (tokens[0] != "geodetic_transform") { continue; }
 
-   typedef Geodetic_Transform Gt;
-   const Point_2D centre (size_2d.i/2, size_2d.j/2);
-   Gt::Data gtd ((Tokens (zoom_tokens.front (), "/"))[1]);
-   geodetic_transform_ptr = Gt::get_transform_ptr (gtd, centre);
+      const string& identifier = tokens[1];
+      const Geodetic_Transform::Data gtd (tokens[2]);
+      geodetic_transform_ptr = Gt::get_transform_ptr (gtd, centre);
 
-   Map_Console::Zoom_Box& zoom_box = get_zoom_box ();
-   zoom_box.reset ();
+      break;
 
-}
+   }
 
-Map_Console::Map_Console (Gtk::Window& gtk_window,
-                          const Size_2D& size_2d,
-                          const Tokens& zoom_tokens,
-                          const Geodetic_Transform& gt)
-   : Console_2D (gtk_window, size_2d),
-     geodetic_zoom_box (*this),
-     option_panel (*this, zoom_tokens)
-{
 
-   Glib::Mutex::Lock lock (mutex);
-
-   typedef Geodetic_Transform Gt;
-   const Point_2D centre (size_2d.i/2, size_2d.j/2);
-   geodetic_transform_ptr = Gt::get_transform_ptr (gt.data, centre);
-
-   Map_Console::Zoom_Box& zoom_box = get_zoom_box ();
-   zoom_box.reset ();
-
-}
-
-Map_Console::Map_Console (Gtk::Window& gtk_window,
-                          const Size_2D& size_2d,
-                          const Tokens& zoom_tokens,
-                          const Geodetic_Transform::Data& gtd)
-   : Console_2D (gtk_window, size_2d),
-     geodetic_zoom_box (*this),
-     option_panel (*this, zoom_tokens)
-{
-
-   Glib::Mutex::Lock lock (mutex);
-
-   typedef Geodetic_Transform Gt;
-   const Point_2D centre (size_2d.i/2, size_2d.j/2);
-   geodetic_transform_ptr = Gt::get_transform_ptr (gtd, centre);
 
    Map_Console::Zoom_Box& zoom_box = get_zoom_box ();
    zoom_box.reset ();
