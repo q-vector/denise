@@ -130,10 +130,10 @@ namespace denise
 
          string
          get_string (const Integer decimal_places,
-                     const bool with_parenthesis = true) const;
+                     const bool plain = false) const;
 
          string
-         get_string (const bool with_parenthesis = true,
+         get_string (const bool plain = false,
                      const string& number_format = "%.1f\u00b0") const;
 
          bool
