@@ -149,14 +149,35 @@ namespace denise
          get_nac ();
 
          static Color
+         transparent ();
+
+         static Color
          black (const Real a = 1.0);
 
          static Color
          white (const Real a = 1.0);
 
          static Color
-         gray (const Real saturation = 0.5,
+         gray (const Real b = 0.5,
                const Real a = 1.0);
+
+         static Color
+         red (const Real a = 1.0);
+
+         static Color
+         green (const Real a = 1.0);
+
+         static Color
+         blue (const Real a = 1.0);
+
+         static Color
+         cyan (const Real a = 1.0);
+
+         static Color
+         yellow (const Real a = 1.0);
+
+         static Color
+         magenta (const Real a = 1.0);
 
          Color&
          operator = (const Color& color);

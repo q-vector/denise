@@ -128,22 +128,64 @@ Color::get_nac ()
 }
 
 Color
+Color::transparent ()
+{
+   return Color (0.0, 0.0, 0.0, 0.0);
+}
+
+Color
 Color::black (const Real a)
 {
-   return Color (0, 0, 0, a);
+   return Color (0.0, 0.0, 0.0, a);
 }
 
 Color
 Color::white (const Real a)
 {
-   return Color (1, 1, 1, a);
+   return Color (1.0, 1.0, 1.0, a);
 }
 
 Color
-Color::gray (const Real saturation,
+Color::gray (const Real b,
              const Real a)
 {
-   return Color (saturation, saturation, saturation, a);
+   return Color (b, b, b, a);
+}
+
+Color
+Color::red (const Real a)
+{
+   return Color::hsb (1.0, 0.0, 0.0, a);
+}
+
+Color
+Color::green (const Real a)
+{
+   return Color (0.0, 1.0, 0.0, a);
+}
+
+Color
+Color::blue (const Real a)
+{
+   return Color (0.0, 0.0, 1.0, a);
+}
+
+Color
+Color::cyan (const Real a)
+{
+   return Color (0.0, 1.0, 1.0, a);
+}
+
+Color
+Color::yellow (const Real a)
+{
+   return Color (1.0, 1.0, 0.0, a);
+}
+
+Color
+Color::magenta (const Real a)
+{
+   return Color (1.0, 0.0, 1.0, a);
 }
 
 Color&
