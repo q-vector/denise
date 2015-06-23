@@ -157,7 +157,7 @@ Lat_Long::get_string (const bool plain,
       string_render ((number_format + "E").c_str (), longitude) :
       string_render ((number_format + "W").c_str (), -longitude));
 
-   if (plain) { return latitude_string + longitude_string; }
+   if (plain) { return latitude_string + " " + longitude_string; }
    else { return "(" + latitude_string + ", " + longitude_string + ")"; }
 
 }

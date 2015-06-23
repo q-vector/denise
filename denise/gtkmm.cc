@@ -8663,7 +8663,7 @@ string
 Map_Console::get_string (const Marker& marker) const
 {
    const Lat_Long lat_long (marker);
-   return lat_long.get_string (false, string ("%.4f\u00b0"));
+   return lat_long.get_string (true, string ("%.3f\u00b0"));
 }
 
 Map_Console::Map_Console (Gtk::Window& gtk_window,
