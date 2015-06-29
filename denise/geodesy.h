@@ -484,6 +484,10 @@ namespace denise
          get_azimuth_forward (Multi_Journey::iterator iterator,
                               const Geodesy& geodesy) const;
 
+         void
+         cairo (const RefPtr<Context> cr,
+                const Transform_2D& transform) const;
+
          Multi_Journey::iterator
          get_iterator (const Transform_2D& transform,
                        const Point_2D& point_2d,

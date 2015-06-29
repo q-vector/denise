@@ -6830,22 +6830,31 @@ Console_2D::Route_Store::get_node (const Transform_2D& transform,
 Integer
 Console_2D::Route_Store::insert (const Point_2D& point)
 {
+
    const Integer& id = get_first_available_id ();
    Route* route_ptr = this->new_route_ptr (id, point);
    Hud_Store::insert (id, route_ptr);
+
+   // node should still be modified because node is not truely defined yet
    node = (--route_ptr->end ());
+
    return id;
+
 }
 
 Integer
 Console_2D::Route_Store::insert (const Point_2D& point_a,
                                  const Point_2D& point_b)
 {
+
    const Integer& id = get_first_available_id ();
    Route* route_ptr = this->new_route_ptr (id, point_a, point_b);
    Hud_Store::insert (id, route_ptr);
-   node = (--route_ptr->end ());
+
+   // node should still be dummy.end () becasue the node is inserted already
+
    return id;
+
 }
 
 bool
@@ -8532,100 +8541,8 @@ Map_Console::Route::cairo (const RefPtr<Context>& cr,
 
    const Transform_2D& transform = console_2d.get_transform ();
 
-   const Geodesy geodesy;
-   const Multi_Journey mj (*this);
-   const Real distance = mj.get_distance (geodesy);
-   if (distance < 1) { return; }
-
-   Real d_distance = 100e3;
-   if (distance < 1000e3) { d_distance = 50e3; }
-   if (distance < 400e3) { d_distance = 20e3; }
-   if (distance < 200e3) { d_distance = 10e3; }
-   Multi_Journey multi_journey (mj, geodesy, d_distance);
-   multi_journey.standardize (LAT_LONG_PACIFIC);
-
-   const Real node_size = 16;
-   const Color& bg_color = Color::hsb (0.167, 0.2, 0.5, 0.7);
-   const Color& fg_color = Color::hsb (0.167, 0.2, 1.0, 1.0);
-
-   Simple_Polyline simple_polyline;
-
-   for (Multi_Journey::const_iterator iterator = multi_journey.begin ();
-        iterator != multi_journey.end (); iterator++)
-   {
-      const Lat_Long& ll = *(iterator);
-      const Point_2D& p = transform.transform (ll);
-      simple_polyline.push_back (p);
-   }
-
-   cr->save ();
-   cr->set_line_cap (LINE_CAP_ROUND);
-   cr->set_line_join (LINE_JOIN_ROUND);
-   cr->set_line_width (node_size);
-   bg_color.cairo (cr);
-   simple_polyline.cairo (cr);
-   cr->stroke ();
-
-   cr->set_line_width (2);
-   cr->set_font_size (7);
-   fg_color.cairo (cr);
-
-   for (Simple_Polyline::iterator iterator = simple_polyline.begin ();
-        iterator != simple_polyline.end (); iterator++)
-   {
-      const Point_2D& p = *(iterator);
-      const Integer d = std::distance (simple_polyline.begin (), iterator);
-      const string& str = string_render ("%d", d);
-      Label (str, p, 'c', 'c').cairo (cr);
-   }
-
-   for (Route::const_iterator i = begin (); i != end (); i++)
-   {
-
-      const Lat_Long& lat_long = *(i);
-      const Point_2D& point = transform.transform (lat_long);
-
-      cr->save ();
-      Dashes ("1:2").cairo (cr);
-      cr->set_line_width (1);
-      Ring (node_size / 2).cairo (cr, point);
-      fg_color.cairo (cr);
-      cr->stroke ();
-      cr->restore ();
-
-      if (!closed && is_last (i)) { continue; }
-
-      cr->save ();
-      cr->set_font_size (12);
-
-      Journey journey = mj.get_journey (i);
-      geodesy.complete (journey);
-
-      const Real distance = journey.get_distance ();
-      const Lat_Long& origin = journey.get_origin ();
-      const Lat_Long& destination = journey.get_destination ();
-      const Point_2D& origin_point = transform.transform (origin);
-      const Point_2D& destination_point = transform.transform (destination);
-      const Real dx = destination_point.x - origin_point.x;
-      const Real dy = destination_point.y - origin_point.y;
-      const Real theta = atan (dy / dx);
-
-      Lat_Long ll = journey.get_middle_lat_long (geodesy);
-      ll.standardize (LAT_LONG_PACIFIC);
-
-      const Point_2D& p = transform.transform (ll);
-      const string& str = string_render ("%.0fkm", distance / 1e3);
-
-      Label label (str, p, 'c', 'b', 12);
-      label.set_text_angle (theta);
-      //label.cairo (cr, fg_color, bg_color, Point_2D (-2, 2));
-      label.cairo (cr, bg_color, fg_color, Point_2D (-2, 2));
-
-      cr->restore ();
-
-   }
-
-   cr->restore ();
+   const Multi_Journey multi_journey (*this);
+   multi_journey.cairo (cr, transform);
 
 }
 
