@@ -21,6 +21,7 @@
 #ifndef DENISE_UTIL_H
 #define DENISE_UTIL_H
 
+#include <map>
 #include <ctype.h>
 #include <dirent.h>
 #include <sys/stat.h>
@@ -213,6 +214,29 @@ namespace denise
 
    void
    print_mem_usage (const Integer indent = 0);
+
+   class Config_File : public Tokens
+   {
+
+      private:
+
+         map<string, string>
+         dictionary;         
+
+         void
+         apply_variables ();
+
+         bool
+         apply_variables_to_a_line (string& line);
+
+      public:
+
+         Config_File (const string& file_path);
+
+         void
+         ingest (const string& file_path);
+
+   };
 
 }
 

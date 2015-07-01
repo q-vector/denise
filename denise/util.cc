@@ -430,3 +430,69 @@ namespace denise
 
 }
 
+void
+Config_File::apply_variables ()
+{
+   for (auto iterator = begin (); iterator != end (); iterator++)
+   {
+      auto& line = *(iterator);
+      while (apply_variables_to_a_line (line));
+   }
+}
+
+bool
+Config_File::apply_variables_to_a_line (string& line)
+{
+
+   size_t found;
+   for (auto iterator = dictionary.begin ();
+        iterator != dictionary.end (); iterator++)
+   {
+      const string variable ("$" + iterator->first);
+      while ((found = line.find (variable)) != string::npos)
+      {
+         const size_t var_length = variable.length ();
+         line.replace (found, var_length, iterator->second);
+      }
+   }
+
+   return (line.find ("$") != string::npos);
+
+}
+
+Config_File::Config_File (const string& file_path)
+{
+   ingest (file_path);
+}
+
+void
+Config_File::ingest (const string& file_path)
+{
+
+   ifstream file (file_path);
+
+   for (string input_string; getline (file, input_string); )
+   {
+
+      if (input_string.size () == 0) { continue; }
+      if (input_string.c_str ()[0] == '#') { continue; }
+
+      const Tokens variable_tokens (input_string, "=");
+      if (variable_tokens.size () == 2)
+      {
+         const string& variable = get_trimmed (variable_tokens[0]);
+         const string& value = get_trimmed (variable_tokens[1]);
+         dictionary.insert (make_pair (variable, value));
+         continue;
+      }
+
+      push_back (input_string);
+
+   }
+
+   file.close ();
+
+   apply_variables ();
+
+}
+
