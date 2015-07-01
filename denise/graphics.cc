@@ -51,6 +51,8 @@ namespace denise
    {
       RefPtr<Context> cr = Context::create (surface);
       cr->select_font_face ("Verdana", FONT_SLANT_NORMAL, FONT_WEIGHT_NORMAL);
+      cr->set_line_cap (LINE_CAP_ROUND);
+      cr->set_line_join (LINE_JOIN_ROUND);
       return cr;
    }
 
@@ -155,7 +157,7 @@ Color::gray (const Real b,
 Color
 Color::red (const Real a)
 {
-   return Color::hsb (1.0, 0.0, 0.0, a);
+   return Color (1.0, 0.0, 0.0, a);
 }
 
 Color

@@ -492,6 +492,9 @@ namespace denise
 
       protected:
 
+         Size_2D
+         size_2d;
+
          const Thermo_Point
          ref_thermo_point;
 
@@ -577,8 +580,11 @@ namespace denise
          virtual void
          reset (const Size_2D& size_2d) = 0;
 
+         const Size_2D&
+         get_size_2d () const;
+
          virtual void
-         set_anchor (const Size_2D& size_2d);
+         set_anchor (const Point_2D& anchor);
 
          void
          zoom (const Point_2D& point,
@@ -1498,6 +1504,16 @@ namespace denise
                            const Thermo_Diagram& thermo_diagram,
                            const Real node_size) const;
 
+         void
+         render_winds (const RefPtr<Context>& cr,
+                       const Thermo_Diagram& thermo_diagram,
+                       const Real x = GSL_NAN) const;
+
+         void
+         render_heights (const RefPtr<Context>& cr,
+                         const Thermo_Diagram& thermo_diagram,
+                         const Real x = GSL_NAN) const;
+
          Mixed_Layer
          get_mixed_layer_from (const Thermo_Diagram& thermo_diagram,
                                const Real p) const;
@@ -1791,7 +1807,7 @@ namespace denise
 
          void
          transform (Point_2D& point_2d,
-                          const Thermo_Point& thermo_point) const;
+                    const Thermo_Point& thermo_point) const;
 
          void
          reverse_tp (Thermo_Point& thermo_point,
@@ -1830,7 +1846,6 @@ namespace denise
       public:
 
          Emagram (const Size_2D& size_2d,
-//                  const Real magic_ratio = 36.6,
                   const Real magic_ratio = 45,
                   const Real p_0 = 1000e2,
                   const Thermo_Point& ref_thermo_point = Thermo_Point::t_p (-120, 1000e2));

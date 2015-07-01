@@ -1624,6 +1624,12 @@ Journey_List::get_lat_long_list_ptr (const Real approx_d,
 
 }
 
+pair<string, Lat_Long>
+Geodetic_Attractor::nearest (const Lat_Long& lat_long) const
+{
+   return make_pair ("", lat_long);
+}
+
 Degree_Geodetic_Attractor::Degree_Geodetic_Attractor (const Integer n)
    : n (n)
 {

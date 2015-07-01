@@ -30,31 +30,10 @@ Geometry_Exception::Geometry_Exception (const string& description)
 {
 }
 
-Attractor::Attractor ()
-   : grid_x (GSL_NAN),
-     grid_y (GSL_NAN)
-{
-}
-
-Attractor::Attractor (const Real grid_x)
-   : grid_x (grid_x),
-     grid_y (grid_x)
-{
-}
-
-Attractor::Attractor (const Real grid_x,
-                      const Real grid_y)
-   : grid_x (grid_x),
-     grid_y (grid_y)
-{
-}
-
 void
 Attractor::attract (Real& x,
                     Real& y) const
 {
-   x = round (x / grid_x) * grid_x;
-   y = round (y / grid_y) * grid_y;
 }
 
 void
@@ -70,6 +49,27 @@ Attractor::get_attraction (const Point_2D& point) const
    Real y = point.y;
    attract (x, y);
    return Point_2D (x, y);
+}
+
+Simple_Attractor::Simple_Attractor (const Real grid_x)
+   : grid_x (grid_x),
+     grid_y (grid_x)
+{
+}
+
+Simple_Attractor::Simple_Attractor (const Real grid_x,
+                                    const Real grid_y)
+   : grid_x (grid_x),
+     grid_y (grid_y)
+{
+}
+
+void
+Simple_Attractor::attract (Real& x,
+                           Real& y) const
+{
+   x = round (x / grid_x) * grid_x;
+   y = round (y / grid_y) * grid_y;
 }
 
 Real

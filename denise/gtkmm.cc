@@ -1579,6 +1579,8 @@ Dcanvas::render ()
    {
       const RefPtr<Context>& cr = Context::create (image_surface);
       cr->select_font_face ("Verdana", FONT_SLANT_NORMAL, FONT_WEIGHT_NORMAL);
+      cr->set_line_cap (LINE_CAP_ROUND);
+      cr->set_line_join (LINE_JOIN_ROUND);
       cairo (cr);
    }
 
@@ -6518,7 +6520,8 @@ Console_2D::Hud_Store::get_first_available_id () const
 }
 
 Console_2D::Hud_Store::Hud_Store ()
-   : dragging_id (-1)
+   : dragging_id (-1),
+     attractor_ptr (NULL)
 {
 }
 
@@ -6533,10 +6536,17 @@ Console_2D::Hud_Store::~Hud_Store ()
    std::map<Integer, Console_2D::Hud*>::clear ();
 }
 
+void
+Console_2D::Hud_Store::set_attractor (const Attractor& attractor)
+{
+   this->attractor_ptr = &attractor;
+}
+
 const Attractor&
 Console_2D::Hud_Store::get_attractor () const
 {
-   throw Exception ();
+   if (attractor_ptr != NULL) { return *attractor_ptr; }
+   else throw Exception ("attractor_ptr is NULL.");
 }
 
 void
@@ -8399,6 +8409,7 @@ void
 Map_Console::Option_Panel::setup_overlay ()
 {
 
+cout << "map_console::option_panel::setup_overlay " << endl;
    const Overlay_Store& overlay_store = map_console.get_overlay_store ();
    Overlay_Drawer& overlay_drawer = get_overlay_drawer ();
 
@@ -8415,6 +8426,7 @@ Map_Console::Option_Panel::setup_overlay ()
       const string& identifier = *(iterator);
       const bool on = overlay_store.is_on (identifier);
 
+cout << "map_console::option_panel::setup_overlay " << identifier << endl;
       Tb* tb_ptr = new Tb (map_console, identifier, font_size, on);
       Tb::Str_Signal& signal = tb_ptr->get_str_signal ();
       signal.connect (sigc::mem_fun (mc, &Map_Console::toggle_overlay));

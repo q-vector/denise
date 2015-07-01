@@ -3540,6 +3540,9 @@ Sounding::render (const RefPtr<Context>& cr,
       render_t_nodes (cr, thermo_diagram, node_size);
    }
 
+   render_winds (cr, thermo_diagram);
+   render_heights (cr, thermo_diagram);
+
    cr->restore ();
 
 }
@@ -3574,6 +3577,93 @@ Sounding::render_t_d_nodes (const RefPtr<Context>& cr,
                             const Real node_size) const
 {
    render_thermo_line_nodes (cr, thermo_diagram, t_d_line, node_size);
+}
+
+void
+Sounding::render_winds (const RefPtr<Context>& cr,
+                        const Thermo_Diagram& thermo_diagram,
+                        const Real x) const
+{
+
+   const Real width = thermo_diagram.get_size_2d ().i;
+   const Real xx = (gsl_isnan (x) ? width - 100 : x);
+
+   Tuple tuple_p ("1000e2:925e2:850e2:800e2:700e2:600e2");
+   tuple_p.add_content ("500e2:400e2:300e2:200e2:100e2");
+
+   cr->save ();
+   Color::black ().cairo (cr);
+
+   const bool northern_hemisphere = false;
+   const Real wind_barb_size = 30;
+
+   for (auto iterator = tuple_p.begin ();
+        iterator != tuple_p.end (); iterator++)
+   {
+
+      const Real p = *(iterator);
+
+      try
+      {
+
+         const Wind& wind = get_wind (p);
+         const Thermo_Point& tp = thermo_diagram.get_thermo_point (xx, p);
+         const Point_2D& point = thermo_diagram.transform (tp);
+
+         const Wind_Barb wind_barb (wind, wind_barb_size, northern_hemisphere);
+
+         wind_barb.cairo (cr, point);
+         cr->fill ();
+
+      }
+      catch (const Thermo_Exception& te)
+      {
+      }
+
+   }
+
+   cr->restore ();
+
+}
+
+void
+Sounding::render_heights (const RefPtr<Context>& cr,
+                          const Thermo_Diagram& thermo_diagram,
+                          const Real x) const
+{
+
+   const Real width = thermo_diagram.get_size_2d ().i;
+   const Real xx = (gsl_isnan (x) ? width - 200 : x);
+
+   Tuple tuple_p ("1000e2:925e2:850e2:800e2:700e2:600e2");
+   tuple_p.add_content ("500e2:400e2:300e2:200e2:100e2");
+
+   cr->save ();
+   cr->set_font_size (12);
+   Color::black ().cairo (cr);
+
+   const bool show_feet = false;
+   const Real multiplier = (show_feet ? 3.2808399 : 1);
+
+   for (auto iterator = tuple_p.begin ();
+        iterator != tuple_p.end (); iterator++)
+   {
+      try
+      {
+         const Real p = *(iterator);
+         const Real& z = get_height (p) * multiplier;
+         const Thermo_Point& tp = thermo_diagram.get_thermo_point (xx, p);
+         const Point_2D& point = thermo_diagram.transform (tp);
+         const string& str = string_render (show_feet ? "%.0fft" : "%.0fm", z);
+         Label (str, point, 'l', 'c').cairo (cr);
+      }
+      catch (const Thermo_Exception& te)
+      {
+      }
+   }
+
+   cr->restore ();
+
 }
 
 Mixed_Layer
@@ -4410,7 +4500,8 @@ Thermo_Diagram::render_labels (const RefPtr<Context>& cr,
 Thermo_Diagram::Thermo_Diagram (const Size_2D& size_2d,
                                 const Real p_0,
                                 const Thermo_Point& ref_thermo_point)
-   : ref_thermo_point (ref_thermo_point),
+   : size_2d (size_2d),
+     ref_thermo_point (ref_thermo_point),
      label_size (size_2d.i * 0.014),
      p_0 (p_0)
 {
@@ -4420,13 +4511,16 @@ Thermo_Diagram::~Thermo_Diagram ()
 {
 }
 
-void
-Thermo_Diagram::set_anchor (const Size_2D& size_2d)
+const Size_2D&
+Thermo_Diagram::get_size_2d () const
 {
-   //anchor.x = (size_2d.i / 33.0);
-   //anchor.y = size_2d.j - (size_2d.i / 13.0);
-   anchor.x = (size_2d.i / 33.0);
-   anchor.y = size_2d.j - 100;
+   return size_2d;
+}
+
+void
+Thermo_Diagram::set_anchor (const Point_2D& anchor)
+{
+   this->anchor = anchor;
 }
 
 void
@@ -4573,10 +4667,15 @@ void
 Tephigram::reset (const Size_2D& size_2d)
 {
 
+   this->size_2d = size_2d;
+
    const Real scale = size_2d.i / 150.0;
    const Real x = ref_thermo_point.get_t ();
    const Real y = log (ref_thermo_point.get_theta () + K);
-   set_anchor (size_2d);
+
+   const Real anchor_x = (size_2d.i / 33.0);
+   const Real anchor_y = size_2d.j - anchor_x * 2;
+   set_anchor (Point_2D (anchor_x, anchor_y));
 
    Affine_Transform_2D::set_identity ();
    Affine_Transform_2D::translate (-x, -y);
@@ -4624,10 +4723,16 @@ void
 Emagram::reset (const Size_2D& size_2d)
 {
 
+   this->size_2d = size_2d;
+
+
    const Real scale = size_2d.i / 200.0;
    const Real x = ref_thermo_point.get_t ();
    const Real y = log (ref_thermo_point.get_p ());
-   set_anchor (size_2d);
+
+   const Real anchor_x = (size_2d.i / 33.0);
+   const Real anchor_y = size_2d.j - anchor_x * 2;
+   set_anchor (Point_2D (anchor_x, anchor_y));
 
    Affine_Transform_2D::set_identity ();
    Affine_Transform_2D::translate (-x, -y);
@@ -4649,10 +4754,15 @@ void
 Skew_T::reset (const Size_2D& size_2d)
 {
 
+   this->size_2d = size_2d;
+
    const Real scale = size_2d.i / 100.0;
    const Real x = ref_thermo_point.get_t ();
    const Real y = log (ref_thermo_point.get_p ());
-   set_anchor (size_2d);
+
+   const Real anchor_x = (size_2d.i / 33.0);
+   const Real anchor_y = size_2d.j - anchor_x * 2;
+   set_anchor (Point_2D (anchor_x, anchor_y));
 
    Affine_Transform_2D::set_identity ();
    Affine_Transform_2D::translate (-x, -y);

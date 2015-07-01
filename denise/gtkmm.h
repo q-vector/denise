@@ -2702,11 +2702,17 @@ namespace denise
                Integer
                get_first_available_id () const;
 
+               const Attractor*
+               attractor_ptr;
+
             public:
 
                Hud_Store ();
 
                virtual ~Hud_Store ();
+
+               void
+               set_attractor (const Attractor& attractor);
 
                virtual const Attractor&
                get_attractor () const;

@@ -97,22 +97,7 @@ namespace denise
    class Attractor
    {
 
-      private:
-
-         const Real
-         grid_x;
-
-         const Real
-         grid_y;
-
       public:
-
-         Attractor ();
-
-         Attractor (const Real grid_x);
-
-         Attractor (const Real grid_x,
-                    const Real grid_y);
 
          virtual void
          attract (Real& x,
@@ -123,6 +108,30 @@ namespace denise
 
          virtual Point_2D
          get_attraction (const Point_2D& point) const;
+
+   };
+
+   class Simple_Attractor : public Attractor
+   {
+
+      private:
+
+         const Real
+         grid_x;
+
+         const Real
+         grid_y;
+
+      public:
+
+         Simple_Attractor (const Real grid_x);
+
+         Simple_Attractor (const Real grid_x,
+                           const Real grid_y);
+
+         virtual void
+         attract (Real& x,
+                  Real& y) const;
 
    };
 
