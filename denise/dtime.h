@@ -258,6 +258,9 @@ namespace denise
 
                Set (const string& str);
 
+               Set (const Dtime& start,
+                    const Dtime& end);
+
                virtual bool
                match (const Dtime& dtime) const;
 

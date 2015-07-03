@@ -4905,11 +4905,14 @@ Log_Transform_2D::Log_Transform_2D (const Domain_1D& domain_x,
                                     const bool log_x,
                                     const bool log_y,
                                     const Point_2D& origin)
-          : Cartesian_Transform_2D (log_x ? Domain_1D (log (domain_x.start), log (domain_x.end)) : domain_x,
-                                    log_y ? Domain_1D (log (domain_y.start), log (domain_y.end)) : domain_y,
-                                    width, height, origin),
-                             log_x (log_x),
-                             log_y (log_y)
+   : Cartesian_Transform_2D (
+        log_x ?
+           Domain_1D (log (domain_x.start), log (domain_x.end)) : domain_x,
+        log_y ?
+           Domain_1D (log (domain_y.start), log (domain_y.end)) : domain_y,
+        width, height, origin),
+     log_x (log_x),
+     log_y (log_y)
 {
 }
 

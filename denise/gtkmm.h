@@ -3452,6 +3452,7 @@ namespace denise
 
    };
 
+/*
    class Time_Series_Canvas : public Dcanvas
    {
 
@@ -3544,6 +3545,7 @@ namespace denise
          ~Time_Series_Canvas ();
 
    };
+*/
 
 };
 

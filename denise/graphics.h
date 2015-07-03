@@ -897,6 +897,12 @@ namespace denise
          void
          set_text_angle (const Real text_angle);
 
+         const string&
+         get_text () const;
+
+         const Point_2D&
+         get_point_2d () const;
+
          void
          cairo (const RefPtr<Context>& cr,
                 const bool align = false,
@@ -1064,36 +1070,47 @@ namespace denise
 
       public:
 
-         Mesh_2D ();
-
          Mesh_2D (const Size_2D& size_2d,
-                  const Domain_2D& domain_2d);
+                  const Domain_2D& domain_2d,
+                  const Color& color,
+                  const Real interval_x,
+                  const Real interval_y);
 
          Mesh_2D (const Size_2D& size_2d,
                   const Domain_2D& domain_2d,
-                  const Simple_Mesh_2D& simple_mesh_2d);
+                  const Color& color_0,
+                  const Real interval_x_0,
+                  const Real interval_y_0,
+                  const Color& color_1,
+                  const Real interval_x_1,
+                  const Real interval_y_1);
 
          Mesh_2D (const Size_2D& size_2d,
                   const Domain_2D& domain_2d,
-                  const Simple_Mesh_2D& simple_mesh_2d_a,
-                  const Simple_Mesh_2D& simple_mesh_2d_b);
+                  const Color& color_0,
+                  const Real interval_x_0,
+                  const Real interval_y_0,
+                  const Color& color_1,
+                  const Real interval_x_1,
+                  const Real interval_y_1,
+                  const Color& color_2,
+                  const Real interval_x_2,
+                  const Real interval_y_2);
 
          Mesh_2D (const Size_2D& size_2d,
                   const Domain_2D& domain_2d,
-                  const Simple_Mesh_2D& simple_mesh_2d_a,
-                  const Simple_Mesh_2D& simple_mesh_2d_b,
-                  const Simple_Mesh_2D& simple_mesh_2d_c);
-
-         Mesh_2D (const Size_2D& size_2d,
-                  const Domain_2D& domain_2d,
-                  const Simple_Mesh_2D& simple_mesh_2d_a,
-                  const Simple_Mesh_2D& simple_mesh_2d_b,
-                  const Simple_Mesh_2D& simple_mesh_2d_c,
-                  const Simple_Mesh_2D& simple_mesh_2d_d);
-
-         Mesh_2D (const Size_2D& size_2d,
-                  const Domain_2D& domain_2d,
-                  const vector<Simple_Mesh_2D>& simple_mesh_2d_vector);
+                  const Color& color_0,
+                  const Real interval_x_0,
+                  const Real interval_y_0,
+                  const Color& color_1,
+                  const Real interval_x_1,
+                  const Real interval_y_1,
+                  const Color& color_2,
+                  const Real interval_x_2,
+                  const Real interval_y_2,
+                  const Color& color_3,
+                  const Real interval_x_3,
+                  const Real interval_y_3);
 
          void
          set_size_2d (const Size_2D& size_2d);
@@ -1104,6 +1121,14 @@ namespace denise
          void
          set_domain_2d (const Domain_1D& domain_x,
                         const Domain_1D& domain_y);
+
+         void
+         set_offset_multiplier_x (const Real offset,
+                                  const Real multiplier);
+
+         void
+         set_offset_multiplier_y (const Real offset,
+                                  const Real multiplier);
 
          void
          add (const Simple_Mesh_2D& simple_mesh_2d);

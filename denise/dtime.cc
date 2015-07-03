@@ -639,6 +639,12 @@ Dtime::Set::Set (const string& str)
 
 }
 
+Dtime::Set::Set (const Dtime& start,
+                 const Dtime& end)
+{
+   insert (Dtime::Span (start, end));
+}
+
 namespace denise
 {
 

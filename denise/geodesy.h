@@ -1426,28 +1426,45 @@ namespace denise
 
       public:
 
-         Geodetic_Mesh (const Size_2D& s = Size_2D (100, 100),
-                        const Domain_2D& d = Domain_2D (-89, 89, -180, 179.9));
-
-         Geodetic_Mesh (const Simple_Mesh_2D& simple_mesh_2d,
+         Geodetic_Mesh (const Color& color,
+                        const Real interval_x,
+                        const Real interval_y,
                         const Size_2D& s = Size_2D (100, 100),
                         const Domain_2D& d = Domain_2D (-89, 89, -180, 179.9));
 
-         Geodetic_Mesh (const Simple_Mesh_2D& simple_mesh_2d_a,
-                        const Simple_Mesh_2D& simple_mesh_2d_b,
+         Geodetic_Mesh (const Color& color_0,
+                        const Real interval_x_0,
+                        const Real interval_y_0,
+                        const Color& color_1,
+                        const Real interval_x_1,
+                        const Real interval_y_1,
                         const Size_2D& s = Size_2D (100, 100),
                         const Domain_2D& d = Domain_2D (-89, 89, -180, 179.9));
 
-         Geodetic_Mesh (const Simple_Mesh_2D& simple_mesh_2d_a,
-                        const Simple_Mesh_2D& simple_mesh_2d_b,
-                        const Simple_Mesh_2D& simple_mesh_2d_c,
+         Geodetic_Mesh (const Color& color_0,
+                        const Real interval_x_0,
+                        const Real interval_y_0,
+                        const Color& color_1,
+                        const Real interval_x_1,
+                        const Real interval_y_1,
+                        const Color& color_2,
+                        const Real interval_x_2,
+                        const Real interval_y_2,
                         const Size_2D& s = Size_2D (100, 100),
                         const Domain_2D& d = Domain_2D (-89, 89, -180, 179.9));
 
-         Geodetic_Mesh (const Simple_Mesh_2D& simple_mesh_2d_a,
-                        const Simple_Mesh_2D& simple_mesh_2d_b,
-                        const Simple_Mesh_2D& simple_mesh_2d_c,
-                        const Simple_Mesh_2D& simple_mesh_2d_d,
+         Geodetic_Mesh (const Color& color_0,
+                        const Real interval_x_0,
+                        const Real interval_y_0,
+                        const Color& color_1,
+                        const Real interval_x_1,
+                        const Real interval_y_1,
+                        const Color& color_2,
+                        const Real interval_x_2,
+                        const Real interval_y_2,
+                        const Color& color_3,
+                        const Real interval_x_3,
+                        const Real interval_y_3,
                         const Size_2D& s = Size_2D (100, 100),
                         const Domain_2D& d = Domain_2D (-89, 89, -180, 179.9));
 

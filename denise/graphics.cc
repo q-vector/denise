@@ -50,7 +50,8 @@ namespace denise
    get_cr (const RefPtr<Surface> surface)
    {
       RefPtr<Context> cr = Context::create (surface);
-      cr->select_font_face ("Verdana", FONT_SLANT_NORMAL, FONT_WEIGHT_NORMAL);
+      //cr->select_font_face ("Verdana", FONT_SLANT_NORMAL, FONT_WEIGHT_NORMAL);
+      cr->select_font_face ("DejaVu Sans", FONT_SLANT_NORMAL, FONT_WEIGHT_NORMAL);
       cr->set_line_cap (LINE_CAP_ROUND);
       cr->set_line_join (LINE_JOIN_ROUND);
       return cr;
@@ -1294,6 +1295,18 @@ Label::set_text_angle (const Real text_angle)
    this->text_angle = text_angle;
 }
 
+const string&
+Label::get_text () const
+{
+   return text;
+}
+
+const Point_2D&
+Label::get_point_2d () const
+{
+   return point_2d;
+}
+
 void
 Label::cairo (const RefPtr<Context>& cr,
               const bool align,
@@ -1675,81 +1688,72 @@ Simple_Mesh_2D::render_label_lat_long (const RefPtr<Context>& cr,
 
 }
 
-Mesh_2D::Mesh_2D ()
-{
-}
-
 Mesh_2D::Mesh_2D (const Size_2D& size_2d,
-                  const Domain_2D& domain_2d)
+                  const Domain_2D& domain_2d,
+                  const Color& color,
+                  const Real interval_x,
+                  const Real interval_y)
    : size_2d (size_2d),
      domain_2d (domain_2d)
 {
+   add (Simple_Mesh_2D (color, interval_x, interval_y));
 }
 
 Mesh_2D::Mesh_2D (const Size_2D& size_2d,
                   const Domain_2D& domain_2d,
-                  const Simple_Mesh_2D& simple_mesh_2d)
+                  const Color& color_0,
+                  const Real interval_x_0,
+                  const Real interval_y_0,
+                  const Color& color_1,
+                  const Real interval_x_1,
+                  const Real interval_y_1)
    : size_2d (size_2d),
      domain_2d (domain_2d)
 {
-   add (simple_mesh_2d);
+   add (Simple_Mesh_2D (color_0, interval_x_0, interval_y_0));
+   add (Simple_Mesh_2D (color_1, interval_x_1, interval_y_1));
 }
 
 Mesh_2D::Mesh_2D (const Size_2D& size_2d,
                   const Domain_2D& domain_2d,
-                  const Simple_Mesh_2D& simple_mesh_2d_a,
-                  const Simple_Mesh_2D& simple_mesh_2d_b)
+                  const Color& color_0,
+                  const Real interval_x_0,
+                  const Real interval_y_0,
+                  const Color& color_1,
+                  const Real interval_x_1,
+                  const Real interval_y_1,
+                  const Color& color_2,
+                  const Real interval_x_2,
+                  const Real interval_y_2)
    : size_2d (size_2d),
      domain_2d (domain_2d)
 {
-   add (simple_mesh_2d_a);
-   add (simple_mesh_2d_b);
+   add (Simple_Mesh_2D (color_0, interval_x_0, interval_y_0));
+   add (Simple_Mesh_2D (color_1, interval_x_1, interval_y_1));
+   add (Simple_Mesh_2D (color_2, interval_x_2, interval_y_2));
 }
 
 Mesh_2D::Mesh_2D (const Size_2D& size_2d,
                   const Domain_2D& domain_2d,
-                  const Simple_Mesh_2D& simple_mesh_2d_a,
-                  const Simple_Mesh_2D& simple_mesh_2d_b,
-                  const Simple_Mesh_2D& simple_mesh_2d_c)
+                  const Color& color_0,
+                  const Real interval_x_0,
+                  const Real interval_y_0,
+                  const Color& color_1,
+                  const Real interval_x_1,
+                  const Real interval_y_1,
+                  const Color& color_2,
+                  const Real interval_x_2,
+                  const Real interval_y_2,
+                  const Color& color_3,
+                  const Real interval_x_3,
+                  const Real interval_y_3)
    : size_2d (size_2d),
      domain_2d (domain_2d)
 {
-   add (simple_mesh_2d_a);
-   add (simple_mesh_2d_b);
-   add (simple_mesh_2d_c);
-}
-
-Mesh_2D::Mesh_2D (const Size_2D& size_2d,
-                  const Domain_2D& domain_2d,
-                  const Simple_Mesh_2D& simple_mesh_2d_a,
-                  const Simple_Mesh_2D& simple_mesh_2d_b,
-                  const Simple_Mesh_2D& simple_mesh_2d_c,
-                  const Simple_Mesh_2D& simple_mesh_2d_d)
-   : size_2d (size_2d),
-     domain_2d (domain_2d)
-{
-   add (simple_mesh_2d_a);
-   add (simple_mesh_2d_b);
-   add (simple_mesh_2d_c);
-   add (simple_mesh_2d_d);
-}
-
-Mesh_2D::Mesh_2D (const Size_2D& size_2d,
-                  const Domain_2D& domain_2d,
-                  const vector<Simple_Mesh_2D>& simple_mesh_2d_vector)
-   : size_2d (size_2d),
-     domain_2d (domain_2d)
-{
-
-   typedef vector<Simple_Mesh_2D>::const_iterator Iterator;
-
-   for (Iterator iterator = simple_mesh_2d_vector.begin ();
-        iterator != simple_mesh_2d_vector.end (); iterator++)
-   {
-      const Simple_Mesh_2D& simple_mesh_2d = *(iterator);
-      add (simple_mesh_2d);
-   }
-
+   add (Simple_Mesh_2D (color_0, interval_x_0, interval_y_0));
+   add (Simple_Mesh_2D (color_1, interval_x_1, interval_y_1));
+   add (Simple_Mesh_2D (color_2, interval_x_2, interval_y_2));
+   add (Simple_Mesh_2D (color_3, interval_x_3, interval_y_3));
 }
 
 void
@@ -1770,6 +1774,30 @@ Mesh_2D::set_domain_2d (const Domain_1D& domain_x,
 {
    this->domain_2d.domain_x = domain_x;
    this->domain_2d.domain_y = domain_y;
+}
+
+void
+Mesh_2D::set_offset_multiplier_x (const Real offset,
+                                  const Real multiplier)
+{
+   for (auto iterator = begin (); iterator != end (); iterator++)
+   {
+      auto& simple_mesh = *(iterator);
+      simple_mesh.offset_x = offset;
+      simple_mesh.multiplier_x = multiplier;
+   }
+}
+
+void
+Mesh_2D::set_offset_multiplier_y (const Real offset,
+                                  const Real multiplier)
+{
+   for (auto iterator = begin (); iterator != end (); iterator++)
+   {
+      auto& simple_mesh = *(iterator);
+      simple_mesh.offset_y = offset;
+      simple_mesh.multiplier_y = multiplier;
+   }
 }
 
 void

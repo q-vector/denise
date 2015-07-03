@@ -3587,45 +3587,66 @@ Track::get_lat_long (const Real tau,
 
 }
 
-Geodetic_Mesh::Geodetic_Mesh (const Size_2D& size_2d,
+Geodetic_Mesh::Geodetic_Mesh (const Color& color,
+                              const Real interval_x,
+                              const Real interval_y,
+                              const Size_2D& size_2d,
                               const Domain_2D& domain_2d)
-   : Mesh_2D (size_2d, domain_2d)
+   : Mesh_2D (size_2d, domain_2d, color, interval_x, interval_y)
 {
 }
 
-Geodetic_Mesh::Geodetic_Mesh (const Simple_Mesh_2D& simple_mesh_2d,
+Geodetic_Mesh::Geodetic_Mesh (const Color& color_0,
+                              const Real interval_x_0,
+                              const Real interval_y_0,
+                              const Color& color_1,
+                              const Real interval_x_1,
+                              const Real interval_y_1,
                               const Size_2D& size_2d,
                               const Domain_2D& domain_2d)
-   : Mesh_2D (size_2d, domain_2d, simple_mesh_2d)
+   : Mesh_2D (size_2d, domain_2d,
+              color_0, interval_x_0, interval_y_0,
+              color_1, interval_x_1, interval_y_1)
 {
 }
 
-Geodetic_Mesh::Geodetic_Mesh (const Simple_Mesh_2D& simple_mesh_2d_a,
-                              const Simple_Mesh_2D& simple_mesh_2d_b,
+Geodetic_Mesh::Geodetic_Mesh (const Color& color_0,
+                              const Real interval_x_0,
+                              const Real interval_y_0,
+                              const Color& color_1,
+                              const Real interval_x_1,
+                              const Real interval_y_1,
+                              const Color& color_2,
+                              const Real interval_x_2,
+                              const Real interval_y_2,
                               const Size_2D& size_2d,
                               const Domain_2D& domain_2d)
-   : Mesh_2D (size_2d, domain_2d, simple_mesh_2d_a, simple_mesh_2d_b)
+   : Mesh_2D (size_2d, domain_2d,
+              color_0, interval_x_0, interval_y_0,
+              color_1, interval_x_1, interval_y_1,
+              color_2, interval_x_2, interval_y_2)
 {
 }
 
-Geodetic_Mesh::Geodetic_Mesh (const Simple_Mesh_2D& simple_mesh_2d_a,
-                              const Simple_Mesh_2D& simple_mesh_2d_b,
-                              const Simple_Mesh_2D& simple_mesh_2d_c,
+Geodetic_Mesh::Geodetic_Mesh (const Color& color_0,
+                              const Real interval_x_0,
+                              const Real interval_y_0,
+                              const Color& color_1,
+                              const Real interval_x_1,
+                              const Real interval_y_1,
+                              const Color& color_2,
+                              const Real interval_x_2,
+                              const Real interval_y_2,
+                              const Color& color_3,
+                              const Real interval_x_3,
+                              const Real interval_y_3,
                               const Size_2D& size_2d,
                               const Domain_2D& domain_2d)
-   : Mesh_2D (size_2d, domain_2d, simple_mesh_2d_a,
-              simple_mesh_2d_b, simple_mesh_2d_c)
-{
-}
-
-Geodetic_Mesh::Geodetic_Mesh (const Simple_Mesh_2D& simple_mesh_2d_a,
-                              const Simple_Mesh_2D& simple_mesh_2d_b,
-                              const Simple_Mesh_2D& simple_mesh_2d_c,
-                              const Simple_Mesh_2D& simple_mesh_2d_d,
-                              const Size_2D& size_2d,
-                              const Domain_2D& domain_2d)
-   : Mesh_2D (size_2d, domain_2d, simple_mesh_2d_a,
-              simple_mesh_2d_b, simple_mesh_2d_c, simple_mesh_2d_d)
+   : Mesh_2D (size_2d, domain_2d,
+              color_0, interval_x_0, interval_y_0,
+              color_1, interval_x_1, interval_y_1,
+              color_2, interval_x_2, interval_y_2,
+              color_3, interval_x_3, interval_y_3)
 {
 }
 
@@ -3647,9 +3668,11 @@ Geodetic_Mesh::cairo (const RefPtr<Context> cr,
    const Lat_Long anchor_lat_long_a (anchor_lat_a, anchor_long_a);
    const Lat_Long anchor_lat_long_b (anchor_lat_b, anchor_long_b);
 
+   const Integer index = size () - 1;
+
    Mesh_2D::render (cr, transform);
-   render_label_lat_long (cr, transform, 1, anchor_lat_long_a, "%.0f");
-   render_label_lat_long (cr, transform, 1, anchor_lat_long_b, "%.0f");
+   render_label_lat_long (cr, transform, index, anchor_lat_long_a, "%.0f");
+   render_label_lat_long (cr, transform, index, anchor_lat_long_b, "%.0f");
 
 }
 

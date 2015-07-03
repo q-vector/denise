@@ -923,6 +923,12 @@ Domain_1D::swap_if_reverse ()
    if (is_reverse ()) { swap (); }
 }
 
+Domain_1D
+Domain_1D::get_swapped () const
+{
+   return Domain_1D (end, start);
+}
+
 Real
 Domain_1D::get_span () const
 {

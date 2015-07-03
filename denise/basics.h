@@ -697,6 +697,9 @@ namespace denise
          void
          swap_if_reverse ();
 
+         Domain_1D
+         get_swapped () const;
+
          Real
          get_span () const;
 

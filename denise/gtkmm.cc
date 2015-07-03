@@ -8017,13 +8017,11 @@ Map_Console::render_mesh (const RefPtr<Context>& cr)
    const Domain_2D domain_2d = get_domain_2d ();
    const Geodetic_Transform& transform = get_geodetic_transform ();
 
-   const Simple_Mesh_2D sm0_2 (Color (0, 0, 0, 0.05), 0.2, 0.2);
-   const Simple_Mesh_2D sm1 (Color (0, 0, 0, 0.1), 1, 1);
-   const Simple_Mesh_2D sm5 (Color (0, 0, 0, 0.1), 5, 5);
-   const Simple_Mesh_2D sm10 (Color (0, 0, 0, 0.4), 10, 10);
-   const Simple_Mesh_2D sm30 (Color (0, 0, 0, 0.4), 30, 30);
-   const Geodetic_Mesh mesh_small (sm1, sm10, size_2d, domain_2d);
-   const Geodetic_Mesh mesh_large (sm5, sm30, size_2d, domain_2d);
+   //const Simple_Mesh_2D sm0_2 (Color::black(0.05), 0.2, 0.2);
+   const Geodetic_Mesh mesh_small (Color::black (0.10), 1.0, 1.0,
+      Color::black (0.40), 10., 10., size_2d, domain_2d);
+   const Geodetic_Mesh mesh_large (Color::black (0.10), 5.0, 5.0,
+      Color::black (0.40), 30., 30., size_2d, domain_2d);
 
    const Real latitude_span = domain_2d.domain_x.get_span ();
    const Real longitude_span = domain_2d.domain_y.get_span ();
@@ -8409,7 +8407,6 @@ void
 Map_Console::Option_Panel::setup_overlay ()
 {
 
-cout << "map_console::option_panel::setup_overlay " << endl;
    const Overlay_Store& overlay_store = map_console.get_overlay_store ();
    Overlay_Drawer& overlay_drawer = get_overlay_drawer ();
 
@@ -8426,7 +8423,6 @@ cout << "map_console::option_panel::setup_overlay " << endl;
       const string& identifier = *(iterator);
       const bool on = overlay_store.is_on (identifier);
 
-cout << "map_console::option_panel::setup_overlay " << identifier << endl;
       Tb* tb_ptr = new Tb (map_console, identifier, font_size, on);
       Tb::Str_Signal& signal = tb_ptr->get_str_signal ();
       signal.connect (sigc::mem_fun (mc, &Map_Console::toggle_overlay));
@@ -8821,6 +8817,7 @@ Map_Console::get_route_store ()
    return mc_route_store;
 }
 
+/*
 Time_Series_Canvas::Transform::Transform (const Size_2D& size_2d,
                                           const Real margin_t,
                                           const Real margin_b,
@@ -9024,47 +9021,45 @@ Time_Series_Canvas::render_sun_elevation (const RefPtr<Context>& cr,
 
    Color (0.8, 0.7, 0.6, 0.2).cairo (cr);
 
-/*
-   const Real start_y = margin_t;
-   const Real end_y = height - margin_b;
-   const Real chart_height = height - margin_t - margin_b;
-   const Real horizon_y = start_y + (1 - 0) * chart_height / 1.34;
-
-   Point_2D p;
-
-   for (Dtime dtime = st; dtime <= domain_t.end; dtime.t += hours)
-   {
-
-      if (dtime < domain_t.start) { continue; }
-
-      const Zenith_Field zenith_field (Sun (), dtime);
-      const Real zenith = zenith_field.evaluate (0, latitude, longitude);
-      const Real elevation = 90 - zenith;
-
-      if (elevation < -20) { continue; }
-
-      const Real cos_z = cos (zenith * DEGREE_TO_RADIAN);
-      transform.transform (p.x, p.y, dtime.t, 500e2);
-      p.y = start_y + (1 - cos_z) * chart_height / 1.34;
-
-      Ring (6).cairo (cr, p);
-      cr->fill ();
-
-   }
-
-   const Real start_x = margin_l;
-   const Real end_x = width - margin_r;
-
-   Polygon polygon;
-   polygon.add (Point_2D (start_x, end_y));
-   polygon.add (Point_2D (start_x, horizon_y));
-   polygon.add (Point_2D (end_x, horizon_y));
-   polygon.add (Point_2D (end_x, end_y));
-
-   Color (0, 0, 0, 0.08).cairo (cr);
-   polygon.cairo (cr);
-   cr->fill ();
-*/
+//   const Real start_y = margin_t;
+//   const Real end_y = height - margin_b;
+//   const Real chart_height = height - margin_t - margin_b;
+//   const Real horizon_y = start_y + (1 - 0) * chart_height / 1.34;
+//
+//   Point_2D p;
+//
+//   for (Dtime dtime = st; dtime <= domain_t.end; dtime.t += hours)
+//   {
+//
+//      if (dtime < domain_t.start) { continue; }
+//
+//      const Zenith_Field zenith_field (Sun (), dtime);
+//      const Real zenith = zenith_field.evaluate (0, latitude, longitude);
+//      const Real elevation = 90 - zenith;
+//
+//      if (elevation < -20) { continue; }
+//
+//      const Real cos_z = cos (zenith * DEGREE_TO_RADIAN);
+//      transform.transform (p.x, p.y, dtime.t, 500e2);
+//      p.y = start_y + (1 - cos_z) * chart_height / 1.34;
+//
+//      Ring (6).cairo (cr, p);
+//      cr->fill ();
+//
+//   }
+//
+//   const Real start_x = margin_l;
+//   const Real end_x = width - margin_r;
+//
+//   Polygon polygon;
+//   polygon.add (Point_2D (start_x, end_y));
+//   polygon.add (Point_2D (start_x, horizon_y));
+//   polygon.add (Point_2D (end_x, horizon_y));
+//   polygon.add (Point_2D (end_x, end_y));
+//
+//   Color (0, 0, 0, 0.08).cairo (cr);
+//   polygon.cairo (cr);
+//   cr->fill ();
 
 }
 
@@ -9083,3 +9078,4 @@ Time_Series_Canvas::~Time_Series_Canvas ()
 {
 }
 
+*/
