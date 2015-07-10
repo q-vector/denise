@@ -206,18 +206,23 @@ namespace denise
 
       private:
 
-         const Real
-         scale;
+         Real
+         s;
 
-         const Real
-         offset;
+         Real
+         o;
 
       public:
+
+         Affine_Transform_1D ();
 
          Affine_Transform_1D (const Real scale,
                               const Real offset);
 
          Affine_Transform_1D (const Affine_Transform_1D& transform);
+
+         virtual bool
+         out_of_domain (const Real x) const;
 
          const Real&
          get_scale () const;
@@ -225,13 +230,29 @@ namespace denise
          const Real&
          get_offset () const;
 
+         void
+         scale (const Real scale);
+
+         void
+         scale (const Real scale,
+                const Real pivot);
+
+         void
+         translate (const Real translation);
+
          virtual void
          transform (Real& transformed,
                     const Real x) const;
 
+         virtual Real
+         transform (const Real x) const;
+
          virtual void
          reverse (Real& reversed,
                   const Real x) const;
+
+         virtual Real
+         reverse (const Real x) const;
 
    };
 
@@ -397,8 +418,8 @@ namespace denise
                 const Real scale_y);
 
          void
-         scale (const Real shear_x,
-                const Real shear_y,
+         scale (const Real scale_x,
+                const Real scale_y,
                 const Point_2D& pivot);
 
          void

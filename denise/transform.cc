@@ -446,43 +446,88 @@ Transform_2D::cairo (const Cairo::RefPtr<Cairo::Context>& cr,
    }
 }
 
+Affine_Transform_1D::Affine_Transform_1D ()
+   : s (1),
+     o (0)
+{
+}
+
 Affine_Transform_1D::Affine_Transform_1D (const Real scale,
                                           const Real offset)
-   : scale (scale),
-     offset (offset)
+   : s (scale),
+     o (offset)
 {
 }
 
 Affine_Transform_1D::Affine_Transform_1D (const Affine_Transform_1D& transform)
-   : scale (transform.scale),
-     offset (transform.offset)
+   : s (transform.s),
+     o (transform.o)
 {
+}
+
+bool
+Affine_Transform_1D::out_of_domain (const Real x) const
+{
+   return false;
 }
 
 const Real&
 Affine_Transform_1D::get_scale () const
 {
-   return scale;
+   return s;
 }
 
 const Real&
 Affine_Transform_1D::get_offset () const
 {
-   return offset;
+   return o;
+}
+
+void
+Affine_Transform_1D::scale (const Real scale)
+{
+   this->s *= scale;
+}
+
+void
+Affine_Transform_1D::scale (const Real scale,
+                            const Real pivot)
+{
+   translate (-pivot);
+   this->scale (scale);
+   translate (pivot);
+}
+
+void
+Affine_Transform_1D::translate (const Real translation)
+{
+   o += translation;
 }
 
 void
 Affine_Transform_1D::transform (Real& transformed,
                                 const Real x) const
 {
-   transformed = scale * x + offset;
+   transformed = s * x + o;
+}
+
+Real
+Affine_Transform_1D::transform (const Real x) const
+{
+   return Transform_1D::transform (x);
 }
 
 void
 Affine_Transform_1D::reverse (Real& reversed,
                               const Real x) const
 {
-   reversed = (x - offset) / scale;
+   reversed = (x - o) / s;
+}
+
+Real
+Affine_Transform_1D::reverse (const Real x) const
+{
+   return Transform_1D::reverse (x);
 }
 
 Moebius_Transform::Moebius_Transform ()

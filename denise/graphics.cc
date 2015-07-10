@@ -40,9 +40,26 @@ namespace denise
    }
 
 
-   RefPtr<ImageSurface>
-   get_surface (const Size_2D& size_2d)
+   RefPtr<Surface>
+   get_surface (const Size_2D& size_2d,
+                const string& format,
+                const string& file_path)
    {
+      
+      if (format == "pdf")
+      {
+         return Cairo::PdfSurface::create (file_path, size_2d.i, size_2d.j);
+      }
+      else
+      if (format == "svg")
+      {
+         return Cairo::SvgSurface::create (file_path, size_2d.i, size_2d.j);
+      }
+      else
+      if (format == "ps")
+      {
+         return Cairo::PsSurface::create (file_path, size_2d.i, size_2d.j);
+      }
       return ImageSurface::create (FORMAT_ARGB32, size_2d.i, size_2d.j);
    }
 
@@ -402,7 +419,7 @@ Checkered::init (const Paintable& paintable_0,
    const Integer w2 = Integer (round (width * 2));
    const Size_2D size_2d (w2, w2);
 
-   RefPtr<ImageSurface> surface = denise::get_surface (Size_2D (w2, w2));
+   RefPtr<Surface> surface = denise::get_surface (Size_2D (w2, w2));
    RefPtr<Context> cr = denise::get_cr (surface);
 
    Color (1, 1, 1, 0.0).cairo (cr);
@@ -447,7 +464,7 @@ Stripped::init (const Paintable& paintable_0,
    const Integer w = Integer (round (width));
    const Integer w2 = Integer (round (width * 2));
 
-   RefPtr<ImageSurface> surface = denise::get_surface (Size_2D (w2, w2));
+   RefPtr<Surface> surface = denise::get_surface (Size_2D (w2, w2));
    RefPtr<Context> cr = denise::get_cr (surface);
 
    Color (1, 1, 1, 0.0).cairo (cr);

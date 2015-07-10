@@ -72,8 +72,10 @@ namespace denise
    get_hue (const Integer i,
             const Integer n);
 
-   RefPtr<ImageSurface>
-   get_surface (const Size_2D& size_2d);
+   RefPtr<Surface>
+   get_surface (const Size_2D& size_2d,
+                const string& format = "png",
+                const string& file_path = "/dev/null");
 
    RefPtr<Context>
    get_cr (const RefPtr<Surface> surface);
