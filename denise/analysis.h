@@ -1239,6 +1239,40 @@ namespace denise
       
    }; 
 
+   class Cartesian_Transform_1D : public Affine_Transform_1D
+   {
+
+      private:
+
+         const bool
+         log;
+
+         void
+         init (const Domain_1D& domain,
+               const Domain_1D& range);
+
+      public:
+
+         Cartesian_Transform_1D (const Domain_1D& domain,
+                                 const Domain_1D& range,
+                                 const bool log = false);
+
+         void
+         transform (Real& transformed,
+                    const Real x) const;
+
+         Real
+         transform (const Real x) const;
+
+         Real
+         reverse (const Real x) const;
+
+         void
+         reverse (Real& reversed,
+                  const Real x) const;
+
+   };
+
    class Cartesian_Transform_2D : public Affine_Transform_2D
    {
 

@@ -204,7 +204,7 @@ namespace denise
    class Affine_Transform_1D : public Transform_1D
    {
 
-      private:
+      protected:
 
          Real
          s;

@@ -4852,6 +4852,58 @@ B_Spline::get_value_at (const Real t) const
 }
 
 void
+Cartesian_Transform_1D::init (const Domain_1D& domain,
+                              const Domain_1D& range)
+{
+   this->s = range.get_span () / domain.get_span ();
+   this->o = range.start - domain.start * s;
+}
+
+Cartesian_Transform_1D::Cartesian_Transform_1D (const Domain_1D& domain,
+                                                const Domain_1D& range,
+                                                const bool log)
+   : log (log)
+{
+   if (!log)
+   {
+      init (domain, range);
+   }
+   else
+   {
+      init (Domain_1D (std::log (domain.start), std::log (domain.end)), range);
+   }
+}
+
+Real
+Cartesian_Transform_1D::transform (const Real x) const
+{
+   return (log ? std::log (x) : x) * s + o;
+}
+
+void
+Cartesian_Transform_1D::transform (Real& transformed,
+                                   const Real x) const
+{
+   transformed = (log ? std::log (x) : x) * s + o;
+}
+
+Real
+Cartesian_Transform_1D::reverse (const Real x) const
+{
+   Real reversed;
+   this->reverse (reversed, x);
+   return reversed;
+}
+
+void
+Cartesian_Transform_1D::reverse (Real& reversed,
+                                 const Real x) const
+{
+   Affine_Transform_1D::reverse (reversed, x);
+   if (log) { reversed = exp (reversed); }
+}
+
+void
 Cartesian_Transform_2D::init (const Domain_1D& domain_x,
                               const Domain_1D& domain_y,
                               const Real width,
@@ -4875,7 +4927,6 @@ Cartesian_Transform_2D::init (const Domain_1D& domain_x,
    }
 
 }
-
 
 Cartesian_Transform_2D::Cartesian_Transform_2D (const Domain_1D& domain_x,
                                                 const Domain_1D& domain_y,
