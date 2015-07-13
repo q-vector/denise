@@ -63,6 +63,12 @@ namespace denise
       return ImageSurface::create (FORMAT_ARGB32, size_2d.i, size_2d.j);
    }
 
+   RefPtr<ImageSurface>
+   get_image_surface (const Size_2D& size_2d)
+   {
+      return ImageSurface::create (FORMAT_ARGB32, size_2d.i, size_2d.j);
+   }
+
    RefPtr<Context>
    get_cr (const RefPtr<Surface> surface)
    {

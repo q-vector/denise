@@ -77,6 +77,9 @@ namespace denise
                 const string& format = "png",
                 const string& file_path = "/dev/null");
 
+   RefPtr<ImageSurface>
+   get_image_surface (const Size_2D& size_2d);
+
    RefPtr<Context>
    get_cr (const RefPtr<Surface> surface);
 

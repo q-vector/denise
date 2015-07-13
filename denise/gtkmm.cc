@@ -176,7 +176,7 @@ Image_Buffer::initialize (const Dwidget& widget)
    {
       const Integer w = Integer (round (widget.get_width ()));
       const Integer h = Integer (round (widget.get_height ()));
-      image_surface = denise::get_surface (Size_2D (w, h));
+      image_surface = denise::get_image_surface (Size_2D (w, h));
    }
 
    RefPtr<Context> cr = denise::get_cr (image_surface);
@@ -1278,8 +1278,8 @@ Dcanvas::initialize ()
    image_surface.clear ();
    widget_surface.clear ();
 
-   image_surface = denise::get_surface (size_2d);
-   widget_surface = denise::get_surface (size_2d);
+   image_surface = denise::get_image_surface (size_2d);
+   widget_surface = denise::get_image_surface (size_2d);
 
 }
 
@@ -1288,7 +1288,7 @@ Dcanvas::save_image (const string& file_path)
 {
 
    const Size_2D& size_2d = get_size_2d ();
-   RefPtr<ImageSurface> surface = denise::get_surface (size_2d);
+   RefPtr<Surface> surface = denise::get_surface (size_2d);
    const RefPtr<Context> cr = denise::get_cr (surface);
 
    cr->set_source (image_surface, 0, 0);

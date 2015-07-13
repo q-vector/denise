@@ -133,7 +133,8 @@ string
 Lat_Long::get_string (const Integer decimal_places,
                       const bool plain) const
 {
-   const string& number_format = string_render ("%%.%df\u00b0", decimal_places);
+   const char* fmt = plain ? "%%.%df" : "%%.%df\u00b0";
+   const string& number_format = string_render (fmt, decimal_places);
    return get_string (plain, number_format);
 }
 
