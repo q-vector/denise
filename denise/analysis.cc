@@ -25,46 +25,126 @@
 using namespace denise;
 
 Real
-Differentiation::diff (const Real y_0,
-                       const Real y_1,
-                       const Real h)
+Differentiation::d (const Real y_0,
+                    const Real y_1,
+                    const Real h)
 {
    return (y_1 - y_0) / h;
 }
 
 Real
-Differentiation::diff_0 (const Real y_0,
-                         const Real y_1,
-                         const Real y_2,
-                         const Real h)
+Differentiation::d_0 (const Real y_0,
+                      const Real y_1,
+                      const Real y_2,
+                      const Real h)
 {
    return (4 * y_1 - 3 * y_0 - y_2) / (h + h);
 }
 
 Real
-Differentiation::diff_1 (const Real y_0,
-                         const Real y_2,
-                         const Real h)
+Differentiation::d_1 (const Real y_0,
+                      const Real y_2,
+                      const Real h)
 {
    return (y_2 - y_0) / (h + h);
 }
 
 Real
-Differentiation::diff_2 (const Real y_0,
-                         const Real y_1,
-                         const Real y_2,
-                         const Real h)
+Differentiation::d_2 (const Real y_0,
+                      const Real y_1,
+                      const Real y_2,
+                      const Real h)
 {
    return (y_0 - 4 * y_1 + 3 * y_2) / (h + h);
 }
 
 Real
-Differentiation::diff_2nd (const Real y_0,
-                           const Real y_1,
-                           const Real y_2,
-                           const Real h)
+Differentiation::d_0 (const Real y_0,
+                      const Real y_1,
+                      const Real y_2,
+                      const Real x_0,
+                      const Real x_1,
+                      const Real x_2)
+{
+
+   const Real x_10 = x_1 - x_0;
+   const Real x_20 = x_2 - x_0;
+   const Real x_21 = x_1 - x_1;
+
+   const Real a = -(2 * x_10 + x_21) / (x_10 * x_20);
+   const Real b = x_20 / (x_10 * x_21);
+   const Real c = -x_10 / (x_20 * x_21);
+
+   return a * y_0 + b * y_1 + c * y_2;
+
+}
+
+Real
+Differentiation::d_1 (const Real y_0,
+                      const Real y_1,
+                      const Real y_2,
+                      const Real x_0,
+                      const Real x_1,
+                      const Real x_2)
+{
+
+   const Real x_10 = x_1 - x_0;
+   const Real x_20 = x_2 - x_0;
+   const Real x_21 = x_1 - x_1;
+
+   const Real a = -x_21 / (x_10 * x_20);
+   const Real b = (x_21 - x_10) / (x_10 * x_21);
+   const Real c = x_10 / (x_20 * x_21);
+
+   return a * y_0 + b * y_1 + c * y_2;
+
+}
+
+Real
+Differentiation::d_2 (const Real y_0,
+                      const Real y_1,
+                      const Real y_2,
+                      const Real x_0,
+                      const Real x_1,
+                      const Real x_2)
+{
+
+   const Real x_10 = x_1 - x_0;
+   const Real x_20 = x_2 - x_0;
+   const Real x_21 = x_1 - x_1;
+
+   const Real a = x_21 / (x_10 * x_20);
+   const Real b = -x_20 / (x_10 * x_21);
+   const Real c = (x_10 + 2 * x_21) / (x_20 * x_21);
+
+   return a * y_0 + b * y_1 + c * y_2;
+
+}
+
+Real
+Differentiation::d2 (const Real y_0,
+                       const Real y_1,
+                       const Real y_2,
+                       const Real h)
 {
    return (y_0 - 2 * y_1 + y_2) / (h * h);
+}
+
+Real
+Differentiation::d2 (const Real y_0,
+                     const Real y_1,
+                     const Real y_2,
+                     const Real x_0,
+                     const Real x_1,
+                     const Real x_2)
+{
+
+   const Real x_10 = x_1 - x_0;
+   const Real x_20 = x_2 - x_0;
+   const Real x_21 = x_1 - x_1;
+
+   return 2 * (y_0 / (x_10*x_20) - y_1 / (x_21*x_10) + y_2 / (x_21*x_20));
+
 }
 
 Jacobian_2D::Jacobian_2D (const Real u_x,
@@ -1989,7 +2069,7 @@ Vector_Data_2D::evaluate_nocheck (const Integer vector_element,
                const Real& a = get_datum (vector_element, 0, j);
                const Real& b = get_datum (vector_element, 1, j);
                const Real& c = get_datum (vector_element, 2, j);
-               return Differentiation::diff_0 (a, b, c, h);
+               return Differentiation::d_0 (a, b, c, h);
             }
             else
             if (i == n - 1)
@@ -1997,7 +2077,7 @@ Vector_Data_2D::evaluate_nocheck (const Integer vector_element,
                const Real& a = get_datum (vector_element, n - 3, j);
                const Real& b = get_datum (vector_element, n - 2, j);
                const Real& c = get_datum (vector_element, n - 1, j);
-               return Differentiation::diff_2 (a, b, c, h);
+               return Differentiation::d_2 (a, b, c, h);
             }
          }
          else
@@ -2008,7 +2088,7 @@ Vector_Data_2D::evaluate_nocheck (const Integer vector_element,
 
          const Real a = get_datum (vector_element, ai, j);
          const Real b = get_datum (vector_element, bi, j);
-         return Differentiation::diff_1 (a, b, h);
+         return Differentiation::d_1 (a, b, h);
 
       }
 
@@ -2030,7 +2110,7 @@ Vector_Data_2D::evaluate_nocheck (const Integer vector_element,
                const Real& a = get_datum (vector_element, i, 0);
                const Real& b = get_datum (vector_element, i, 1);
                const Real& c = get_datum (vector_element, i, 2);
-               return Differentiation::diff_0 (a, b, c, k);
+               return Differentiation::d_0 (a, b, c, k);
             }
             else
             if (j == n - 1)
@@ -2038,7 +2118,7 @@ Vector_Data_2D::evaluate_nocheck (const Integer vector_element,
                const Real& a = get_datum (vector_element, i, n - 3);
                const Real& b = get_datum (vector_element, i, n - 2);
                const Real& c = get_datum (vector_element, i, n - 1);
-               return Differentiation::diff_2 (a, b, c, k);
+               return Differentiation::d_2 (a, b, c, k);
             }
          }
          else
@@ -2049,7 +2129,7 @@ Vector_Data_2D::evaluate_nocheck (const Integer vector_element,
 
          const Real a = get_datum (vector_element, i, aj);
          const Real b = get_datum (vector_element, i, bj);
-         return Differentiation::diff_1 (a, b, k);
+         return Differentiation::d_1 (a, b, k);
 
       }
 
@@ -2072,7 +2152,7 @@ Vector_Data_2D::evaluate_nocheck (const Integer vector_element,
                const Real& a = get_datum (vector_element, 0, j);
                const Real& b = get_datum (vector_element, 1, j);
                const Real& c = get_datum (vector_element, 2, j);
-               return Differentiation::diff_2nd (a, b, c, h);
+               return Differentiation::d2 (a, b, c, h);
             }
             else
             if (i == n - 1)
@@ -2080,7 +2160,7 @@ Vector_Data_2D::evaluate_nocheck (const Integer vector_element,
                const Real& a = get_datum (vector_element, n - 3, j);
                const Real& b = get_datum (vector_element, n - 2, j);
                const Real& c = get_datum (vector_element, n - 1, j);
-               return Differentiation::diff_2nd (a, b, c, h);
+               return Differentiation::d2 (a, b, c, h);
             }
          }
          else
@@ -2093,7 +2173,7 @@ Vector_Data_2D::evaluate_nocheck (const Integer vector_element,
          const Real a = get_datum (vector_element, ai, j);
          const Real b = get_datum (vector_element, bi, j);
          const Real c = get_datum (vector_element, ci, j);
-         return Differentiation::diff_2nd (a, b, c, h);
+         return Differentiation::d2 (a, b, c, h);
 
       }
 
@@ -2116,7 +2196,7 @@ Vector_Data_2D::evaluate_nocheck (const Integer vector_element,
                const Real& a = get_datum (vector_element, i, 0);
                const Real& b = get_datum (vector_element, i, 1);
                const Real& c = get_datum (vector_element, i, 2);
-               return Differentiation::diff_2nd (a, b, c, k);
+               return Differentiation::d2 (a, b, c, k);
             }
             else
             if (j == n - 1)
@@ -2124,7 +2204,7 @@ Vector_Data_2D::evaluate_nocheck (const Integer vector_element,
                const Real& a = get_datum (vector_element, i, n - 3);
                const Real& b = get_datum (vector_element, i, n - 2);
                const Real& c = get_datum (vector_element, i, n - 1);
-               return Differentiation::diff_2nd (a, b, c, k);
+               return Differentiation::d2 (a, b, c, k);
             }
          }
          else
@@ -2137,7 +2217,7 @@ Vector_Data_2D::evaluate_nocheck (const Integer vector_element,
          const Real a = get_datum (vector_element, i, aj);
          const Real b = get_datum (vector_element, i, bj);
          const Real c = get_datum (vector_element, i, cj);
-         return Differentiation::diff_2nd (a, b, c, k);
+         return Differentiation::d2 (a, b, c, k);
 
       }
 
