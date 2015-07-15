@@ -92,6 +92,8 @@ namespace denise
       LATENT_HEATING,
       DENSITY = 56, RHO = 56,
       PRECIP_RATE,
+      BRUNT_VAISALA,
+      SCORER_PARAMETER,
       P_THETA,
       P_RHO,
       VARIANCE_TEMPERATURE,
