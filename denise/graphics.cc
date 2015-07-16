@@ -1998,6 +1998,35 @@ Raster::blit (const RefPtr<Context>& cr,
 
 void
 Title::cairo (const RefPtr<Context>& cr,
+              const string& str) const
+{
+
+   const Real width = Real (i);
+   const Real title_height = get_height ();
+   const Real font_size = title_height / 2;
+   const Real y = title_height * 0.875;
+   const Point_2D origin (0, 0);
+   const Point_2D shadow_offset (2, -2);
+   
+   cr->save ();
+   cr->set_font_size (font_size);
+   
+   Label label (str, Point_2D (width / 2, y), 'c', 'b');
+   
+   shadow_color.cairo (cr);
+   label.set_offset (shadow_offset);
+   label.cairo (cr);
+   
+   fg_color.cairo (cr);
+   label.set_offset (origin);
+   label.cairo (cr); 
+
+   cr->restore ();
+
+}
+
+void
+Title::cairo (const RefPtr<Context>& cr,
               const string& string_l,
               const string& string_c,
               const string& string_r) const
@@ -2121,6 +2150,24 @@ Title::get_height () const
 }
 
 void
+Title::set (const Tokens& tokens)
+{
+   clear ();
+   for (auto iterator = tokens.begin ();
+        iterator != tokens.end (); iterator++)
+   {
+      push_back (*(iterator));
+   }
+}
+
+void
+Title::set (const string& str)
+{
+   clear ();
+   push_back (str);
+}
+
+void
 Title::set (const string& string_l,
             const string& string_c,
             const string& string_r)
@@ -2163,15 +2210,29 @@ Title::cairo (const RefPtr<Context>& cr)
    cr->stroke ();
 
    const Tokens& tokens = *(this);
+   const Integer n = size ();
 
-   if (size () == 3)
+   switch (n)
    {
-      cairo (cr, tokens[0], tokens[1], tokens[2]);
-   }
-   else
-   if (size () == 5)
-   {
-      cairo (cr, tokens[0], tokens[1], tokens[2], tokens[3], tokens[4]);
+
+      case 1:
+      {
+         cairo (cr, tokens[0]);
+         break;
+      }
+
+      case 3:
+      {
+         cairo (cr, tokens[0], tokens[1], tokens[2]);
+         break;
+      }
+
+      case 5:
+      {
+         cairo (cr, tokens[0], tokens[1], tokens[2], tokens[3], tokens[4]);
+         break;
+      }
+
    }
 
    cr->restore ();

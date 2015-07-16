@@ -1238,6 +1238,10 @@ namespace denise
 
          virtual void
          cairo (const RefPtr<Context>& cr,
+                const string& str) const;
+
+         virtual void
+         cairo (const RefPtr<Context>& cr,
                 const string& string_l,
                 const string& string_c,
                 const string& string_r) const;
@@ -1262,6 +1266,12 @@ namespace denise
 
          Real
          get_height () const;
+
+         void
+         set (const Tokens& tokens);
+
+         void
+         set (const string& str);
 
          void
          set (const string& string_l,
