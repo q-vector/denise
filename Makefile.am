@@ -1,4 +1,4 @@
-SUBDIRS = denise
+SUBDIRS = denise src
 
 EXTRA_DIST = denise.pc.in
 

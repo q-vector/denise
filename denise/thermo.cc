@@ -1719,6 +1719,22 @@ Thermo_Line::Thermo_Line (const International_Standard_Atmosphere& isa,
 
 }
 
+set<Real>
+Thermo_Line::get_p_set () const
+{
+
+   set<Real> p_set;
+
+   for (auto iterator = begin (); iterator != end (); iterator++)
+   {
+      const Real p = iterator->first;
+      p_set.insert (p);
+   }
+
+   return p_set;
+
+}
+
 void
 Thermo_Line::add (const Real p,
                   const Real value)
@@ -2615,6 +2631,22 @@ Wind_Profile::Wind_Profile ()
 {
 }
 
+set<Real>
+Wind_Profile::get_p_set () const
+{
+
+   set<Real> p_set;
+
+   for (auto iterator = begin (); iterator != end (); iterator++)
+   {
+      const Real p = iterator->first;
+      p_set.insert (p);
+   }
+
+   return p_set;
+
+}
+
 void
 Wind_Profile::add (const Real p,
                    const Wind& wind)
@@ -2758,6 +2790,22 @@ Height_Profile::Height_Profile ()
 {
 }
 
+set<Real>
+Height_Profile::get_p_set () const
+{
+
+   set<Real> p_set;
+
+   for (auto iterator = begin (); iterator != end (); iterator++)
+   {
+      const Real p = iterator->first;
+      p_set.insert (p);
+   }
+
+   return p_set;
+
+}
+
 void
 Height_Profile::add (const Real p,
                      const Real height)
@@ -2848,12 +2896,6 @@ Height_Profile::get_pressure (const Real height) const
 
 }
 
-Integer
-Sounding::get_wmo_id () const
-{
-   return wmo_id;
-}
-
 void
 Sounding::render_thermo_line_nodes (const RefPtr<Context>& cr,
                                     const Thermo_Diagram& thermo_diagram,
@@ -2906,6 +2948,167 @@ Sounding::Sounding (const Sounding& sounding)
      steering_layer (steering_layer),
      helicity_layer (helicity_layer)
 {
+}
+
+Sounding*
+Sounding::get_mean_sounding_ptr (const list<const Sounding*>& sounding_ptr_list,
+                                 const Thermo_Diagram& thermo_diagram)
+{
+
+   set<Real> grand_p_set;
+
+   for (auto iterator = sounding_ptr_list.begin ();
+        iterator != sounding_ptr_list.end (); iterator++)
+   {
+
+      const Sounding& sounding = **(iterator);
+      const set<Real>& p_set = sounding.get_p_set ();
+
+      for (auto j = p_set.begin (); j != p_set.end (); j++)
+      {
+         const Real p = *(j);
+         grand_p_set.insert (p);
+      }
+
+   }
+
+   Sounding* mean_sounding_ptr = new Sounding ();
+   Sounding& mean_sounding = *mean_sounding_ptr;
+
+   for (auto i = grand_p_set.begin (); i != grand_p_set.end (); i++)
+   {
+
+      const Real p = *(i);
+
+      Integer t_n = 0;
+      Integer t_d_n = 0;
+      Integer wind_n = 0;
+      Integer height_n = 0;
+      Real t_sigma = 0;
+      Real t_d_sigma = 0;
+      Real u_sigma = 0;
+      Real v_sigma = 0;
+      Real height_sigma = 0;
+
+      for (auto j = sounding_ptr_list.begin ();
+           j != sounding_ptr_list.end (); j++)
+      {
+
+         const Sounding& sounding = **(j);
+
+         try
+         {
+            const Real t = sounding.get_temperature (thermo_diagram, p);
+            t_sigma += t;
+            t_n++;
+         }
+         catch (const Thermo_Exception& te) {}
+
+         try
+         {
+            const Real t_d = sounding.get_dew_point (thermo_diagram, p);
+            t_d_sigma += t_d;
+            t_d_n++;
+         }
+         catch (const Thermo_Exception& te) {}
+
+         try
+         {
+            const Wind& wind = sounding.get_wind (p);
+            u_sigma += wind.u;
+            v_sigma += wind.v;
+            wind_n++;
+         }
+         catch (const Thermo_Exception& te) {}
+
+         try
+         {
+            const Real height = sounding.get_height (p);
+            height_sigma += height;
+            height_n++;
+         }
+         catch (const Thermo_Exception& te) {}
+
+      }
+
+      const Real t = t_sigma / t_n;
+      if (gsl_finite (t))
+      {
+         mean_sounding.get_t_line ().add (p, t);
+      }
+
+      const Real t_d = t_d_sigma / t_d_n;
+      if (gsl_finite (t_d))
+      {
+         mean_sounding.get_t_d_line ().add (p, t_d);
+      }
+
+      const Real u = u_sigma / wind_n;
+      const Real v = v_sigma / wind_n;
+      if (gsl_finite (u) && gsl_finite (v))
+      {
+         mean_sounding.get_wind_profile ().add (p, Wind (u, v));
+      }
+
+      const Real height = height_sigma / height_n;
+      if (gsl_finite (height))
+      {
+         mean_sounding.get_height_profile ().add (p, height);
+      }
+
+   }
+
+   return mean_sounding_ptr;
+
+}
+
+set<Real>
+Sounding::get_p_set () const
+{
+
+   set<Real> p_set;
+
+   const set<Real>& t_p_set = t_line.get_p_set ();
+   const set<Real>& t_d_p_set = t_d_line.get_p_set ();
+   const set<Real>& wind_p_set = wind_profile.get_p_set ();
+   const set<Real>& height_p_set = height_profile.get_p_set ();
+
+   for (auto iterator = t_p_set.begin ();
+        iterator != t_p_set.end (); iterator++)
+   {
+      const Real p = *(iterator);
+      p_set.insert (p);
+   }
+
+   for (auto iterator = t_d_p_set.begin ();
+        iterator != t_d_p_set.end (); iterator++)
+   {
+      const Real p = *(iterator);
+      p_set.insert (p);
+   }
+
+   for (auto iterator = wind_p_set.begin ();
+        iterator != wind_p_set.end (); iterator++)
+   {
+      const Real p = *(iterator);
+      p_set.insert (p);
+   }
+
+   for (auto iterator = height_p_set.begin ();
+        iterator != height_p_set.end (); iterator++)
+   {
+      const Real p = *(iterator);
+      p_set.insert (p);
+   }
+
+   return p_set;
+
+}
+
+Integer
+Sounding::get_wmo_id () const
+{
+   return wmo_id;
 }
 
 const Dtime&

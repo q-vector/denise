@@ -995,25 +995,30 @@ namespace denise
          Real
          line_width;
 
-         Simple_Mesh_2D (const Color& color,
-                         const Tuple& tuple_x,
-                         const Tuple& tuple_y);
+         Simple_Mesh_2D (const Tuple& tuple_x,
+                         const Tuple& tuple_y,
+                         const Color& color);
 
-         Simple_Mesh_2D (const Color& color,
-                         const Tuple& tuple_x,
+         Simple_Mesh_2D (const Tuple& tuple_x,
                          const Real interval_y,
+                         const Color& color,
                          const Real multiplier_y = 1,
                          const Real offset_y = 0);
 
-         Simple_Mesh_2D (const Color& color,
-                         const Real interval_x,
+         Simple_Mesh_2D (const Real interval_x,
                          const Tuple& tuple_y,
+                         const Color& color,
                          const Real multiplier_x = 1,
                          const Real offset_x = 0);
 
-         Simple_Mesh_2D (const Color& color,
-                         const Real interval_x,
+         Simple_Mesh_2D (const Real interval,
+                         const Color& color,
+                         const Real multiplier = 1,
+                         const Real offset = 0);
+
+         Simple_Mesh_2D (const Real interval_x,
                          const Real interval_y,
+                         const Color& color,
                          const Real multiplier_x = 1,
                          const Real offset_x = 0,
                          const Real multiplier_y = 1,
@@ -1077,45 +1082,77 @@ namespace denise
 
          Mesh_2D (const Size_2D& size_2d,
                   const Domain_2D& domain_2d,
-                  const Color& color,
                   const Real interval_x,
-                  const Real interval_y);
+                  const Real interval_y,
+                  const Color& color);
 
          Mesh_2D (const Size_2D& size_2d,
                   const Domain_2D& domain_2d,
-                  const Color& color_0,
-                  const Real interval_x_0,
-                  const Real interval_y_0,
-                  const Color& color_1,
-                  const Real interval_x_1,
-                  const Real interval_y_1);
+                  const Real interval,
+                  const Color& color);
 
          Mesh_2D (const Size_2D& size_2d,
                   const Domain_2D& domain_2d,
-                  const Color& color_0,
                   const Real interval_x_0,
                   const Real interval_y_0,
-                  const Color& color_1,
+                  const Color& color_0,
                   const Real interval_x_1,
                   const Real interval_y_1,
-                  const Color& color_2,
-                  const Real interval_x_2,
-                  const Real interval_y_2);
+                  const Color& color_1);
 
          Mesh_2D (const Size_2D& size_2d,
                   const Domain_2D& domain_2d,
+                  const Real interval_0,
                   const Color& color_0,
+                  const Real interval_1,
+                  const Color& color_1);
+
+         Mesh_2D (const Size_2D& size_2d,
+                  const Domain_2D& domain_2d,
                   const Real interval_x_0,
                   const Real interval_y_0,
-                  const Color& color_1,
+                  const Color& color_0,
                   const Real interval_x_1,
                   const Real interval_y_1,
-                  const Color& color_2,
+                  const Color& color_1,
                   const Real interval_x_2,
                   const Real interval_y_2,
-                  const Color& color_3,
+                  const Color& color_2);
+
+         Mesh_2D (const Size_2D& size_2d,
+                  const Domain_2D& domain_2d,
+                  const Real interval_0,
+                  const Color& color_0,
+                  const Real interval_1,
+                  const Color& color_1,
+                  const Real interval_2,
+                  const Color& color_2);
+
+         Mesh_2D (const Size_2D& size_2d,
+                  const Domain_2D& domain_2d,
+                  const Real interval_x_0,
+                  const Real interval_y_0,
+                  const Color& color_0,
+                  const Real interval_x_1,
+                  const Real interval_y_1,
+                  const Color& color_1,
+                  const Real interval_x_2,
+                  const Real interval_y_2,
+                  const Color& color_2,
                   const Real interval_x_3,
-                  const Real interval_y_3);
+                  const Real interval_y_3,
+                  const Color& color_3);
+
+         Mesh_2D (const Size_2D& size_2d,
+                  const Domain_2D& domain_2d,
+                  const Real interval_0,
+                  const Color& color_0,
+                  const Real interval_1,
+                  const Color& color_1,
+                  const Real interval_2,
+                  const Color& color_2,
+                  const Real interval_3,
+                  const Color& color_3);
 
          void
          set_size_2d (const Size_2D& size_2d);
@@ -1238,6 +1275,10 @@ namespace denise
 
          virtual void
          cairo (const RefPtr<Context>& cr,
+                const string& str) const;
+
+         virtual void
+         cairo (const RefPtr<Context>& cr,
                 const string& string_l,
                 const string& string_c,
                 const string& string_r) const;
@@ -1262,6 +1303,12 @@ namespace denise
 
          Real
          get_height () const;
+
+         void
+         set (const Tokens& tokens);
+
+         void
+         set (const string& str);
 
          void
          set (const string& string_l,

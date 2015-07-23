@@ -73,6 +73,11 @@ fi
 dnl Checks for header files.
 AC_CHECK_HEADERS(ieeefp.h)
 AC_CHECK_HEADERS(cstdint)
+AC_CHECK_HEADERS(readline/readline.h)
+AC_CHECK_LIB(ncurses, main, [DENISE_LIBS="-lncurses $DENISE_LIBS"],
+   AC_MSG_ERROR(ncurses not found), )
+AC_CHECK_LIB(readline, readline, [DENISE_LIBS="-lreadline $DENISE_LIBS"],
+   AC_MSG_ERROR(readline not found), -lncurses)
 
 dnl Checks for typedefs, structures, and compiler characteristics.
 
@@ -87,5 +92,5 @@ AC_SUBST(DENISE_REQUIRES)
 AC_SUBST(DENISE_CFLAGS)
 AC_SUBST(DENISE_LIBS)
 
-AC_CONFIG_FILES([denise.pc Makefile denise/Makefile])
+AC_CONFIG_FILES([denise.pc Makefile denise/Makefile src/Makefile])
 AC_OUTPUT

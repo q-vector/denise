@@ -1,7 +1,7 @@
 //
 // analysis.h
 // 
-// Copyright (C) 2005-2013 Simon E. Ching
+// Copyright (C) 2005-2015 Simon E. Ching
 // 
 // This file is part of libdenise.
 //
@@ -17,6 +17,11 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with libdenise.  If not, see <http://www.gnu.org/licenses/>.
+//
+// Differentiation code partially adapted from
+//    Singh and Bhadauria, 2009: Finite Difference Formulae for Unequal
+//       Sub-Intervals Using Lagrange's Interpolation Formula.  Int.
+//       Hournal of Math. Analysis, Vol 3, 2009, 17, 815-827.
 
 #ifndef DENISE_ANALYSIS_H
 #define DENISE_ANALYSIS_H
@@ -56,32 +61,64 @@ namespace denise
       public:
 
          static Real
-         diff (const Real y_0,
-               const Real y_1,
-               const Real h);
+         d (const Real y_0,
+            const Real y_1,
+            const Real h);
 
          static Real
-         diff_0 (const Real y_0,
-                 const Real y_1,
-                 const Real y_2,
-                 const Real h);
+         d_0 (const Real y_0,
+              const Real y_1,
+              const Real y_2,
+              const Real h);
 
          static Real
-         diff_1 (const Real y_0,
-                 const Real y_2,
-                 const Real h);
+         d_1 (const Real y_0,
+              const Real y_2,
+              const Real h);
 
          static Real
-         diff_2 (const Real y_0,
-                 const Real y_1,
-                 const Real y_2,
-                 const Real h);
+         d_2 (const Real y_0,
+              const Real y_1,
+              const Real y_2,
+              const Real h);
 
          static Real
-         diff_2nd (const Real y_0,
-                   const Real y_1,
-                   const Real y_2,
-                   const Real h);
+         d_0 (const Real y_0,
+              const Real y_1,
+              const Real y_2,
+              const Real x_0,
+              const Real x_1,
+              const Real x_2);
+
+         static Real
+         d_1 (const Real y_0,
+              const Real y_1,
+              const Real y_2,
+              const Real x_0,
+              const Real x_1,
+              const Real x_2);
+
+         static Real
+         d_2 (const Real y_0,
+              const Real y_1,
+              const Real y_2,
+              const Real x_0,
+              const Real x_1,
+              const Real x_2);
+
+         static Real
+         d2 (const Real y_0,
+             const Real y_1,
+             const Real y_2,
+             const Real h);
+
+         static Real
+         d2 (const Real y_0,
+             const Real y_1,
+             const Real y_2,
+             const Real x_0,
+             const Real x_1,
+             const Real x_2);
 
    };
 

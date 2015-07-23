@@ -16,6 +16,7 @@ configure
 denise.pc
 denise/Makefile
 denise/Makefile.in
+src/denise
 depcomp
 install-sh
 libtool

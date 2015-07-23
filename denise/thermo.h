@@ -1026,6 +1026,9 @@ namespace denise
          Thermo_Line (const International_Standard_Atmosphere& isa,
                       const Real delta_p = 10e2);
 
+         set<Real>
+         get_p_set () const;
+
          void
          add (const Real p,
               const Real value);
@@ -1204,6 +1207,9 @@ namespace denise
 
          Wind_Profile ();
 
+         set<Real>
+         get_p_set () const;
+
          void
          add (const Real p,
               const Wind& wind);
@@ -1238,6 +1244,9 @@ namespace denise
       public:
 
          Height_Profile ();
+
+         set<Real>
+         get_p_set () const;
 
          void
          add (const Real pressure,
@@ -1308,6 +1317,13 @@ namespace denise
          Sounding (const Integer wmo_id);
 
          Sounding (const Sounding& sounding);
+
+         static Sounding*
+         get_mean_sounding_ptr (const list<const Sounding*>& sounding_ptr_list,
+                                const Thermo_Diagram& thermo_diagram);
+
+         set<Real>
+         get_p_set () const;
 
          Integer
          get_wmo_id () const;

@@ -37,8 +37,11 @@ using namespace Cairo;
 namespace denise
 {
 
+   class Lat_Long;
    class Geodesy;
    class Journey;
+   class Multi_Journey;
+   class Geodetic_Mesh;
    class Geodetic_Transform;
 
    /// The FAI sphere radius
@@ -87,134 +90,6 @@ namespace denise
       WGS84,
       SPHERE
    };
-
-   /// Represents a point on the Geodesy.
-   ///
-   /// Lat_Long consists of 2 Real's in (latitude, longitude)
-   class Lat_Long
-   {
-
-      public:
-
-         Real
-         latitude;
-
-         Real
-         longitude;
-
-         Lat_Long (const Real latitude = 0.0,
-                   const Real longitude = 0.0);
-
-         Lat_Long (const string& lat_long_string);
-         
-         Lat_Long (const string& latitude_string,
-                   const string& longitude_string);
-         
-         Lat_Long (const Point_2D& point);
-
-         static void
-         standardize (Real& latitude,
-                      Real& longitude,
-                      const Lat_Long_Genre lat_long_genre = LAT_LONG_STANDARD);
-
-         static void
-         standardize (Real& latitude,
-                      Real& longitude,
-                      const Real standard_longitude);
-
-         void
-         standardize (const Lat_Long_Genre lat_long_genre = LAT_LONG_STANDARD);
-
-         void
-         standardize (const Real standard_longitude);
-
-         string
-         get_string (const Integer decimal_places,
-                     const bool plain = false) const;
-
-         string
-         get_string (const bool plain = false,
-                     const string& number_format = "%.1f\u00b0") const;
-
-         bool
-         operator == (const Lat_Long& lat_long) const;
-         
-         bool
-         operator != (const Lat_Long& lat_long) const;
-         
-         Lat_Long 
-         operator = (const Lat_Long& lat_long);
-         
-         Lat_Long 
-         operator + (const Lat_Long& lat_long) const;
-         
-         void
-         operator += (const Lat_Long& lat_long);
-         
-         Lat_Long 
-         operator - ();
-         
-         Lat_Long 
-         operator - (const Lat_Long& lat_long) const;
-         
-         void
-         operator -= (const Lat_Long& lat_long);
-         
-         Lat_Long 
-         operator * (const Real scalar) const;
-
-         void
-         operator *= (const Real scalar);
-
-         Lat_Long
-         operator / (const Real scalar) const;
-
-         void
-         operator /= (const Real scalar);
-
-         operator Point_2D () const;
-
-         bool
-         is_nall () const;
-
-   };
-
-/*
-   class Location : public Lat_Long
-   {
-
-      protected:
-
-         string
-         identifier;
-
-      public:
-
-         Location (const string& identifier,
-                   const Lat_Long& lat_long);
-
-         Location (const Lat_Long& lat_long);
-
-         Location (const Location& location);
-
-         void
-         set_identifier (const string& identifier);
-
-         const string&
-         get_identifier () const;
-
-   };
-
-   class Location_Set : public set<Location>
-   {
-
-      public:
-
-         Location_Set::const_iterator
-         nearest (const Lat_Long& lat_long) const;
-
-   };
-*/
 
    /// Represents the Geodesy.
    ///
@@ -315,6 +190,155 @@ namespace denise
 
    };
 
+   /// Represents a point on the Geodesy.
+   ///
+   /// Lat_Long consists of 2 Real's in (latitude, longitude)
+   class Lat_Long
+   {
+
+      public:
+
+         Real
+         latitude;
+
+         Real
+         longitude;
+
+         class List : public list<Lat_Long>
+         {
+
+            public:
+
+               void
+               add (const Journey& journey,
+                    const Geodesy& geodesy = Geodesy (),
+                    const Real d_distance = 10e3,
+                    const Integer max_n = 1000);
+
+               void
+               add (const Multi_Journey& multi_journey,
+                    const Geodesy& geodesy = Geodesy (),
+                    const Real d_distance = 10e3,
+                    const Integer max_n = 1000);
+
+         };
+
+         Lat_Long (const Real latitude = 0.0,
+                   const Real longitude = 0.0);
+
+         Lat_Long (const string& lat_long_string);
+         
+         Lat_Long (const string& latitude_string,
+                   const string& longitude_string);
+         
+         Lat_Long (const Point_2D& point);
+
+         static void
+         standardize (Real& latitude,
+                      Real& longitude,
+                      const Lat_Long_Genre lat_long_genre = LAT_LONG_STANDARD);
+
+         static void
+         standardize (Real& latitude,
+                      Real& longitude,
+                      const Real standard_longitude);
+
+         void
+         standardize (const Lat_Long_Genre lat_long_genre = LAT_LONG_STANDARD);
+
+         void
+         standardize (const Real standard_longitude);
+
+         string
+         get_string (const Integer decimal_places,
+                     const bool nsew = false,
+                     const bool with_symbol = false,
+                     const bool with_parenthesis = false) const;
+
+         string
+         get_string (const bool with_parenthesis = false,
+                     const string& number_format = "-%f") const;
+
+         bool
+         operator == (const Lat_Long& lat_long) const;
+         
+         bool
+         operator != (const Lat_Long& lat_long) const;
+         
+         Lat_Long 
+         operator = (const Lat_Long& lat_long);
+         
+         Lat_Long 
+         operator + (const Lat_Long& lat_long) const;
+         
+         void
+         operator += (const Lat_Long& lat_long);
+         
+         Lat_Long 
+         operator - ();
+         
+         Lat_Long 
+         operator - (const Lat_Long& lat_long) const;
+         
+         void
+         operator -= (const Lat_Long& lat_long);
+         
+         Lat_Long 
+         operator * (const Real scalar) const;
+
+         void
+         operator *= (const Real scalar);
+
+         Lat_Long
+         operator / (const Real scalar) const;
+
+         void
+         operator /= (const Real scalar);
+
+         operator Point_2D () const;
+
+         bool
+         is_nall () const;
+
+   };
+
+/*
+   class Location : public Lat_Long
+   {
+
+      protected:
+
+         string
+         identifier;
+
+      public:
+
+         Location (const string& identifier,
+                   const Lat_Long& lat_long);
+
+         Location (const Lat_Long& lat_long);
+
+         Location (const Location& location);
+
+         void
+         set_identifier (const string& identifier);
+
+         const string&
+         get_identifier () const;
+
+   };
+
+   class Location_Set : public set<Location>
+   {
+
+      public:
+
+         Location_Set::const_iterator
+         nearest (const Lat_Long& lat_long) const;
+
+   };
+*/
+
    /// Represents a Journey on the Geodesy.
    ///
    /// Journey consists of the Lat_Long's of the origin and destination;
@@ -335,6 +359,8 @@ namespace denise
          azimuth_backward;
 
       public:
+
+         Journey ();
 
          Journey (const Lat_Long& origin,
                   const Lat_Long& destination);
@@ -433,12 +459,19 @@ namespace denise
          Multi_Journey (const Simple_Polyline& simple_polyline);
 
          Multi_Journey (const Journey& journey,
-                        const Geodesy& geodesy,
+                        const Geodesy& geodesy = Geodesy ());
+
+         Multi_Journey (const Multi_Journey& multi_journey);
+
+         Multi_Journey (const string& str);
+
+         Multi_Journey (const Journey& journey,
+                        const Geodesy& geodesy = Geodesy (),
                         const Real d_distance = 100e3,
                         const Integer max_n = 50);
 
          Multi_Journey (const Multi_Journey& multi_journey,
-                        const Geodesy& geodesy,
+                        const Geodesy& geodesy = Geodesy (),
                         const Real d_distance = 100e3,
                         const Integer max_n = 50);
 
@@ -471,6 +504,11 @@ namespace denise
          Lat_Long
          get_lat_long (const Real x,
                        const Geodesy& geodesy) const;
+
+         Lat_Long::List
+         get_lat_long_list (const Geodesy& geodesy,
+                            const Real d_distance = 100e3,
+                            const Integer max_n = 50) const;
 
          Real
          get_azimuth_forward (const Real x,
@@ -720,6 +758,12 @@ namespace denise
 
          void
          standardize (Lat_Long& lat_long) const;
+
+         Domain_2D
+         get_domain_2d (const Size_2D& size_2d) const;
+
+         Geodetic_Mesh
+         get_mesh (const Size_2D& size_2d) const;
 
    };
 
@@ -1426,45 +1470,77 @@ namespace denise
 
       public:
 
-         Geodetic_Mesh (const Color& color,
-                        const Real interval_x,
+         Geodetic_Mesh (const Real interval_x,
                         const Real interval_y,
+                        const Color& color,
                         const Size_2D& s = Size_2D (100, 100),
                         const Domain_2D& d = Domain_2D (-89, 89, -180, 179.9));
 
-         Geodetic_Mesh (const Color& color_0,
-                        const Real interval_x_0,
-                        const Real interval_y_0,
-                        const Color& color_1,
-                        const Real interval_x_1,
-                        const Real interval_y_1,
+         Geodetic_Mesh (const Real interval,
+                        const Color& color,
                         const Size_2D& s = Size_2D (100, 100),
                         const Domain_2D& d = Domain_2D (-89, 89, -180, 179.9));
 
-         Geodetic_Mesh (const Color& color_0,
-                        const Real interval_x_0,
+         Geodetic_Mesh (const Real interval_x_0,
                         const Real interval_y_0,
-                        const Color& color_1,
+                        const Color& color_0,
                         const Real interval_x_1,
                         const Real interval_y_1,
-                        const Color& color_2,
+                        const Color& color_1,
+                        const Size_2D& s = Size_2D (100, 100),
+                        const Domain_2D& d = Domain_2D (-89, 89, -180, 179.9));
+
+         Geodetic_Mesh (const Real interval_0,
+                        const Color& color_0,
+                        const Real interval_1,
+                        const Color& color_1,
+                        const Size_2D& s = Size_2D (100, 100),
+                        const Domain_2D& d = Domain_2D (-89, 89, -180, 179.9));
+
+         Geodetic_Mesh (const Real interval_x_0,
+                        const Real interval_y_0,
+                        const Color& color_0,
+                        const Real interval_x_1,
+                        const Real interval_y_1,
+                        const Color& color_1,
                         const Real interval_x_2,
                         const Real interval_y_2,
+                        const Color& color_2,
                         const Size_2D& s = Size_2D (100, 100),
                         const Domain_2D& d = Domain_2D (-89, 89, -180, 179.9));
 
-         Geodetic_Mesh (const Color& color_0,
-                        const Real interval_x_0,
-                        const Real interval_y_0,
+         Geodetic_Mesh (const Real interval_0,
+                        const Color& color_0,
+                        const Real interval_1,
                         const Color& color_1,
+                        const Real interval_2,
+                        const Color& color_2,
+                        const Size_2D& s = Size_2D (100, 100),
+                        const Domain_2D& d = Domain_2D (-89, 89, -180, 179.9));
+
+         Geodetic_Mesh (const Real interval_x_0,
+                        const Real interval_y_0,
+                        const Color& color_0,
                         const Real interval_x_1,
                         const Real interval_y_1,
-                        const Color& color_2,
+                        const Color& color_1,
                         const Real interval_x_2,
                         const Real interval_y_2,
-                        const Color& color_3,
+                        const Color& color_2,
                         const Real interval_x_3,
                         const Real interval_y_3,
+                        const Color& color_3,
+                        const Size_2D& s = Size_2D (100, 100),
+                        const Domain_2D& d = Domain_2D (-89, 89, -180, 179.9));
+
+         Geodetic_Mesh (const Real interval_0,
+                        const Color& color_0,
+                        const Real interval_1,
+                        const Color& color_1,
+                        const Real interval_2,
+                        const Color& color_2,
+                        const Real interval_3,
+                        const Color& color_3,
                         const Size_2D& s = Size_2D (100, 100),
                         const Domain_2D& d = Domain_2D (-89, 89, -180, 179.9));
 
@@ -1473,6 +1549,10 @@ namespace denise
                 const Geodetic_Transform& transform) const;
 
    };
+
+   ostream&
+   operator << (ostream &out_file,
+                const Lat_Long& lat_long);
 
 }
 
