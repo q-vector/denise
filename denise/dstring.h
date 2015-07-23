@@ -98,6 +98,10 @@ namespace denise
          Tokens (const string& str,
                  const string& delimiters = string (" \f\n\t"));
 
+         Tokens
+         subtokens (const Integer i,
+                    const Integer n = -1) const;
+
          Real
          real (const Integer index) const;
 

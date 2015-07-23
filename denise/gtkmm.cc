@@ -8018,10 +8018,10 @@ Map_Console::render_mesh (const RefPtr<Context>& cr)
    const Geodetic_Transform& transform = get_geodetic_transform ();
 
    //const Simple_Mesh_2D sm0_2 (Color::black(0.05), 0.2, 0.2);
-   const Geodetic_Mesh mesh_small (Color::black (0.10), 1.0, 1.0,
-      Color::black (0.40), 10., 10., size_2d, domain_2d);
-   const Geodetic_Mesh mesh_large (Color::black (0.10), 5.0, 5.0,
-      Color::black (0.40), 30., 30., size_2d, domain_2d);
+   const Geodetic_Mesh mesh_small (1.0, 1.0, Color::black (0.10),
+      10., 10., Color::black (0.40), size_2d, domain_2d);
+   const Geodetic_Mesh mesh_large (5.0, 5.0, Color::black (0.10),
+      30., 30., Color::black (0.40), size_2d, domain_2d);
 
    const Real latitude_span = domain_2d.domain_x.get_span ();
    const Real longitude_span = domain_2d.domain_y.get_span ();
@@ -8039,7 +8039,7 @@ Map_Console::get_domain_2d () const
 {
    const Geodetic_Transform& transform = get_geodetic_transform ();
    const Size_2D& size_2d = get_size_2d ();
-   return transform.get_doomain_2d (size_2d);
+   return transform.get_domain_2d (size_2d);
 }
 
 void

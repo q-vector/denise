@@ -607,15 +607,19 @@ Lat_Long::standardize (const Real standard_longitude)
 
 string
 Lat_Long::get_string (const Integer decimal_places,
-                      const bool plain) const
+                      const bool nsew,
+                      const bool with_symbol,
+                      const bool with_parenthesis) const
 {
-   const char* fmt = plain ? "%%.%df" : "%%.%df\u00b0";
-   const string& number_format = string_render (fmt, decimal_places);
-   return get_string (plain, number_format);
+   const Integer dp = decimal_places;
+   const string prefix (nsew ? "" : "-");
+   const string suffix (with_symbol ? "\u00b0" : "");
+   const string& number_format = prefix + string_render ("%%.%df", dp) + suffix;
+   return get_string (with_parenthesis, number_format);
 }
 
 string
-Lat_Long::get_string (const bool plain,
+Lat_Long::get_string (const bool with_parenthesis,
                       const string& number_format) const
 {
 
@@ -625,17 +629,30 @@ Lat_Long::get_string (const bool plain,
    ll.standardize (LAT_LONG_STANDARD);
    const Real latitude = ll.latitude;
    const Real longitude = ll.longitude;
+   const bool nsew = (number_format.substr (0, 1) != "-");
 
-   const string& latitude_string = ((latitude >= 0) ?
-      string_render ((number_format + "N").c_str (), latitude) :
-      string_render ((number_format + "S").c_str (), -latitude));
+   const string& latitude_string = nsew ?
+      ((latitude >= 0) ?
+         string_render ((number_format + "N").c_str (), latitude) :
+         string_render ((number_format + "S").c_str (), -latitude)) :
+      string_render ((number_format.substr (1)).c_str (), latitude);
 
-   const string& longitude_string = ((longitude >= 0) ?
-      string_render ((number_format + "E").c_str (), longitude) :
-      string_render ((number_format + "W").c_str (), -longitude));
+   const string& longitude_string = nsew ?
+      ((longitude >= 0) ?
+         string_render ((number_format + "E").c_str (), longitude) :
+         string_render ((number_format + "W").c_str (), -longitude)) :
+      string_render ((number_format.substr (1)).c_str (), longitude);
 
-   if (plain) { return latitude_string + longitude_string; }
-   else { return "(" + latitude_string + ", " + longitude_string + ")"; }
+   if (with_parenthesis)
+   {
+      return "(" + latitude_string + ", " + longitude_string + ")";
+   }
+   else
+   {
+      return nsew ?
+         latitude_string + longitude_string :
+         latitude_string + "," + longitude_string;
+   }
 
 }
 
@@ -789,6 +806,14 @@ Location_Set::nearest (const Lat_Long& lat_long) const
 
 }
 */
+
+Journey::Journey ()
+   : Edge (Lat_Long (GSL_NAN, GSL_NAN), Lat_Long (GSL_NAN, GSL_NAN)),
+     distance (GSL_NAN),
+     azimuth_forward (GSL_NAN),
+     azimuth_backward (GSL_NAN)
+{
+}
 
 Journey::Journey (const Lat_Long& origin,
                   const Lat_Long& destination)
@@ -3901,3 +3926,15 @@ Geodetic_Mesh::cairo (const RefPtr<Context> cr,
 
 }
 
+namespace denise
+{
+
+   ostream&
+   operator << (ostream &out_file,
+                const Lat_Long& lat_long)
+   {
+      out_file << lat_long.get_string ();
+      return out_file;
+   }
+
+};

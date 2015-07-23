@@ -251,11 +251,13 @@ namespace denise
 
          string
          get_string (const Integer decimal_places,
-                     const bool plain = false) const;
+                     const bool nsew = false,
+                     const bool with_symbol = false,
+                     const bool with_parenthesis = false) const;
 
          string
-         get_string (const bool plain = false,
-                     const string& number_format = "%.1f\u00b0") const;
+         get_string (const bool with_parenthesis = false,
+                     const string& number_format = "-%f") const;
 
          bool
          operator == (const Lat_Long& lat_long) const;
@@ -357,6 +359,8 @@ namespace denise
          azimuth_backward;
 
       public:
+
+         Journey ();
 
          Journey (const Lat_Long& origin,
                   const Lat_Long& destination);
@@ -1545,6 +1549,10 @@ namespace denise
                 const Geodetic_Transform& transform) const;
 
    };
+
+   ostream&
+   operator << (ostream &out_file,
+                const Lat_Long& lat_long);
 
 }
 

@@ -166,6 +166,23 @@ Tokens::Tokens (const string& str,
    add (str, delimiters);
 }
 
+Tokens
+Tokens::subtokens (const Integer i,
+                   const Integer n) const
+{
+
+   Tokens subtokens;
+   const Integer nn = ((n < 0) ? size () - i : n);
+
+   for (Integer index = i; index < i + nn; index++)
+   {
+      subtokens.push_back (at (index));
+   }
+
+   return subtokens;
+
+}
+
 Real
 Tokens::real (const Integer index) const
 {
