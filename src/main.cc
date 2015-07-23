@@ -2,7 +2,7 @@
 #include <iostream>
 #include <readline/readline.h>
 #include <readline/history.h>
-#include "denise.h"
+#include "andrea.h"
 
 using namespace std;
 using namespace denise;
@@ -15,9 +15,9 @@ main (int argc,
    bool done;
    char* line;
 
-   Denise denise;
+   Andrea andrea;
    //char prompt[] = "";
-   char prompt[] = "\ndenise> ";
+   char prompt[] = "\nandrea> ";
 
    for ( ; !done; )
    {
@@ -31,16 +31,16 @@ main (int argc,
          const Tokens tokens (line);
          if (tokens.size () == 0) { continue; }
 
-         denise.parse (tokens);
+         andrea.parse (tokens);
 
       }
       catch (const Exception& e)
       {
-         cerr << "denise: " << e << " " << line << endl;
+         cerr << "andrea: " << e << " " << line << endl;
       }
       catch (const std::out_of_range& oor)
       {
-         cerr << "denise: out_of_range " << oor.what () << " " << line << endl;
+         cerr << "andrea: out_of_range " << oor.what () << " " << line << endl;
       }
 
       add_history (line);
