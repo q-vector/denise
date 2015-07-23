@@ -1,12 +1,12 @@
 #include <denise/dstring.h>
 #include <denise/met.h>
-#include "denise.h"
+#include "andrea.h"
 
 using namespace std;
 using namespace denise;
 
 void
-Denise::assign_journey (const string& variable,
+Andrea::assign_journey (const string& variable,
                         const Tokens& arguments)
 {
 
@@ -47,7 +47,7 @@ Denise::assign_journey (const string& variable,
 }
 
 void
-Denise::journey (const Tokens& arguments)
+Andrea::journey (const Tokens& arguments)
 {
 
    const Integer n = arguments.size ();
@@ -118,7 +118,7 @@ Denise::journey (const Tokens& arguments)
 }
 
 void
-Denise::distance (const Tokens& arguments)
+Andrea::distance (const Tokens& arguments)
 {
 
    const Integer n = arguments.size ();
@@ -131,7 +131,7 @@ Denise::distance (const Tokens& arguments)
 }
 
 void
-Denise::azimuth (const Tokens& arguments)
+Andrea::azimuth (const Tokens& arguments)
 {
 
    const Integer n = arguments.size ();
@@ -145,7 +145,7 @@ Denise::azimuth (const Tokens& arguments)
 }
 
 void
-Denise::destination (const Tokens& arguments)
+Andrea::destination (const Tokens& arguments)
 {
 
    const Integer n = arguments.size ();
@@ -159,7 +159,7 @@ Denise::destination (const Tokens& arguments)
 }
 
 void
-Denise::wind_shear (const Tokens& arguments)
+Andrea::wind_shear (const Tokens& arguments)
 {
 
    const Integer n = arguments.size ();
@@ -203,13 +203,13 @@ Denise::wind_shear (const Tokens& arguments)
 
 }
 
-Denise::Denise ()
+Andrea::Andrea ()
    : lat_long_dp (4)
 {
 }
 
 void
-Denise::parse (const Tokens& tokens)
+Andrea::parse (const Tokens& tokens)
 {
 
    if (get_lower_case (tokens[0]) == "distance")

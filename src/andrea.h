@@ -8,7 +8,7 @@ class Journey_Map : public map<string, Journey>
 {
 };
 
-class Denise
+class Andrea
 {
 
    private:
@@ -40,7 +40,7 @@ class Denise
 
    public:
 
-      Denise ();
+      Andrea ();
 
       void
       parse (const Tokens& tokens);
