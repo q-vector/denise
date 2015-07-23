@@ -2116,8 +2116,9 @@ Title::set_size_2d (const Size_2D& size_2d)
 Real
 Title::get_height () const
 {
-   const Real h = j * 0.042;
-   return std::max (std::min (h, 45.0), 35.0);
+   //const Real h = j * 0.042;
+   //return std::max (std::min (h, 45.0), 35.0);
+   return 40.0;
 }
 
 void
