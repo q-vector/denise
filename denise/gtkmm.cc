@@ -8037,70 +8037,9 @@ Map_Console::render_mesh (const RefPtr<Context>& cr)
 const Domain_2D
 Map_Console::get_domain_2d () const
 {
-
-   list<Lat_Long> lat_long_list;
-
    const Geodetic_Transform& transform = get_geodetic_transform ();
-   Domain_2D domain_2d (GSL_POSINF, GSL_NEGINF, GSL_POSINF, GSL_NEGINF);
-   Real start_latitude = GSL_POSINF;
-   Real start_longitude = GSL_POSINF;
-   Real end_latitude = GSL_NEGINF;
-   Real end_longitude = GSL_NEGINF;
-
    const Size_2D& size_2d = get_size_2d ();
-   const Real width = size_2d.i;
-   const Real height = size_2d.j;
-
-   lat_long_list.push_back (transform.get_lat_long (Point_2D (0, 0)));
-   lat_long_list.push_back (transform.get_lat_long (Point_2D (width/2, 0)));
-   lat_long_list.push_back (transform.get_lat_long (Point_2D (width, 0)));
-   lat_long_list.push_back (transform.get_lat_long (Point_2D (0, height)));
-   lat_long_list.push_back (transform.get_lat_long (Point_2D (width/2, height)));
-   lat_long_list.push_back (transform.get_lat_long (Point_2D (width, height)));
-
-   //Lat_Long centre_ll = transform.reverse (Point_2D (width/2, height/2));
-   //centre_ll.standardize (LAT_LONG_PACIFIC);
-   //const Real centre_longitude = centre_ll.longitude;
-   const Real centre_longitude = transform.get_lat_long ().longitude;
-
-   Point_2D north_pole_p = transform.transform (Lat_Long (90, 0));
-   Point_2D south_pole_p = transform.transform (Lat_Long (-90, 0));
-   const bool np = (north_pole_p.x >= 0 && north_pole_p.x <= width &&
-                    north_pole_p.y >= 0 && north_pole_p.y <= height);
-   const bool sp = (south_pole_p.x >= 0 && south_pole_p.x <= width &&
-                    south_pole_p.y >= 0 && south_pole_p.y <= height);
-
-   for (list<Lat_Long>::const_iterator iterator = lat_long_list.begin ();
-        iterator != lat_long_list.end (); iterator++)
-   {
-      const Lat_Long& lat_long = *(iterator);
-      const Real& latitude = lat_long.latitude;
-      const Real& longitude = lat_long.longitude;
-
-      if (latitude < start_latitude) { start_latitude = latitude; }
-      if (latitude > end_latitude) { end_latitude = latitude; }
-
-      if (longitude > centre_longitude + 180) { continue; }
-      if (longitude < centre_longitude - 180) { continue; }
-
-      if (longitude < start_longitude) { start_longitude = longitude; }
-      if (longitude > end_longitude) { end_longitude = longitude; }
-   }
-
-   Lat_Long sw_ll (start_latitude, start_longitude);
-   Lat_Long ne_ll (end_latitude, end_longitude);
-   sw_ll.standardize (centre_longitude);
-   ne_ll.standardize (centre_longitude);
-
-   start_latitude = (sp ? -89.99 : sw_ll.latitude);
-   end_latitude = (np ? 89.99 : ne_ll.latitude);
-
-   if (gsl_isnan (sw_ll.longitude)) { sw_ll.longitude = centre_longitude-180; }
-   if (gsl_isnan (ne_ll.longitude)) { ne_ll.longitude = centre_longitude+180; }
-
-   return Domain_2D (start_latitude, end_latitude,
-      sw_ll.longitude, ne_ll.longitude);
-
+   return transform.get_doomain_2d (size_2d);
 }
 
 void

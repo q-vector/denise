@@ -69,7 +69,7 @@ Differentiation::d_0 (const Real y_0,
 
    const Real x_10 = x_1 - x_0;
    const Real x_20 = x_2 - x_0;
-   const Real x_21 = x_1 - x_1;
+   const Real x_21 = x_2 - x_1;
 
    const Real a = -(2 * x_10 + x_21) / (x_10 * x_20);
    const Real b = x_20 / (x_10 * x_21);
@@ -90,7 +90,7 @@ Differentiation::d_1 (const Real y_0,
 
    const Real x_10 = x_1 - x_0;
    const Real x_20 = x_2 - x_0;
-   const Real x_21 = x_1 - x_1;
+   const Real x_21 = x_2 - x_1;
 
    const Real a = -x_21 / (x_10 * x_20);
    const Real b = (x_21 - x_10) / (x_10 * x_21);
@@ -111,7 +111,7 @@ Differentiation::d_2 (const Real y_0,
 
    const Real x_10 = x_1 - x_0;
    const Real x_20 = x_2 - x_0;
-   const Real x_21 = x_1 - x_1;
+   const Real x_21 = x_2 - x_1;
 
    const Real a = x_21 / (x_10 * x_20);
    const Real b = -x_20 / (x_10 * x_21);
@@ -123,9 +123,9 @@ Differentiation::d_2 (const Real y_0,
 
 Real
 Differentiation::d2 (const Real y_0,
-                       const Real y_1,
-                       const Real y_2,
-                       const Real h)
+                     const Real y_1,
+                     const Real y_2,
+                     const Real h)
 {
    return (y_0 - 2 * y_1 + y_2) / (h * h);
 }

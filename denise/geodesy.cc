@@ -23,297 +23,6 @@
 using namespace std;
 using namespace denise;
 
-Lat_Long::Lat_Long (const Real latitude,
-                    const Real longitude)
-{
-   this->latitude = latitude;
-   this->longitude = longitude;
-}
-
-Lat_Long::Lat_Long (const string& lat_long_string)
-{
-
-   char* end;
-   const Reg_Exp south ("[Ss]$");
-   const Reg_Exp west ("[Ww]$");
-
-   const Tokens tokens (lat_long_string, ",");
-   const string& latitude_string = tokens[0];
-   const string& longitude_string = tokens[1];
-
-   this->latitude = strtod (latitude_string.c_str (), &end);
-   this->longitude = strtod (longitude_string.c_str (), &end);
-
-   if (south.match (latitude_string)) { latitude *= -1; }
-   if (west.match (longitude_string)) { longitude *= -1; }
-
-}
-
-Lat_Long::Lat_Long (const string& latitude_string,
-                    const string& longitude_string)
-{
-
-   char* end;
-   const Reg_Exp south ("[Ss]$");
-   const Reg_Exp west ("[Ww]$");
-
-   this->latitude = strtod (latitude_string.c_str (), &end);
-   this->longitude = strtod (longitude_string.c_str (), &end);
-
-   if (south.match (latitude_string)) { latitude *= -1; }
-   if (west.match (longitude_string)) { longitude *= -1; }
-
-}
-
-Lat_Long::Lat_Long (const Point_2D& point)
-{
-   this->latitude = point.x;
-   this->longitude = point.y;
-}
-
-void
-Lat_Long::standardize (Real& latitude,
-                       Real& longitude,
-                       const Lat_Long_Genre lat_long_genre)
-{
-
-   switch (lat_long_genre)
-   {
-
-      case LAT_LONG_STANDARD:
-      {
-         standardize (latitude, longitude, 0);
-         break;
-      }
-
-      case LAT_LONG_PACIFIC:
-      {
-         standardize (latitude, longitude, 180);
-         break;
-      }
-
-   }
-
-}
-
-void
-Lat_Long::standardize (Real& latitude,
-                       Real& longitude,
-                       const Real standard_longitude)
-{
-
-   latitude = modulo (latitude, Domain_1D (-180, 180));
-
-   if (fabs (latitude) > 90)
-   {
-      longitude += 180;
-      latitude = (latitude > 0 ? 180 : -180) - latitude;
-   }
-
-   const Real start_longitude = standard_longitude - 180;
-   const Real end_longitude = standard_longitude + 180;
-   const Domain_1D domain_longitude (start_longitude, end_longitude);
-   longitude = modulo (longitude, domain_longitude);
-
-}
-
-void
-Lat_Long::standardize (const Lat_Long_Genre lat_long_genre)
-{
-   Lat_Long::standardize (latitude, longitude, lat_long_genre);
-}
-
-void
-Lat_Long::standardize (const Real standard_longitude)
-{
-   Lat_Long::standardize (latitude, longitude, standard_longitude);
-}
-
-string
-Lat_Long::get_string (const Integer decimal_places,
-                      const bool plain) const
-{
-   const char* fmt = plain ? "%%.%df" : "%%.%df\u00b0";
-   const string& number_format = string_render (fmt, decimal_places);
-   return get_string (plain, number_format);
-}
-
-string
-Lat_Long::get_string (const bool plain,
-                      const string& number_format) const
-{
-
-   if (is_nall ()) { return ""; }
-
-   Lat_Long ll = *(this);
-   ll.standardize (LAT_LONG_STANDARD);
-   const Real latitude = ll.latitude;
-   const Real longitude = ll.longitude;
-
-   const string& latitude_string = ((latitude >= 0) ?
-      string_render ((number_format + "N").c_str (), latitude) :
-      string_render ((number_format + "S").c_str (), -latitude));
-
-   const string& longitude_string = ((longitude >= 0) ?
-      string_render ((number_format + "E").c_str (), longitude) :
-      string_render ((number_format + "W").c_str (), -longitude));
-
-   if (plain) { return latitude_string + longitude_string; }
-   else { return "(" + latitude_string + ", " + longitude_string + ")"; }
-
-}
-
-bool
-Lat_Long::operator == (const Lat_Long& lat_long) const
-{
-   return (latitude == lat_long.latitude) && (longitude == lat_long.longitude);
-}
-
-bool
-Lat_Long::operator != (const Lat_Long& lat_long) const
-{
-   return (latitude != lat_long.latitude) || (longitude != lat_long.longitude);
-}
-
-Lat_Long
-Lat_Long::operator = (const Lat_Long& lat_long)
-{
-   latitude = lat_long.latitude;
-   longitude = lat_long.longitude;
-
-   return *this;
-}
-
-Lat_Long
-Lat_Long::operator + (const Lat_Long& lat_long) const
-{
-   return Lat_Long (latitude + lat_long.latitude,
-                    longitude + lat_long.longitude);
-}
-
-void
-Lat_Long::operator += (const Lat_Long& lat_long)
-{
-   latitude += lat_long.latitude;
-   longitude += lat_long.longitude;
-}
-
-Lat_Long
-Lat_Long::operator - ()
-{
-   return Lat_Long (-latitude, -longitude);
-}
-
-Lat_Long
-Lat_Long::operator - (const Lat_Long& lat_long) const
-{
-   return Lat_Long (latitude - lat_long.latitude,
-                    longitude - lat_long.longitude);
-}
-
-void
-Lat_Long::operator -= (const Lat_Long& lat_long)
-{
-   latitude -= lat_long.latitude;
-   longitude -= lat_long.longitude;
-}
-
-Lat_Long
-Lat_Long::operator * (const Real scalar) const
-{
-   return Lat_Long (latitude * scalar, longitude * scalar);
-}
-
-void
-Lat_Long::operator *= (const Real scalar)
-{
-   latitude *= scalar;
-   longitude *= scalar;
-}
-
-Lat_Long
-Lat_Long::operator / (const Real scalar) const
-{
-   return Lat_Long (latitude / scalar, longitude / scalar);
-}
-
-void
-Lat_Long::operator /= (const Real scalar)
-{
-   latitude /= scalar;
-   longitude /= scalar;
-}
-
-Lat_Long::operator Point_2D () const
-{
-   return Point_2D (latitude, longitude);
-}
-
-bool
-Lat_Long::is_nall () const
-{
-   return gsl_isnan (latitude) || gsl_isnan (longitude);
-}
-
-/*
-Location::Location (const string& identifier,
-                    const Lat_Long& lat_long)
-   : identifier (identifier),
-     Lat_Long (lat_long)
-{
-}
-
-Location::Location (const Lat_Long& lat_long)
-   : identifier (""),
-     Lat_Long (lat_long)
-{
-}
-
-Location::Location (const Location& location)
-   : identifier (location.identifier),
-     Lat_Long (location)
-{
-}
-
-void
-Location::set_identifier (const string& identifier)
-{
-   this->identifier = identifier;
-}
-
-const string&
-Location::get_identifier () const
-{
-   return identifier;
-}
- 
-Location_Set::const_iterator 
-Location_Set::nearest (const Lat_Long& lat_long) const
-{
-
-   Real min_distance = GSL_POSINF;
-   Location_Set::const_iterator nearest = end ();
- 
-   for (Location_Set::const_iterator iterator = begin (); 
-        iterator != end (); iterator++)
-   {
- 
-      const Location& location = *(iterator);
-      const Real d = Geodesy::get_distance (lat_long, location);
-      
-      if (d < min_distance)
-      {
-         min_distance = d;
-         nearest = iterator;
-      }
-
-   }
-
-   return nearest;
-
-}
-*/
-
 Real
 Geodesy::asin (const Real sine)
 {
@@ -756,6 +465,331 @@ Geodesy::get_azimuth_backward (const Lat_Long& origin,
    return journey.get_azimuth_backward ();
 }
 
+void
+Lat_Long::List::add (const Journey& journey,
+                     const Geodesy& geodesy,
+                     const Real d_distance,
+                     const Integer max_n)
+{
+
+   const Multi_Journey mj (journey, geodesy, d_distance, max_n);
+
+   for (auto iterator = mj.begin (); iterator != mj.end (); iterator++)
+   {
+      const Lat_Long lat_long (*iterator);
+      push_back (lat_long);
+   }
+
+}
+
+void
+Lat_Long::List::add (const Multi_Journey& multi_journey,
+                     const Geodesy& geodesy,
+                     const Real d_distance,
+                     const Integer max_n)
+{
+
+   const Multi_Journey mj (multi_journey, geodesy, d_distance, max_n);
+
+   for (auto iterator = mj.begin (); iterator != mj.end (); iterator++)
+   {
+      const Lat_Long lat_long (*iterator);
+      push_back (lat_long);
+   }
+
+}
+
+Lat_Long::Lat_Long (const Real latitude,
+                    const Real longitude)
+{
+   this->latitude = latitude;
+   this->longitude = longitude;
+}
+
+Lat_Long::Lat_Long (const string& lat_long_string)
+{
+
+   char* end;
+   const Reg_Exp south ("[Ss]$");
+   const Reg_Exp west ("[Ww]$");
+
+   const Tokens tokens (lat_long_string, ",");
+   const string& latitude_string = tokens[0];
+   const string& longitude_string = tokens[1];
+
+   this->latitude = strtod (latitude_string.c_str (), &end);
+   this->longitude = strtod (longitude_string.c_str (), &end);
+
+   if (south.match (latitude_string)) { latitude *= -1; }
+   if (west.match (longitude_string)) { longitude *= -1; }
+
+}
+
+Lat_Long::Lat_Long (const string& latitude_string,
+                    const string& longitude_string)
+{
+
+   char* end;
+   const Reg_Exp south ("[Ss]$");
+   const Reg_Exp west ("[Ww]$");
+
+   this->latitude = strtod (latitude_string.c_str (), &end);
+   this->longitude = strtod (longitude_string.c_str (), &end);
+
+   if (south.match (latitude_string)) { latitude *= -1; }
+   if (west.match (longitude_string)) { longitude *= -1; }
+
+}
+
+Lat_Long::Lat_Long (const Point_2D& point)
+{
+   this->latitude = point.x;
+   this->longitude = point.y;
+}
+
+void
+Lat_Long::standardize (Real& latitude,
+                       Real& longitude,
+                       const Lat_Long_Genre lat_long_genre)
+{
+
+   switch (lat_long_genre)
+   {
+
+      case LAT_LONG_STANDARD:
+      {
+         standardize (latitude, longitude, 0);
+         break;
+      }
+
+      case LAT_LONG_PACIFIC:
+      {
+         standardize (latitude, longitude, 180);
+         break;
+      }
+
+   }
+
+}
+
+void
+Lat_Long::standardize (Real& latitude,
+                       Real& longitude,
+                       const Real standard_longitude)
+{
+
+   latitude = modulo (latitude, Domain_1D (-180, 180));
+
+   if (fabs (latitude) > 90)
+   {
+      longitude += 180;
+      latitude = (latitude > 0 ? 180 : -180) - latitude;
+   }
+
+   const Real start_longitude = standard_longitude - 180;
+   const Real end_longitude = standard_longitude + 180;
+   const Domain_1D domain_longitude (start_longitude, end_longitude);
+   longitude = modulo (longitude, domain_longitude);
+
+}
+
+void
+Lat_Long::standardize (const Lat_Long_Genre lat_long_genre)
+{
+   Lat_Long::standardize (latitude, longitude, lat_long_genre);
+}
+
+void
+Lat_Long::standardize (const Real standard_longitude)
+{
+   Lat_Long::standardize (latitude, longitude, standard_longitude);
+}
+
+string
+Lat_Long::get_string (const Integer decimal_places,
+                      const bool plain) const
+{
+   const char* fmt = plain ? "%%.%df" : "%%.%df\u00b0";
+   const string& number_format = string_render (fmt, decimal_places);
+   return get_string (plain, number_format);
+}
+
+string
+Lat_Long::get_string (const bool plain,
+                      const string& number_format) const
+{
+
+   if (is_nall ()) { return ""; }
+
+   Lat_Long ll = *(this);
+   ll.standardize (LAT_LONG_STANDARD);
+   const Real latitude = ll.latitude;
+   const Real longitude = ll.longitude;
+
+   const string& latitude_string = ((latitude >= 0) ?
+      string_render ((number_format + "N").c_str (), latitude) :
+      string_render ((number_format + "S").c_str (), -latitude));
+
+   const string& longitude_string = ((longitude >= 0) ?
+      string_render ((number_format + "E").c_str (), longitude) :
+      string_render ((number_format + "W").c_str (), -longitude));
+
+   if (plain) { return latitude_string + longitude_string; }
+   else { return "(" + latitude_string + ", " + longitude_string + ")"; }
+
+}
+
+bool
+Lat_Long::operator == (const Lat_Long& lat_long) const
+{
+   return (latitude == lat_long.latitude) && (longitude == lat_long.longitude);
+}
+
+bool
+Lat_Long::operator != (const Lat_Long& lat_long) const
+{
+   return (latitude != lat_long.latitude) || (longitude != lat_long.longitude);
+}
+
+Lat_Long
+Lat_Long::operator = (const Lat_Long& lat_long)
+{
+   latitude = lat_long.latitude;
+   longitude = lat_long.longitude;
+
+   return *this;
+}
+
+Lat_Long
+Lat_Long::operator + (const Lat_Long& lat_long) const
+{
+   return Lat_Long (latitude + lat_long.latitude,
+                    longitude + lat_long.longitude);
+}
+
+void
+Lat_Long::operator += (const Lat_Long& lat_long)
+{
+   latitude += lat_long.latitude;
+   longitude += lat_long.longitude;
+}
+
+Lat_Long
+Lat_Long::operator - ()
+{
+   return Lat_Long (-latitude, -longitude);
+}
+
+Lat_Long
+Lat_Long::operator - (const Lat_Long& lat_long) const
+{
+   return Lat_Long (latitude - lat_long.latitude,
+                    longitude - lat_long.longitude);
+}
+
+void
+Lat_Long::operator -= (const Lat_Long& lat_long)
+{
+   latitude -= lat_long.latitude;
+   longitude -= lat_long.longitude;
+}
+
+Lat_Long
+Lat_Long::operator * (const Real scalar) const
+{
+   return Lat_Long (latitude * scalar, longitude * scalar);
+}
+
+void
+Lat_Long::operator *= (const Real scalar)
+{
+   latitude *= scalar;
+   longitude *= scalar;
+}
+
+Lat_Long
+Lat_Long::operator / (const Real scalar) const
+{
+   return Lat_Long (latitude / scalar, longitude / scalar);
+}
+
+void
+Lat_Long::operator /= (const Real scalar)
+{
+   latitude /= scalar;
+   longitude /= scalar;
+}
+
+Lat_Long::operator Point_2D () const
+{
+   return Point_2D (latitude, longitude);
+}
+
+bool
+Lat_Long::is_nall () const
+{
+   return gsl_isnan (latitude) || gsl_isnan (longitude);
+}
+
+/*
+Location::Location (const string& identifier,
+                    const Lat_Long& lat_long)
+   : identifier (identifier),
+     Lat_Long (lat_long)
+{
+}
+
+Location::Location (const Lat_Long& lat_long)
+   : identifier (""),
+     Lat_Long (lat_long)
+{
+}
+
+Location::Location (const Location& location)
+   : identifier (location.identifier),
+     Lat_Long (location)
+{
+}
+
+void
+Location::set_identifier (const string& identifier)
+{
+   this->identifier = identifier;
+}
+
+const string&
+Location::get_identifier () const
+{
+   return identifier;
+}
+ 
+Location_Set::const_iterator 
+Location_Set::nearest (const Lat_Long& lat_long) const
+{
+
+   Real min_distance = GSL_POSINF;
+   Location_Set::const_iterator nearest = end ();
+ 
+   for (Location_Set::const_iterator iterator = begin (); 
+        iterator != end (); iterator++)
+   {
+ 
+      const Location& location = *(iterator);
+      const Real d = Geodesy::get_distance (lat_long, location);
+      
+      if (d < min_distance)
+      {
+         min_distance = d;
+         nearest = iterator;
+      }
+
+   }
+
+   return nearest;
+
+}
+*/
+
 Journey::Journey (const Lat_Long& origin,
                   const Lat_Long& destination)
    : Edge (origin, destination),
@@ -1012,6 +1046,47 @@ Multi_Journey::Multi_Journey (const bool closed)
 {
 }
 
+Multi_Journey::Multi_Journey (const Simple_Polyline& simple_polyline)
+   : Simple_Polyline (simple_polyline)
+{
+}
+
+Multi_Journey::Multi_Journey (const Journey& journey,
+                              const Geodesy& geodesy)
+{
+
+   Journey j (journey);
+   geodesy.complete (j);
+
+   push_back (Point_2D (j.get_origin ()));
+   push_back (Point_2D (j.get_destination ()));
+
+}
+
+Multi_Journey::Multi_Journey (const Multi_Journey& multi_journey)
+{
+   for (auto iterator = multi_journey.begin ();
+        iterator != multi_journey.end (); iterator++)
+   {
+      const Lat_Long lat_long (*iterator);
+      push_back (Point_2D (lat_long));
+   }
+}
+
+Multi_Journey::Multi_Journey (const string& str)
+{
+
+   const Tokens tokens (str, "=");
+
+   for (auto iterator = tokens.begin (); iterator != tokens.end (); iterator++)
+   {
+      const string& lat_long_str = *(iterator);
+      const Lat_Long lat_long (lat_long_str);
+      push_back (Point_2D (lat_long));
+   }
+
+}
+
 Multi_Journey::Multi_Journey (const Journey& journey,
                               const Geodesy& geodesy,
                               const Real d_distance,
@@ -1084,11 +1159,6 @@ Multi_Journey::Multi_Journey (const Multi_Journey& multi_journey,
 
    }
 
-}
-
-Multi_Journey::Multi_Journey (const Simple_Polyline& simple_polyline)
-   : Simple_Polyline (simple_polyline)
-{
 }
 
 void
@@ -1253,6 +1323,25 @@ Multi_Journey::get_lat_long (const Real x,
    }
 
    return Lat_Long (GSL_NAN, GSL_NAN);
+
+}
+
+Lat_Long::List
+Multi_Journey::get_lat_long_list (const Geodesy& geodesy,
+                                  const Real d_distance,
+                                  const Integer max_n) const
+{
+
+   Lat_Long::List lat_long_list;
+   Multi_Journey mj (*this, d_distance, max_n);
+
+   for (auto i = begin (); i != end (); i++)
+   {
+      const Lat_Long lat_long (*i);
+      lat_long_list.push_back (lat_long);
+   }
+
+   return lat_long_list;
 
 }
 
@@ -1446,7 +1535,7 @@ Multi_Journey::get_iterator (const Transform_2D& transform,
 
    Point_2D p_a, p_b;
 
-   for (Multi_Journey::iterator i = begin (); i != end (); i++)
+   for (auto i = begin (); i != end (); i++)
    {
 
       if (!closed && is_last (i)) { continue; }
@@ -1454,7 +1543,7 @@ Multi_Journey::get_iterator (const Transform_2D& transform,
       Journey journey = get_journey (i);
       Multi_Journey mj (journey, geodesy, d_distance, max_n);
 
-      for (Multi_Journey::const_iterator j = mj.begin (); j != mj.end (); j++)
+      for (auto j = mj.begin (); j != mj.end (); j++)
       {
 
          if (!mj.closed && mj.is_last (j)) { continue; }
@@ -1496,7 +1585,7 @@ Multi_Journey::get_iterator (const Transform_2D& transform,
 
    Point_2D p_a, p_b;
 
-   for (Multi_Journey::const_iterator i = begin (); i != end (); i++)
+   for (auto i = begin (); i != end (); i++)
    {
 
       if (!closed && is_last (i)) { continue; }
@@ -1504,7 +1593,7 @@ Multi_Journey::get_iterator (const Transform_2D& transform,
       Journey journey = get_journey (i);
       Multi_Journey mj (journey, geodesy, d_distance, max_n);
 
-      for (Multi_Journey::const_iterator j = mj.begin (); j != mj.end (); j++)
+      for (auto j = mj.begin (); j != mj.end (); j++)
       {
 
          if (!mj.closed && mj.is_last (j)) { continue; }
@@ -1997,6 +2086,88 @@ Equidistant_Cylindrical_Transform::Equidistant_Cylindrical_Transform (const Doma
    //affine_transform.scale (1, 1); 
    ////affine_transform.rotate (M_PI_2);
    ////affine_transform.scale (1, -1); 
+
+}
+
+Domain_2D
+Geodetic_Transform::get_domain_2d (const Size_2D& size_2d) const
+{
+
+   const Real width = size_2d.i;
+   const Real height = size_2d.j;
+
+   list<Lat_Long> lat_long_list;
+   lat_long_list.push_back (get_lat_long (Point_2D (0, 0)));
+   lat_long_list.push_back (get_lat_long (Point_2D (width/2, 0)));
+   lat_long_list.push_back (get_lat_long (Point_2D (width, 0)));
+   lat_long_list.push_back (get_lat_long (Point_2D (0, height)));
+   lat_long_list.push_back (get_lat_long (Point_2D (width/2, height)));
+   lat_long_list.push_back (get_lat_long (Point_2D (width, height)));
+
+   const Real centre_longitude = get_lat_long ().longitude;
+
+   const Point_2D north_pole_p = transform (Lat_Long (90, 0));
+   const Point_2D south_pole_p = transform (Lat_Long (-90, 0));
+   const bool np = (north_pole_p.x >= 0 && north_pole_p.x <= width &&
+                    north_pole_p.y >= 0 && north_pole_p.y <= height);
+   const bool sp = (south_pole_p.x >= 0 && south_pole_p.x <= width &&
+                    south_pole_p.y >= 0 && south_pole_p.y <= height);
+
+   Real start_latitude = GSL_POSINF;
+   Real start_longitude = GSL_POSINF;
+   Real end_latitude = GSL_NEGINF;
+   Real end_longitude = GSL_NEGINF;
+
+   for (auto iterator = lat_long_list.begin ();
+        iterator != lat_long_list.end (); iterator++)
+   {
+
+      const Lat_Long& lat_long = *(iterator);
+      const Real& latitude = lat_long.latitude;
+      const Real& longitude = lat_long.longitude;
+
+      if (latitude < start_latitude) { start_latitude = latitude; }
+      if (latitude > end_latitude) { end_latitude = latitude; }
+
+      if (longitude > centre_longitude + 180) { continue; }
+      if (longitude < centre_longitude - 180) { continue; }
+
+      if (longitude < start_longitude) { start_longitude = longitude; }
+      if (longitude > end_longitude) { end_longitude = longitude; }
+
+   }
+
+   Lat_Long sw (start_latitude, start_longitude);
+   Lat_Long ne (end_latitude, end_longitude);
+   sw.standardize (centre_longitude);
+   ne.standardize (centre_longitude);
+
+   start_latitude = (sp ? -89.99 : sw.latitude);
+   end_latitude = (np ? 89.99 : ne.latitude);
+
+   if (gsl_isnan (sw.longitude)) { sw.longitude = centre_longitude - 180; }
+   if (gsl_isnan (ne.longitude)) { ne.longitude = centre_longitude + 180; }
+
+   return Domain_2D (start_latitude, end_latitude, sw.longitude, ne.longitude);
+
+}
+
+Geodetic_Mesh
+Geodetic_Transform::get_mesh (const Size_2D& size_2d) const
+{
+
+   const Domain_2D& domain_2d = get_domain_2d (size_2d);
+   const Real latitude_span = domain_2d.domain_x.get_span ();
+   const Real longitude_span = domain_2d.domain_y.get_span ();
+   const Real span = std::min (latitude_span, longitude_span);
+
+   const Color& color_n = Color::black (0.10);
+   const Color& color_j = Color::black (0.40);
+
+   const Real minor = (span > 90 ? 5 : span > 30 ? 1 : 0.2);
+   const Real major = (span > 90 ? 30 : span > 30 ? 10 : span > 5 ? 2 : 1);
+
+   return Geodetic_Mesh (minor, color_n, major, color_j, size_2d, domain_2d);
 
 }
 
@@ -3588,66 +3759,119 @@ Track::get_lat_long (const Real tau,
 
 }
 
-Geodetic_Mesh::Geodetic_Mesh (const Color& color,
-                              const Real interval_x,
+Geodetic_Mesh::Geodetic_Mesh (const Real interval_x,
                               const Real interval_y,
+                              const Color& color,
                               const Size_2D& size_2d,
                               const Domain_2D& domain_2d)
-   : Mesh_2D (size_2d, domain_2d, color, interval_x, interval_y)
+   : Mesh_2D (size_2d, domain_2d, interval_x, interval_y, color)
 {
 }
 
-Geodetic_Mesh::Geodetic_Mesh (const Color& color_0,
-                              const Real interval_x_0,
-                              const Real interval_y_0,
-                              const Color& color_1,
-                              const Real interval_x_1,
-                              const Real interval_y_1,
+Geodetic_Mesh::Geodetic_Mesh (const Real interval,
+                              const Color& color,
                               const Size_2D& size_2d,
                               const Domain_2D& domain_2d)
-   : Mesh_2D (size_2d, domain_2d,
-              color_0, interval_x_0, interval_y_0,
-              color_1, interval_x_1, interval_y_1)
+   : Mesh_2D (size_2d, domain_2d, interval, color)
 {
 }
 
-Geodetic_Mesh::Geodetic_Mesh (const Color& color_0,
-                              const Real interval_x_0,
+Geodetic_Mesh::Geodetic_Mesh (const Real interval_x_0,
                               const Real interval_y_0,
-                              const Color& color_1,
+                              const Color& color_0,
                               const Real interval_x_1,
                               const Real interval_y_1,
-                              const Color& color_2,
-                              const Real interval_x_2,
-                              const Real interval_y_2,
+                              const Color& color_1,
                               const Size_2D& size_2d,
                               const Domain_2D& domain_2d)
    : Mesh_2D (size_2d, domain_2d,
-              color_0, interval_x_0, interval_y_0,
-              color_1, interval_x_1, interval_y_1,
-              color_2, interval_x_2, interval_y_2)
+              interval_x_0, interval_y_0, color_0,
+              interval_x_1, interval_y_1, color_1)
 {
 }
 
-Geodetic_Mesh::Geodetic_Mesh (const Color& color_0,
-                              const Real interval_x_0,
-                              const Real interval_y_0,
+Geodetic_Mesh::Geodetic_Mesh (const Real interval_0,
+                              const Color& color_0,
+                              const Real interval_1,
                               const Color& color_1,
+                              const Size_2D& size_2d,
+                              const Domain_2D& domain_2d)
+   : Mesh_2D (size_2d, domain_2d,
+              interval_0, interval_0, color_0,
+              interval_1, interval_1, color_1)
+{
+}
+
+Geodetic_Mesh::Geodetic_Mesh (const Real interval_x_0,
+                              const Real interval_y_0,
+                              const Color& color_0,
                               const Real interval_x_1,
                               const Real interval_y_1,
-                              const Color& color_2,
+                              const Color& color_1,
                               const Real interval_x_2,
                               const Real interval_y_2,
-                              const Color& color_3,
+                              const Color& color_2,
+                              const Size_2D& size_2d,
+                              const Domain_2D& domain_2d)
+   : Mesh_2D (size_2d, domain_2d,
+              interval_x_0, interval_y_0, color_0,
+              interval_x_1, interval_y_1, color_1,
+              interval_x_2, interval_y_2, color_2)
+{
+}
+
+Geodetic_Mesh::Geodetic_Mesh (const Real interval_0,
+                              const Color& color_0,
+                              const Real interval_1,
+                              const Color& color_1,
+                              const Real interval_2,
+                              const Color& color_2,
+                              const Size_2D& size_2d,
+                              const Domain_2D& domain_2d)
+   : Mesh_2D (size_2d, domain_2d,
+              interval_0, interval_0, color_0,
+              interval_1, interval_1, color_1,
+              interval_2, interval_2, color_2)
+{
+}
+
+Geodetic_Mesh::Geodetic_Mesh (const Real interval_x_0,
+                              const Real interval_y_0,
+                              const Color& color_0,
+                              const Real interval_x_1,
+                              const Real interval_y_1,
+                              const Color& color_1,
+                              const Real interval_x_2,
+                              const Real interval_y_2,
+                              const Color& color_2,
                               const Real interval_x_3,
                               const Real interval_y_3,
+                              const Color& color_3,
                               const Size_2D& size_2d,
                               const Domain_2D& domain_2d)
    : Mesh_2D (size_2d, domain_2d,
-              color_0, interval_x_0, interval_y_0,
-              color_1, interval_x_1, interval_y_1,
-              color_2, interval_x_2, interval_y_2,
-              color_3, interval_x_3, interval_y_3)
+              interval_x_0, interval_y_0, color_0,
+              interval_x_1, interval_y_1, color_1,
+              interval_x_2, interval_y_2, color_2,
+              interval_x_3, interval_y_3, color_3)
+{
+}
+
+Geodetic_Mesh::Geodetic_Mesh (const Real interval_0,
+                              const Color& color_0,
+                              const Real interval_1,
+                              const Color& color_1,
+                              const Real interval_2,
+                              const Color& color_2,
+                              const Real interval_3,
+                              const Color& color_3,
+                              const Size_2D& size_2d,
+                              const Domain_2D& domain_2d)
+   : Mesh_2D (size_2d, domain_2d,
+              interval_0, interval_0, color_0,
+              interval_1, interval_1, color_1,
+              interval_2, interval_2, color_2,
+              interval_3, interval_3, color_3)
 {
 }
 

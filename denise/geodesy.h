@@ -37,8 +37,11 @@ using namespace Cairo;
 namespace denise
 {
 
+   class Lat_Long;
    class Geodesy;
    class Journey;
+   class Multi_Journey;
+   class Geodetic_Mesh;
    class Geodetic_Transform;
 
    /// The FAI sphere radius
@@ -88,6 +91,105 @@ namespace denise
       SPHERE
    };
 
+   /// Represents the Geodesy.
+   ///
+   /// This is an ellipsoidal geodesy model.  The calculations
+   /// utilize Vincenty's (1975) iterative algorithm.  If flattening
+   /// is 0 the geodesy is spherical and the calculations are based
+   /// on direct methods of spherical trignometry.
+   class Geodesy
+   {
+
+       private:
+
+          Real
+          a;
+
+          Real
+          f;
+
+          Real
+          epsilon_v;
+
+          static Real
+          asin (const Real cosine);
+
+          static Real
+          acos (const Real cosine);
+
+          void
+          spherical_inverse (Journey& journey) const;
+
+          void
+          spherical_direct (Journey& journey) const;
+
+          void
+          vincenty_inverse (Journey& journey) const;
+
+          void
+          vincenty_direct (Journey& journey) const;
+
+          void
+          inverse (Journey& journey) const;
+
+          void
+          direct (Journey& journey) const;
+
+       public:
+
+          Geodesy (const Geodesy_Model geodesy_model,
+                   const Real epsilon_v = 5e-12);
+
+          Geodesy (const Real semi_major_axis = EARTH_RADIUS,
+                   const Real flattening = 0,
+                   const Real epsilon_v = 5e-12);
+
+          Real
+          get_semi_major_axis () const;
+
+          Real
+          get_semi_minor_axis () const;
+
+          Real
+          get_flattening () const;
+
+          Real
+          get_eccentricity () const;
+
+          Real
+          get_epsilon_v () const;
+
+          void
+          complete (Journey& journey) const;
+
+          static Real
+          get_angle (const Lat_Long& lat_long_a,
+                     const Lat_Long& lat_long_b,
+                     const Geodesy& geodesy = Geodesy ());
+
+          static Real
+          get_distance (const Lat_Long& lat_long_a,
+                        const Lat_Long& lat_long_b,
+                        const Geodesy& geodesy = Geodesy ());
+
+          static Lat_Long
+          get_destination (const Lat_Long& origin,
+                           const Real distance,
+                           const Real azimuth_forward,
+                           const Geodesy& geodesy = Geodesy ());
+
+          static Real
+          get_azimuth_forward (const Lat_Long& lat_long_a,
+                               const Lat_Long& lat_long_b,
+                               const Geodesy& geodesy = Geodesy ());
+
+          static Real
+          get_azimuth_backward (const Lat_Long& lat_long_a,
+                                const Lat_Long& lat_long_b,
+                                const Geodesy& geodesy = Geodesy ());
+
+   };
+
    /// Represents a point on the Geodesy.
    ///
    /// Lat_Long consists of 2 Real's in (latitude, longitude)
@@ -101,6 +203,25 @@ namespace denise
 
          Real
          longitude;
+
+         class List : public list<Lat_Long>
+         {
+
+            public:
+
+               void
+               add (const Journey& journey,
+                    const Geodesy& geodesy = Geodesy (),
+                    const Real d_distance = 10e3,
+                    const Integer max_n = 1000);
+
+               void
+               add (const Multi_Journey& multi_journey,
+                    const Geodesy& geodesy = Geodesy (),
+                    const Real d_distance = 10e3,
+                    const Integer max_n = 1000);
+
+         };
 
          Lat_Long (const Real latitude = 0.0,
                    const Real longitude = 0.0);
@@ -215,105 +336,6 @@ namespace denise
 
    };
 */
-
-   /// Represents the Geodesy.
-   ///
-   /// This is an ellipsoidal geodesy model.  The calculations
-   /// utilize Vincenty's (1975) iterative algorithm.  If flattening
-   /// is 0 the geodesy is spherical and the calculations are based
-   /// on direct methods of spherical trignometry.
-   class Geodesy
-   {
-
-       private:
-
-          Real
-          a;
-
-          Real
-          f;
-
-          Real
-          epsilon_v;
-
-          static Real
-          asin (const Real cosine);
-
-          static Real
-          acos (const Real cosine);
-
-          void
-          spherical_inverse (Journey& journey) const;
-
-          void
-          spherical_direct (Journey& journey) const;
-
-          void
-          vincenty_inverse (Journey& journey) const;
-
-          void
-          vincenty_direct (Journey& journey) const;
-
-          void
-          inverse (Journey& journey) const;
-
-          void
-          direct (Journey& journey) const;
-
-       public:
-
-          Geodesy (const Geodesy_Model geodesy_model,
-                   const Real epsilon_v = 5e-12);
-
-          Geodesy (const Real semi_major_axis = EARTH_RADIUS,
-                   const Real flattening = 0,
-                   const Real epsilon_v = 5e-12);
-
-          Real
-          get_semi_major_axis () const;
-
-          Real
-          get_semi_minor_axis () const;
-
-          Real
-          get_flattening () const;
-
-          Real
-          get_eccentricity () const;
-
-          Real
-          get_epsilon_v () const;
-
-          void
-          complete (Journey& journey) const;
-
-          static Real
-          get_angle (const Lat_Long& lat_long_a,
-                     const Lat_Long& lat_long_b,
-                     const Geodesy& geodesy = Geodesy ());
-
-          static Real
-          get_distance (const Lat_Long& lat_long_a,
-                        const Lat_Long& lat_long_b,
-                        const Geodesy& geodesy = Geodesy ());
-
-          static Lat_Long
-          get_destination (const Lat_Long& origin,
-                           const Real distance,
-                           const Real azimuth_forward,
-                           const Geodesy& geodesy = Geodesy ());
-
-          static Real
-          get_azimuth_forward (const Lat_Long& lat_long_a,
-                               const Lat_Long& lat_long_b,
-                               const Geodesy& geodesy = Geodesy ());
-
-          static Real
-          get_azimuth_backward (const Lat_Long& lat_long_a,
-                                const Lat_Long& lat_long_b,
-                                const Geodesy& geodesy = Geodesy ());
-
-   };
 
    /// Represents a Journey on the Geodesy.
    ///
@@ -433,12 +455,19 @@ namespace denise
          Multi_Journey (const Simple_Polyline& simple_polyline);
 
          Multi_Journey (const Journey& journey,
-                        const Geodesy& geodesy,
+                        const Geodesy& geodesy = Geodesy ());
+
+         Multi_Journey (const Multi_Journey& multi_journey);
+
+         Multi_Journey (const string& str);
+
+         Multi_Journey (const Journey& journey,
+                        const Geodesy& geodesy = Geodesy (),
                         const Real d_distance = 100e3,
                         const Integer max_n = 50);
 
          Multi_Journey (const Multi_Journey& multi_journey,
-                        const Geodesy& geodesy,
+                        const Geodesy& geodesy = Geodesy (),
                         const Real d_distance = 100e3,
                         const Integer max_n = 50);
 
@@ -471,6 +500,11 @@ namespace denise
          Lat_Long
          get_lat_long (const Real x,
                        const Geodesy& geodesy) const;
+
+         Lat_Long::List
+         get_lat_long_list (const Geodesy& geodesy,
+                            const Real d_distance = 100e3,
+                            const Integer max_n = 50) const;
 
          Real
          get_azimuth_forward (const Real x,
@@ -720,6 +754,12 @@ namespace denise
 
          void
          standardize (Lat_Long& lat_long) const;
+
+         Domain_2D
+         get_domain_2d (const Size_2D& size_2d) const;
+
+         Geodetic_Mesh
+         get_mesh (const Size_2D& size_2d) const;
 
    };
 
@@ -1426,45 +1466,77 @@ namespace denise
 
       public:
 
-         Geodetic_Mesh (const Color& color,
-                        const Real interval_x,
+         Geodetic_Mesh (const Real interval_x,
                         const Real interval_y,
+                        const Color& color,
                         const Size_2D& s = Size_2D (100, 100),
                         const Domain_2D& d = Domain_2D (-89, 89, -180, 179.9));
 
-         Geodetic_Mesh (const Color& color_0,
-                        const Real interval_x_0,
-                        const Real interval_y_0,
-                        const Color& color_1,
-                        const Real interval_x_1,
-                        const Real interval_y_1,
+         Geodetic_Mesh (const Real interval,
+                        const Color& color,
                         const Size_2D& s = Size_2D (100, 100),
                         const Domain_2D& d = Domain_2D (-89, 89, -180, 179.9));
 
-         Geodetic_Mesh (const Color& color_0,
-                        const Real interval_x_0,
+         Geodetic_Mesh (const Real interval_x_0,
                         const Real interval_y_0,
-                        const Color& color_1,
+                        const Color& color_0,
                         const Real interval_x_1,
                         const Real interval_y_1,
-                        const Color& color_2,
+                        const Color& color_1,
+                        const Size_2D& s = Size_2D (100, 100),
+                        const Domain_2D& d = Domain_2D (-89, 89, -180, 179.9));
+
+         Geodetic_Mesh (const Real interval_0,
+                        const Color& color_0,
+                        const Real interval_1,
+                        const Color& color_1,
+                        const Size_2D& s = Size_2D (100, 100),
+                        const Domain_2D& d = Domain_2D (-89, 89, -180, 179.9));
+
+         Geodetic_Mesh (const Real interval_x_0,
+                        const Real interval_y_0,
+                        const Color& color_0,
+                        const Real interval_x_1,
+                        const Real interval_y_1,
+                        const Color& color_1,
                         const Real interval_x_2,
                         const Real interval_y_2,
+                        const Color& color_2,
                         const Size_2D& s = Size_2D (100, 100),
                         const Domain_2D& d = Domain_2D (-89, 89, -180, 179.9));
 
-         Geodetic_Mesh (const Color& color_0,
-                        const Real interval_x_0,
-                        const Real interval_y_0,
+         Geodetic_Mesh (const Real interval_0,
+                        const Color& color_0,
+                        const Real interval_1,
                         const Color& color_1,
+                        const Real interval_2,
+                        const Color& color_2,
+                        const Size_2D& s = Size_2D (100, 100),
+                        const Domain_2D& d = Domain_2D (-89, 89, -180, 179.9));
+
+         Geodetic_Mesh (const Real interval_x_0,
+                        const Real interval_y_0,
+                        const Color& color_0,
                         const Real interval_x_1,
                         const Real interval_y_1,
-                        const Color& color_2,
+                        const Color& color_1,
                         const Real interval_x_2,
                         const Real interval_y_2,
-                        const Color& color_3,
+                        const Color& color_2,
                         const Real interval_x_3,
                         const Real interval_y_3,
+                        const Color& color_3,
+                        const Size_2D& s = Size_2D (100, 100),
+                        const Domain_2D& d = Domain_2D (-89, 89, -180, 179.9));
+
+         Geodetic_Mesh (const Real interval_0,
+                        const Color& color_0,
+                        const Real interval_1,
+                        const Color& color_1,
+                        const Real interval_2,
+                        const Color& color_2,
+                        const Real interval_3,
+                        const Color& color_3,
                         const Size_2D& s = Size_2D (100, 100),
                         const Domain_2D& d = Domain_2D (-89, 89, -180, 179.9));
 
