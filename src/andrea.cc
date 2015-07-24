@@ -5,6 +5,85 @@
 using namespace std;
 using namespace denise;
 
+Entity::Entity (const string& str)
+   : string (str)
+{
+}
+
+Real
+Entity::value () const
+{
+
+   const bool addition = Reg_Exp::match (*this, "\\+");
+   const bool subtraction = Reg_Exp::match (*this, "\\-");
+   const bool multiplication = Reg_Exp::match (*this, "\\*");
+   const bool division = Reg_Exp::match (*this, "\\/");
+   const bool power = Reg_Exp::match (*this, "\\^");
+
+   if (addition)
+   {
+      const Tokens tokens (*this, "+");
+      Real value = 0;
+      for (auto iterator = tokens.begin ();
+           iterator != tokens.end (); iterator++)
+      {
+         const Entity entity (*iterator);
+         value += entity.value ();
+      }
+      return value;
+   }
+   else
+   if (subtraction)
+   {
+      const Tokens tokens (*this, "-");
+      Real value = 0;
+      for (auto iterator = tokens.begin ();
+           iterator != tokens.end (); iterator++)
+      {
+         const Entity entity (*iterator);
+         value -= entity.value ();
+      }
+      return value;
+   }
+   else
+   if (multiplication)
+   {
+      const Tokens tokens (*this, "*");
+      Real value = 1;
+      for (auto iterator = tokens.begin ();
+           iterator != tokens.end (); iterator++)
+      {
+         const Entity entity (*iterator);
+         value *= entity.value ();
+      }
+      return value;
+   }
+   else
+   if (division)
+   {
+      const Tokens tokens (*this, "/");
+      Real value = 1;
+      for (auto iterator = tokens.begin ();
+           iterator != tokens.end (); iterator++)
+      {
+         const Entity entity (*iterator);
+         value /= entity.value ();
+      }
+      return value;
+   }
+   else
+   if (power)
+   {
+      const Integer i = this->find ("^");
+      const Entity entity_a (this->substr (0, i));
+      const Entity entity_b (this->substr (i + 1));
+      return pow (entity_a.value (), entity_b.value ());
+   }
+
+   return stof (*this);
+
+}
+
 void
 Andrea::assign_journey (const string& variable,
                         const Tokens& arguments)
@@ -118,7 +197,7 @@ Andrea::journey (const Tokens& arguments)
 }
 
 void
-Andrea::distance (const Tokens& arguments)
+Andrea::distance (const Tokens& arguments) const
 {
 
    const Integer n = arguments.size ();
@@ -131,7 +210,7 @@ Andrea::distance (const Tokens& arguments)
 }
 
 void
-Andrea::azimuth (const Tokens& arguments)
+Andrea::azimuth (const Tokens& arguments) const
 {
 
    const Integer n = arguments.size ();
@@ -145,7 +224,7 @@ Andrea::azimuth (const Tokens& arguments)
 }
 
 void
-Andrea::destination (const Tokens& arguments)
+Andrea::destination (const Tokens& arguments) const
 {
 
    const Integer n = arguments.size ();
@@ -159,7 +238,7 @@ Andrea::destination (const Tokens& arguments)
 }
 
 void
-Andrea::wind_shear (const Tokens& arguments)
+Andrea::wind_shear (const Tokens& arguments) const
 {
 
    const Integer n = arguments.size ();
@@ -203,6 +282,12 @@ Andrea::wind_shear (const Tokens& arguments)
 
 }
 
+void
+Andrea::print (const Entity& entity) const
+{
+   cout << entity.value () << endl;
+}
+
 Andrea::Andrea ()
    : lat_long_dp (4)
 {
@@ -211,6 +296,12 @@ Andrea::Andrea ()
 void
 Andrea::parse (const Tokens& tokens)
 {
+
+   if (get_lower_case (tokens[0]) == "journey")
+   {
+      journey (tokens.subtokens (1));
+      return;
+   }
 
    if (get_lower_case (tokens[0]) == "distance")
    {
@@ -237,9 +328,9 @@ Andrea::parse (const Tokens& tokens)
       return;
    }
 
-   if (get_lower_case (tokens[0]) == "journey")
+   if (get_lower_case (tokens[0]) == "print")
    {
-      journey (tokens.subtokens (1));
+      print (tokens[1]);
       return;
    }
 
