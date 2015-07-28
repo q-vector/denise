@@ -3302,13 +3302,13 @@ Sounding::get_brunt_vaisala_profile_ptr () const
       const Real p_1 = iterator->first;
       const Real p_2 = next->first;
 
-      const Real t_0 = prev->second + K;
-      const Real t_1 = iterator->second + K;
-      const Real t_2 = next->second + K;
+      const Real t_0 = prev->second;
+      const Real t_1 = iterator->second;
+      const Real t_2 = next->second;
 
-      const Real theta_0 = Thermo_Point::t_p (t_0, p_0).get_theta ();
-      const Real theta_1 = Thermo_Point::t_p (t_1, p_1).get_theta ();
-      const Real theta_2 = Thermo_Point::t_p (t_2, p_2).get_theta ();
+      const Real theta_0 = Thermo_Point::t_p (t_0, p_0).get_theta () + K;
+      const Real theta_1 = Thermo_Point::t_p (t_1, p_1).get_theta () + K;
+      const Real theta_2 = Thermo_Point::t_p (t_2, p_2).get_theta () + K;
 
       const Real z_0 = height_profile.get_height (p_0);
       const Real z_1 = height_profile.get_height (p_1);
