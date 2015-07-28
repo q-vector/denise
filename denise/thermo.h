@@ -1366,6 +1366,12 @@ namespace denise
          const Dtime&
          get_time () const;
 
+         const Dtime&
+         get_basetime () const;
+
+         const string&
+         get_location_str () const;
+
          T_Line&
          get_t_line ();
 

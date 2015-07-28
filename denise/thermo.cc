@@ -3363,6 +3363,18 @@ Sounding::get_time () const
    return time;
 }
 
+const Dtime&
+Sounding::get_basetime () const
+{
+   return basetime;
+}
+
+const string&
+Sounding::get_location_str () const
+{
+   return location_str;
+}
+
 T_Line&
 Sounding::get_t_line ()
 {
