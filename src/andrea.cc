@@ -21,19 +21,19 @@ Sounding_Map::print (const string& variable,
       return;
    }
    else
-   if (tokens[1] == "basetime")
+   if (tokens[0] == "basetime")
    {
       cout << sounding.get_basetime ().get_string (time_fmt) << endl;
       return;
    }
    else
-   if (tokens[1] == "location")
+   if (tokens[0] == "location")
    {
       cout << sounding.get_location_str () << endl;
       return;
    }
    else
-   if (tokens[1] == "t")
+   if (tokens[0] == "t")
    {
       const Thermo_Line& t_line = sounding.get_t_line ();
       for (auto iterator = t_line.begin ();
@@ -45,7 +45,7 @@ Sounding_Map::print (const string& variable,
       }
    }
    else
-   if (tokens[1] == "td")
+   if (tokens[0] == "td")
    {
       const Thermo_Line& t_d_line = sounding.get_t_d_line ();
       for (auto iterator = t_d_line.begin ();
@@ -57,7 +57,7 @@ Sounding_Map::print (const string& variable,
       }
    }
    else
-   if (tokens[1] == "wind")
+   if (tokens[0] == "wind")
    {
       const Wind_Profile& wind_profile = sounding.get_wind_profile ();
       for (auto iterator = wind_profile.begin ();
@@ -71,7 +71,7 @@ Sounding_Map::print (const string& variable,
       }
    }
    else
-   if (tokens[1] == "height")
+   if (tokens[0] == "height")
    {
       const Height_Profile& height_profile = sounding.get_height_profile ();
       for (auto iterator = height_profile.begin ();
@@ -81,6 +81,20 @@ Sounding_Map::print (const string& variable,
          const Real height = iterator->second;
          cout << p << " " << height << endl;
       }
+   }
+   else
+   if (tokens[0] == "brunt_vaisala")
+   {
+      const Real_Profile* brunt_vaisala_profile_ptr =
+         sounding.get_brunt_vaisala_profile_ptr ();
+      for (auto iterator = brunt_vaisala_profile_ptr->begin ();
+           iterator != brunt_vaisala_profile_ptr->end (); iterator++)
+      {
+         const Real p = iterator->first;
+         const Real brunt_vaisala = iterator->second;
+         cout << p << " " << brunt_vaisala << endl;
+      }
+      delete brunt_vaisala_profile_ptr;
    }
 
 }

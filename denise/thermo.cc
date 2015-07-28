@@ -3063,9 +3063,21 @@ Sounding::save (const string& file_path) const
    ofstream file (file_path);
 
    const string time_fmt ("%Y%m%d%H%M");
-   if (!time.is_nat ()) { file << "time " << time.get_string (time_fmt) << endl; }
-   if (!basetime.is_nat ()) { file << "basetime " << basetime.get_string (time_fmt) << endl; }
-   if (location_str != "") { file << "location " << location_str << endl; }
+
+   if (!time.is_nat ())
+   {
+      file << "time " << time.get_string (time_fmt) << endl;
+   }
+
+   if (!basetime.is_nat ())
+   {
+      file << "basetime " << basetime.get_string (time_fmt) << endl;
+   }
+
+   if (location_str != "")
+   {
+      file << "location " << location_str << endl;
+   }
 
    write (file);
    file.close ();
@@ -3224,8 +3236,8 @@ Sounding::get_scorer_profile_ptr (const Real azimuth,
    {
 
       if (iterator == t_line.begin ()) { continue; }
-      Thermo_Line::const_iterator prev = (--iterator);
-      Thermo_Line::const_iterator next = (++iterator);
+      Thermo_Line::const_iterator prev = iterator; prev--;
+      Thermo_Line::const_iterator next = iterator; next++;
       if (next == t_line.end ()) { continue; }
 
       const Real p_0 = prev->first;
@@ -3282,17 +3294,17 @@ Sounding::get_brunt_vaisala_profile_ptr () const
    {
 
       if (iterator == t_line.begin ()) { continue; }
-      Thermo_Line::const_iterator prev = (--iterator);
-      Thermo_Line::const_iterator next = (++iterator);
+      Thermo_Line::const_iterator prev = iterator; prev--;
+      Thermo_Line::const_iterator next = iterator; next++;
       if (next == t_line.end ()) { continue; }
 
       const Real p_0 = prev->first;
       const Real p_1 = iterator->first;
       const Real p_2 = next->first;
 
-      const Real t_0 = prev->second;
-      const Real t_1 = iterator->second;
-      const Real t_2 = next->second;
+      const Real t_0 = prev->second + K;
+      const Real t_1 = iterator->second + K;
+      const Real t_2 = next->second + K;
 
       const Real theta_0 = Thermo_Point::t_p (t_0, p_0).get_theta ();
       const Real theta_1 = Thermo_Point::t_p (t_1, p_1).get_theta ();
