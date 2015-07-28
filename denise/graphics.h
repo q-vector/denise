@@ -1067,7 +1067,7 @@ namespace denise
 
    };
 
-   class Mesh_2D : protected vector<Simple_Mesh_2D>
+   class Mesh_2D : public vector<Simple_Mesh_2D>
    {
 
       protected:
@@ -1079,6 +1079,9 @@ namespace denise
          domain_2d;
 
       public:
+
+         Mesh_2D (const Size_2D& size_2d,
+                  const Domain_2D& domain_2d);
 
          Mesh_2D (const Size_2D& size_2d,
                   const Domain_2D& domain_2d,

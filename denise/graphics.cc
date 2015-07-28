@@ -1731,6 +1731,13 @@ Simple_Mesh_2D::render_label_lat_long (const RefPtr<Context>& cr,
 }
 
 Mesh_2D::Mesh_2D (const Size_2D& size_2d,
+                  const Domain_2D& domain_2d)
+   : size_2d (size_2d),
+     domain_2d (domain_2d)
+{
+}
+
+Mesh_2D::Mesh_2D (const Size_2D& size_2d,
                   const Domain_2D& domain_2d,
                   const Real interval_x,
                   const Real interval_y,
