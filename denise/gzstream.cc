@@ -18,9 +18,9 @@
 // You should have received a copy of the GNU General Public License
 // along with libdenise.  If not, see <http://www.gnu.org/licenses/>.
 //
-// gzstream is derived from the Gzstream Library written by Deepak
-// Bandyopadhyay and Lutz Kettner at the Computational Geometry Group
-// at UNC Chapel Hill http://www.cs.unc.edu/Research/compgeom/gzstream/
+// gzstream is derived from the Gzstream Library (LGPL license) written
+// by Deepak Bandyopadhyay and Lutz Kettner at the Computational Geometry
+// Group at UNC Chapel Hill http://www.cs.unc.edu/Research/compgeom/gzstream/
 
 #include <cstring>
 #include "gzstream.h"

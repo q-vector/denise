@@ -999,7 +999,7 @@ namespace denise
 
    };
 
-   class Thermo_Line : public map<Real, Real>
+   class Thermo_Line : public Real_Profile
    {
 
       private:
@@ -1025,6 +1025,10 @@ namespace denise
 
          Thermo_Line (const International_Standard_Atmosphere& isa,
                       const Real delta_p = 10e2);
+
+         void
+         write (ofstream& file,
+                const string& identifier) const;
 
          set<Real>
          get_p_set () const;
@@ -1207,6 +1211,9 @@ namespace denise
 
          Wind_Profile ();
 
+         void
+         write (ofstream& file) const;
+
          set<Real>
          get_p_set () const;
 
@@ -1225,7 +1232,7 @@ namespace denise
 
    };
 
-   class Height_Profile : public map<Real, Real>
+   class Height_Profile : public Real_Profile
    {
 
       private:
@@ -1244,6 +1251,9 @@ namespace denise
       public:
 
          Height_Profile ();
+
+         void
+         write (ofstream& file) const;
 
          set<Real>
          get_p_set () const;
@@ -1265,11 +1275,14 @@ namespace denise
 
       protected:
 
-         Integer
-         wmo_id;
-
          Dtime
          time;
+
+         Dtime
+         basetime;
+
+         string
+         location_str;
 
          T_Line
          t_line;
@@ -1314,22 +1327,50 @@ namespace denise
 
          Sounding ();
 
-         Sounding (const Integer wmo_id);
+         Sounding (const string& file_path);
 
          Sounding (const Sounding& sounding);
+
+         void
+         load (const string& file_path);
+
+         void
+         save (const string& file_path) const;
+
+         void
+         write (ofstream& file) const;
+
+         void
+         set_time (const Dtime& dtime);
+
+         void
+         set_basetime (const Dtime& basetime);
+
+         void
+         set_location_str (const string& location_str);
 
          static Sounding*
          get_mean_sounding_ptr (const list<const Sounding*>& sounding_ptr_list,
                                 const Thermo_Diagram& thermo_diagram);
 
+         Real_Profile*
+         get_scorer_profile_ptr (const Real azimuth,
+                                 const Thermo_Diagram& thermo_diagram) const;
+
+         Real_Profile*
+         get_brunt_vaisala_profile_ptr () const;
+
          set<Real>
          get_p_set () const;
 
-         Integer
-         get_wmo_id () const;
-
          const Dtime&
          get_time () const;
+
+         const Dtime&
+         get_basetime () const;
+
+         const string&
+         get_location_str () const;
 
          T_Line&
          get_t_line ();

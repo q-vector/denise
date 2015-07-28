@@ -6,6 +6,165 @@ using namespace std;
 using namespace denise;
 
 void
+Sounding_Map::print (const string& variable,
+                     const Tokens& tokens) const
+{
+
+   const string time_fmt ("%Y%m%d%H%M");
+   const Integer n = tokens.size ();
+   const Sounding& sounding = at (variable);
+
+   if (n < 1) { return; }
+   if (tokens[0] == "time")
+   {
+      cout << sounding.get_time ().get_string (time_fmt) << endl;
+      return;
+   }
+   else
+   if (tokens[1] == "basetime")
+   {
+      cout << sounding.get_basetime ().get_string (time_fmt) << endl;
+      return;
+   }
+   else
+   if (tokens[1] == "location")
+   {
+      cout << sounding.get_location_str () << endl;
+      return;
+   }
+   else
+   if (tokens[1] == "t")
+   {
+      const Thermo_Line& t_line = sounding.get_t_line ();
+      for (auto iterator = t_line.begin ();
+           iterator != t_line.end (); iterator++)
+      {
+         const Real p = iterator->first;
+         const Real t = iterator->second;
+         cout << p << " " << t << endl;
+      }
+   }
+   else
+   if (tokens[1] == "td")
+   {
+      const Thermo_Line& t_d_line = sounding.get_t_d_line ();
+      for (auto iterator = t_d_line.begin ();
+           iterator != t_d_line.end (); iterator++)
+      {
+         const Real p = iterator->first;
+         const Real t_d = iterator->second;
+         cout << p << " " << t_d << endl;
+      }
+   }
+   else
+   if (tokens[1] == "wind")
+   {
+      const Wind_Profile& wind_profile = sounding.get_wind_profile ();
+      for (auto iterator = wind_profile.begin ();
+           iterator != wind_profile.end (); iterator++)
+      {
+         const Real p = iterator->first;
+         const Wind& wind = iterator->second;
+         const Real wind_direction = wind.get_direction ();
+         const Real wind_speed = wind.get_speed ();
+         cout << p << " " << wind_direction << " " << wind_speed << endl;
+      }
+   }
+   else
+   if (tokens[1] == "height")
+   {
+      const Height_Profile& height_profile = sounding.get_height_profile ();
+      for (auto iterator = height_profile.begin ();
+           iterator != height_profile.end (); iterator++)
+      {
+         const Real p = iterator->first;
+         const Real height = iterator->second;
+         cout << p << " " << height << endl;
+      }
+   }
+
+}
+
+Entity::Entity (const string& str)
+   : string (str)
+{
+}
+
+Real
+Entity::value () const
+{
+
+   const bool addition = Reg_Exp::match (*this, "\\+");
+   const bool subtraction = Reg_Exp::match (*this, "\\-");
+   const bool multiplication = Reg_Exp::match (*this, "\\*");
+   const bool division = Reg_Exp::match (*this, "\\/");
+   const bool power = Reg_Exp::match (*this, "\\^");
+
+   if (addition)
+   {
+      const Tokens tokens (*this, "+");
+      Real value = 0;
+      for (auto iterator = tokens.begin ();
+           iterator != tokens.end (); iterator++)
+      {
+         const Entity entity (*iterator);
+         value += entity.value ();
+      }
+      return value;
+   }
+   else
+   if (subtraction)
+   {
+      const Tokens tokens (*this, "-");
+      Real value = 0;
+      for (auto iterator = tokens.begin ();
+           iterator != tokens.end (); iterator++)
+      {
+         const Entity entity (*iterator);
+         value -= entity.value ();
+      }
+      return value;
+   }
+   else
+   if (multiplication)
+   {
+      const Tokens tokens (*this, "*");
+      Real value = 1;
+      for (auto iterator = tokens.begin ();
+           iterator != tokens.end (); iterator++)
+      {
+         const Entity entity (*iterator);
+         value *= entity.value ();
+      }
+      return value;
+   }
+   else
+   if (division)
+   {
+      const Tokens tokens (*this, "/");
+      Real value = 1;
+      for (auto iterator = tokens.begin ();
+           iterator != tokens.end (); iterator++)
+      {
+         const Entity entity (*iterator);
+         value /= entity.value ();
+      }
+      return value;
+   }
+   else
+   if (power)
+   {
+      const Integer i = this->find ("^");
+      const Entity entity_a (this->substr (0, i));
+      const Entity entity_b (this->substr (i + 1));
+      return pow (entity_a.value (), entity_b.value ());
+   }
+
+   return stof (*this);
+
+}
+
+void
 Andrea::assign_journey (const string& variable,
                         const Tokens& arguments)
 {
@@ -37,6 +196,33 @@ Andrea::assign_journey (const string& variable,
          break;
       }
 
+      default:
+      {
+         throw Exception ("assign_journey error");
+      }
+
+   }
+
+}
+
+void
+Andrea::assign_sounding (const string& variable,
+                         const Tokens& arguments)
+{
+
+   const Integer n = arguments.size ();
+
+   switch (n)
+   {
+
+      case 1:
+      {
+         const string& file_path = arguments[0];
+         Sounding sounding (file_path);
+         sounding_map[variable] = sounding;
+         break;
+      }
+         
       default:
       {
          throw Exception ("assign_journey error");
@@ -118,7 +304,27 @@ Andrea::journey (const Tokens& arguments)
 }
 
 void
-Andrea::distance (const Tokens& arguments)
+Andrea::sounding (const Tokens& arguments)
+{
+
+   const Integer n = arguments.size ();
+
+   const bool is_assignment = (n >= 2) && (arguments[1] == "=");
+   const bool is_print = (n == 1);
+
+   if (is_assignment)
+   {
+      const string& variable = arguments[0];
+      assign_sounding (arguments[0], arguments.subtokens (2));
+      return;
+   }
+
+   sounding_map.print (arguments[0], arguments[1]);
+
+}
+
+void
+Andrea::distance (const Tokens& arguments) const
 {
 
    const Integer n = arguments.size ();
@@ -131,7 +337,7 @@ Andrea::distance (const Tokens& arguments)
 }
 
 void
-Andrea::azimuth (const Tokens& arguments)
+Andrea::azimuth (const Tokens& arguments) const
 {
 
    const Integer n = arguments.size ();
@@ -145,7 +351,7 @@ Andrea::azimuth (const Tokens& arguments)
 }
 
 void
-Andrea::destination (const Tokens& arguments)
+Andrea::destination (const Tokens& arguments) const
 {
 
    const Integer n = arguments.size ();
@@ -159,7 +365,7 @@ Andrea::destination (const Tokens& arguments)
 }
 
 void
-Andrea::wind_shear (const Tokens& arguments)
+Andrea::wind_shear (const Tokens& arguments) const
 {
 
    const Integer n = arguments.size ();
@@ -203,6 +409,12 @@ Andrea::wind_shear (const Tokens& arguments)
 
 }
 
+void
+Andrea::print (const Entity& entity) const
+{
+   cout << entity.value () << endl;
+}
+
 Andrea::Andrea ()
    : lat_long_dp (4)
 {
@@ -211,6 +423,18 @@ Andrea::Andrea ()
 void
 Andrea::parse (const Tokens& tokens)
 {
+
+   if (get_lower_case (tokens[0]) == "journey")
+   {
+      journey (tokens.subtokens (1));
+      return;
+   }
+
+   if (get_lower_case (tokens[0]) == "sounding")
+   {
+      sounding (tokens.subtokens (1));
+      return;
+   }
 
    if (get_lower_case (tokens[0]) == "distance")
    {
@@ -237,9 +461,9 @@ Andrea::parse (const Tokens& tokens)
       return;
    }
 
-   if (get_lower_case (tokens[0]) == "journey")
+   if (get_lower_case (tokens[0]) == "print")
    {
-      journey (tokens.subtokens (1));
+      print (tokens[1]);
       return;
    }
 

@@ -1101,7 +1101,7 @@ Multi_Journey::Multi_Journey (const Multi_Journey& multi_journey)
 Multi_Journey::Multi_Journey (const string& str)
 {
 
-   const Tokens tokens (str, "=");
+   const Tokens tokens (str, "@");
 
    for (auto iterator = tokens.begin (); iterator != tokens.end (); iterator++)
    {

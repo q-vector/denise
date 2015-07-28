@@ -1719,6 +1719,19 @@ Thermo_Line::Thermo_Line (const International_Standard_Atmosphere& isa,
 
 }
 
+void
+Thermo_Line::write (ofstream& file,
+                    const string& identifier) const
+{
+   for (auto iterator = begin (); iterator != end (); iterator++)
+   {
+      const Real pressure = iterator->first;
+      const Real datum = iterator->second;
+      file << identifier << " " << pressure << " " << datum << endl;
+   }
+
+}
+
 set<Real>
 Thermo_Line::get_p_set () const
 {
@@ -2631,6 +2644,20 @@ Wind_Profile::Wind_Profile ()
 {
 }
 
+void
+Wind_Profile::write (ofstream& file) const
+{
+   for (auto iterator = begin (); iterator != end (); iterator++)
+   {
+      const Real pressure = iterator->first;
+      const Wind& wind = iterator->second;
+      const Real wind_direction = wind.get_direction ();
+      const Real wind_speed = wind.get_speed ();
+      file << "wind " << pressure << " " << wind_direction << " " << wind_speed << endl;
+   }
+
+}
+
 set<Real>
 Wind_Profile::get_p_set () const
 {
@@ -2790,6 +2817,18 @@ Height_Profile::Height_Profile ()
 {
 }
 
+void
+Height_Profile::write (ofstream& file) const
+{
+   for (auto iterator = begin (); iterator != end (); iterator++)
+   {
+      const Real pressure = iterator->first;
+      const Real height = iterator->second;
+      file << "height " << pressure << " " << height << endl;
+   }
+
+}
+
 set<Real>
 Height_Profile::get_p_set () const
 {
@@ -2915,8 +2954,9 @@ Sounding::render_thermo_line_nodes (const RefPtr<Context>& cr,
 Sounding::Sounding ()
    : t_line (),
      t_d_line (),
-     wmo_id (-1),
+     location_str (""),
      time (GSL_NAN),
+     basetime (GSL_NAN),
      dry_layer (400e2, 600e2),
      shear_layer (GSL_NAN, GSL_NAN),
      steering_layer (2000, 4500),
@@ -2924,16 +2964,18 @@ Sounding::Sounding ()
 {
 }
 
-Sounding::Sounding (const Integer wmo_id)
+Sounding::Sounding (const string& file_path)
    : t_line (),
      t_d_line (),
-     wmo_id (wmo_id),
+     location_str (""),
      time (GSL_NAN),
+     basetime (GSL_NAN),
      dry_layer (400e2, 600e2),
      shear_layer (GSL_NAN, GSL_NAN),
      steering_layer (2000, 4500),
      helicity_layer (0, 3000)
 {
+   load (file_path);
 }
 
 Sounding::Sounding (const Sounding& sounding)
@@ -2941,13 +2983,120 @@ Sounding::Sounding (const Sounding& sounding)
      t_d_line (sounding.t_d_line),
      wind_profile (sounding.wind_profile),
      height_profile (sounding.height_profile),
-     wmo_id (sounding.wmo_id),
+     location_str (""),
      time (sounding.time),
+     basetime (sounding.basetime),
      dry_layer (sounding.dry_layer),
      shear_layer (shear_layer),
      steering_layer (steering_layer),
      helicity_layer (helicity_layer)
 {
+}
+
+void
+Sounding::load (const string& file_path)
+{
+
+   string input_string;
+   ifstream file (file_path.c_str ());
+
+   while (getline (file, input_string))
+   {
+
+      const Tokens tokens (input_string);
+
+      if (tokens[0] == "time")
+      {
+         this->time = Dtime (tokens[1]);
+      }
+      else
+      if (tokens[0] == "basetime")
+      {
+         this->basetime = Dtime (tokens[1]);
+      }
+      else
+      if (tokens[0] == "location")
+      {
+         this->location_str = tokens[1];
+      }
+      else
+      if (tokens[0] == "t")
+      {
+         const Real p = stof (tokens[1]);
+         const Real t = stof (tokens[2]);
+         t_line.add (p, t);
+      }
+      else
+      if (tokens[0] == "td")
+      {
+         const Real p = stof (tokens[1]);
+         const Real td = stof (tokens[2]);
+         t_d_line.add (p, td);
+      }
+      else
+      if (tokens[0] == "wind")
+      {
+         const Real p = stof (tokens[1]);
+         const Real wind_dir = stof (tokens[2]);
+         const Real wind_speed = stof (tokens[3]);
+         const Wind& wind = Wind::direction_speed (wind_dir, wind_speed);
+         wind_profile.add (p, wind);
+      }
+      else
+      if (tokens[0] == "height")
+      {
+         const Real p = stof (tokens[1]);
+         const Real height = stof (tokens[2]);
+         height_profile.add (p, height);
+      }
+
+   }
+
+   file.close ();
+
+}
+
+void
+Sounding::save (const string& file_path) const
+{
+
+   ofstream file (file_path);
+
+   const string time_fmt ("%Y%m%d%H%M");
+   if (!time.is_nat ()) { file << "time " << time.get_string (time_fmt) << endl; }
+   if (!basetime.is_nat ()) { file << "basetime " << basetime.get_string (time_fmt) << endl; }
+   if (location_str != "") { file << "location " << location_str << endl; }
+
+   write (file);
+   file.close ();
+
+}
+
+void
+Sounding::write (ofstream& file) const
+{
+   t_line.write (file, "t");
+   t_d_line.write (file, "td");
+   wind_profile.write (file);
+   height_profile.write (file);
+}
+
+void
+Sounding::set_time (const Dtime& dtime)
+{
+   this->time = dtime;
+}
+
+void
+Sounding::set_basetime (const Dtime& basetime)
+{
+   this->basetime = basetime;
+}
+
+void
+Sounding::set_location_str (const string& location_str)
+{
+   this->location_str = location_str;
 }
 
 Sounding*
@@ -3062,6 +3211,109 @@ Sounding::get_mean_sounding_ptr (const list<const Sounding*>& sounding_ptr_list,
 
 }
 
+Real_Profile*
+Sounding::get_scorer_profile_ptr (const Real azimuth,
+                                  const Thermo_Diagram& therm_diagram) const
+{
+
+   Real_Profile* scorer_profile_ptr = new Real_Profile ();
+   const Real theta = azimuth * M_PI/180;
+
+   for (auto iterator = t_line.begin ();
+        iterator != t_line.end (); iterator++)
+   {
+
+      if (iterator == t_line.begin ()) { continue; }
+      Thermo_Line::const_iterator prev = (--iterator);
+      Thermo_Line::const_iterator next = (++iterator);
+      if (next == t_line.end ()) { continue; }
+
+      const Real p_0 = prev->first;
+      const Real p_1 = iterator->first;
+      const Real p_2 = next->first;
+
+      const Real t_0 = prev->second;
+      const Real t_1 = iterator->second;
+      const Real t_2 = next->second;
+
+      const Wind& wind_0 = wind_profile.get_wind (p_0);
+      const Wind& wind_1 = wind_profile.get_wind (p_1);
+      const Wind& wind_2 = wind_profile.get_wind (p_2);
+
+      const Real u_0 = wind_0.u; const Real v_0 = wind_0.v;
+      const Real u_1 = wind_1.u; const Real v_1 = wind_1.v;
+      const Real u_2 = wind_2.u; const Real v_2 = wind_2.v;
+
+      const Real along_0 = u_0 * sin (theta) + v_0 * cos (theta);
+      const Real along_1 = u_1 * sin (theta) + v_1 * cos (theta);
+      const Real along_2 = u_2 * sin (theta) + v_2 * cos (theta);
+
+      const Real theta_0 = Thermo_Point::t_p (t_0, p_0).get_theta ();
+      const Real theta_1 = Thermo_Point::t_p (t_1, p_1).get_theta ();
+      const Real theta_2 = Thermo_Point::t_p (t_2, p_2).get_theta ();
+
+      const Real z_0 = height_profile.get_height (p_0);
+      const Real z_1 = height_profile.get_height (p_1);
+      const Real z_2 = height_profile.get_height (p_2);
+
+      typedef Differentiation D;
+      const Real dtheta_dz = D::d_1 (theta_0, theta_1, theta_2, z_0, z_1, z_2);
+
+      const Real A = (g / theta_1 * dtheta_dz ) / (along_1 * along_1);
+      const Real B = -D::d2 (along_0, along_1, along_2, z_0, z_1, z_2) / along_1;
+
+      const Real scorer = A + B;
+      scorer_profile_ptr->insert (make_pair (p_1, scorer));
+
+   }
+
+   return scorer_profile_ptr;
+
+}
+
+Real_Profile*
+Sounding::get_brunt_vaisala_profile_ptr () const
+{
+
+   Real_Profile* brunt_vaisala_profile_ptr = new Real_Profile ();
+
+   for (auto iterator = t_line.begin ();
+        iterator != t_line.end (); iterator++)
+   {
+
+      if (iterator == t_line.begin ()) { continue; }
+      Thermo_Line::const_iterator prev = (--iterator);
+      Thermo_Line::const_iterator next = (++iterator);
+      if (next == t_line.end ()) { continue; }
+
+      const Real p_0 = prev->first;
+      const Real p_1 = iterator->first;
+      const Real p_2 = next->first;
+
+      const Real t_0 = prev->second;
+      const Real t_1 = iterator->second;
+      const Real t_2 = next->second;
+
+      const Real theta_0 = Thermo_Point::t_p (t_0, p_0).get_theta ();
+      const Real theta_1 = Thermo_Point::t_p (t_1, p_1).get_theta ();
+      const Real theta_2 = Thermo_Point::t_p (t_2, p_2).get_theta ();
+
+      const Real z_0 = height_profile.get_height (p_0);
+      const Real z_1 = height_profile.get_height (p_1);
+      const Real z_2 = height_profile.get_height (p_2);
+
+      typedef Differentiation D;
+      const Real dtheta_dz = D::d_1 (theta_0, theta_1, theta_2, z_0, z_1, z_2);
+
+      const Real brunt_vaisala = sqrt (g / theta_1 * dtheta_dz);
+      brunt_vaisala_profile_ptr->insert (make_pair (p_1, brunt_vaisala));
+
+   }
+
+   return brunt_vaisala_profile_ptr;
+
+}
+
 set<Real>
 Sounding::get_p_set () const
 {
@@ -3105,16 +3357,22 @@ Sounding::get_p_set () const
 
 }
 
-Integer
-Sounding::get_wmo_id () const
-{
-   return wmo_id;
-}
-
 const Dtime&
 Sounding::get_time () const
 {
    return time;
+}
+
+const Dtime&
+Sounding::get_basetime () const
+{
+   return basetime;
+}
+
+const string&
+Sounding::get_location_str () const
+{
+   return location_str;
 }
 
 T_Line&
@@ -4977,7 +5235,7 @@ Skew_T::reset (const Size_2D& size_2d)
 
 Ttxx_Sounding::Ttxx_Sounding (const Integer wmo_id,
                               const Integer yygg)
-   : Sounding (wmo_id),
+   : Sounding (),
      yygg (yygg)
 {
 }
@@ -4985,7 +5243,8 @@ Ttxx_Sounding::Ttxx_Sounding (const Integer wmo_id,
 const string
 Ttxx_Sounding::get_key () const
 {
-   return string_render ("%05d:%04d", wmo_id, yygg);
+   //return string_render ("%05d:%04d", wmo_id, yygg);
+   return "";
 }
 
 Thermo_Exception::Thermo_Exception (const string& description)
