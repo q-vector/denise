@@ -1193,7 +1193,7 @@ namespace denise
    };
 
    template<class T>
-   class Template_Toggle_Button : public Dbutton
+   class Template_Toggle_Button : public Dtoggle_button
    {
 
       public:

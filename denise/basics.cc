@@ -892,6 +892,28 @@ Ituple::push_front (const Integer value)
    insert (begin (), value);
 }
 
+Tuple
+Real_Profile::get_abscissa_tuple () const
+{
+   Tuple tuple;
+   for (auto iterator = begin (); iterator != end (); iterator++)
+   {
+      tuple.push_back (iterator->first);
+   }
+   return tuple;
+}
+
+Tuple
+Real_Profile::get_ordinate_tuple () const
+{
+   Tuple tuple;
+   for (auto iterator = begin (); iterator != end (); iterator++)
+   {
+      tuple.push_back (iterator->second);
+   }
+   return tuple;
+}
+
 Domain_1D::Domain_1D (const Real start,
                       const Real end)
    : start (start),

@@ -25,9 +25,10 @@
 #include <ieeefp.h>
 #endif
 
-#include <list>
 #include <complex>
 #include <iostream>
+#include <list>
+#include <map>
 #include <set>
 #include <vector>
 #include <gsl/gsl_math.h>
@@ -671,6 +672,19 @@ namespace denise
 
    typedef vector<Tuple>
    Ituple_Vector;
+
+   class Real_Profile : public map<Real, Real>
+   {
+
+      public:
+
+         Tuple
+         get_abscissa_tuple () const;
+
+         Tuple
+         get_ordinate_tuple () const;
+
+   };
 
    class Domain_1D
    {
