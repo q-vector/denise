@@ -25,6 +25,9 @@ main (int argc,
       line = readline (prompt);
       if (!line) { break; }
 
+      const string& input_line = get_trimmed (string (line));
+      if (input_line[0] == '#') { continue; }
+
       try
       {
 

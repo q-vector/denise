@@ -108,8 +108,9 @@ Journey_Map::destination (const Tokens& tokens) const
 
 }
 
-Journey_Map::Journey_Map ()
-   : lat_long_dp (4)
+Journey_Map::Journey_Map (const Andrea& andrea)
+   : andrea (andrea),
+     lat_long_dp (4)
 {
 }
 
@@ -309,8 +310,8 @@ Sounding_Map::print (const string& variable,
 
 }
 
-Sounding_Map::Sounding_Map ()
-   : tephigram (Size_2D (1000, 1000))
+Sounding_Map::Sounding_Map (const Andrea& andrea)
+   : andrea (andrea)
 {
 }
 
@@ -331,6 +332,216 @@ Sounding_Map::parse (const Tokens& tokens)
    {
       const string& variable = tokens[1];
       print (variable, tokens.subtokens (2));
+   }
+
+}
+
+void
+Image_Map::init (const string& variable,
+                 const string& geometry)
+{
+
+   const Tokens tokens (geometry, "x");
+   const Size_2D size_2d (stof (tokens[0]), stof (tokens[1]));
+
+   RefPtr<ImageSurface> image_surface = get_image_surface (size_2d);
+   (*this)[variable] = image_surface;
+
+}
+
+void
+Image_Map::save (const string& variable,
+                 const string& file_path) const
+{
+   const RefPtr<ImageSurface>& image_surface = at (variable);
+   image_surface->write_to_png (file_path);
+}
+
+void
+Image_Map::title (const string& variable,
+                  const Tokens& tokens) const
+{
+
+   const RefPtr<ImageSurface>& image_surface = at (variable);
+   const RefPtr<Context> cr = denise::get_cr (image_surface);
+   const Integer w = image_surface->get_width ();
+   const Integer h = image_surface->get_height ();
+   const Size_2D size_2d (w, h);
+
+   Title title (size_2d);
+   title.set (tokens);
+   title.cairo (cr);
+
+}
+
+void
+Image_Map::sounding (const Tokens& tokens) const
+{
+
+   const string& operation = tokens[0];
+
+   if (tokens[0] == "tephigram")
+   {
+      sounding_tephigram (tokens.subtokens (1));
+   }
+   else
+   if (tokens[0] == "chart")
+   {
+      sounding_chart (tokens.subtokens (1));
+   }
+
+}
+
+void
+Image_Map::sounding_tephigram (const Tokens& tokens) const
+{
+
+   const string& image_identifier = tokens[0];
+   const string& sounding_identifier = tokens[1];
+
+   const RefPtr<ImageSurface>& image_surface = at (image_identifier);
+   const RefPtr<Context> cr = denise::get_cr (image_surface);
+   const Sounding& sounding =
+      andrea.get_sounding_map ().at (sounding_identifier);
+
+   const Integer w = image_surface->get_width ();
+   const Integer h = image_surface->get_height ();
+   const Size_2D size_2d (w, h);
+   const Tephigram tephigram (size_2d);
+
+   Color::white ().cairo (cr);
+   cr->paint ();
+
+   cr->set_line_width (1);
+   tephigram.render (cr);
+
+   cr->set_line_width (2);
+   sounding.render (cr, tephigram);
+
+}
+
+void
+Image_Map::sounding_chart (const Tokens& tokens) const
+{
+
+   const string& image_identifier = tokens[0];
+   const string& sounding_identifier = tokens[1];
+   const string& x_str = tokens[2];
+   const string& y_str = tokens[3];
+   const string& genre = tokens[4]; // always speed for now
+
+   const RefPtr<ImageSurface>& image_surface = at (image_identifier);
+   const RefPtr<Context> cr = denise::get_cr (image_surface);
+   const Sounding& sounding =
+      andrea.get_sounding_map ().at (sounding_identifier);
+
+   const Tokens x_tokens (x_str, "/");
+   const Tokens y_tokens (y_str, "/");
+   const bool is_p = (y_tokens[0][0] == 'p');
+   const Domain_1D domain_x (stof (x_tokens[0]), stof (x_tokens[1]));
+   const Domain_1D domain_y (stof (y_tokens[1]), stof (y_tokens[2]));
+   const Domain_2D domain_2d (domain_x, domain_y);
+
+   const Integer image_width = image_surface->get_width ();
+   const Integer image_height = image_surface->get_height ();
+   const Size_2D size_2d (image_width, image_height);
+
+   const Real title_height = 40;
+   const Real margin_l = 100;
+   const Real margin_r = 50;
+   const Real margin_t = title_height + 50;
+   const Real margin_b = 50;
+
+   const Real w = size_2d.i - margin_l - margin_r;
+   const Real h = size_2d.j - margin_t - margin_b;
+
+   const Real minor_interval_x = 1;
+   const Real major_interval_x = 10;
+   const Real minor_interval_y = is_p ? 10e2 : 100;
+   const Real major_interval_y = is_p ? 100e2 : 1000;
+   const Color minor_color = Color::black (0.2);
+   const Color major_color = Color::black (0.8);
+
+   const string y_fmt (is_p ? "%.0fPa" : "%.0fm");
+   const string x_fmt ("%.0fm s\u207b\u00b9");
+
+   const Mesh_2D mesh_2d (Size_2D (2, 2), domain_2d,
+      major_interval_x, major_interval_y, major_color,
+      minor_interval_x, minor_interval_y, minor_color);
+
+   Affine_Transform_2D transform;
+   const Real span_x = domain_x.get_span ();
+   const Real span_y = domain_y.get_span ();
+   transform.scale (1, -1);
+   transform.scale (w / span_x, h / span_y);
+   transform.translate (margin_l, size_2d.j - margin_b);
+
+   Color::white ().cairo (cr);
+   cr->paint ();
+
+   cr->set_line_width (2);
+   Color::black ().cairo (cr);
+   mesh_2d.render (cr, transform);
+   mesh_2d.render_label_x (cr, transform, domain_x.start, domain_y.start,
+      x_fmt, NUMBER_REAL, 'c', 't', 5);
+   mesh_2d.render_label_y (cr, transform, domain_x.start, domain_y.start,
+      y_fmt, NUMBER_REAL, 'r', 'c', 5);
+
+   const Ring ring (4);
+   const Wind_Profile& wind_profile = sounding.get_wind_profile ();
+
+   for (auto iterator = wind_profile.begin ();
+        iterator != wind_profile.end (); iterator++)
+   {
+
+      const Real p = iterator->first;
+      const Real z = sounding.get_height (p);
+      const Wind& wind = iterator->second;
+      const Real speed = wind.get_speed ();
+      const Point_2D point = transform.transform (Point_2D (speed, z));
+
+      ring.cairo (cr, point);
+      Color::red (0.4).cairo (cr);
+      cr->fill ();
+
+   }
+
+}
+
+Image_Map::Image_Map (const Andrea& andrea)
+   : andrea (andrea)
+{
+}
+
+void
+Image_Map::parse (const Tokens& tokens)
+{
+
+   const Integer n = tokens.size ();
+
+   if (tokens[0] == "init")
+   {
+      const string& variable = tokens[1];
+      const string& geometry = tokens[2];
+      init (variable, geometry);
+   }
+   else
+   if (tokens[0] == "save")
+   {
+      const string& variable = tokens[1];
+      const string& file_path = tokens[2];
+      save (variable, file_path);
+   }
+   else
+   if (tokens[0] == "title")
+   {
+      const string& image_identifier = tokens[1];
+      title (image_identifier, tokens.subtokens (2));
+   }
+   else
+   if (tokens[0] == "sounding")
+   {
+      sounding (tokens.subtokens (1));
    }
 
 }
@@ -466,13 +677,40 @@ Andrea::print (const Entity& entity) const
 }
 
 Andrea::Andrea ()
+   : image_map (*this),
+     journey_map (*this),
+     sounding_map (*this)
 {
+}
+
+const Image_Map&
+Andrea::get_image_map () const
+{
+   return image_map;
+}
+
+const Journey_Map&
+Andrea::get_journey_map () const
+{
+   return journey_map;
+}
+
+const Sounding_Map&
+Andrea::get_sounding_map () const
+{
+   return sounding_map;
 }
 
 void
 Andrea::parse (const Tokens& tokens)
 {
 
+   if (get_lower_case (tokens[0]) == "image")
+   {
+      image_map.parse (tokens.subtokens (1));
+      return;
+   }
+   else
    if (get_lower_case (tokens[0]) == "journey")
    {
       journey_map.parse (tokens.subtokens (1));

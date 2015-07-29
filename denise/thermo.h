@@ -495,16 +495,16 @@ namespace denise
          Size_2D
          size_2d;
 
-         const Thermo_Point
+         Thermo_Point
          ref_thermo_point;
 
-         const Real
+         Real
          label_size;
 
          Point_2D
          anchor;
 
-         const Real
+         Real
          p_0;
 
          Real
@@ -571,9 +571,11 @@ namespace denise
 
       public:
 
-         Thermo_Diagram (const Size_2D& size_2d,
+         Thermo_Diagram (const Size_2D& size_2d = Size_2D (960, 960),
                          const Real p_0 = 1000e2,
                          const Thermo_Point& ref_thermo_point = Thermo_Point::t_p (-40, 1000e3));
+
+         Thermo_Diagram (const Thermo_Diagram& thermo_diagram);
 
          ~Thermo_Diagram ();
 
@@ -595,7 +597,7 @@ namespace denise
 
          void
          render (const RefPtr<Context>& cr,
-                 const Real label_x,
+                 const Real label_x = GSL_NAN,
                  const Color& color_0 = Color (0.5, 0.5, 0.5),
                  const Color& color_1 = Color (0.7, 0.7, 0.7),
                  const Color& color_2 = Color (0.9, 0.9, 0.9),
@@ -1872,7 +1874,7 @@ namespace denise
 
       public:
 
-         Tephigram (const Size_2D& size_2d,
+         Tephigram (const Size_2D& size_2d = Size_2D (960, 960),
                     const Real p_0 = 1000e2,
                     const Thermo_Point& ref_thermo_point = Thermo_Point::t_p (-40, 1000e2));
 
@@ -1902,7 +1904,7 @@ namespace denise
 
       public:
 
-         Emagram (const Size_2D& size_2d,
+         Emagram (const Size_2D& size_2d = Size_2D (960, 960),
                   const Real magic_ratio = 45,
                   const Real p_0 = 1000e2,
                   const Thermo_Point& ref_thermo_point = Thermo_Point::t_p (-120, 1000e2));
@@ -1920,7 +1922,7 @@ namespace denise
 
       public:
 
-         Skew_T (const Size_2D& size_2d,
+         Skew_T (const Size_2D& size_2d = Size_2D (960, 960),
                  const Real magic_ratio = 36.6,
                  const Real p_0 = 1000e2,
                  const Thermo_Point& ref_thermo_point = Thermo_Point::t_p (-40, 1000e2));

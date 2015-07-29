@@ -5,10 +5,15 @@
 using namespace std;
 using namespace denise;
 
+class Andrea;
+
 class Journey_Map : public map<string, Journey>
 {
 
    private:
+
+      const Andrea&
+      andrea;
 
       Integer
       lat_long_dp;
@@ -31,7 +36,7 @@ class Journey_Map : public map<string, Journey>
 
    public:
 
-      Journey_Map ();
+      Journey_Map (const Andrea& andrea);
 
       void
       parse (const Tokens& tokens);
@@ -42,6 +47,9 @@ class Sounding_Map : public map<string, Sounding>
 {
 
    private:
+
+      const Andrea&
+      andrea;
 
       Tephigram
       tephigram;
@@ -56,7 +64,50 @@ class Sounding_Map : public map<string, Sounding>
 
    public:
 
-      Sounding_Map ();
+      Sounding_Map (const Andrea& andrea);
+
+      void
+      parse (const Tokens& tokens);
+
+};
+
+class Image_Map : public map<string, RefPtr<ImageSurface> >
+{
+
+   private:
+
+      const Andrea&
+      andrea;
+
+      void
+      init (const string& variable,
+            const string& geometry);
+
+      void
+      save (const string& variable,
+            const string& file_path) const;
+
+      void
+      title (const string& variable,
+             const Tokens& tokens) const;
+
+      void
+      tephigram (const string& image_identifier,
+                 const string& tephigram_identifier,
+                 const Tokens& arguments) const;
+
+      void
+      sounding (const Tokens& tokens) const;
+
+      void
+      sounding_tephigram (const Tokens& tokens) const;
+
+      void
+      sounding_chart (const Tokens& tokens) const;
+
+   public:
+
+      Image_Map (const Andrea& andrea);
 
       void
       parse (const Tokens& tokens);
@@ -80,6 +131,9 @@ class Andrea
 
    private:
 
+      Image_Map
+      image_map;
+
       Journey_Map
       journey_map;
 
@@ -95,6 +149,15 @@ class Andrea
    public:
 
       Andrea ();
+
+      const Image_Map&
+      get_image_map () const;
+
+      const Journey_Map&
+      get_journey_map () const;
+
+      const Sounding_Map&
+      get_sounding_map () const;
 
       void
       parse (const Tokens& tokens);

@@ -4999,6 +4999,14 @@ Thermo_Diagram::Thermo_Diagram (const Size_2D& size_2d,
 {
 }
 
+Thermo_Diagram::Thermo_Diagram (const Thermo_Diagram& thermo_diagram)
+   : size_2d (thermo_diagram.size_2d),
+     ref_thermo_point (thermo_diagram.ref_thermo_point),
+     label_size (thermo_diagram.label_size),
+     p_0 (thermo_diagram.p_0)
+{
+}
+
 Thermo_Diagram::~Thermo_Diagram ()
 {
 }
@@ -5050,11 +5058,13 @@ Thermo_Diagram::render (const RefPtr<Context>& cr,
       render_saturated_adiabats (cr, color_0, color_1, color_2, true);
    }
 
+   const Real lx = (gsl_isnan (label_x) ? size_2d.i - 50 : label_x);
+
    render_dry_adiabats (cr, color_0, color_1, color_2);
    render_saturated_adiabats (cr, color_0, color_1, color_2, false);
    render_isobars (cr, color_0, color_1, color_2, false);
    render_isotherms (cr, color_0, color_1, color_2, false);
-   render_labels (cr, label_x, color_0, color_1, color_2);
+   render_labels (cr, lx, color_0, color_1, color_2);
 
    cr->restore ();
 
