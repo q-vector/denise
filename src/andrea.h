@@ -7,110 +7,131 @@ using namespace denise;
 
 class Andrea;
 
-class Journey_Map : public map<string, Journey>
+class Andrea_Package
 {
 
-   private:
+   protected:
 
       const Andrea&
       andrea;
+
+      Andrea_Package (const Andrea& andrea);
+
+};
+
+class Journey_Package : protected Andrea_Package
+{
+
+   protected:
 
       Integer
       lat_long_dp;
 
-      void
-      assign (const string& variable,
-              const Tokens& arguments);
+      map<string, Journey>
+      journey_map;
+
+      Journey_Package (const Andrea& andrea);
 
       void
-      print (const string& variable) const;
+      assign_journey (const string& variable,
+                      const Tokens& arguments);
 
       void
-      distance (const Tokens& tokens) const;
+      print_journey (const string& variable) const;
 
       void
-      azimuth (const Tokens& tokens) const;
+      journey_distance (const Tokens& tokens) const;
 
       void
-      destination (const Tokens& tokens) const;
-
-   public:
-
-      Journey_Map (const Andrea& andrea);
+      journey_azimuth (const Tokens& tokens) const;
 
       void
-      parse (const Tokens& tokens);
+      journey_destination (const Tokens& tokens) const;
+
+      void
+      parse_journey (const Tokens& tokens);
+
+   public: 
+
+      const map<string, Journey>&
+      get_journey_map () const;
 
 };
 
-class Sounding_Map : public map<string, Sounding>
+class Sounding_Package : public Andrea_Package
 {
 
-   private:
+   protected:
 
-      const Andrea&
-      andrea;
+      map<string, Sounding>
+      sounding_map;
 
       Tephigram
       tephigram;
 
-      void
-      load (const string& variable,
-            const string& file_path);
+      Sounding_Package (const Andrea& andrea);
 
       void
-      print (const string& variable,
-             const Tokens& arguments) const;
+      load_sounding (const string& variable,
+                     const string& file_path);
+
+      void
+      print_sounding (const string& variable,
+                      const Tokens& arguments) const;
+
+      void
+      parse_sounding (const Tokens& tokens);
 
    public:
 
-      Sounding_Map (const Andrea& andrea);
-
-      void
-      parse (const Tokens& tokens);
+      const map<string, Sounding>&
+      get_sounding_map () const;
 
 };
 
-class Image_Map : public map<string, RefPtr<ImageSurface> >
+class Image_Package : public Andrea_Package
 {
 
-   private:
+   protected:
 
-      const Andrea&
-      andrea;
+      map<string, RefPtr<ImageSurface> >
+      image_map;
 
-      void
-      init (const string& variable,
-            const string& geometry);
+      Image_Package (const Andrea& andrea);
 
       void
-      save (const string& variable,
-            const string& file_path) const;
+      init_image (const string& variable,
+                  const string& geometry);
 
       void
-      title (const string& variable,
-             const Tokens& tokens) const;
+      save_image (const string& variable,
+                  const string& file_path) const;
 
       void
-      tephigram (const string& image_identifier,
-                 const string& tephigram_identifier,
-                 const Tokens& arguments) const;
+      image_title (const string& variable,
+                   const Tokens& tokens) const;
 
       void
-      sounding (const Tokens& tokens) const;
+      image_tephigram (const string& image_identifier,
+                       const string& tephigram_identifier,
+                       const Tokens& arguments) const;
 
       void
-      sounding_tephigram (const Tokens& tokens) const;
+      image_sounding (const Tokens& tokens) const;
 
       void
-      sounding_chart (const Tokens& tokens) const;
+      image_sounding_tephigram (const Tokens& tokens) const;
+
+      void
+      image_sounding_chart (const Tokens& tokens) const;
+
+      void
+      parse_image (const Tokens& tokens);
 
    public:
 
-      Image_Map (const Andrea& andrea);
-
-      void
-      parse (const Tokens& tokens);
+      const map<string, RefPtr<ImageSurface> >&
+      get_image_map () const;
 
 };
 
@@ -126,19 +147,12 @@ class Entity : public string
 
 };
 
-class Andrea
+class Andrea : public Journey_Package,
+               public Sounding_Package,
+               public Image_Package
 {
 
    private:
-
-      Image_Map
-      image_map;
-
-      Journey_Map
-      journey_map;
-
-      Sounding_Map
-      sounding_map;
 
       void
       wind_shear (const Tokens& arguments) const;
@@ -149,15 +163,6 @@ class Andrea
    public:
 
       Andrea ();
-
-      const Image_Map&
-      get_image_map () const;
-
-      const Journey_Map&
-      get_journey_map () const;
-
-      const Sounding_Map&
-      get_sounding_map () const;
 
       void
       parse (const Tokens& tokens);

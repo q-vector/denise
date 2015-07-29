@@ -5,9 +5,14 @@
 using namespace std;
 using namespace denise;
 
+Andrea_Package::Andrea_Package (const Andrea& andrea)
+   : andrea (andrea)
+{
+}
+
 void
-Journey_Map::assign (const string& variable,
-                     const Tokens& arguments)
+Journey_Package::assign_journey (const string& variable,
+                                 const Tokens& arguments)
 {
 
    const Geodesy geodesy;
@@ -22,7 +27,7 @@ Journey_Map::assign (const string& variable,
          const Lat_Long destination (arguments[1]);
          Journey journey (origin, destination);
          geodesy.complete (journey);
-         (*this)[variable] = journey;
+         journey_map[variable] = journey;
          break;
       }
          
@@ -33,13 +38,13 @@ Journey_Map::assign (const string& variable,
          const Real azimuth_forward = stof (arguments[2]);
          Journey journey (origin, distance, azimuth_forward);
          geodesy.complete (journey);
-         (*this)[variable] = journey;
+         journey_map[variable] = journey;
          break;
       }
 
       default:
       {
-         throw Exception ("Journey assign");
+         throw Exception ("assign_journey");
       }
 
    }
@@ -47,10 +52,10 @@ Journey_Map::assign (const string& variable,
 }
 
 void
-Journey_Map::print (const string& variable) const
+Journey_Package::print_journey (const string& variable) const
 {
 
-   const Journey& journey = at (variable);
+   const Journey& journey = journey_map.at (variable);
 
    cout << journey.get_origin ().get_string (lat_long_dp) << " ";
    cout << journey.get_destination ().get_string (lat_long_dp) << " ";
@@ -61,11 +66,11 @@ Journey_Map::print (const string& variable) const
 }
 
 void
-Journey_Map::distance (const Tokens& tokens) const
+Journey_Package::journey_distance (const Tokens& tokens) const
 {
 
    const Integer n = tokens.size ();
-   if (n != 2) { throw Exception ("Journey distance"); }
+   if (n != 2) { throw Exception ("journey_distance"); }
 
    const Lat_Long origin (tokens[0]);
    const Lat_Long destination (tokens[1]);
@@ -76,11 +81,11 @@ Journey_Map::distance (const Tokens& tokens) const
 }
 
 void
-Journey_Map::azimuth (const Tokens& tokens) const
+Journey_Package::journey_azimuth (const Tokens& tokens) const
 {
 
    const Integer n = tokens.size ();
-   if (n != 2) { throw Exception ("Journey azimuth"); }
+   if (n != 2) { throw Exception ("journey_azimuth"); }
 
    const Lat_Long origin (tokens[0]);
    const Lat_Long destination (tokens[1]);
@@ -92,11 +97,11 @@ Journey_Map::azimuth (const Tokens& tokens) const
 }
 
 void
-Journey_Map::destination (const Tokens& tokens) const
+Journey_Package::journey_destination (const Tokens& tokens) const
 {
 
    const Integer n = tokens.size ();
-   if (n != 3) { throw Exception ("Journey destination"); }
+   if (n != 3) { throw Exception ("journey_destination"); }
 
    const Lat_Long origin (tokens[0]);
    const Real distance = stof (tokens[1]);
@@ -108,14 +113,14 @@ Journey_Map::destination (const Tokens& tokens) const
 
 }
 
-Journey_Map::Journey_Map (const Andrea& andrea)
-   : andrea (andrea),
+Journey_Package::Journey_Package (const Andrea& andrea)
+   : Andrea_Package (andrea),
      lat_long_dp (4)
 {
 }
 
 void
-Journey_Map::parse (const Tokens& tokens)
+Journey_Package::parse_journey (const Tokens& tokens)
 {
 
 
@@ -124,51 +129,62 @@ Journey_Map::parse (const Tokens& tokens)
    if (tokens[0] == "assign")
    {
       const string& variable = tokens[1];
-      assign (variable, tokens.subtokens (2));
+      assign_journey (variable, tokens.subtokens (2));
    }
    else
    if (tokens[0] == "print")
    {
       const string& variable = tokens[1];
-      print (variable);
+      print_journey (variable);
    }
    else
    if (tokens[0] == "distance")
    {
-      distance (tokens.subtokens (1));
+      journey_distance (tokens.subtokens (1));
    }
    else
    if (tokens[0] == "azimuth")
    {
-      azimuth (tokens.subtokens (1));
+      journey_azimuth (tokens.subtokens (1));
    }
    else
    if (tokens[0] == "destination")
    {
-      destination (tokens.subtokens (1));
+      journey_destination (tokens.subtokens (1));
    }
    else
    {
-      throw Exception ("Journey");
+      throw Exception ("parse_journey");
    }
 
 }
 
-void
-Sounding_Map::load (const string& variable,
-                    const string& file_path)
+const map<string, Journey>&
+Journey_Package::get_journey_map () const
 {
-   Sounding sounding (file_path);
-   (*this)[variable] = sounding;
+   return journey_map;
+}
+
+Sounding_Package::Sounding_Package (const Andrea& andrea)
+   : Andrea_Package (andrea)
+{
 }
 
 void
-Sounding_Map::print (const string& variable,
-                     const Tokens& tokens) const
+Sounding_Package::load_sounding (const string& variable,
+                                 const string& file_path)
+{
+   Sounding sounding (file_path);
+   sounding_map[variable] = sounding;
+}
+
+void
+Sounding_Package::print_sounding (const string& variable,
+                                  const Tokens& tokens) const
 {
 
    const string time_fmt ("%Y%m%d%H%M");
-   const Sounding& sounding = at (variable);
+   const Sounding& sounding = sounding_map.at (variable);
    if (tokens.size () < 1) { return; }
 
    const string& genre = tokens[0];
@@ -310,13 +326,8 @@ Sounding_Map::print (const string& variable,
 
 }
 
-Sounding_Map::Sounding_Map (const Andrea& andrea)
-   : andrea (andrea)
-{
-}
-
 void
-Sounding_Map::parse (const Tokens& tokens)
+Sounding_Package::parse_sounding (const Tokens& tokens)
 {
 
    const Integer n = tokens.size ();
@@ -325,44 +336,50 @@ Sounding_Map::parse (const Tokens& tokens)
    {
       const string& variable = tokens[1];
       const string& file_path = tokens[2];
-      load (variable, file_path);
+      load_sounding (variable, file_path);
    }
    else
    if (tokens[0] == "print")
    {
       const string& variable = tokens[1];
-      print (variable, tokens.subtokens (2));
+      print_sounding (variable, tokens.subtokens (2));
    }
 
 }
 
+const map<string, Sounding>&
+Sounding_Package::get_sounding_map () const
+{
+   return sounding_map;
+}
+
 void
-Image_Map::init (const string& variable,
-                 const string& geometry)
+Image_Package::init_image (const string& variable,
+                           const string& geometry)
 {
 
    const Tokens tokens (geometry, "x");
    const Size_2D size_2d (stof (tokens[0]), stof (tokens[1]));
 
    RefPtr<ImageSurface> image_surface = get_image_surface (size_2d);
-   (*this)[variable] = image_surface;
+   image_map[variable] = image_surface;
 
 }
 
 void
-Image_Map::save (const string& variable,
-                 const string& file_path) const
+Image_Package::save_image (const string& variable,
+                           const string& file_path) const
 {
-   const RefPtr<ImageSurface>& image_surface = at (variable);
+   const RefPtr<ImageSurface>& image_surface = image_map.at (variable);
    image_surface->write_to_png (file_path);
 }
 
 void
-Image_Map::title (const string& variable,
-                  const Tokens& tokens) const
+Image_Package::image_title (const string& variable,
+                            const Tokens& tokens) const
 {
 
-   const RefPtr<ImageSurface>& image_surface = at (variable);
+   const RefPtr<ImageSurface>& image_surface = image_map.at (variable);
    const RefPtr<Context> cr = denise::get_cr (image_surface);
    const Integer w = image_surface->get_width ();
    const Integer h = image_surface->get_height ();
@@ -375,31 +392,31 @@ Image_Map::title (const string& variable,
 }
 
 void
-Image_Map::sounding (const Tokens& tokens) const
+Image_Package::image_sounding (const Tokens& tokens) const
 {
 
    const string& operation = tokens[0];
 
    if (tokens[0] == "tephigram")
    {
-      sounding_tephigram (tokens.subtokens (1));
+      image_sounding_tephigram (tokens.subtokens (1));
    }
    else
    if (tokens[0] == "chart")
    {
-      sounding_chart (tokens.subtokens (1));
+      image_sounding_chart (tokens.subtokens (1));
    }
 
 }
 
 void
-Image_Map::sounding_tephigram (const Tokens& tokens) const
+Image_Package::image_sounding_tephigram (const Tokens& tokens) const
 {
 
    const string& image_identifier = tokens[0];
    const string& sounding_identifier = tokens[1];
 
-   const RefPtr<ImageSurface>& image_surface = at (image_identifier);
+   const RefPtr<ImageSurface>& image_surface = image_map.at (image_identifier);
    const RefPtr<Context> cr = denise::get_cr (image_surface);
    const Sounding& sounding =
       andrea.get_sounding_map ().at (sounding_identifier);
@@ -421,7 +438,7 @@ Image_Map::sounding_tephigram (const Tokens& tokens) const
 }
 
 void
-Image_Map::sounding_chart (const Tokens& tokens) const
+Image_Package::image_sounding_chart (const Tokens& tokens) const
 {
 
    const string& image_identifier = tokens[0];
@@ -430,7 +447,7 @@ Image_Map::sounding_chart (const Tokens& tokens) const
    const string& y_str = tokens[3];
    const string& genre = tokens[4]; // always speed for now
 
-   const RefPtr<ImageSurface>& image_surface = at (image_identifier);
+   const RefPtr<ImageSurface>& image_surface = image_map.at (image_identifier);
    const RefPtr<Context> cr = denise::get_cr (image_surface);
    const Sounding& sounding =
       andrea.get_sounding_map ().at (sounding_identifier);
@@ -447,7 +464,7 @@ Image_Map::sounding_chart (const Tokens& tokens) const
    const Size_2D size_2d (image_width, image_height);
 
    const Real title_height = 40;
-   const Real margin_l = 100;
+   const Real margin_l = 75;
    const Real margin_r = 50;
    const Real margin_t = title_height + 50;
    const Real margin_b = 50;
@@ -462,8 +479,8 @@ Image_Map::sounding_chart (const Tokens& tokens) const
    const Color minor_color = Color::black (0.2);
    const Color major_color = Color::black (0.8);
 
-   const string y_fmt (is_p ? "%.0fPa" : "%.0fm");
-   const string x_fmt ("%.0fm s\u207b\u00b9");
+   const string y_fmt (is_p ? "%.0f Pa" : "%.0f m");
+   const string x_fmt ("%.0f ms\u207b\u00b9");
 
    const Mesh_2D mesh_2d (Size_2D (2, 2), domain_2d,
       major_interval_x, major_interval_y, major_color,
@@ -508,13 +525,13 @@ Image_Map::sounding_chart (const Tokens& tokens) const
 
 }
 
-Image_Map::Image_Map (const Andrea& andrea)
-   : andrea (andrea)
+Image_Package::Image_Package (const Andrea& andrea)
+   : Andrea_Package (andrea)
 {
 }
 
 void
-Image_Map::parse (const Tokens& tokens)
+Image_Package::parse_image (const Tokens& tokens)
 {
 
    const Integer n = tokens.size ();
@@ -523,27 +540,33 @@ Image_Map::parse (const Tokens& tokens)
    {
       const string& variable = tokens[1];
       const string& geometry = tokens[2];
-      init (variable, geometry);
+      init_image (variable, geometry);
    }
    else
    if (tokens[0] == "save")
    {
       const string& variable = tokens[1];
       const string& file_path = tokens[2];
-      save (variable, file_path);
+      save_image (variable, file_path);
    }
    else
    if (tokens[0] == "title")
    {
       const string& image_identifier = tokens[1];
-      title (image_identifier, tokens.subtokens (2));
+      image_title (image_identifier, tokens.subtokens (2));
    }
    else
    if (tokens[0] == "sounding")
    {
-      sounding (tokens.subtokens (1));
+      image_sounding (tokens.subtokens (1));
    }
 
+}
+
+const map<string, RefPtr<ImageSurface> >&
+Image_Package::get_image_map () const
+{
+   return image_map;
 }
 
 Entity::Entity (const string& str)
@@ -677,28 +700,10 @@ Andrea::print (const Entity& entity) const
 }
 
 Andrea::Andrea ()
-   : image_map (*this),
-     journey_map (*this),
-     sounding_map (*this)
+   : Image_Package (*this),
+     Journey_Package (*this),
+     Sounding_Package (*this)
 {
-}
-
-const Image_Map&
-Andrea::get_image_map () const
-{
-   return image_map;
-}
-
-const Journey_Map&
-Andrea::get_journey_map () const
-{
-   return journey_map;
-}
-
-const Sounding_Map&
-Andrea::get_sounding_map () const
-{
-   return sounding_map;
 }
 
 void
@@ -707,19 +712,19 @@ Andrea::parse (const Tokens& tokens)
 
    if (get_lower_case (tokens[0]) == "image")
    {
-      image_map.parse (tokens.subtokens (1));
+      parse_image (tokens.subtokens (1));
       return;
    }
    else
    if (get_lower_case (tokens[0]) == "journey")
    {
-      journey_map.parse (tokens.subtokens (1));
+      parse_journey (tokens.subtokens (1));
       return;
    }
    else
    if (get_lower_case (tokens[0]) == "sounding")
    {
-      sounding_map.parse (tokens.subtokens (1));
+      parse_sounding (tokens.subtokens (1));
       return;
    }
    else
