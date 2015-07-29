@@ -18,6 +18,7 @@
 // along with libdenise.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <fstream>
+#include <iomanip>
 #include "aviation.h"
 #include "thermo.h"
 
@@ -1727,7 +1728,8 @@ Thermo_Line::write (ofstream& file,
    {
       const Real pressure = iterator->first;
       const Real datum = iterator->second;
-      file << identifier << " " << pressure << " " << datum << endl;
+      file << identifier << std::setprecision (2) << " " <<
+              pressure << " " << datum << endl;
    }
 
 }
@@ -2653,7 +2655,8 @@ Wind_Profile::write (ofstream& file) const
       const Wind& wind = iterator->second;
       const Real wind_direction = wind.get_direction ();
       const Real wind_speed = wind.get_speed ();
-      file << "wind " << pressure << " " << wind_direction << " " << wind_speed << endl;
+      file << "wind " << setprecision (2) <<
+              pressure << " " << wind_direction << " " << wind_speed << endl;
    }
 
 }
@@ -2824,7 +2827,8 @@ Height_Profile::write (ofstream& file) const
    {
       const Real pressure = iterator->first;
       const Real height = iterator->second;
-      file << "height " << pressure << " " << height << endl;
+      file << "height " << setprecision (2) <<
+           pressure << " " << height << endl;
    }
 
 }
@@ -3318,6 +3322,21 @@ Sounding::get_brunt_vaisala_profile_ptr () const
       const Real dtheta_dz = D::d_1 (theta_0, theta_1, theta_2, z_0, z_1, z_2);
 
       const Real brunt_vaisala = sqrt (g / theta_1 * dtheta_dz);
+//if (!gsl_finite (brunt_vaisala))
+{
+   cout << brunt_vaisala << "\t: ";
+   cout << dtheta_dz << " | ";
+   cout << p_0 << " ";
+   cout << p_1 << " ";
+   cout << p_2 << " | ";
+   cout << theta_0 << " ";
+   cout << theta_1 << " ";
+   cout << theta_2 << " | ";
+   cout << z_0 << " ";
+   cout << z_1 << " ";
+   cout << z_2 << " ";
+   cout << endl;
+}
       brunt_vaisala_profile_ptr->insert (make_pair (p_1, brunt_vaisala));
 
    }

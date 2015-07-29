@@ -7,16 +7,59 @@ using namespace denise;
 
 class Journey_Map : public map<string, Journey>
 {
+
+   private:
+
+      Integer
+      lat_long_dp;
+
+      void
+      assign (const string& variable,
+              const Tokens& arguments);
+
+      void
+      print (const string& variable) const;
+
+      void
+      distance (const Tokens& tokens) const;
+
+      void
+      azimuth (const Tokens& tokens) const;
+
+      void
+      destination (const Tokens& tokens) const;
+
+   public:
+
+      Journey_Map ();
+
+      void
+      parse (const Tokens& tokens);
+
 };
 
 class Sounding_Map : public map<string, Sounding>
 {
 
-   public:
+   private:
+
+      Tephigram
+      tephigram;
+
+      void
+      load (const string& variable,
+            const string& file_path);
 
       void
       print (const string& variable,
              const Tokens& arguments) const;
+
+   public:
+
+      Sounding_Map ();
+
+      void
+      parse (const Tokens& tokens);
 
 };
 
@@ -37,37 +80,11 @@ class Andrea
 
    private:
 
-      Integer
-      lat_long_dp;
-
       Journey_Map
       journey_map;
 
       Sounding_Map
       sounding_map;
-
-      void
-      assign_journey (const string& variable,
-                      const Tokens& arguments);
-
-      void
-      assign_sounding (const string& variable,
-                       const Tokens& arguments);
-
-      void
-      journey (const Tokens& arguments);
-
-      void
-      sounding (const Tokens& arguments);
-
-      void
-      distance (const Tokens& arguments) const;
-
-      void
-      azimuth (const Tokens& arguments) const;
-
-      void
-      destination (const Tokens& arguments) const;
 
       void
       wind_shear (const Tokens& arguments) const;
