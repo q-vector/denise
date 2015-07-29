@@ -1728,7 +1728,7 @@ Thermo_Line::write (ofstream& file,
    {
       const Real pressure = iterator->first;
       const Real datum = iterator->second;
-      file << identifier << std::setprecision (2) << " " <<
+      file << identifier << fixed << setprecision (4) << " " <<
               pressure << " " << datum << endl;
    }
 
@@ -2655,7 +2655,7 @@ Wind_Profile::write (ofstream& file) const
       const Wind& wind = iterator->second;
       const Real wind_direction = wind.get_direction ();
       const Real wind_speed = wind.get_speed ();
-      file << "wind " << setprecision (2) <<
+      file << "wind " << fixed << setprecision (4) <<
               pressure << " " << wind_direction << " " << wind_speed << endl;
    }
 
@@ -2827,7 +2827,7 @@ Height_Profile::write (ofstream& file) const
    {
       const Real pressure = iterator->first;
       const Real height = iterator->second;
-      file << "height " << setprecision (2) <<
+      file << "height " << fixed << setprecision (4) <<
            pressure << " " << height << endl;
    }
 
