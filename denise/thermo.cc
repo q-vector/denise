@@ -3160,6 +3160,9 @@ Sounding::get_mean_sounding_ptr (const list<const Sounding*>& sounding_ptr_list,
       {
 
          const Sounding& sounding = **(j);
+         const Real start_p = sounding.get_start_p ();
+         const Real end_p = sounding.get_end_p ();
+         if (p < start_p || p > end_p) { continue; }
 
          try
          {
@@ -3228,8 +3231,126 @@ Sounding::get_mean_sounding_ptr (const list<const Sounding*>& sounding_ptr_list,
 }
 
 Real_Profile*
-Sounding::get_scorer_profile_ptr (const Real azimuth,
-                                  const Thermo_Diagram& therm_diagram) const
+Sounding::get_height_profile_ptr () const
+{
+
+   Real_Profile* height_profile_ptr = new Real_Profile ();
+
+   for (auto iterator = t_line.begin ();
+        iterator != t_line.end (); iterator++)
+   {
+      const Real p = iterator->first;
+      const Real height = get_height (p);
+      height_profile_ptr->insert (make_pair (p, height));
+   }
+
+   return height_profile_ptr;
+
+}
+
+Real_Profile*
+Sounding::get_theta_profile_ptr () const
+{
+
+   Real_Profile* theta_profile_ptr = new Real_Profile ();
+
+   for (auto iterator = t_line.begin ();
+        iterator != t_line.end (); iterator++)
+   {
+      const Real p = iterator->first;
+      const Real t = iterator->second;
+      const Real theta = Thermo_Point::t_p (t, p).get_theta ();
+      theta_profile_ptr->insert (make_pair (p, theta));
+   }
+
+   return theta_profile_ptr;
+
+}
+
+Real_Profile*
+Sounding::get_speed_profile_ptr () const
+{
+
+   Real_Profile* speed_profile_ptr = new Real_Profile ();
+
+   for (auto iterator = wind_profile.begin ();
+        iterator != wind_profile.end (); iterator++)
+   {
+      const Real p = iterator->first;
+      const Wind& wind = iterator->second;
+      const Real speed = wind.get_speed ();
+      speed_profile_ptr->insert (make_pair (p, speed));
+   }
+
+   return speed_profile_ptr;
+
+}
+
+Real_Profile*
+Sounding::get_along_speed_profile_ptr (const Real azimuth) const
+{
+
+   Real_Profile* speed_profile_ptr = new Real_Profile ();
+   const Real theta = azimuth * M_PI/180;
+
+   for (auto iterator = wind_profile.begin ();
+        iterator != wind_profile.end (); iterator++)
+   {
+      const Real p = iterator->first;
+      const Wind& wind = iterator->second;
+      const Real along = wind.u * sin (theta) + wind.v * cos (theta);
+      speed_profile_ptr->insert (make_pair (p, along));
+   }
+
+   return speed_profile_ptr;
+
+}
+
+Real_Profile*
+Sounding::get_brunt_vaisala_profile_ptr () const
+{
+
+   Real_Profile* brunt_vaisala_profile_ptr = new Real_Profile ();
+
+   for (auto iterator = t_line.begin ();
+        iterator != t_line.end (); iterator++)
+   {
+
+      if (iterator == t_line.begin ()) { continue; }
+      Thermo_Line::const_iterator prev = iterator; prev--;
+      Thermo_Line::const_iterator next = iterator; next++;
+      if (next == t_line.end ()) { continue; }
+
+      const Real p_0 = prev->first;
+      const Real p_1 = iterator->first;
+      const Real p_2 = next->first;
+
+      const Real t_0 = prev->second;
+      const Real t_1 = iterator->second;
+      const Real t_2 = next->second;
+
+      const Real theta_0 = Thermo_Point::t_p (t_0, p_0).get_theta () + K;
+      const Real theta_1 = Thermo_Point::t_p (t_1, p_1).get_theta () + K;
+      const Real theta_2 = Thermo_Point::t_p (t_2, p_2).get_theta () + K;
+
+      const Real z_0 = height_profile.get_height (p_0);
+      const Real z_1 = height_profile.get_height (p_1);
+      const Real z_2 = height_profile.get_height (p_2);
+
+      typedef Differentiation D;
+      const Real dtheta_dz = D::d_1 (theta_0, theta_1, theta_2, z_0, z_1, z_2);
+
+      const Real brunt_vaisala = sqrt (g / theta_1 * dtheta_dz);
+      brunt_vaisala_profile_ptr->insert (make_pair (p_1, brunt_vaisala));
+
+   }
+
+   return brunt_vaisala_profile_ptr;
+
+}
+
+Real_Profile*
+Sounding::get_scorer_profile_ptr (const Real azimuth) const
 {
 
    Real_Profile* scorer_profile_ptr = new Real_Profile ();
@@ -3284,64 +3405,6 @@ Sounding::get_scorer_profile_ptr (const Real azimuth,
    }
 
    return scorer_profile_ptr;
-
-}
-
-Real_Profile*
-Sounding::get_brunt_vaisala_profile_ptr () const
-{
-
-   Real_Profile* brunt_vaisala_profile_ptr = new Real_Profile ();
-
-   for (auto iterator = t_line.begin ();
-        iterator != t_line.end (); iterator++)
-   {
-
-      if (iterator == t_line.begin ()) { continue; }
-      Thermo_Line::const_iterator prev = iterator; prev--;
-      Thermo_Line::const_iterator next = iterator; next++;
-      if (next == t_line.end ()) { continue; }
-
-      const Real p_0 = prev->first;
-      const Real p_1 = iterator->first;
-      const Real p_2 = next->first;
-
-      const Real t_0 = prev->second;
-      const Real t_1 = iterator->second;
-      const Real t_2 = next->second;
-
-      const Real theta_0 = Thermo_Point::t_p (t_0, p_0).get_theta () + K;
-      const Real theta_1 = Thermo_Point::t_p (t_1, p_1).get_theta () + K;
-      const Real theta_2 = Thermo_Point::t_p (t_2, p_2).get_theta () + K;
-
-      const Real z_0 = height_profile.get_height (p_0);
-      const Real z_1 = height_profile.get_height (p_1);
-      const Real z_2 = height_profile.get_height (p_2);
-
-      typedef Differentiation D;
-      const Real dtheta_dz = D::d_1 (theta_0, theta_1, theta_2, z_0, z_1, z_2);
-
-      const Real brunt_vaisala = sqrt (g / theta_1 * dtheta_dz);
-//if (!gsl_finite (brunt_vaisala))
-{
-   cout << brunt_vaisala << "\t: ";
-   cout << dtheta_dz << " | ";
-   cout << p_0 << " ";
-   cout << p_1 << " ";
-   cout << p_2 << " | ";
-   cout << theta_0 << " ";
-   cout << theta_1 << " ";
-   cout << theta_2 << " | ";
-   cout << z_0 << " ";
-   cout << z_1 << " ";
-   cout << z_2 << " ";
-   cout << endl;
-}
-      brunt_vaisala_profile_ptr->insert (make_pair (p_1, brunt_vaisala));
-
-   }
-
-   return brunt_vaisala_profile_ptr;
 
 }
 

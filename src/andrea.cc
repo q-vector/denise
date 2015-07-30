@@ -11,7 +11,7 @@ Andrea_Package::Andrea_Package (const Andrea& andrea)
 }
 
 void
-Journey_Package::assign_journey (const string& variable,
+Journey_Package::journey_assign (const string& variable,
                                  const Tokens& arguments)
 {
 
@@ -44,7 +44,7 @@ Journey_Package::assign_journey (const string& variable,
 
       default:
       {
-         throw Exception ("assign_journey");
+         throw Exception ("journey_assign");
       }
 
    }
@@ -52,7 +52,7 @@ Journey_Package::assign_journey (const string& variable,
 }
 
 void
-Journey_Package::print_journey (const string& variable) const
+Journey_Package::journey_print (const string& variable) const
 {
 
    const Journey& journey = journey_map.at (variable);
@@ -120,7 +120,7 @@ Journey_Package::Journey_Package (const Andrea& andrea)
 }
 
 void
-Journey_Package::parse_journey (const Tokens& tokens)
+Journey_Package::journey_parse (const Tokens& tokens)
 {
 
 
@@ -129,13 +129,13 @@ Journey_Package::parse_journey (const Tokens& tokens)
    if (tokens[0] == "assign")
    {
       const string& variable = tokens[1];
-      assign_journey (variable, tokens.subtokens (2));
+      journey_assign (variable, tokens.subtokens (2));
    }
    else
    if (tokens[0] == "print")
    {
       const string& variable = tokens[1];
-      print_journey (variable);
+      journey_print (variable);
    }
    else
    if (tokens[0] == "distance")
@@ -154,7 +154,7 @@ Journey_Package::parse_journey (const Tokens& tokens)
    }
    else
    {
-      throw Exception ("parse_journey");
+      throw Exception ("journey_parse");
    }
 
 }
@@ -171,7 +171,7 @@ Sounding_Package::Sounding_Package (const Andrea& andrea)
 }
 
 void
-Sounding_Package::load_sounding (const string& variable,
+Sounding_Package::sounding_load (const string& variable,
                                  const string& file_path)
 {
    Sounding sounding (file_path);
@@ -179,7 +179,7 @@ Sounding_Package::load_sounding (const string& variable,
 }
 
 void
-Sounding_Package::print_sounding (const string& variable,
+Sounding_Package::sounding_print (const string& variable,
                                   const Tokens& tokens) const
 {
 
@@ -327,7 +327,7 @@ Sounding_Package::print_sounding (const string& variable,
 }
 
 void
-Sounding_Package::parse_sounding (const Tokens& tokens)
+Sounding_Package::sounding_parse (const Tokens& tokens)
 {
 
    const Integer n = tokens.size ();
@@ -336,13 +336,13 @@ Sounding_Package::parse_sounding (const Tokens& tokens)
    {
       const string& variable = tokens[1];
       const string& file_path = tokens[2];
-      load_sounding (variable, file_path);
+      sounding_load (variable, file_path);
    }
    else
    if (tokens[0] == "print")
    {
       const string& variable = tokens[1];
-      print_sounding (variable, tokens.subtokens (2));
+      sounding_print (variable, tokens.subtokens (2));
    }
 
 }
@@ -354,7 +354,7 @@ Sounding_Package::get_sounding_map () const
 }
 
 void
-Image_Package::init_image (const string& variable,
+Image_Package::image_init (const string& variable,
                            const string& geometry)
 {
 
@@ -367,7 +367,7 @@ Image_Package::init_image (const string& variable,
 }
 
 void
-Image_Package::save_image (const string& variable,
+Image_Package::image_save (const string& variable,
                            const string& file_path) const
 {
    const RefPtr<ImageSurface>& image_surface = image_map.at (variable);
@@ -445,7 +445,7 @@ Image_Package::image_sounding_chart (const Tokens& tokens) const
    const string& sounding_identifier = tokens[1];
    const string& x_str = tokens[2];
    const string& y_str = tokens[3];
-   const string& genre = tokens[4]; // always speed for now
+   const string& genre = tokens[4];
 
    const RefPtr<ImageSurface>& image_surface = image_map.at (image_identifier);
    const RefPtr<Context> cr = denise::get_cr (image_surface);
@@ -472,15 +472,57 @@ Image_Package::image_sounding_chart (const Tokens& tokens) const
    const Real w = size_2d.i - margin_l - margin_r;
    const Real h = size_2d.j - margin_t - margin_b;
 
-   const Real minor_interval_x = 1;
-   const Real major_interval_x = 10;
    const Real minor_interval_y = is_p ? 10e2 : 100;
    const Real major_interval_y = is_p ? 100e2 : 1000;
    const Color minor_color = Color::black (0.2);
    const Color major_color = Color::black (0.8);
 
-   const string y_fmt (is_p ? "%.0f Pa" : "%.0f m");
-   const string x_fmt ("%.0f ms\u207b\u00b9");
+   Real minor_interval_x, major_interval_x;
+   string fmt_x;
+   const Real_Profile* real_profile_ptr;
+
+   if (genre == "height")
+   {
+      minor_interval_x = 100;
+      major_interval_x = 1000;
+      fmt_x = string ("%.0f\u00b0C");
+      real_profile_ptr = sounding.get_height_profile_ptr ();
+   }
+   else
+   if (genre == "theta")
+   {
+      minor_interval_x = 1;
+      major_interval_x = 10;
+      fmt_x = string ("%.0f\u00b0C");
+      real_profile_ptr = sounding.get_theta_profile_ptr ();
+   }
+   else
+   if (genre == "speed")
+   {
+      minor_interval_x = 1;
+      major_interval_x = 10;
+      fmt_x = string ("%.0f ms\u207b\u00b9");
+      real_profile_ptr = sounding.get_speed_profile_ptr ();
+   }
+   else
+   if (genre == "along_speed")
+   {
+      const Real azimuth = stof (tokens[5]);
+      minor_interval_x = 1;
+      major_interval_x = 10;
+      fmt_x = string ("%.0f ms\u207b\u00b9");
+      real_profile_ptr = sounding.get_along_speed_profile_ptr (azimuth);
+   }
+   else
+   if (genre == "brunt_vaisala")
+   {
+      minor_interval_x = 0.001;
+      major_interval_x = 0.01;
+      fmt_x = string ("%.2f s\u207b\u00b9");
+      real_profile_ptr = sounding.get_brunt_vaisala_profile_ptr ();
+   }
+
+   const string fmt_y (is_p ? "%.0f Pa" : "%.0f m");
 
    const Mesh_2D mesh_2d (Size_2D (2, 2), domain_2d,
       major_interval_x, major_interval_y, major_color,
@@ -493,34 +535,56 @@ Image_Package::image_sounding_chart (const Tokens& tokens) const
    transform.scale (w / span_x, h / span_y);
    transform.translate (margin_l, size_2d.j - margin_b);
 
+   image_sounding_chart (cr, transform, is_p, mesh_2d, fmt_x,
+      fmt_y, sounding, *real_profile_ptr, Ring (4), Color::red (0.4));
+
+   delete real_profile_ptr;
+
+}
+
+void
+Image_Package::image_sounding_chart (const RefPtr<Context>& cr,
+                                     const Transform_2D& transform,
+                                     const bool is_p,
+                                     const Mesh_2D& mesh_2d,
+                                     const string& fmt_x,
+                                     const string& fmt_y,
+                                     const Sounding& sounding,
+                                     const Real_Profile& real_profile,
+                                     const Symbol& symbol,
+                                     const Color& color) const
+{
+
+   const Domain_2D& domain_2d = mesh_2d.get_domain_2d ();
+   const Real label_x = domain_2d.domain_x.start;
+   const Real label_y = domain_2d.domain_y.start;
+
    Color::white ().cairo (cr);
    cr->paint ();
 
    cr->set_line_width (2);
    Color::black ().cairo (cr);
    mesh_2d.render (cr, transform);
-   mesh_2d.render_label_x (cr, transform, domain_x.start, domain_y.start,
-      x_fmt, NUMBER_REAL, 'c', 't', 5);
-   mesh_2d.render_label_y (cr, transform, domain_x.start, domain_y.start,
-      y_fmt, NUMBER_REAL, 'r', 'c', 5);
+   mesh_2d.render_label_x (cr, transform, label_x,
+      label_y, fmt_x, NUMBER_REAL, 'c', 't', 5);
+   mesh_2d.render_label_y (cr, transform, label_x,
+      label_y, fmt_y, NUMBER_REAL, 'r', 'c', 5);
 
-   const Ring ring (4);
-   const Wind_Profile& wind_profile = sounding.get_wind_profile ();
+   color.cairo (cr);
 
-   for (auto iterator = wind_profile.begin ();
-        iterator != wind_profile.end (); iterator++)
+   for (auto iterator = real_profile.begin ();
+        iterator != real_profile.end (); iterator++)
    {
-
       const Real p = iterator->first;
-      const Real z = sounding.get_height (p);
-      const Wind& wind = iterator->second;
-      const Real speed = wind.get_speed ();
-      const Point_2D point = transform.transform (Point_2D (speed, z));
-
-      ring.cairo (cr, point);
-      Color::red (0.4).cairo (cr);
+      const Real y = is_p ? p : sounding.get_height (p);
+      const Real datum = iterator->second;
+      const Point_2D point = transform.transform (Point_2D (datum, y));
+if (y < 0)
+{
+   cout << p << " " << y << endl;
+}
+      symbol.cairo (cr, point);
       cr->fill ();
-
    }
 
 }
@@ -531,7 +595,7 @@ Image_Package::Image_Package (const Andrea& andrea)
 }
 
 void
-Image_Package::parse_image (const Tokens& tokens)
+Image_Package::image_parse (const Tokens& tokens)
 {
 
    const Integer n = tokens.size ();
@@ -540,14 +604,14 @@ Image_Package::parse_image (const Tokens& tokens)
    {
       const string& variable = tokens[1];
       const string& geometry = tokens[2];
-      init_image (variable, geometry);
+      image_init (variable, geometry);
    }
    else
    if (tokens[0] == "save")
    {
       const string& variable = tokens[1];
       const string& file_path = tokens[2];
-      save_image (variable, file_path);
+      image_save (variable, file_path);
    }
    else
    if (tokens[0] == "title")
@@ -653,21 +717,21 @@ Andrea::wind_shear (const Tokens& arguments) const
 {
 
    const Integer n = arguments.size ();
-   if (n != 2) { throw Exception ("wind_shear error"); }
+   if (n != 2) { throw Exception ("wind_shear"); }
 
    const Tokens tokens_a (arguments[0], ":");
    const Integer n_a = tokens_a.size ();
-   if (n_a < 1 || n_a > 2 ) { throw Exception ("wind_shear error"); }
+   if (n_a < 1 || n_a > 2 ) { throw Exception ("wind_shear"); }
    const bool a_with_height = (n_a == 2);
    const Tokens wind_tokens_a (tokens_a[a_with_height ? 1 : 0], "/");
-   if (wind_tokens_a.size () != 2) { throw Exception ("wind_shear error"); }
+   if (wind_tokens_a.size () != 2) { throw Exception ("wind_shear"); }
 
    const Tokens tokens_b (arguments[1], ":");
    const Integer n_b = tokens_b.size ();
-   if (n_b < 1 || n_b > 2 ) { throw Exception ("wind_shear error"); }
+   if (n_b < 1 || n_b > 2 ) { throw Exception ("wind_shear"); }
    const bool b_with_height = (n_b == 2);
    const Tokens wind_tokens_b (tokens_b[b_with_height ? 1 : 0], "/");
-   if (wind_tokens_b.size () != 2) { throw Exception ("wind_shear error"); }
+   if (wind_tokens_b.size () != 2) { throw Exception ("wind_shear"); }
 
    const Real height_a    = a_with_height ? stof (tokens_a[0]) : GSL_NAN;
    const Real direction_a = stof (wind_tokens_a[0]);
@@ -712,19 +776,19 @@ Andrea::parse (const Tokens& tokens)
 
    if (get_lower_case (tokens[0]) == "image")
    {
-      parse_image (tokens.subtokens (1));
+      image_parse (tokens.subtokens (1));
       return;
    }
    else
    if (get_lower_case (tokens[0]) == "journey")
    {
-      parse_journey (tokens.subtokens (1));
+      journey_parse (tokens.subtokens (1));
       return;
    }
    else
    if (get_lower_case (tokens[0]) == "sounding")
    {
-      parse_sounding (tokens.subtokens (1));
+      sounding_parse (tokens.subtokens (1));
       return;
    }
    else
@@ -741,7 +805,7 @@ Andrea::parse (const Tokens& tokens)
       return;
    }
 
-   throw Exception ("cannot process: ");
+   throw Exception ("parse");
 
 }
 

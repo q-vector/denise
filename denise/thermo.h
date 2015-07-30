@@ -1356,11 +1356,22 @@ namespace denise
                                 const Thermo_Diagram& thermo_diagram);
 
          Real_Profile*
-         get_scorer_profile_ptr (const Real azimuth,
-                                 const Thermo_Diagram& thermo_diagram) const;
+         get_height_profile_ptr () const;
+
+         Real_Profile*
+         get_theta_profile_ptr () const;
+
+         Real_Profile*
+         get_speed_profile_ptr () const;
+
+         Real_Profile*
+         get_along_speed_profile_ptr (const Real azimuth) const;
 
          Real_Profile*
          get_brunt_vaisala_profile_ptr () const;
+
+         Real_Profile*
+         get_scorer_profile_ptr (const Real azimuth) const;
 
          set<Real>
          get_p_set () const;

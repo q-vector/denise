@@ -33,11 +33,11 @@ class Journey_Package : protected Andrea_Package
       Journey_Package (const Andrea& andrea);
 
       void
-      assign_journey (const string& variable,
+      journey_assign (const string& variable,
                       const Tokens& arguments);
 
       void
-      print_journey (const string& variable) const;
+      journey_print (const string& variable) const;
 
       void
       journey_distance (const Tokens& tokens) const;
@@ -49,7 +49,7 @@ class Journey_Package : protected Andrea_Package
       journey_destination (const Tokens& tokens) const;
 
       void
-      parse_journey (const Tokens& tokens);
+      journey_parse (const Tokens& tokens);
 
    public: 
 
@@ -72,15 +72,15 @@ class Sounding_Package : public Andrea_Package
       Sounding_Package (const Andrea& andrea);
 
       void
-      load_sounding (const string& variable,
+      sounding_load (const string& variable,
                      const string& file_path);
 
       void
-      print_sounding (const string& variable,
+      sounding_print (const string& variable,
                       const Tokens& arguments) const;
 
       void
-      parse_sounding (const Tokens& tokens);
+      sounding_parse (const Tokens& tokens);
 
    public:
 
@@ -100,11 +100,11 @@ class Image_Package : public Andrea_Package
       Image_Package (const Andrea& andrea);
 
       void
-      init_image (const string& variable,
+      image_init (const string& variable,
                   const string& geometry);
 
       void
-      save_image (const string& variable,
+      image_save (const string& variable,
                   const string& file_path) const;
 
       void
@@ -126,7 +126,19 @@ class Image_Package : public Andrea_Package
       image_sounding_chart (const Tokens& tokens) const;
 
       void
-      parse_image (const Tokens& tokens);
+      image_sounding_chart (const RefPtr<Context>& cr,
+                            const Transform_2D& transform,
+                            const bool is_p,
+                            const Mesh_2D& mesh_2d,
+                            const string& fmt_x,
+                            const string& fmt_y,
+                            const Sounding& sounding,
+                            const Real_Profile& real_profile,
+                            const Symbol& symbol,
+                            const Color& color) const;
+
+      void
+      image_parse (const Tokens& tokens);
 
    public:
 
