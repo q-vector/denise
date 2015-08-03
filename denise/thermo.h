@@ -1371,7 +1371,8 @@ namespace denise
          get_brunt_vaisala_profile_ptr () const;
 
          Real_Profile*
-         get_scorer_profile_ptr (const Real azimuth) const;
+         get_scorer_profile_ptr (const Real azimuth,
+                                 const Real c = 0.0) const;
 
          set<Real>
          get_p_set () const;

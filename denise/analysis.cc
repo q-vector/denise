@@ -141,7 +141,7 @@ Differentiation::d2 (const Real y_0,
 
    const Real x_10 = x_1 - x_0;
    const Real x_20 = x_2 - x_0;
-   const Real x_21 = x_1 - x_1;
+   const Real x_21 = x_2 - x_1;
 
    return 2 * (y_0 / (x_10*x_20) - y_1 / (x_21*x_10) + y_2 / (x_21*x_20));
 

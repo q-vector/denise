@@ -472,71 +472,103 @@ Image_Package::image_sounding_chart (const Tokens& tokens) const
    const Real w = size_2d.i - margin_l - margin_r;
    const Real h = size_2d.j - margin_t - margin_b;
 
+   const Color minor_color = Color::black (0.1);
+   const Color major_color = Color::black (0.3);
+
+   const string fmt_y ("%.0f");
+   const string unit_y (is_p ? "Pa" : "m");
    const Real minor_interval_y = is_p ? 10e2 : 100;
    const Real major_interval_y = is_p ? 100e2 : 1000;
-   const Color minor_color = Color::black (0.2);
-   const Color major_color = Color::black (0.8);
 
-   Real minor_interval_x, major_interval_x;
-   string fmt_x;
+   Mesh_2D mesh_2d (size_2d, domain_2d);
+   string fmt_x, unit_x;
    const Real_Profile* real_profile_ptr;
 
    if (genre == "height")
    {
-      minor_interval_x = 100;
-      major_interval_x = 1000;
-      fmt_x = string ("%.0f\u00b0C");
+      const Real minor_interval_x = 100;
+      const Real major_interval_x = 1000;
+      mesh_2d = Mesh_2D (Size_2D (2, 2), domain_2d,
+         major_interval_x, major_interval_y, major_color,
+         minor_interval_x, minor_interval_y, minor_color);
+      fmt_x = string ("%.0f");
+      unit_x = string ("\u00b0C");
       real_profile_ptr = sounding.get_height_profile_ptr ();
    }
    else
    if (genre == "theta")
    {
-      minor_interval_x = 1;
-      major_interval_x = 10;
-      fmt_x = string ("%.0f\u00b0C");
+      const Real minor_interval_x = 1;
+      const Real major_interval_x = 10;
+      mesh_2d = Mesh_2D (Size_2D (2, 2), domain_2d,
+         major_interval_x, major_interval_y, major_color,
+         minor_interval_x, minor_interval_y, minor_color);
+      fmt_x = string ("%.0f");
+      unit_x = string ("\u00b0C");
       real_profile_ptr = sounding.get_theta_profile_ptr ();
    }
    else
    if (genre == "speed")
    {
-      minor_interval_x = 1;
-      major_interval_x = 10;
-      fmt_x = string ("%.0f ms\u207b\u00b9");
+      const Real minor_interval_x = 1;
+      const Real major_interval_x = 10;
+      mesh_2d = Mesh_2D (Size_2D (2, 2), domain_2d,
+         major_interval_x, major_interval_y, major_color,
+         minor_interval_x, minor_interval_y, minor_color);
+      fmt_x = string ("%.0f");
+      unit_x = string ("ms\u207b\u00b9");
       real_profile_ptr = sounding.get_speed_profile_ptr ();
    }
    else
    if (genre == "along_speed")
    {
       const Real azimuth = stof (tokens[5]);
-      minor_interval_x = 1;
-      major_interval_x = 10;
-      fmt_x = string ("%.0f ms\u207b\u00b9");
+      const Real minor_interval_x = 1;
+      const Real major_interval_x = 10;
+      mesh_2d = Mesh_2D (Size_2D (2, 2), domain_2d,
+         major_interval_x, major_interval_y, major_color,
+         minor_interval_x, minor_interval_y, minor_color);
+      fmt_x = string ("%.0f");
+      unit_x = string ("ms\u207b\u00b9");
       real_profile_ptr = sounding.get_along_speed_profile_ptr (azimuth);
    }
    else
    if (genre == "brunt_vaisala")
    {
-      minor_interval_x = 0.001;
-      major_interval_x = 0.01;
-      fmt_x = string ("%.2f s\u207b\u00b9");
+      const Real minor_interval_x = 0.001;
+      const Real major_interval_x = 0.01;
+      mesh_2d = Mesh_2D (Size_2D (2, 2), domain_2d,
+         major_interval_x, major_interval_y, major_color,
+         minor_interval_x, minor_interval_y, minor_color);
+      fmt_x = string ("%.2f");
+      unit_x = string ("s\u207b\u00b9");
       real_profile_ptr = sounding.get_brunt_vaisala_profile_ptr ();
    }
-
-   const string fmt_y (is_p ? "%.0f Pa" : "%.0f m");
-
-   const Mesh_2D mesh_2d (Size_2D (2, 2), domain_2d,
-      major_interval_x, major_interval_y, major_color,
-      minor_interval_x, minor_interval_y, minor_color);
+   else
+   if (genre == "scorer")
+   {
+      const Real azimuth = stof (tokens[5]);
+      const Real minor_interval_x = 1e-6;
+      const Real major_interval_x = 1e-5;
+      mesh_2d = Mesh_2D (Size_2D (2, 2), domain_2d,
+         major_interval_x, major_interval_y, major_color,
+         minor_interval_x, minor_interval_y, minor_color,
+         1e23, 1e23, Color::black (1.0));
+      fmt_x = string ("%g");
+      unit_x = string ("m\u207b\u00b2");
+      real_profile_ptr = sounding.get_scorer_profile_ptr (azimuth);
+   }
 
    Affine_Transform_2D transform;
    const Real span_x = domain_x.get_span ();
    const Real span_y = domain_y.get_span ();
    transform.scale (1, -1);
+   transform.translate (-domain_x.start, 0);
    transform.scale (w / span_x, h / span_y);
    transform.translate (margin_l, size_2d.j - margin_b);
 
-   image_sounding_chart (cr, transform, is_p, mesh_2d, fmt_x,
-      fmt_y, sounding, *real_profile_ptr, Ring (4), Color::red (0.4));
+   image_sounding_chart (cr, transform, is_p, mesh_2d, fmt_x, fmt_y, unit_x,
+      unit_y, sounding, *real_profile_ptr, Ring (4), Color::red (0.4));
 
    delete real_profile_ptr;
 
@@ -549,6 +581,8 @@ Image_Package::image_sounding_chart (const RefPtr<Context>& cr,
                                      const Mesh_2D& mesh_2d,
                                      const string& fmt_x,
                                      const string& fmt_y,
+                                     const string& unit_x,
+                                     const string& unit_y,
                                      const Sounding& sounding,
                                      const Real_Profile& real_profile,
                                      const Symbol& symbol,
@@ -556,8 +590,10 @@ Image_Package::image_sounding_chart (const RefPtr<Context>& cr,
 {
 
    const Domain_2D& domain_2d = mesh_2d.get_domain_2d ();
-   const Real label_x = domain_2d.domain_x.start;
-   const Real label_y = domain_2d.domain_y.start;
+   const Real start_x = domain_2d.domain_x.start;
+   const Real start_y = domain_2d.domain_y.start;
+   const Real end_x = domain_2d.domain_x.end;
+   const Real end_y = domain_2d.domain_y.end;
 
    Color::white ().cairo (cr);
    cr->paint ();
@@ -565,10 +601,13 @@ Image_Package::image_sounding_chart (const RefPtr<Context>& cr,
    cr->set_line_width (2);
    Color::black ().cairo (cr);
    mesh_2d.render (cr, transform);
-   mesh_2d.render_label_x (cr, transform, label_x,
-      label_y, fmt_x, NUMBER_REAL, 'c', 't', 5);
-   mesh_2d.render_label_y (cr, transform, label_x,
-      label_y, fmt_y, NUMBER_REAL, 'r', 'c', 5);
+   mesh_2d.render_label_x (cr, transform, 0, start_y,
+      fmt_x, NUMBER_REAL, 'c', 't', 9);
+   mesh_2d.render_label_y (cr, transform, 0, start_x,
+      fmt_y, NUMBER_REAL, 'r', 'c', 9);
+
+   Label (unit_x, Point_2D (end_x, start_y), 'l', 'c', 9).cairo (cr, transform);
+   Label (unit_y, Point_2D (start_x, end_y), 'r', 'b', 9).cairo (cr, transform);
 
    color.cairo (cr);
 
@@ -579,10 +618,6 @@ Image_Package::image_sounding_chart (const RefPtr<Context>& cr,
       const Real y = is_p ? p : sounding.get_height (p);
       const Real datum = iterator->second;
       const Point_2D point = transform.transform (Point_2D (datum, y));
-if (y < 0)
-{
-   cout << p << " " << y << endl;
-}
       symbol.cairo (cr, point);
       cr->fill ();
    }

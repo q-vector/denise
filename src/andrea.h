@@ -132,6 +132,8 @@ class Image_Package : public Andrea_Package
                             const Mesh_2D& mesh_2d,
                             const string& fmt_x,
                             const string& fmt_y,
+                            const string& unit_x,
+                            const string& unit_y,
                             const Sounding& sounding,
                             const Real_Profile& real_profile,
                             const Symbol& symbol,

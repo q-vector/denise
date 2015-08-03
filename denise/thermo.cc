@@ -3350,11 +3350,14 @@ Sounding::get_brunt_vaisala_profile_ptr () const
 }
 
 Real_Profile*
-Sounding::get_scorer_profile_ptr (const Real azimuth) const
+Sounding::get_scorer_profile_ptr (const Real azimuth,
+                                  const Real c) const
 {
 
    Real_Profile* scorer_profile_ptr = new Real_Profile ();
    const Real theta = azimuth * M_PI/180;
+   const Real min_p = std::max (get_start_p (), wind_profile.begin ()->first);
+   const Real max_p = std::min (get_end_p (), wind_profile.rbegin ()->first);
 
    for (auto iterator = t_line.begin ();
         iterator != t_line.end (); iterator++)
@@ -3366,8 +3369,10 @@ Sounding::get_scorer_profile_ptr (const Real azimuth) const
       if (next == t_line.end ()) { continue; }
 
       const Real p_0 = prev->first;
+      if (p_0 < min_p) { continue; }
       const Real p_1 = iterator->first;
       const Real p_2 = next->first;
+      if (p_2 > max_p) { continue; }
 
       const Real t_0 = prev->second;
       const Real t_1 = iterator->second;
@@ -3395,9 +3400,11 @@ Sounding::get_scorer_profile_ptr (const Real azimuth) const
 
       typedef Differentiation D;
       const Real dtheta_dz = D::d_1 (theta_0, theta_1, theta_2, z_0, z_1, z_2);
+      const Real d2along_dz2 = D::d2 (along_0, along_1, along_2, z_0, z_1, z_2);
 
-      const Real A = (g / theta_1 * dtheta_dz ) / (along_1 * along_1);
-      const Real B = -D::d2 (along_0, along_1, along_2, z_0, z_1, z_2) / along_1;
+      const Real relative_u = (along_1 - c);
+      const Real A = (g / theta_1 * dtheta_dz ) / (relative_u * relative_u);
+      const Real B = -d2along_dz2 / relative_u;
 
       const Real scorer = A + B;
       scorer_profile_ptr->insert (make_pair (p_1, scorer));
