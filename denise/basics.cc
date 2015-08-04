@@ -432,6 +432,30 @@ Box_2D::contains (const Real x,
    return contains (Integer (rint (x)), Integer (rint (y)));
 }
 
+Index_2D
+Box_2D::get_nw () const
+{
+   return index_2d;
+}
+
+Index_2D
+Box_2D::get_ne () const
+{
+   return Index_2D (index_2d.i + size_2d.i, index_2d.j);
+}
+
+Index_2D
+Box_2D::get_sw () const
+{
+   return Index_2D (index_2d.i, index_2d.j + size_2d.j);
+}
+
+Index_2D
+Box_2D::get_se () const
+{
+   return Index_2D (index_2d.i + size_2d.i, index_2d.j + size_2d.j);
+}
+
 Box_3D::Box_3D (const Size_3D& size_3d)
     : index_3d (0, 0, 0),
        size_3d (size_3d)
@@ -455,6 +479,12 @@ Point_2D::Point_2D (const Real x,
 Point_2D::Point_2D (const complex<Real>& c)
    : x (std::real (c)),
      y (std::imag (c))
+{
+}
+
+Point_2D::Point_2D (const Index_2D& index)
+   : x (Real (index.i)),
+     y (Real (index.j))
 {
 }
 

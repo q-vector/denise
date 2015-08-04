@@ -386,6 +386,18 @@ namespace denise
          contains (const Real x,
                    const Real y) const;
 
+         Index_2D
+         get_nw () const;
+
+         Index_2D
+         get_ne () const;
+
+         Index_2D
+         get_sw () const;
+
+         Index_2D
+         get_se () const;
+
    };
 
    class Box_3D
@@ -421,6 +433,8 @@ namespace denise
                    const Real y = GSL_NAN);
 
          Point_2D (const complex<Real>& c);
+
+         Point_2D (const Index_2D& index_2d);
 
          complex<Real>
          get_complex () const;
