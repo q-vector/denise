@@ -40,19 +40,21 @@ Geodesy::acos (const Real cosine)
 }
 
 void
-Geodesy::spherical_inverse (Journey& journey) const
+Geodesy::spherical_inverse (Real& distance,
+                            Real& azimuth_forward,
+                            Real& azimuth_backward,
+                            const Lat_Long& origin,
+                            const Lat_Long& destination) const
 {
 
-   if (journey.get_origin () == journey.get_destination ())
+   if (origin == destination)
    {
-      journey.set_distance_azimuth (0, GSL_NAN, GSL_NAN);
+      distance = 0;
+      azimuth_forward = GSL_NAN;
+      azimuth_backward = GSL_NAN;
    }
-
    else
    {
-
-      const Lat_Long& origin = journey.get_origin ();
-      const Lat_Long& destination = journey.get_destination ();
 
       const Real phi_o  = origin.latitude * DEGREE_TO_RADIAN;
       const Real phi_d  = destination.latitude * DEGREE_TO_RADIAN;
@@ -74,29 +76,27 @@ Geodesy::spherical_inverse (Journey& journey) const
       if (sdl < 0) { bf = M_2_TIMES_PI - bf; }
       else         { bb = M_2_TIMES_PI - bb; }
 
-
-      const Real distance = d * a;
-      const Real azimuth_forward = bf * RADIAN_TO_DEGREE;
-      const Real azimuth_backward = bb * RADIAN_TO_DEGREE;
-
-      journey.set_distance_azimuth (distance,
-         azimuth_forward, azimuth_backward);
+      distance = d * a;
+      azimuth_forward = bf * RADIAN_TO_DEGREE;
+      azimuth_backward = bb * RADIAN_TO_DEGREE;
 
    }
 
 }
 
 void
-Geodesy::spherical_direct (Journey& journey) const
+Geodesy::spherical_direct (Lat_Long& destination,
+                           Real& azimuth_backward,
+                           const Lat_Long& origin,
+                           const Real distance,
+                           const Real azimuth_forward) const
 {
-
-   const Lat_Long& origin = journey.get_origin ();
 
    const Real phi_o  = origin.latitude * DEGREE_TO_RADIAN;
    const Real lambda_o = origin.longitude * DEGREE_TO_RADIAN;
 
-   const Real d = journey.get_distance () / a;
-   const Real bf = journey.get_azimuth_forward () * DEGREE_TO_RADIAN;
+   const Real d = distance / a;
+   const Real bf = azimuth_forward * DEGREE_TO_RADIAN;
 
    const Real spo = sin (phi_o), cpo = cos (phi_o);
    const Real sd = sin (d), cd = cos (d);
@@ -116,20 +116,19 @@ Geodesy::spherical_direct (Journey& journey) const
    Real bb = Geodesy::acos ((spo - spd * cd) / (sd * cpd));
    if (sin (lambda_o - lambda_d) < 0) { bb = M_2_TIMES_PI - bb; }
 
-   Lat_Long destination;
    destination.latitude = phi_d * RADIAN_TO_DEGREE;
    destination.longitude = lambda_d * RADIAN_TO_DEGREE;
-
-   journey.set_destination_azimuth (destination, bb * RADIAN_TO_DEGREE);
+   azimuth_backward = bb * RADIAN_TO_DEGREE;
 
 }
 
 void
-Geodesy::vincenty_inverse (Journey& journey) const
+Geodesy::vincenty_inverse (Real& distance,
+                           Real& azimuth_forward,
+                           Real& azimuth_backward,
+                           const Lat_Long& origin,
+                           const Lat_Long& destination) const
 {
-
-   const Lat_Long& origin = journey.get_origin ();
-   const Lat_Long& destination = journey.get_destination ();
 
    Real phi_o    = origin.latitude * DEGREE_TO_RADIAN;
    Real lambda_o = origin.longitude * DEGREE_TO_RADIAN;
@@ -146,7 +145,9 @@ Geodesy::vincenty_inverse (Journey& journey) const
        fabs (fabs (lambda_o - lambda_d) - M_2_TIMES_PI) < epsilon_v))
    {
       // Identical points.
-      journey.set_distance_azimuth (0, GSL_NAN, GSL_NAN);
+      distance = 0;
+      azimuth_forward = GSL_NAN;
+      azimuth_backward = GSL_NAN;
       return;
    }
 
@@ -202,24 +203,25 @@ Geodesy::vincenty_inverse (Journey& journey) const
    const Real nautical_miles = ((((4*sy*sy-3) *
       (1-e-e)*cz*d/6 - x) * d/4 + cz) * sy*d + y) * c*a*r;
 
-   const Real distance = nautical_miles;
-   const Real azimuth_forward = fmod (theta_f * RADIAN_TO_DEGREE, 360);
-   const Real azimuth_backward = fmod (theta_b * RADIAN_TO_DEGREE, 360);
-   journey.set_distance_azimuth (distance, azimuth_forward, azimuth_backward);
+   distance = nautical_miles;
+   azimuth_forward = fmod (theta_f * RADIAN_TO_DEGREE, 360);
+   azimuth_backward = fmod (theta_b * RADIAN_TO_DEGREE, 360);
 
 }
           
 void
-Geodesy::vincenty_direct (Journey& journey) const
+Geodesy::vincenty_direct (Lat_Long& destination,
+                          Real& azimuth_backward,
+                          const Lat_Long& origin,
+                          const Real distance,
+                          const Real azimuth_forward) const
 {
-
-   const Lat_Long& origin = journey.get_origin ();
 
    const Real phi_o    = origin.latitude * M_PI/180;
    const Real lambda_o = origin.longitude * M_PI/180;
 
-   const Real s = journey.get_distance ();
-   const Real faz = journey.get_azimuth_forward () * DEGREE_TO_RADIAN;
+   const Real s = distance;
+   const Real faz = azimuth_forward * DEGREE_TO_RADIAN;
 
    const Real r = 1 - f;
    Real tu = r * tan (phi_o);
@@ -271,35 +273,71 @@ Geodesy::vincenty_direct (Journey& journey) const
 
    const Real baz = atan2 (sa, b) + M_PI;
 
-   Lat_Long destination;
    destination.latitude = phi_d * RADIAN_TO_DEGREE;
    destination.longitude = lambda_d * RADIAN_TO_DEGREE;
-
-   journey.set_destination_azimuth (destination,
-      fmod (baz * RADIAN_TO_DEGREE, 360));
+   azimuth_backward = fmod (baz * RADIAN_TO_DEGREE, 360);
 
 }
 
-void
-Geodesy::inverse (Journey& journey) const
+Geodesy::Geodesy (const string& str)
 {
-   if (f == 0) { spherical_inverse (journey); }
-   else        { vincenty_inverse (journey); }
+
+   Geodesy::Model model = SPHERE;
+   const string& s = get_upper_case (str);
+
+        if (s == "AIRY_1930")             { model = AIRY_1930; }
+   else if (s == "MODIFIED_AIRY")         { model = MODIFIED_AIRY; }
+   else if (s == "AUSTRALIAN_NATIONAL")   { model = AUSTRALIAN_NATIONAL; }
+   else if (s == "BESSEL_1841")           { model = BESSEL_1841; }
+   else if (s == "BESSEL_NAMIBIA_1841")   { model = BESSEL_NAMIBIA_1841; }
+   else if (s == "CLARKE_1866")           { model = CLARKE_1866; }
+   else if (s == "CLARKE_1880")           { model = CLARKE_1880; }
+   else if (s == "EVEREST_INDIA_1830")    { model = EVEREST_INDIA_1830; }
+   else if (s == "EVEREST_INDIA_1956")    { model = EVEREST_INDIA_1956; }
+   else if (s == "EVEREST_SABAH")         { model = EVEREST_SABAH; }
+   else if (s == "EVEREST_MALAYSIA_1948") { model = EVEREST_MALAYSIA_1948; }
+   else if (s == "EVEREST_MALAYSIA_1969") { model = EVEREST_MALAYSIA_1969; }
+   else if (s == "MODIFIED_FISCHER_1960") { model = MODIFIED_FISCHER_1960; }
+   else if (s == "GRS_1967")              { model = GRS_1967; }
+   else if (s == "GRS_1980")              { model = GRS_1980; }
+   else if (s == "HELMERT_1906")          { model = HELMERT_1906; }
+   else if (s == "HOUGH_1960")            { model = HOUGH_1960; }
+   else if (s == "INDONESIAN_1974")       { model = INDONESIAN_1974; }
+   else if (s == "INTERNATIONAL_1924")    { model = INTERNATIONAL_1924; }
+   else if (s == "KRASSOVSKY_1940")       { model = KRASSOVSKY_1940; }
+   else if (s == "SOUTH_AMERICAN_1969")   { model = SOUTH_AMERICAN_1969; }
+   else if (s == "WGS60")                 { model = WGS60; }
+   else if (s == "WGS66")                 { model = WGS66; }
+   else if (s == "WGS72")                 { model = WGS72; }
+   else if (s == "WGS84")                 { model = WGS84; }
+
+   set (model, epsilon_v);
+
 }
 
-void
-Geodesy::direct (Journey& journey) const
-{
-   if (f == 0) { spherical_direct (journey); }
-   else        { vincenty_direct (journey); }
-}
-
-Geodesy::Geodesy (const Geodesy_Model geodesy_model,
+Geodesy::Geodesy (const Geodesy::Model model,
                   const Real epsilon_v)
-     : epsilon_v (epsilon_v)
+{
+   set (model, epsilon_v);
+}
+          
+Geodesy::Geodesy (const Real semi_major_axis,
+                  const Real flattening,
+                  const Real epsilon_v)
+             : a (semi_major_axis),
+               f (flattening),
+       epsilon_v (epsilon_v)
+{
+}
+
+void
+Geodesy::set (const Geodesy::Model model,
+              const Real epsilon_v)
 {
 
-   switch (geodesy_model)
+   this->epsilon_v = epsilon_v;
+
+   switch (model)
    {
 
       case AIRY_1930:             a = 6377563.396; f = 1/299.3249646;   break;
@@ -334,15 +372,6 @@ Geodesy::Geodesy (const Geodesy_Model geodesy_model,
    }
 
 }
-          
-Geodesy::Geodesy (const Real semi_major_axis,
-                  const Real flattening,
-                  const Real epsilon_v)
-             : a (semi_major_axis),
-               f (flattening),
-       epsilon_v (epsilon_v)
-{
-}
 
 Real
 Geodesy::get_semi_major_axis () const
@@ -375,43 +404,41 @@ Geodesy::get_epsilon_v () const
 }
 
 void
-Geodesy::complete (Journey& journey) const
+Geodesy::inverse (Real& distance,
+                  Real& azimuth_forward,
+                  Real& azimuth_backward,
+                  const Lat_Long& origin,
+                  const Lat_Long& destination) const
 {
-
-   if (!journey.get_origin ().is_nall () &&
-       !gsl_isnan (journey.get_distance ()) &&
-       !gsl_isnan (journey.get_azimuth_forward ()))
+   if (f == 0)
    {
-      direct (journey);
-      return;
+      spherical_inverse (distance, azimuth_forward,
+         azimuth_backward, origin, destination);
    }
-
-   if (!journey.get_origin ().is_nall () &&
-       !journey.get_destination ().is_nall ())
+   else
    {
-      inverse (journey);
-      return;
+      vincenty_inverse (distance, azimuth_forward,
+         azimuth_backward, origin, destination);
    }
+}
 
-   if (!journey.get_destination ().is_nall () &&
-       !gsl_isnan (journey.get_distance ()) &&
-       !gsl_isnan (journey.get_azimuth_backward ()))
+void
+Geodesy::direct (Lat_Long& destination,
+                 Real& azimuth_backward,
+                 const Lat_Long& origin,
+                 const Real distance, 
+                 const Real azimuth_forward) const
+{
+   if (f == 0)
    {
-      journey.swap ();
-      direct (journey);
-      journey.swap ();
-      return;
+      spherical_direct (destination, azimuth_backward,
+         origin, distance, azimuth_forward);
    }
-
-   if (!journey.get_origin ().is_nall () &&
-       (journey.get_distance () < 1))
+   else
    {
-      journey.set_destination (journey.get_origin ());
-      return;
+      vincenty_direct (destination, azimuth_backward,
+         origin, distance, azimuth_forward);
    }
-
-   throw Exception ("Insufficient info to complete journey.");
-
 }
 
 Real
@@ -419,9 +446,9 @@ Geodesy::get_angle (const Lat_Long& lat_long_a,
                     const Lat_Long& lat_long_b,
                     const Geodesy& geodesy)
 {
-   Journey journey (lat_long_a, lat_long_b);
-   geodesy.complete (journey);
-   return journey.get_distance () / EARTH_RADIUS;
+   Journey::Simple simple_journey (lat_long_a, lat_long_b);
+   simple_journey.complete (geodesy);
+   return simple_journey.get_distance () / EARTH_RADIUS;
 }
 
 Real
@@ -429,9 +456,9 @@ Geodesy::get_distance (const Lat_Long& lat_long_a,
                        const Lat_Long& lat_long_b,
                        const Geodesy& geodesy)
 {
-   Journey journey (lat_long_a, lat_long_b);
-   geodesy.complete (journey);
-   return journey.get_distance ();
+   Journey::Simple simple_journey (lat_long_a, lat_long_b);
+   simple_journey.complete (geodesy);
+   return simple_journey.get_distance ();
 }
 
 Lat_Long
@@ -440,9 +467,9 @@ Geodesy::get_destination (const Lat_Long& origin,
                           const Real azimuth_forward,
                           const Geodesy& geodesy)
 {
-   Journey journey (origin, distance, azimuth_forward);
-   geodesy.complete (journey);
-   return journey.get_destination ();
+   Journey::Simple simple_journey (origin, distance, azimuth_forward);
+   simple_journey.complete (geodesy);
+   return simple_journey.get_destination ();
 }
 
 Real
@@ -450,9 +477,9 @@ Geodesy::get_azimuth_forward (const Lat_Long& origin,
                               const Lat_Long& destination,
                               const Geodesy& geodesy)
 {
-   Journey journey (origin, destination);
-   geodesy.complete (journey);
-   return journey.get_azimuth_forward ();
+   Journey::Simple simple_journey (origin, destination);
+   simple_journey.complete (geodesy);
+   return simple_journey.get_azimuth_forward ();
 }
 
 Real
@@ -460,10 +487,27 @@ Geodesy::get_azimuth_backward (const Lat_Long& origin,
                                const Lat_Long& destination,
                                const Geodesy& geodesy)
 {
-   Journey journey (origin, destination);
-   geodesy.complete (journey);
-   return journey.get_azimuth_backward ();
+   Journey::Simple simple_journey (origin, destination);
+   simple_journey.complete (geodesy);
+   return simple_journey.get_azimuth_backward ();
 }
+
+//void
+//Lat_Long::List::add (const Journey::Simple& simple_journey,
+//                     const Geodesy& geodesy,
+//                     const Real d_distance,
+//                     const Integer max_n)
+//{
+//
+//   const Journey j (simple_journey, geodesy, d_distance, max_n);
+//
+//   for (auto iterator = j.begin (); iterator != j.end (); iterator++)
+//   {
+//      const Lat_Long lat_long (*iterator);
+//      push_back (lat_long);
+//   }
+//
+//}
 
 void
 Lat_Long::List::add (const Journey& journey,
@@ -472,26 +516,10 @@ Lat_Long::List::add (const Journey& journey,
                      const Integer max_n)
 {
 
-   const Multi_Journey mj (journey, geodesy, d_distance, max_n);
+   const Journey& fj = Journey::fine_journey (
+      journey, geodesy, d_distance, max_n);
 
-   for (auto iterator = mj.begin (); iterator != mj.end (); iterator++)
-   {
-      const Lat_Long lat_long (*iterator);
-      push_back (lat_long);
-   }
-
-}
-
-void
-Lat_Long::List::add (const Multi_Journey& multi_journey,
-                     const Geodesy& geodesy,
-                     const Real d_distance,
-                     const Integer max_n)
-{
-
-   const Multi_Journey mj (multi_journey, geodesy, d_distance, max_n);
-
-   for (auto iterator = mj.begin (); iterator != mj.end (); iterator++)
+   for (auto iterator = fj.begin (); iterator != fj.end (); iterator++)
    {
       const Lat_Long lat_long (*iterator);
       push_back (lat_long);
@@ -807,7 +835,7 @@ Location_Set::nearest (const Lat_Long& lat_long) const
 }
 */
 
-Journey::Journey ()
+Journey::Simple::Simple ()
    : Edge (Lat_Long (GSL_NAN, GSL_NAN), Lat_Long (GSL_NAN, GSL_NAN)),
      distance (GSL_NAN),
      azimuth_forward (GSL_NAN),
@@ -815,8 +843,8 @@ Journey::Journey ()
 {
 }
 
-Journey::Journey (const Lat_Long& origin,
-                  const Lat_Long& destination)
+Journey::Simple::Simple (const Lat_Long& origin,
+                         const Lat_Long& destination)
    : Edge (origin, destination),
      distance (GSL_NAN),
      azimuth_forward (GSL_NAN),
@@ -824,20 +852,20 @@ Journey::Journey (const Lat_Long& origin,
 {
 }
 
-Journey::Journey (const Lat_Long& origin,
-                  const Lat_Long& destination,
-                  const Geodesy& geodesy)
+Journey::Simple::Simple (const Lat_Long& origin,
+                         const Lat_Long& destination,
+                         const Geodesy& geodesy)
    : Edge (origin, destination),
      distance (GSL_NAN),
      azimuth_forward (GSL_NAN),
      azimuth_backward (GSL_NAN)
 {
-   geodesy.complete (*this);
+   complete (geodesy);
 }
 
-Journey::Journey (const Lat_Long& origin,
-                  const Real distance,
-                  const Real azimuth_forward)
+Journey::Simple::Simple (const Lat_Long& origin,
+                         const Real distance,
+                         const Real azimuth_forward)
    : Edge (origin, Point_2D (GSL_NAN, GSL_NAN)),
      distance (distance),
      azimuth_forward (azimuth_forward),
@@ -845,28 +873,77 @@ Journey::Journey (const Lat_Long& origin,
 {
 }
 
-Journey::Journey (const Lat_Long& origin,
-                  const Real distance,
-                  const Real azimuth_forward,
-                  const Geodesy& geodesy)
+Journey::Simple::Simple (const Lat_Long& origin,
+                         const Real distance,
+                         const Real azimuth_forward,
+                         const Geodesy& geodesy)
    : Edge (origin, Point_2D (GSL_NAN, GSL_NAN)),
      distance (distance),
      azimuth_forward (azimuth_forward),
      azimuth_backward (GSL_NAN)
 {
-   geodesy.complete (*this);
+   complete (geodesy);
 }
 
-Journey::Journey (const Journey& journey)
-   : Edge (journey),
-     distance (journey.distance),
-     azimuth_forward (journey.azimuth_forward),
-     azimuth_backward (journey.azimuth_backward)
+Journey::Simple::Simple (const Journey::Simple& simple_journey)
+   : Edge (simple_journey),
+     distance (simple_journey.distance),
+     azimuth_forward (simple_journey.azimuth_forward),
+     azimuth_backward (simple_journey.azimuth_backward)
 {
 }
 
 void
-Journey::standardize (const Lat_Long_Genre lat_long_genre)
+Journey::Simple::complete (const Geodesy& geodesy)
+{
+
+   if (!get_origin ().is_nall () &&
+       !gsl_isnan (distance) &&
+       !gsl_isnan (azimuth_forward))
+   {
+      Lat_Long destination;
+      geodesy.direct (destination, azimuth_backward,
+         get_origin (), distance, azimuth_forward);
+      Edge::point_b.x = destination.latitude;
+      Edge::point_b.y = destination.longitude;
+      return;
+   }
+
+   if (!get_origin ().is_nall () &&
+       !get_destination ().is_nall ())
+   {
+      geodesy.inverse (distance, azimuth_forward,
+         azimuth_backward, get_origin (), get_destination ());
+      return;
+   }
+
+   if (!get_destination ().is_nall () &&
+       !gsl_isnan (distance) &&
+       !gsl_isnan (azimuth_backward))
+   {
+      Lat_Long origin;
+      geodesy.direct (origin, azimuth_forward,
+         get_destination (), distance, azimuth_backward);
+      Edge::point_a.x = origin.latitude;
+      Edge::point_a.y = origin.longitude;
+      return;
+   }
+
+   if (!get_origin ().is_nall () &&
+       (distance < 1))
+   {
+      Edge::point_b = Edge::point_a;
+      azimuth_forward = GSL_NAN;
+      azimuth_backward = GSL_NAN;
+      return;
+   }
+
+   throw Exception ("Insufficient info to complete simple journey.");
+
+}
+
+void
+Journey::Simple::standardize (const Lat_Long_Genre lat_long_genre)
 {
 
    Lat_Long origin (point_a);
@@ -881,7 +958,7 @@ Journey::standardize (const Lat_Long_Genre lat_long_genre)
 }
 
 void
-Journey::standardize (const Real standard_longitude)
+Journey::Simple::standardize (const Real standard_longitude)
 {
 
    Lat_Long origin (point_a);
@@ -896,7 +973,7 @@ Journey::standardize (const Real standard_longitude)
 }
 
 string
-Journey::get_cardinal_direction (const Real azimuth)
+Journey::Simple::get_cardinal_direction (const Real azimuth)
 {
 
    const Integer a = Integer (round (azimuth / 22.5)) % 16;
@@ -926,30 +1003,30 @@ Journey::get_cardinal_direction (const Real azimuth)
 }
 
 void
-Journey::swap ()
+Journey::Simple::swap ()
 {
    Edge::swap ();
    std::swap (azimuth_forward, azimuth_backward);
 }
 
 void
-Journey::translate (const Real distance,
-                    const Real azimuth)
+Journey::Simple::translate (const Real distance,
+                            const Real azimuth)
 {
 
    const Geodesy geodesy;
-   const Journey journey_a (point_a, distance, azimuth, geodesy);
-   const Journey journey_b (point_b, distance, azimuth, geodesy);
+   const Journey::Simple simple_a (point_a, distance, azimuth, geodesy);
+   const Journey::Simple simple_b (point_b, distance, azimuth, geodesy);
 
-   point_a = journey_a.get_destination ();
-   point_b = journey_b.get_destination ();
+   point_a = simple_a.get_destination ();
+   point_b = simple_b.get_destination ();
 
-   geodesy.complete (*this);
+   complete (geodesy);
 
 }
 
 void
-Journey::set_origin (const Lat_Long& origin)
+Journey::Simple::set_origin (const Lat_Long& origin)
 {
    this->point_a = origin;
    this->distance = GSL_NAN;
@@ -958,7 +1035,7 @@ Journey::set_origin (const Lat_Long& origin)
 }
 
 void
-Journey::set_destination (const Lat_Long& destination)
+Journey::Simple::set_destination (const Lat_Long& destination)
 {
    this->point_b = destination;
    this->distance = GSL_NAN;
@@ -967,17 +1044,17 @@ Journey::set_destination (const Lat_Long& destination)
 }
 
 void
-Journey::set_destination_azimuth (const Lat_Long& destination,
-                                  const Real azimuth_backward)
+Journey::Simple::set_destination_azimuth (const Lat_Long& destination,
+                                          const Real azimuth_backward)
 {
    this->point_b = destination;
    this->azimuth_backward = azimuth_backward;
 }
 
 void
-Journey::set_distance_azimuth (const Real distance,
-                               const Real azimuth_forward,
-                               const Real azimuth_backward)
+Journey::Simple::set_distance_azimuth (const Real distance,
+                                       const Real azimuth_forward,
+                                       const Real azimuth_backward)
 {
    this->distance = distance;
    this->azimuth_forward = azimuth_forward;
@@ -985,57 +1062,57 @@ Journey::set_distance_azimuth (const Real distance,
 }
 
 Lat_Long
-Journey::get_origin () const
+Journey::Simple::get_origin () const
 {
    return Lat_Long (point_a);
 }
 
 Lat_Long
-Journey::get_destination () const
+Journey::Simple::get_destination () const
 {
    return Lat_Long (point_b);
 }
 
 const Real&
-Journey::get_distance () const
+Journey::Simple::get_distance () const
 {
    return distance;
 }
    
 const Real&
-Journey::get_azimuth_forward () const
+Journey::Simple::get_azimuth_forward () const
 {
    return azimuth_forward;
 }
    
 const Real&
-Journey::get_azimuth_backward () const
+Journey::Simple::get_azimuth_backward () const
 {
    return azimuth_backward;
 }
 
 Lat_Long
-Journey::get_middle_lat_long (const Geodesy& geodesy)
+Journey::Simple::get_middle_lat_long (const Geodesy& geodesy)
 {
    return get_lat_long (0.5, geodesy);
 }
 
 Lat_Long
-Journey::get_lat_long (const Real fraction,
-                       const Geodesy& geodesy)
+Journey::Simple::get_lat_long (const Real fraction,
+                               const Geodesy& geodesy)
 {
-   geodesy.complete (*this);
+   complete (geodesy);
    const Lat_Long& origin = get_origin ();
-   const Journey j (origin, distance/2, azimuth_forward, geodesy);
-   return j.get_destination ();
+   const Journey::Simple sj (origin, distance/2, azimuth_forward, geodesy);
+   return sj.get_destination ();
 }
 
 void
-Journey::fill_lat_long_list (list<Lat_Long>& lat_long_list,
-                             const Real approx_d,
-                             const Integer max_n_per_leg,
-                             const bool first_leg,
-                             const Geodesy& geodesy) const
+Journey::Simple::fill_lat_long_list (list<Lat_Long>& lat_long_list,
+                                     const Real approx_d,
+                                     const Integer max_n_per_leg,
+                                     const bool first_leg,
+                                     const Geodesy& geodesy) const
 {
 
    Integer n = Integer (round (distance / (approx_d))) + 1;
@@ -1046,10 +1123,10 @@ Journey::fill_lat_long_list (list<Lat_Long>& lat_long_list,
    for (Integer i = (first_leg ? 0 : 1); i < n; i++)
    {
 
-      Journey j (get_origin (), i * d, azimuth_forward);
-      geodesy.complete (j);
+      Journey::Simple sj (get_origin (), i * d, azimuth_forward);
+      sj.complete (geodesy);
 
-      const Lat_Long& ll = j.get_destination ();
+      const Lat_Long& ll = sj.get_destination ();
       lat_long_list.push_back (ll);
 
    }
@@ -1057,48 +1134,49 @@ Journey::fill_lat_long_list (list<Lat_Long>& lat_long_list,
 }
 
 list<Lat_Long>*
-Journey::get_lat_long_list_ptr (const Real approx_d,
-                                const Integer max_n_per_leg,
-                                const Geodesy& geodesy) const
+Journey::Simple::get_lat_long_list_ptr (const Real approx_d,
+                                        const Integer max_n_per_leg,
+                                        const Geodesy& geodesy) const
 {
    list<Lat_Long>* lat_long_list_ptr = new list<Lat_Long>;
-   fill_lat_long_list (*lat_long_list_ptr, approx_d, max_n_per_leg, true, geodesy);
+   fill_lat_long_list (*lat_long_list_ptr, approx_d,
+      max_n_per_leg, true, geodesy);
    return lat_long_list_ptr;
 }
 
-Multi_Journey::Multi_Journey (const bool closed)
+Journey::Journey (const bool closed)
    : Simple_Polyline (closed)
 {
 }
 
-Multi_Journey::Multi_Journey (const Simple_Polyline& simple_polyline)
+Journey::Journey (const Simple_Polyline& simple_polyline)
    : Simple_Polyline (simple_polyline)
 {
 }
 
-Multi_Journey::Multi_Journey (const Journey& journey,
-                              const Geodesy& geodesy)
+Journey::Journey (const Journey::Simple& simple_journey,
+                  const Geodesy& geodesy)
 {
 
-   Journey j (journey);
-   geodesy.complete (j);
+   Journey::Simple sj (simple_journey);
+   sj.complete (geodesy);
 
-   push_back (Point_2D (j.get_origin ()));
-   push_back (Point_2D (j.get_destination ()));
+   push_back (Point_2D (sj.get_origin ()));
+   push_back (Point_2D (sj.get_destination ()));
 
 }
 
-Multi_Journey::Multi_Journey (const Multi_Journey& multi_journey)
+Journey::Journey (const Journey& journey)
 {
-   for (auto iterator = multi_journey.begin ();
-        iterator != multi_journey.end (); iterator++)
+   for (auto iterator = journey.begin ();
+        iterator != journey.end (); iterator++)
    {
       const Lat_Long lat_long (*iterator);
       push_back (Point_2D (lat_long));
    }
 }
 
-Multi_Journey::Multi_Journey (const string& str)
+Journey::Journey (const string& str)
 {
 
    const Tokens tokens (str, "@");
@@ -1112,19 +1190,21 @@ Multi_Journey::Multi_Journey (const string& str)
 
 }
 
-Multi_Journey::Multi_Journey (const Journey& journey,
-                              const Geodesy& geodesy,
-                              const Real d_distance,
-                              const Integer max_n)
-   : Simple_Polyline (false)
+Journey
+Journey::fine_journey (const Journey::Simple& simple_journey,
+                       const Geodesy& geodesy,
+                       const Real d_distance,
+                       const Integer max_n)
 {
 
-   Journey j (journey);
-   geodesy.complete (j);
+   Journey fine_journey (false);
 
-   const Lat_Long& origin = j.get_origin ();
-   const Real distance = j.get_distance ();
-   const Real azimuth_forward = j.get_azimuth_forward ();
+   Journey::Simple sj (simple_journey);
+   sj.complete (geodesy);
+
+   const Lat_Long& origin = sj.get_origin ();
+   const Real distance = sj.get_distance ();
+   const Real azimuth_forward = sj.get_azimuth_forward ();
 
    Integer n = Integer (round (distance / (d_distance))) + 1;
    if (n < 2) { n = 2; } else if (n > max_n) { n = max_n; }
@@ -1132,36 +1212,40 @@ Multi_Journey::Multi_Journey (const Journey& journey,
 
    for (Integer i = 0; i < n; i++)
    {
-      Journey jj (origin, i * d, azimuth_forward);
-      geodesy.complete (jj);
-      push_back (jj.get_destination ());
+      Journey::Simple sjj (origin, i * d, azimuth_forward);
+      sjj.complete (geodesy);
+      fine_journey.push_back (sjj.get_destination ());
    }
+
+   return fine_journey;
 
 }
 
-Multi_Journey::Multi_Journey (const Multi_Journey& multi_journey,
-                              const Geodesy& geodesy,
-                              const Real d_distance,
-                              const Integer max_n)
-   : Simple_Polyline (multi_journey.closed)
+Journey
+Journey::fine_journey (const Journey& journey,
+                       const Geodesy& geodesy,
+                       const Real d_distance,
+                       const Integer max_n)
 {
 
-   for (Multi_Journey::const_iterator iterator = multi_journey.begin ();
-        iterator != multi_journey.end (); iterator++)
+   Journey fine_journey (journey.closed);
+
+   for (Journey::const_iterator iterator = journey.begin ();
+        iterator != journey.end (); iterator++)
    {
 
       // Skip the node if this is the last node of an unclosed multi_journey
-      if (!multi_journey.closed && multi_journey.is_last (iterator))
+      if (!journey.closed && journey.is_last (iterator))
       {
          continue;
       }
 
-      Journey journey = multi_journey.get_journey (iterator);
-      geodesy.complete (journey);
+      Journey::Simple simple_journey = journey.get_simple_journey (iterator);
+      simple_journey.complete (geodesy);
 
-      const Lat_Long& origin = journey.get_origin ();
-      const Real distance = journey.get_distance ();
-      const Real azimuth_forward = journey.get_azimuth_forward ();
+      const Lat_Long& origin = simple_journey.get_origin ();
+      const Real distance = simple_journey.get_distance ();
+      const Real azimuth_forward = simple_journey.get_azimuth_forward ();
 
       Integer n = Integer (round (distance / (d_distance))) + 1;
       if (n < 2) { n = 2; } else if (n > max_n) { n = max_n; }
@@ -1172,25 +1256,27 @@ Multi_Journey::Multi_Journey (const Multi_Journey& multi_journey,
 
          if (i == 0)
          {
-            if (iterator == multi_journey.begin ()) { push_back (*(iterator)); }
+            const bool is_begin = (iterator == journey.begin ());
+            if (is_begin) { fine_journey.push_back (*(iterator)); }
             continue;
          }
 
-         Journey j (origin, i * d, azimuth_forward);
-         geodesy.complete (j);
-         push_back (j.get_destination ());
+         Journey::Simple sj (origin, i * d, azimuth_forward);
+         sj.complete (geodesy);
+         fine_journey.push_back (sj.get_destination ());
 
       }
 
    }
 
+   return fine_journey;
+
 }
 
 void
-Multi_Journey::standardize (const Lat_Long_Genre lat_long_genre)
+Journey::standardize (const Lat_Long_Genre lat_long_genre)
 {
-   for (Multi_Journey::iterator iterator = begin ();
-        iterator != end (); iterator++)
+   for (Journey::iterator iterator = begin (); iterator != end (); iterator++)
    {
       Point_2D& point = *(iterator);
       Lat_Long lat_long (point);
@@ -1200,10 +1286,9 @@ Multi_Journey::standardize (const Lat_Long_Genre lat_long_genre)
 }
 
 void
-Multi_Journey::standardize (const Real standard_longitude)
+Journey::standardize (const Real standard_longitude)
 {
-   for (Multi_Journey::iterator iterator = begin ();
-        iterator != end (); iterator++)
+   for (Journey::iterator iterator = begin (); iterator != end (); iterator++)
    {
       Point_2D& point = *(iterator);
       Lat_Long lat_long (point);
@@ -1213,85 +1298,84 @@ Multi_Journey::standardize (const Real standard_longitude)
 }
 
 void
-Multi_Journey::translate (const Real distance,
-                          const Real azimuth)
+Journey::translate (const Real distance,
+                    const Real azimuth)
 {
 
    const Geodesy geodesy;
 
-   for (Multi_Journey::iterator iterator = begin ();
-        iterator != end (); iterator++)
+   for (Journey::iterator iterator = begin (); iterator != end (); iterator++)
    {
       Point_2D& point = *(iterator);
-      const Journey journey (point, distance, azimuth, geodesy);
-      point = journey.get_destination ();
+      const Journey::Simple simple_journey (point, distance, azimuth, geodesy);
+      point = simple_journey.get_destination ();
    }
 
 }
 
-Journey
-Multi_Journey::get_journey (const Real x,
-                            const Geodesy& geodesy) const
+Journey::Simple
+Journey::get_simple_journey (const Real x,
+                             const Geodesy& geodesy) const
 {
 
    if (x < 0) { throw Exception ("Before Lat Point"); }
    Real distance = 0;
 
-   for (Multi_Journey::const_iterator i = begin (); i != end (); i++)
+   for (Journey::const_iterator i = begin (); i != end (); i++)
    {
       if (!closed && is_last (i)) { throw Exception ("Beyond Lat Point"); }
-      Journey journey = get_journey (i);
-      geodesy.complete (journey);
-      distance += journey.get_distance ();
-      if (x < distance) { return journey; }
+      Journey::Simple simple_journey = get_simple_journey (i);
+      simple_journey.complete (geodesy);
+      distance += simple_journey.get_distance ();
+      if (x < distance) { return simple_journey; }
    }
 
 }
 
-Journey
-Multi_Journey::get_journey (Multi_Journey::iterator iterator) const
+Journey::Simple
+Journey::get_simple_journey (Journey::iterator iterator) const
 {
    if (is_last (iterator))
    {
-      if (closed) { return Journey (*(iterator), *(begin ())); }
-      else { throw Exception ("Last Node in Multi_Journey"); }
+      if (closed) { return Journey::Simple (*(iterator), *(begin ())); }
+      else { throw Exception ("Last Node in Journey"); }
    }
    else
    {
-      Multi_Journey::iterator next = iterator;
-      return Journey (*(iterator), *(++next));
+      Journey::iterator next = iterator;
+      return Journey::Simple (*(iterator), *(++next));
    }
 }
 
-Journey
-Multi_Journey::get_journey (Multi_Journey::const_iterator iterator) const
+Journey::Simple
+Journey::get_simple_journey (Journey::const_iterator iterator) const
 {
    if (is_last (iterator))
    {
-      if (closed) { return Journey (*(iterator), *(begin ())); }
-      else { throw Exception ("Last Node in Multi_Journey"); }
+      if (closed) { return Journey::Simple (*(iterator), *(begin ())); }
+      else { throw Exception ("Last Node in Journey"); }
    }
    else
    {
-      Multi_Journey::const_iterator next = iterator;
-      return Journey (*(iterator), *(++next));
+      Journey::const_iterator next = iterator;
+      return Journey::Simple (*(iterator), *(++next));
    }
 }
 
 Real
-Multi_Journey::get_distance (const Geodesy& geodesy) const
+Journey::get_distance (const Geodesy& geodesy) const
 {
 
    if (size () < 2) { return GSL_NAN; }
 
    Real distance = 0;
 
-   for (Multi_Journey::const_iterator i = begin (); i != end (); i++)
+   for (Journey::const_iterator i = begin (); i != end (); i++)
    {
       if (!closed && is_last (i)) { continue; }
-      Journey journey = get_journey (i);
-      geodesy.complete (journey);
-      distance += journey.get_distance ();
+      Journey::Simple simple_journey = get_simple_journey (i);
+      simple_journey.complete (geodesy);
+      distance += simple_journey.get_distance ();
    }
 
    return distance;
@@ -1299,7 +1383,7 @@ Multi_Journey::get_distance (const Geodesy& geodesy) const
 }
 
 Tuple
-Multi_Journey::get_tuple_x (const Geodesy& geodesy) const
+Journey::get_tuple_x (const Geodesy& geodesy) const
 {
 
    Tuple tuple_x;
@@ -1307,12 +1391,12 @@ Multi_Journey::get_tuple_x (const Geodesy& geodesy) const
 
    Real distance = 0;
 
-   for (Multi_Journey::const_iterator i = begin (); i != end (); i++)
+   for (Journey::const_iterator i = begin (); i != end (); i++)
    {
       if (!closed && is_last (i)) { continue; }
-      Journey journey = get_journey (i);
-      geodesy.complete (journey);
-      distance += journey.get_distance ();
+      Journey::Simple simple_journey = get_simple_journey (i);
+      simple_journey.complete (geodesy);
+      distance += simple_journey.get_distance ();
       tuple_x.push_back (distance);
    }
 
@@ -1321,25 +1405,25 @@ Multi_Journey::get_tuple_x (const Geodesy& geodesy) const
 }
 
 Lat_Long
-Multi_Journey::get_lat_long (const Real x,
-                             const Geodesy& geodesy) const
+Journey::get_lat_long (const Real x,
+                       const Geodesy& geodesy) const
 {
 
    Real distance = 0;
    if (x < 0) { return Lat_Long (GSL_NAN, GSL_NAN); }
 
-   for (Multi_Journey::const_iterator i = begin (); i != end (); i++)
+   for (Journey::const_iterator i = begin (); i != end (); i++)
    {
 
       if (!closed && is_last (i)) { continue; }
-      Journey journey = get_journey (i);
-      geodesy.complete (journey);
-      const Real d_distance = journey.get_distance ();
+      Journey::Simple simple_journey = get_simple_journey (i);
+      simple_journey.complete (geodesy);
+      const Real d_distance = simple_journey.get_distance ();
 
       if (x >= distance && x <= distance + d_distance)
       {
-         const Real azimuth = journey.get_azimuth_forward ();
-         const Lat_Long& origin = journey.get_origin ();
+         const Real azimuth = simple_journey.get_azimuth_forward ();
+         const Lat_Long& origin = simple_journey.get_origin ();
          return geodesy.get_destination (origin, x - distance, azimuth);
       }
 
@@ -1352,15 +1436,15 @@ Multi_Journey::get_lat_long (const Real x,
 }
 
 Lat_Long::List
-Multi_Journey::get_lat_long_list (const Geodesy& geodesy,
-                                  const Real d_distance,
-                                  const Integer max_n) const
+Journey::get_lat_long_list (const Geodesy& geodesy,
+                            const Real d_distance,
+                            const Integer max_n) const
 {
 
    Lat_Long::List lat_long_list;
-   Multi_Journey mj (*this, d_distance, max_n);
+   const Journey& fj = Journey::fine_journey (*this, d_distance, max_n);
 
-   for (auto i = begin (); i != end (); i++)
+   for (auto i = fj.begin (); i != fj.end (); i++)
    {
       const Lat_Long lat_long (*i);
       lat_long_list.push_back (lat_long);
@@ -1371,81 +1455,82 @@ Multi_Journey::get_lat_long_list (const Geodesy& geodesy,
 }
 
 Real
-Multi_Journey::get_azimuth_forward (const Real x,
-                                    const Geodesy& geodesy) const
+Journey::get_azimuth_forward (const Real x,
+                              const Geodesy& geodesy) const
 {
    const Lat_Long lat_long = get_lat_long (x, geodesy);
-   const Lat_Long& destination = get_journey (x, geodesy).get_destination ();
+   const Lat_Long& destination = get_simple_journey (x,
+      geodesy).get_destination ();
    return Geodesy::get_azimuth_forward (lat_long, destination, geodesy);
 }
 
 Real
-Multi_Journey::get_azimuth_forward (Multi_Journey::const_iterator iterator,
-                                    const Geodesy& geodesy) const
+Journey::get_azimuth_forward (Journey::const_iterator iterator,
+                              const Geodesy& geodesy) const
 {
 
-   if (size () < 2) { throw Exception ("Multi_Journey less than 2 nodes"); }
+   if (size () < 2) { throw Exception ("Journey less than 2 nodes"); }
 
    if (is_last (iterator))
    {
       if (closed)
       {
-         const Journey journey (*(iterator), front (), geodesy);
-         return journey.get_azimuth_forward ();
+         const Journey::Simple simple_journey (*(iterator), front (), geodesy);
+         return simple_journey.get_azimuth_forward ();
       }
       else
       {
-         Multi_Journey::const_iterator prev = iterator;
+         Journey::const_iterator prev = iterator;
          prev--;
-         const Journey journey (*(prev), *(iterator), geodesy);
-         return modulo ((journey.get_azimuth_backward () + 180), 360);
+         const Journey::Simple simple_journey (*(prev), *(iterator), geodesy);
+         return modulo ((simple_journey.get_azimuth_backward () + 180), 360);
       }
    }
    else
    {
-      Multi_Journey::const_iterator next = iterator;
+      Journey::const_iterator next = iterator;
       next++;
-      const Journey journey (*(iterator), *(next), geodesy);
-      return journey.get_azimuth_forward ();
+      const Journey::Simple simple_journey (*(iterator), *(next), geodesy);
+      return simple_journey.get_azimuth_forward ();
    }
 
 }
 
 Real
-Multi_Journey::get_azimuth_forward (Multi_Journey::iterator iterator,
-                                    const Geodesy& geodesy) const
+Journey::get_azimuth_forward (Journey::iterator iterator,
+                              const Geodesy& geodesy) const
 {
 
-   if (size () < 2) { throw Exception ("Multi_Journey not long enough"); }
+   if (size () < 2) { throw Exception ("Journey not long enough"); }
 
    if (is_last (iterator))
    {
       if (closed)
       {
-         const Journey journey (*(iterator), front (), geodesy);
-         return journey.get_azimuth_forward ();
+         const Journey::Simple simple_journey (*(iterator), front (), geodesy);
+         return simple_journey.get_azimuth_forward ();
       }
       else
       {
-         Multi_Journey::iterator prev = iterator;
+         Journey::iterator prev = iterator;
          prev--;
-         const Journey journey (*(prev), *(iterator), geodesy);
-         return modulo ((journey.get_azimuth_backward () + 180), 360);
+         const Journey::Simple simple_journey (*(prev), *(iterator), geodesy);
+         return modulo ((simple_journey.get_azimuth_backward () + 180), 360);
       }
    }
    else
    {
-      Multi_Journey::iterator next = iterator;
+      Journey::iterator next = iterator;
       next++;
-      const Journey journey (*(iterator), *(next), geodesy);
-      return journey.get_azimuth_forward ();
+      const Journey::Simple simple_journey (*(iterator), *(next), geodesy);
+      return simple_journey.get_azimuth_forward ();
    }
 
 }
 
 void
-Multi_Journey::cairo (const RefPtr<Context> cr,
-                      const Transform_2D& transform) const
+Journey::cairo (const RefPtr<Context> cr,
+                const Transform_2D& transform) const
 {
 
    const Geodesy geodesy;
@@ -1456,8 +1541,8 @@ Multi_Journey::cairo (const RefPtr<Context> cr,
    if (distance < 1000e3) { d_distance = 50e3; }
    if (distance < 400e3) { d_distance = 20e3; }
    if (distance < 200e3) { d_distance = 10e3; }
-   Multi_Journey multi_journey (*this, geodesy, d_distance);
-   multi_journey.standardize (LAT_LONG_PACIFIC);
+   Journey fine_journey = Journey::fine_journey (*this, geodesy, d_distance);
+   fine_journey.standardize (LAT_LONG_PACIFIC);
 
    const Real node_size = 16;
    const Color& bg_color = Color::hsb (0.167, 0.2, 0.5, 0.7);
@@ -1465,8 +1550,8 @@ Multi_Journey::cairo (const RefPtr<Context> cr,
 
    // Simple_Polyline is needed because it is "curved"
    Simple_Polyline simple_polyline;
-   for (Multi_Journey::const_iterator iterator = multi_journey.begin ();
-        iterator != multi_journey.end (); iterator++)
+   for (Journey::const_iterator iterator = fine_journey.begin ();
+        iterator != fine_journey.end (); iterator++)
    {
       const Lat_Long& ll = *(iterator);
       const Point_2D& p = transform.transform (ll);
@@ -1517,19 +1602,19 @@ Multi_Journey::cairo (const RefPtr<Context> cr,
       cr->save ();
       cr->set_font_size (12);
 
-      Journey journey = this->get_journey (i);
-      geodesy.complete (journey);
+      Journey::Simple simple_journey = this->get_simple_journey (i);
+      simple_journey.complete (geodesy);
 
-      const Real distance = journey.get_distance ();
-      const Lat_Long& origin = journey.get_origin ();
-      const Lat_Long& destination = journey.get_destination ();
+      const Real distance = simple_journey.get_distance ();
+      const Lat_Long& origin = simple_journey.get_origin ();
+      const Lat_Long& destination = simple_journey.get_destination ();
       const Point_2D& origin_point = transform.transform (origin);
       const Point_2D& destination_point = transform.transform (destination);
       const Real dx = destination_point.x - origin_point.x;
       const Real dy = destination_point.y - origin_point.y;
       const Real theta = atan (dy / dx);
 
-      Lat_Long ll = journey.get_middle_lat_long (geodesy);
+      Lat_Long ll = simple_journey.get_middle_lat_long (geodesy);
       ll.standardize (LAT_LONG_PACIFIC);
 
       const Point_2D& p = transform.transform (ll);
@@ -1548,36 +1633,37 @@ Multi_Journey::cairo (const RefPtr<Context> cr,
 
 }
 
-Multi_Journey::iterator
-Multi_Journey::get_iterator (const Transform_2D& transform,
-                             const Point_2D& point_2d,
-                             const Geodesy& geodesy,
-                             const Real threshold,
-                             const Real standard_longitude,
-                             const Real d_distance,
-                             const Integer max_n)
+Journey::iterator
+Journey::get_iterator (const Transform_2D& transform,
+                       const Point_2D& point_2d,
+                       const Geodesy& geodesy,
+                       const Real threshold,
+                       const Real standard_longitude,
+                       const Real d_distance,
+                       const Integer max_n)
 {
 
    Point_2D p_a, p_b;
 
-   for (auto i = begin (); i != end (); i++)
+   for (auto iterator_i = begin (); iterator_i != end (); iterator_i++)
    {
 
-      if (!closed && is_last (i)) { continue; }
+      if (!closed && is_last (iterator_i)) { continue; }
 
-      Journey journey = get_journey (i);
-      Multi_Journey mj (journey, geodesy, d_distance, max_n);
+      Journey::Simple simple_journey = get_simple_journey (iterator_i);
+      const Journey fj = Journey::fine_journey (
+         simple_journey, geodesy, d_distance, max_n);
 
-      for (auto j = mj.begin (); j != mj.end (); j++)
+      for (auto iterator_j = fj.begin (); iterator_j != fj.end (); iterator_j++)
       {
 
-         if (!mj.closed && mj.is_last (j)) { continue; }
+         if (!fj.closed && fj.is_last (iterator_j)) { continue; }
 
          // This is original,... but should be wrong!
-         //Journey jj = get_journey (j);
-         Journey jj = mj.get_journey (j);
-         Lat_Long ll_a = jj.get_origin ();
-         Lat_Long ll_b = jj.get_destination ();
+         //Journey::Simple sjj = get_simple_journey (iterator_j);
+         Journey::Simple sjj = fj.get_simple_journey (iterator_j);
+         Lat_Long ll_a = sjj.get_origin ();
+         Lat_Long ll_b = sjj.get_destination ();
 
          ll_a.standardize (standard_longitude);
          ll_b.standardize (standard_longitude);
@@ -1587,7 +1673,7 @@ Multi_Journey::get_iterator (const Transform_2D& transform,
 
          if (Edge::distance (p_a, p_b, point_2d) < threshold)
          {
-            return i;
+            return iterator_i;
          }
 
       }
@@ -1598,36 +1684,37 @@ Multi_Journey::get_iterator (const Transform_2D& transform,
 
 }
 
-Multi_Journey::const_iterator
-Multi_Journey::get_iterator (const Transform_2D& transform,
-                             const Point_2D& point_2d,
-                             const Geodesy& geodesy,
-                             const Real threshold,
-                             const Real standard_longitude,
-                             const Real d_distance,
-                             const Integer max_n) const
+Journey::const_iterator
+Journey::get_iterator (const Transform_2D& transform,
+                       const Point_2D& point_2d,
+                       const Geodesy& geodesy,
+                       const Real threshold,
+                       const Real standard_longitude,
+                       const Real d_distance,
+                       const Integer max_n) const
 {
 
    Point_2D p_a, p_b;
 
-   for (auto i = begin (); i != end (); i++)
+   for (auto iterator_i = begin (); iterator_i != end (); iterator_i++)
    {
 
-      if (!closed && is_last (i)) { continue; }
+      if (!closed && is_last (iterator_i)) { continue; }
 
-      Journey journey = get_journey (i);
-      Multi_Journey mj (journey, geodesy, d_distance, max_n);
+      Journey::Simple simple_journey = get_simple_journey (iterator_i);
+      const Journey fj = Journey::fine_journey (
+         simple_journey, geodesy, d_distance, max_n);
 
-      for (auto j = mj.begin (); j != mj.end (); j++)
+      for (auto iterator_j = fj.begin (); iterator_j != fj.end (); iterator_j++)
       {
 
-         if (!mj.closed && mj.is_last (j)) { continue; }
+         if (!fj.closed && fj.is_last (iterator_j)) { continue; }
 
          // This is original,... but should be wrong!
-         //Journey jj = get_journey (j);
-         Journey jj = mj.get_journey (j);
-         Lat_Long ll_a = jj.get_origin ();
-         Lat_Long ll_b = jj.get_destination ();
+         //Journey::Simple sjj = get_simple_journey (iterator_j);
+         Journey::Simple sjj = fj.get_simple_journey (iterator_j);
+         Lat_Long ll_a = sjj.get_origin ();
+         Lat_Long ll_b = sjj.get_destination ();
 
          ll_a.standardize (standard_longitude);
          ll_b.standardize (standard_longitude);
@@ -1637,7 +1724,7 @@ Multi_Journey::get_iterator (const Transform_2D& transform,
 
          if (Edge::distance (p_a, p_b, point_2d) < threshold)
          {
-            return i;
+            return iterator_i;
          }
 
       }
@@ -1648,18 +1735,18 @@ Multi_Journey::get_iterator (const Transform_2D& transform,
 
 }
 
-Multi_Journey::iterator
-Multi_Journey::implant (const Transform_2D& transform,
-                        const Point_2D& point_2d,
-                        const Geodesy& geodesy, 
-                        const Real threshold,
-                        const Real standard_longitude,
-                        const Real d_distance, 
-                        const Integer max_n)
+Journey::iterator
+Journey::implant (const Transform_2D& transform,
+                  const Point_2D& point_2d,
+                  const Geodesy& geodesy, 
+                  const Real threshold,
+                  const Real standard_longitude,
+                  const Real d_distance, 
+                  const Integer max_n)
 {
 
-   // if point is not near existing Multi_Journey
-   Multi_Journey::iterator iterator = get_iterator (transform,
+   // if point is not near existing Journey
+   Journey::iterator iterator = get_iterator (transform,
       point_2d, geodesy, threshold, standard_longitude, d_distance, max_n);
    if (iterator == end ()) { return iterator; }
 
@@ -1668,6 +1755,7 @@ Multi_Journey::implant (const Transform_2D& transform,
 
 }
 
+/*
 Journey_List::Journey_List (const Lat_Long& lat_long)
    : geodesy (SPHERE)
 {
@@ -1738,6 +1826,7 @@ Journey_List::get_lat_long_list_ptr (const Real approx_d,
    return lat_long_list_ptr;
 
 }
+*/
 
 pair<string, Lat_Long>
 Geodetic_Attractor::nearest (const Lat_Long& lat_long) const
@@ -1774,8 +1863,7 @@ Range_Circle::Range_Circle (const Lat_Long& lat_long,
                             const Real range,
                             const Real standard_longitude,
                             const Integer n,
-                            const Geodesy_Model geodesy_model,
-                            const Real epsilon_v)
+                            const Geodesy& geodesy)
 {
 
    Lat_Long last_ll;
@@ -1788,7 +1876,7 @@ Range_Circle::Range_Circle (const Lat_Long& lat_long,
    {
 
       const Real azimuth = 90 + i * da;
-      Lat_Long ll = Geodesy::get_destination (lat_long, range, azimuth);
+      auto ll = Geodesy::get_destination (lat_long, range, azimuth, geodesy);
       ll.standardize (standard_longitude);
 
       if (ll.longitude - last_ll.longitude > 350)
@@ -1820,8 +1908,7 @@ Range_Sector::Range_Sector (const Lat_Long& lat_long,
                             const Real end_azimuth,
                             const Real standard_longitude,
                             const Integer n,
-                            const Geodesy_Model geodesy_model,
-                            const Real epsilon_v)
+                            const Geodesy& geodesy)
 {
 
    Lat_Long last_ll;
@@ -1838,7 +1925,7 @@ Range_Sector::Range_Sector (const Lat_Long& lat_long,
    {
 
       const Real azimuth = start_azimuth + i * da;
-      Lat_Long ll = Geodesy::get_destination (lat_long, range, azimuth);
+      auto ll = Geodesy::get_destination (lat_long, range, azimuth, geodesy);
       ll.standardize (standard_longitude);
 
       if (ll.longitude - last_ll.longitude > 350)
@@ -2627,7 +2714,7 @@ Perspective_Transform::Perspective_Transform (const Real scale,
                                               const Point_2D& ref_point,
                                               const Real height)
    : Geodetic_Transform (PERSPECTIVE, scale, ref_lat_long),
-     geodesy (SPHERE),
+     geodesy (),
      ref_lat_long (ref_lat_long),
      ref_point (ref_point),
      height (height),
@@ -2675,10 +2762,11 @@ Perspective_Transform::transform (Real& x,
 
 //   ttt.transform (x, y, latitude, longitude);
 
-   Journey journey (ref_lat_long, Lat_Long (latitude, longitude));
-   geodesy.complete (journey);
+   const Lat_Long lat_long (latitude, longitude);
+   Journey::Simple simple_journey (ref_lat_long, lat_long);
+   simple_journey.complete (geodesy);
 
-   const Real azimuth_forward = journey.get_azimuth_forward ();
+   const Real azimuth_forward = simple_journey.get_azimuth_forward ();
    if (!gsl_finite (azimuth_forward))
    {
       x = ref_point.x;
@@ -2686,8 +2774,8 @@ Perspective_Transform::transform (Real& x,
       return;
    }
 
-   const Real alpha = journey.get_azimuth_forward () * DEGREE_TO_RADIAN;
-   const Real chi = journey.get_distance () / EARTH_RADIUS;
+   const Real alpha = simple_journey.get_azimuth_forward () * DEGREE_TO_RADIAN;
+   const Real chi = simple_journey.get_distance () / EARTH_RADIUS;
    const Real tan_eta = sin (chi) / (1 - cos (chi) + height / EARTH_RADIUS);
    const Real r = height * tan_eta;
 
@@ -2720,10 +2808,11 @@ Perspective_Transform::reverse (Real& latitude,
    const Real theta = asin (sin (eta) / EARTH_RADIUS * (EARTH_RADIUS + height));
    const Real chi = theta - eta;
 
-   Journey journey (ref_lat_long, chi * EARTH_RADIUS, alpha * RADIAN_TO_DEGREE);
-   geodesy.complete (journey);
+   Journey::Simple simple_journey (ref_lat_long,
+      chi * EARTH_RADIUS, alpha * RADIAN_TO_DEGREE);
+   simple_journey.complete (geodesy);
 
-   const Lat_Long& destination = journey.get_destination ();
+   const Lat_Long& destination = simple_journey.get_destination ();
    latitude = destination.latitude;
    longitude = destination.longitude;
 
@@ -3782,6 +3871,12 @@ Track::get_lat_long (const Real tau,
 
    return Lat_Long (latitude, longitude);
 
+}
+
+Geodetic_Mesh::Geodetic_Mesh (const Size_2D& size_2d,
+                              const Domain_2D& domain_2d)
+   : Mesh_2D (size_2d, domain_2d)
+{
 }
 
 Geodetic_Mesh::Geodetic_Mesh (const Real interval_x,

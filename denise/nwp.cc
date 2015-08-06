@@ -4695,28 +4695,28 @@ Nwp::get_data_ptr (const Key& key,
 
 Scalar_Data_1D*
 Nwp::get_terrain_profile_ptr (const Key& key,
-                              const Multi_Journey& multi_journey)
+                              const Journey& journey)
 {
 
    const Geodesy geodesy;
-   const Tuple& tuple_x = multi_journey.get_tuple_x (geodesy);
+   const Tuple& tuple_x = journey.get_tuple_x (geodesy);
    const Real distance = tuple_x.back ();
    const Level& surface = Level::surface_level ();
 
-   if (tuple_x.size () < 2) { throw Nwp_Exception ("Invalid multi_journey"); }
-   if (gsl_isnan (distance)) { throw Nwp_Exception ("Invalid multi_journey"); }
-   if (distance < 1) { throw Nwp_Exception ("multi_journey too short"); }
+   if (tuple_x.size () < 2) { throw Nwp_Exception ("Invalid journey"); }
+   if (gsl_isnan (distance)) { throw Nwp_Exception ("Invalid journey"); }
+   if (distance < 1) { throw Nwp_Exception ("journey too short"); }
 
    Geodetic_Vector_Data_2D* temp_data_ptr = get_initialized_vd_2d (1);
    fill_data (*temp_data_ptr, 0, key, surface, PRESSURE);
 
    Scalar_Data_1D* data_ptr = new Scalar_Data_1D (tuple_x);
 
-   for (Multi_Journey::const_iterator iterator = multi_journey.begin ();
-        iterator != multi_journey.end (); iterator++)
+   for (Journey::const_iterator iterator = journey.begin ();
+        iterator != journey.end (); iterator++)
    {
 
-      const Integer i = std::distance (multi_journey.begin (), iterator);
+      const Integer i = std::distance (journey.begin (), iterator);
       const Real latitude = iterator->x;
       const Real longitude = iterator->y;
 
@@ -4734,16 +4734,16 @@ Nwp::get_terrain_profile_ptr (const Key& key,
 
 Scalar_Data_1D*
 Nwp::get_rainfall_profile_ptr (const Key& key,
-                               const Multi_Journey& multi_journey)
+                               const Journey& journey)
 {
 
    const Geodesy geodesy;
-   const Tuple& tuple_x = multi_journey.get_tuple_x (geodesy);
+   const Tuple& tuple_x = journey.get_tuple_x (geodesy);
    const Real distance = tuple_x.back ();
 
-   if (tuple_x.size () < 2) { throw Nwp_Exception ("Invalid multi_journey"); }
-   if (gsl_isnan (distance)) { throw Nwp_Exception ("Invalid multi_journey"); }
-   if (distance < 1) { throw Nwp_Exception ("multi_journey too short"); }
+   if (tuple_x.size () < 2) { throw Nwp_Exception ("Invalid journey"); }
+   if (gsl_isnan (distance)) { throw Nwp_Exception ("Invalid journey"); }
+   if (distance < 1) { throw Nwp_Exception ("journey too short"); }
 
    const Level& nil = Level::nil_level ();
    Geodetic_Vector_Data_2D* temp_data_ptr = get_initialized_vd_2d (1);
@@ -4751,11 +4751,11 @@ Nwp::get_rainfall_profile_ptr (const Key& key,
 
    Scalar_Data_1D* data_ptr = new Scalar_Data_1D (tuple_x);
 
-   for (Multi_Journey::const_iterator iterator = multi_journey.begin ();
-        iterator != multi_journey.end (); iterator++)
+   for (Journey::const_iterator iterator = journey.begin ();
+        iterator != journey.end (); iterator++)
    {
 
-      const Integer i = std::distance (multi_journey.begin (), iterator);
+      const Integer i = std::distance (journey.begin (), iterator);
       const Real latitude = iterator->x;
       const Real longitude = iterator->y;
 
@@ -4773,30 +4773,30 @@ Nwp::get_rainfall_profile_ptr (const Key& key,
 
 Nwp::Cross_Section*
 Nwp::get_cross_section_ptr (const Key& key,
-                            const Multi_Journey& multi_journey,
+                            const Journey& journey,
                             const Nwp_Element nwp_element,
                             const bool with_wind)
 {
    vector<Nwp_Element> nwp_element_vector;
    nwp_element_vector.push_back (nwp_element);
-   return get_cross_section_ptr (key, multi_journey,
+   return get_cross_section_ptr (key, journey,
       nwp_element_vector, with_wind);
 }
 
 Nwp::Cross_Section*
 Nwp::get_cross_section_ptr (const Key& key,
-                            const Multi_Journey& multi_journey,
+                            const Journey& journey,
                             const vector<Nwp_Element>& nwp_element_vector,
                             const bool with_wind)
 {
 
    const Geodesy geodesy;
-   const Tuple& tuple_x = multi_journey.get_tuple_x (geodesy);
+   const Tuple& tuple_x = journey.get_tuple_x (geodesy);
    const Real distance = tuple_x.back ();
 
-   if (tuple_x.size () < 2) { throw Nwp_Exception ("Invalid multi_journey"); }
-   if (gsl_isnan (distance)) { throw Nwp_Exception ("Invalid multi_journey"); }
-   if (distance < 1) { throw Nwp_Exception ("multi_journey too short"); }
+   if (tuple_x.size () < 2) { throw Nwp_Exception ("Invalid journey"); }
+   if (gsl_isnan (distance)) { throw Nwp_Exception ("Invalid journey"); }
+   if (distance < 1) { throw Nwp_Exception ("journey too short"); }
 
    const Data_3D& data_3d = get_3d_data (key);
 
@@ -4815,15 +4815,15 @@ Nwp::get_cross_section_ptr (const Key& key,
       const Nwp_Element& nwp_element = *(iterator);
       const Tuple& tuple_p = data_3d.get_tuple_p (nwp_element);
 
-      for (Multi_Journey::const_iterator i = multi_journey.begin ();
-           i != multi_journey.end (); i++)
+      for (Journey::const_iterator i = journey.begin ();
+           i != journey.end (); i++)
       {
 
-         const Integer ii = std::distance (multi_journey.begin (), i);
+         const Integer ii = std::distance (journey.begin (), i);
          const Lat_Long& lat_long = *(i);
          const Real latitude = lat_long.latitude;
          const Real longitude = lat_long.longitude;
-         const Real angle = multi_journey.get_azimuth_forward (i, geodesy);
+         const Real angle = journey.get_azimuth_forward (i, geodesy);
          const Real theta = angle * DEGREE_TO_RADIAN;
          const Real c = cos (theta);
          const Real s = sin (theta);
@@ -4874,15 +4874,15 @@ Nwp::get_cross_section_ptr (const Key& key,
       Scalar_Data_2D& n_sd_2d = cs_ptr->get_sd_2d (NORMAL_WIND);
       Scalar_Data_2D& o_sd_2d = cs_ptr->get_sd_2d (OMEGA);
 
-      for (Multi_Journey::const_iterator i = multi_journey.begin ();
-           i != multi_journey.end (); i++)
+      for (Journey::const_iterator i = journey.begin ();
+           i != journey.end (); i++)
       {
 
-         const Integer ii = std::distance (multi_journey.begin (), i);
+         const Integer ii = std::distance (journey.begin (), i);
          const Lat_Long& lat_long = *(i);
          const Real latitude = lat_long.latitude;
          const Real longitude = lat_long.longitude;
-         const Real angle = multi_journey.get_azimuth_forward (i, geodesy);
+         const Real angle = journey.get_azimuth_forward (i, geodesy);
          const Real theta = angle * DEGREE_TO_RADIAN;
          const Real c = cos (theta);
          const Real s = sin (theta);
@@ -4924,8 +4924,8 @@ Nwp::get_cross_section_ptr (const Key& key,
    }
 
    typedef Scalar_Data_1D Sd_1d;
-   Sd_1d* terrain_profile_ptr = get_terrain_profile_ptr (key, multi_journey);
-   Sd_1d* rainfall_profile_ptr = get_rainfall_profile_ptr (key, multi_journey);
+   Sd_1d* terrain_profile_ptr = get_terrain_profile_ptr (key, journey);
+   Sd_1d* rainfall_profile_ptr = get_rainfall_profile_ptr (key, journey);
    cs_ptr->set_profile_ptrs (terrain_profile_ptr, rainfall_profile_ptr);
    return cs_ptr;
 
@@ -5209,8 +5209,8 @@ Nwp::get_time_cross_data_ptr (const Lat_Long& lat_long,
    }
 
    typedef Scalar_Data_1D Sd_1d;
-   //Sd_1d* terrain_profile_ptr = get_terrain_profile_ptr (key, multi_journey);
-   //Sd_1d* rainfall_profile_ptr = get_rainfall_profile_ptr (key, multi_journey);
+   //Sd_1d* terrain_profile_ptr = get_terrain_profile_ptr (key, journey);
+   //Sd_1d* rainfall_profile_ptr = get_rainfall_profile_ptr (key, journey);
    //cs_ptr->set_profile_ptrs (terrain_profile_ptr, rainfall_profile_ptr);
    return tc_ptr;
 

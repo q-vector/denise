@@ -1017,6 +1017,15 @@ Domain_1D::normalize (const Real x,
    return pow (f, gamma);
 }
 
+Domain_2D::Domain_2D (const string& str)
+{
+   const Tokens tokens (str, ":");
+   domain_x.start = stof (tokens[0]);
+   domain_x.end = stof (tokens[1]);
+   domain_y.start = stof (tokens[2]);
+   domain_y.end = stof (tokens[3]);
+}
+
 Domain_2D::Domain_2D (const Real start_x,
                       const Real end_x,
                       const Real start_y,

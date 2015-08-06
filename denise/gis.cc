@@ -1333,8 +1333,8 @@ Land_Mask::get_fetch (const Lat_Long& lat_long,
 
    for (Real d = dd; d < max_d; d += dd)
    {
-      const Journey journey (lat_long, d, bearing, geodesy);
-      const Lat_Long& ll = journey.get_destination ();
+      const Journey::Simple simple_journey (lat_long, d, bearing, geodesy);
+      const Lat_Long& ll = simple_journey.get_destination ();
       if (is_land (ll)) { return d; }
    }
 

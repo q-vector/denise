@@ -757,6 +757,8 @@ namespace denise
          Domain_1D         
          domain_y;         
 
+         Domain_2D (const string& str);
+
          Domain_2D (const Real start_x = 0,
                     const Real end_x = 1,
                     const Real start_y = 0,

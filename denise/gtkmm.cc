@@ -8474,8 +8474,8 @@ Map_Console::Route::matches (const Transform_2D& transform,
                              const Point_2D& point) const
 {
    const Geodesy geodesy;
-   const Multi_Journey mj (*this);
-   return (mj.get_iterator (transform, point, geodesy, node_size) != mj.end ());
+   const Journey j (*this);
+   return (j.get_iterator (transform, point, geodesy, node_size) != j.end ());
 }
 
 void
@@ -8488,8 +8488,8 @@ Map_Console::Route::cairo (const RefPtr<Context>& cr,
 
    const Transform_2D& transform = console_2d.get_transform ();
 
-   const Multi_Journey multi_journey (*this);
-   multi_journey.cairo (cr, transform);
+   const Journey journey (*this);
+   journey.cairo (cr, transform);
 
 }
 
@@ -8498,10 +8498,10 @@ Map_Console::Route::add (const Transform_2D& transform,
                          const Point_2D& point)
 {
    const Geodesy geodesy;
-   Multi_Journey multi_journey (*this);
-   Console_2D::Route::iterator i = multi_journey.implant (
+   Journey journey (*this);
+   Console_2D::Route::iterator i = journey.implant (
       transform, point, geodesy, node_size);
-   set (multi_journey);
+   set (journey);
 
    for (Console_2D::Route::iterator iterator = begin ();
         iterator != end (); iterator++)
@@ -8519,8 +8519,8 @@ Map_Console::Route::add (const Transform_2D& transform,
 Real
 Map_Console::Route::get_distance (const Geodesy& geodesy) const
 {
-   const Multi_Journey multi_journey (*this);
-   return multi_journey.get_distance (geodesy);
+   const Journey journey (*this);
+   return journey.get_distance (geodesy);
 }
 
 string

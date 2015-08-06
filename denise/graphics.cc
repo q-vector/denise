@@ -111,15 +111,104 @@ Dashes::cairo (const RefPtr<Context>& cr,
    cr->set_dash (d, offset);
 }
 
+Color::Color (const Color& color)
+   : r (color.r),
+     g (color.g),
+     b (color.b),
+     a (color.a)
+{
+}
+
 Color::Color (const Real r,
               const Real g,
               const Real b,
               const Real a)
-         : r (r),
-           g (g),
-           b (b),
-           a (a)
+   : r (r),
+     g (g),
+     b (b),
+     a (a)
 {
+}
+
+Color::Color (const string& str)
+{
+
+   const Tokens tokens (get_lower_case (str), ":");
+   const Integer n = tokens.size ();
+
+   if (tokens[0] == "black")
+   {
+      const Real a = (n > 1 ? stof (tokens[1]) : 1.0);
+      set (Color::black (a));
+   }
+   else
+   if (tokens[0] == "white")
+   {
+      const Real a = (n > 1 ? stof (tokens[1]) : 1.0);
+      set (Color::white (a));
+   }
+   else
+   if (tokens[0] == "gray")
+   {
+      const Real b = (n > 1 ? stof (tokens[1]) : 0.5);
+      const Real a = (n > 2 ? stof (tokens[2]) : 1.0);
+      set (Color::gray (b, a));
+   }
+   else
+   if (tokens[0] == "red")
+   {
+      const Real a = (n > 1 ? stof (tokens[1]) : 1.0);
+      set (Color::red (a));
+   }
+   else
+   if (tokens[0] == "green")
+   {
+      const Real a = (n > 1 ? stof (tokens[1]) : 1.0);
+      set (Color::green (a));
+   }
+   else
+   if (tokens[0] == "blue")
+   {
+      const Real a = (n > 1 ? stof (tokens[1]) : 1.0);
+      set (Color::blue (a));
+   }
+   else
+   if (tokens[0] == "cyan")
+   {
+      const Real a = (n > 1 ? stof (tokens[1]) : 1.0);
+      set (Color::cyan (a));
+   }
+   else
+   if (tokens[0] == "yellow")
+   {
+      const Real a = (n > 1 ? stof (tokens[1]) : 1.0);
+      set (Color::yellow (a));
+   }
+   else
+   if (tokens[0] == "magenta")
+   {
+      const Real a = (n > 1 ? stof (tokens[1]) : 1.0);
+      set (Color::magenta (a));
+   }
+   else
+   if (tokens[0] == "rgb")
+   {
+      const Real r = stof (tokens[1]);
+      const Real g = stof (tokens[2]);
+      const Real b = stof (tokens[3]);
+      const Real a = (n > 4 ? stof (tokens[4]) : 1.0);
+      set (r, g, b, a);
+   }
+   else
+   if (tokens[0] == "hsb")
+   {
+      const Real h = stof (tokens[1]);
+      const Real s = stof (tokens[2]);
+      const Real b = stof (tokens[3]);
+      const Real a = (n > 4 ? stof (tokens[4]) : 1.0);
+      set_hsb (h, s, b, a);
+   }
+
 }
 
 Color::Color (const RefPtr<Context>& cr)
@@ -240,6 +329,15 @@ Color::operator != (const Color& color) const
 {
    return (!is_nac () || !color.is_nac ()) && ((r != color.r) ||
       (g != color.g) || (b != color.b) || (a != color.a));
+}
+
+void
+Color::set (const Color& color)
+{
+   this->a = color.a;
+   this->r = color.r;
+   this->g = color.g;
+   this->b = color.b;
 }
 
 void

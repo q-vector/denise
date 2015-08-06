@@ -40,7 +40,6 @@ namespace denise
    class Lat_Long;
    class Geodesy;
    class Journey;
-   class Multi_Journey;
    class Geodetic_Mesh;
    class Geodetic_Transform;
 
@@ -59,36 +58,6 @@ namespace denise
    {
       LAT_LONG_STANDARD,
       LAT_LONG_PACIFIC
-   };
-
-   enum Geodesy_Model
-   {
-      AIRY_1930,
-      MODIFIED_AIRY,
-      AUSTRALIAN_NATIONAL,
-      BESSEL_1841,
-      BESSEL_NAMIBIA_1841,
-      CLARKE_1866,
-      CLARKE_1880,
-      EVEREST_INDIA_1830,
-      EVEREST_INDIA_1956,
-      EVEREST_SABAH,
-      EVEREST_MALAYSIA_1948,
-      EVEREST_MALAYSIA_1969,
-      MODIFIED_FISCHER_1960,
-      GRS_1967,
-      GRS_1980,
-      HELMERT_1906,
-      HOUGH_1960,
-      INDONESIAN_1974,
-      INTERNATIONAL_1924,
-      KRASSOVSKY_1940,
-      SOUTH_AMERICAN_1969,
-      WGS60,
-      WGS66,
-      WGS72,
-      WGS84,
-      SPHERE
    };
 
    /// Represents the Geodesy.
@@ -118,31 +87,77 @@ namespace denise
           acos (const Real cosine);
 
           void
-          spherical_inverse (Journey& journey) const;
+          spherical_inverse (Real& distance,
+                             Real& azimuth_forward,
+                             Real& azimuth_backward,
+                             const Lat_Long& origin,
+                             const Lat_Long& destination) const;
 
           void
-          spherical_direct (Journey& journey) const;
+          spherical_direct (Lat_Long& destination,
+                            Real& azimuth_backward,
+                            const Lat_Long& origin,
+                            const Real distance,
+                            const Real azimuth_forward) const;
 
           void
-          vincenty_inverse (Journey& journey) const;
+          vincenty_inverse (Real& distance,
+                            Real& azimuth_forward,
+                            Real& azimuth_backward,
+                            const Lat_Long& origin,
+                            const Lat_Long& destination) const;
 
           void
-          vincenty_direct (Journey& journey) const;
-
-          void
-          inverse (Journey& journey) const;
-
-          void
-          direct (Journey& journey) const;
+          vincenty_direct (Lat_Long& destination,
+                           Real& azimuth_backward,
+                           const Lat_Long& origin,
+                           const Real distance,
+                           const Real azimuth_forward) const;
 
        public:
 
-          Geodesy (const Geodesy_Model geodesy_model,
+          enum Model
+          {
+             AIRY_1930,
+             MODIFIED_AIRY,
+             AUSTRALIAN_NATIONAL,
+             BESSEL_1841,
+             BESSEL_NAMIBIA_1841,
+             CLARKE_1866,
+             CLARKE_1880,
+             EVEREST_INDIA_1830,
+             EVEREST_INDIA_1956,
+             EVEREST_SABAH,
+             EVEREST_MALAYSIA_1948,
+             EVEREST_MALAYSIA_1969,
+             MODIFIED_FISCHER_1960,
+             GRS_1967,
+             GRS_1980,
+             HELMERT_1906,
+             HOUGH_1960,
+             INDONESIAN_1974,
+             INTERNATIONAL_1924,
+             KRASSOVSKY_1940,
+             SOUTH_AMERICAN_1969,
+             WGS60,
+             WGS66,
+             WGS72,
+             WGS84,
+             SPHERE
+          };
+
+          Geodesy (const string& str);          
+
+          Geodesy (const Model model,
                    const Real epsilon_v = 5e-12);
 
           Geodesy (const Real semi_major_axis = EARTH_RADIUS,
                    const Real flattening = 0,
                    const Real epsilon_v = 5e-12);
+
+          void
+          set (const Model model,
+               const Real epsilon_v = 5e-12);
 
           Real
           get_semi_major_axis () const;
@@ -160,7 +175,18 @@ namespace denise
           get_epsilon_v () const;
 
           void
-          complete (Journey& journey) const;
+          inverse (Real& distance,
+                   Real& azimuth_forward,
+                   Real& azimuth_backward,
+                   const Lat_Long& origin,
+                   const Lat_Long& destination) const;
+
+          void
+          direct (Lat_Long& destination,
+                  Real& azimuth_backward,
+                  const Lat_Long& origin,
+                  const Real distance,
+                  const Real azimuth_forward) const;
 
           static Real
           get_angle (const Lat_Long& lat_long_a,
@@ -209,14 +235,14 @@ namespace denise
 
             public:
 
-               void
-               add (const Journey& journey,
-                    const Geodesy& geodesy = Geodesy (),
-                    const Real d_distance = 10e3,
-                    const Integer max_n = 1000);
+               //void
+               //add (const Journey::Simple& simple_journey,
+               //     const Geodesy& geodesy = Geodesy (),
+               //     const Real d_distance = 10e3,
+               //     const Integer max_n = 1000);
 
                void
-               add (const Multi_Journey& multi_journey,
+               add (const Journey& journey,
                     const Geodesy& geodesy = Geodesy (),
                     const Real d_distance = 10e3,
                     const Integer max_n = 1000);
@@ -339,161 +365,167 @@ namespace denise
    };
 */
 
-   /// Represents a Journey on the Geodesy.
-   ///
-   /// Journey consists of the Lat_Long's of the origin and destination;
-   /// the distance in between as well as the course back and fro between
-   /// the 2 locations.
-   class Journey : public Edge
+
+   class Journey : public Simple_Polyline
    {
-
-      protected:
-
-         Real
-         distance;
-
-         Real
-         azimuth_forward;
-
-         Real
-         azimuth_backward;
 
       public:
 
-         Journey ();
+         /// Represents a Simple Journey on the Geodesy.
+         ///
+         /// Journey consists of the Lat_Long's of the origin and destination;
+         /// the distance in between as well as the course back and fro between
+         /// the 2 locations.
+         class Simple : public Edge
+         {
 
-         Journey (const Lat_Long& origin,
-                  const Lat_Long& destination);
+            protected:
 
-         Journey (const Lat_Long& origin,
-                  const Real distance,
-                  const Real azimuth_forward,
-                  const Geodesy& geodesy);
+               Real
+               distance;
 
-         Journey (const Lat_Long& origin,
-                  const Lat_Long& destination,
-                  const Geodesy& geodesy);
+               Real
+               azimuth_forward;
 
-         Journey (const Lat_Long& origin,
-                  const Real distance,
-                  const Real azimuth_forward);
+               Real
+               azimuth_backward;
+
+            public:
+
+               Simple ();
+
+               Simple (const Lat_Long& origin,
+                       const Lat_Long& destination);
+
+               Simple (const Lat_Long& origin,
+                       const Real distance,
+                       const Real azimuth_forward,
+                       const Geodesy& geodesy);
+
+               Simple (const Lat_Long& origin,
+                       const Lat_Long& destination,
+                       const Geodesy& geodesy);
+
+               Simple (const Lat_Long& origin,
+                       const Real distance,
+                       const Real azimuth_forward);
+
+               Simple (const Simple& simple_journey);
+
+               void
+               complete (const Geodesy& geodesy = Geodesy ());
+
+               void
+               standardize (const Lat_Long_Genre lat_long_genre = LAT_LONG_STANDARD);
+
+               void
+               standardize (const Real standard_longitude);
+
+               static string
+               get_cardinal_direction (const Real azimuth);
+
+               /// Swaps the origin and destination; as well as the
+               /// azimuth_forward and azimuth_backward
+               void
+               swap ();
+
+               virtual void
+               translate (const Real distance,
+                          const Real azimuth);
+
+               void
+               set_origin (const Lat_Long& origin);
+
+               void
+               set_destination (const Lat_Long& destination);
+
+               void
+               set_destination_azimuth (const Lat_Long& destination,
+                                        const Real azimuth_backward);
+
+               void
+               set_distance_azimuth (const Real distance,
+                                     const Real azimuth_forward,
+                                     const Real azimuth_backward);
+
+               Lat_Long
+               get_origin () const;
+
+               Lat_Long
+               get_destination () const;
+
+               const Real&
+               get_distance () const;
+
+               const Real&
+               get_azimuth_forward () const;
+
+               const Real&
+               get_azimuth_backward () const;
+
+               Lat_Long
+               get_middle_lat_long (const Geodesy& geodesy);
+
+               Lat_Long
+               get_lat_long (const Real fraction,
+                             const Geodesy& geodesy);
+
+               void
+               fill_lat_long_list (list<Lat_Long>& lat_long_list,
+                                   const Real approx_d,
+                                   const Integer max_n_per_leg,
+                                   const bool first_leg,
+                                   const Geodesy& geodesy) const;
+
+               list<Lat_Long>*
+               get_lat_long_list_ptr (const Real approx_d,
+                                      const Integer max_n_per_leg,
+                                      const Geodesy& geodesy) const;
+
+         };
+
+         Journey (const bool closed = false);
+
+         Journey (const Simple_Polyline& simple_polyline);
+
+         Journey (const Simple& simple_journey,
+                  const Geodesy& geodesy = Geodesy ());
 
          Journey (const Journey& journey);
 
+         Journey (const string& str);
+
+         static Journey
+         fine_journey (const Simple& simple_journey,
+                       const Geodesy& geodesy = Geodesy (),
+                       const Real d_distance = 100e3,
+                       const Integer max_n = 50);
+
+         static Journey
+         fine_journey (const Journey& journey,
+                       const Geodesy& geodesy = Geodesy (),
+                       const Real d_distance = 100e3,
+                       const Integer max_n = 50);
+
          void
          standardize (const Lat_Long_Genre lat_long_genre = LAT_LONG_STANDARD);
 
          void
          standardize (const Real standard_longitude);
 
-         static string
-         get_cardinal_direction (const Real azimuth);
-
-         /// Swaps the origin and destination; as well as the
-         /// azimuth_forward and azimuth_backward
-         void
-         swap ();
-
          virtual void
          translate (const Real distance,
                     const Real azimuth);
 
-         void
-         set_origin (const Lat_Long& origin);
-
-         void
-         set_destination (const Lat_Long& destination);
-
-         void
-         set_destination_azimuth (const Lat_Long& destination,
-                                  const Real azimuth_backward);
-
-         void
-         set_distance_azimuth (const Real distance,
-                               const Real azimuth_forward,
-                               const Real azimuth_backward);
-
-         Lat_Long
-         get_origin () const;
-
-         Lat_Long
-         get_destination () const;
-
-         const Real&
-         get_distance () const;
-
-         const Real&
-         get_azimuth_forward () const;
-
-         const Real&
-         get_azimuth_backward () const;
-
-         Lat_Long
-         get_middle_lat_long (const Geodesy& geodesy);
-
-         Lat_Long
-         get_lat_long (const Real fraction,
-                       const Geodesy& geodesy);
-
-         void
-         fill_lat_long_list (list<Lat_Long>& lat_long_list,
-                             const Real approx_d,
-                             const Integer max_n_per_leg,
-                             const bool first_leg,
+         Journey::Simple
+         get_simple_journey (const Real x,
                              const Geodesy& geodesy) const;
 
-         list<Lat_Long>*
-         get_lat_long_list_ptr (const Real approx_d,
-                                const Integer max_n_per_leg,
-                                const Geodesy& geodesy) const;
+         Journey::Simple
+         get_simple_journey (Journey::iterator iterator) const;
 
-   };
-
-   class Multi_Journey : public Simple_Polyline
-   {
-
-      public:
-
-         Multi_Journey (const bool closed = false);
-
-         Multi_Journey (const Simple_Polyline& simple_polyline);
-
-         Multi_Journey (const Journey& journey,
-                        const Geodesy& geodesy = Geodesy ());
-
-         Multi_Journey (const Multi_Journey& multi_journey);
-
-         Multi_Journey (const string& str);
-
-         Multi_Journey (const Journey& journey,
-                        const Geodesy& geodesy = Geodesy (),
-                        const Real d_distance = 100e3,
-                        const Integer max_n = 50);
-
-         Multi_Journey (const Multi_Journey& multi_journey,
-                        const Geodesy& geodesy = Geodesy (),
-                        const Real d_distance = 100e3,
-                        const Integer max_n = 50);
-
-         void
-         standardize (const Lat_Long_Genre lat_long_genre = LAT_LONG_STANDARD);
-
-         void
-         standardize (const Real standard_longitude);
-
-         virtual void
-         translate (const Real distance,
-                    const Real azimuth);
-
-         Journey
-         get_journey (const Real x,
-                      const Geodesy& geodesy) const;
-
-         Journey
-         get_journey (Multi_Journey::iterator iterator) const;
-
-         Journey
-         get_journey (Multi_Journey::const_iterator iterator) const;
+         Journey::Simple
+         get_simple_journey (Journey::const_iterator iterator) const;
 
          Real
          get_distance (const Geodesy& geodesy) const;
@@ -515,18 +547,18 @@ namespace denise
                               const Geodesy& geodesy) const;
 
          Real
-         get_azimuth_forward (Multi_Journey::const_iterator iterator,
+         get_azimuth_forward (Journey::const_iterator iterator,
                               const Geodesy& geodesy) const;
 
          Real
-         get_azimuth_forward (Multi_Journey::iterator iterator,
+         get_azimuth_forward (Journey::iterator iterator,
                               const Geodesy& geodesy) const;
 
          void
          cairo (const RefPtr<Context> cr,
                 const Transform_2D& transform) const;
 
-         Multi_Journey::iterator
+         Journey::iterator
          get_iterator (const Transform_2D& transform,
                        const Point_2D& point_2d,
                        const Geodesy& geodesy,
@@ -535,7 +567,7 @@ namespace denise
                        const Real d_distance = 100e3,
                        const Integer max_n = 50);
 
-         Multi_Journey::const_iterator
+         Journey::const_iterator
          get_iterator (const Transform_2D& transform,
                        const Point_2D& point_2d,
                        const Geodesy& geodesy,
@@ -544,7 +576,7 @@ namespace denise
                        const Real d_distance = 100e3,
                        const Integer max_n = 50) const;
 
-         Multi_Journey::iterator
+         Journey::iterator
          implant (const Transform_2D& transform,
                   const Point_2D& point_2d,
                   const Geodesy& geodesy,
@@ -555,6 +587,7 @@ namespace denise
 
    };
 
+/*
    class Journey_List : public list<Journey>
    {
 
@@ -587,6 +620,7 @@ namespace denise
                                 const Integer max_n_per_leg = 30) const;
 
    };
+*/
 
    class Geodetic_Attractor
    {
@@ -630,8 +664,7 @@ namespace denise
                        const Real range,
                        const Real standard_longitude = 0,
                        const Integer n = 360,
-                       const Geodesy_Model geodesy_model = SPHERE,
-                       const Real epsilon_v = 5e-12);
+                       const Geodesy& geodesy = Geodesy ());
 
    };   
 
@@ -646,8 +679,7 @@ namespace denise
                        const Real end_azimuth,
                        const Real standard_longitude = 0,
                        const Integer n = 360,
-                       const Geodesy_Model geodesy_model = SPHERE,
-                       const Real epsilon_v = 5e-12);
+                       const Geodesy& geodesy = Geodesy ());
 
    };   
 
@@ -1469,6 +1501,9 @@ namespace denise
    {
 
       public:
+
+         Geodetic_Mesh (const Size_2D& s = Size_2D (100, 100),
+                        const Domain_2D& d = Domain_2D (-89, 89, -180, 179.9));
 
          Geodetic_Mesh (const Real interval_x,
                         const Real interval_y,

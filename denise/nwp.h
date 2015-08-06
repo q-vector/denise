@@ -891,21 +891,21 @@ namespace denise
 
          virtual Scalar_Data_1D*
          get_terrain_profile_ptr (const Key& key,
-                                  const Multi_Journey& multi_journey);
+                                  const Journey& journey);
 
          virtual Scalar_Data_1D*
          get_rainfall_profile_ptr (const Key& key,
-                                   const Multi_Journey& multi_journey);
+                                   const Journey& journey);
 
          virtual Cross_Section*
          get_cross_section_ptr (const Key& key,
-                                const Multi_Journey& multi_journey,
+                                const Journey& journey,
                                 const Nwp_Element nwp_element,
                                 const bool with_wind);
 
          virtual Cross_Section*
          get_cross_section_ptr (const Key& key,
-                                const Multi_Journey& multi_journey,
+                                const Journey& journey,
                                 const vector<Nwp_Element>& element_vector,
                                 const bool with_wind);
 

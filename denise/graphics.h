@@ -133,6 +133,8 @@ namespace denise
          Real
          a;
 
+         Color (const Color& color);
+
          /// Creates an sRGB color withthe specified values.
          ///
          /// If rgb is set true, the constructor expects HSV values
@@ -141,6 +143,8 @@ namespace denise
                 const Real g = 0,
                 const Real b = 0,
                 const Real a = 1.0);
+
+         Color (const string& str);
 
          Color (const RefPtr<Context>& cr);
 
@@ -192,6 +196,9 @@ namespace denise
 
          bool
          operator != (const Color& color) const;
+
+         void 
+         set (const Color& color);
 
          void
          set (const Real r,
