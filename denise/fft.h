@@ -86,7 +86,7 @@ namespace denise
 
          void
          set_coefficient (const Integer k,
-                          const Complex& coefficient);
+                          const Cmplx& coefficient);
 
          void
          set_amplitude_phase (const Integer wavenumber,
@@ -101,7 +101,7 @@ namespace denise
          void
          transform ();
 
-         Complex
+         Cmplx
          get_coefficient (const Integer k) const;
 
          void

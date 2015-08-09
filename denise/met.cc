@@ -133,36 +133,6 @@ namespace denise
 
    }
 
-   Wind_Category 
-   get_wind_category (const Real speed)
-   {
-
-      Wind_Category wind_category = CALM;
-
-      if (speed >= 32.7) { wind_category = HURRICANE; }
-
-      else
-      if (speed >= 24.5) { wind_category = STORM; }
-
-      else
-      if (speed >= 17.2) { wind_category = GALE; }
-
-      else
-      if (speed >= 10.8) { wind_category = STRONG; }
-
-      else
-      if (speed >= 8.0) { wind_category = FRESH; }
-
-      else
-      if (speed >= 3.4) { wind_category = MODERATE; }
-
-      else
-      if (speed >= 0.2) { wind_category = LIGHT; }
-
-      return wind_category;
-
-   }
-
    string
    get_tc_category_string (const Tc_Category tc_category)
    {
@@ -177,28 +147,6 @@ namespace denise
          case TC_STS: s.assign ("STS"); break;
          case TC_T:   s.assign ("T");   break;
          case ALL_TC_CATEGORIES: s.append ("ALL_TC_CATEGORIES"); break;
-      }
-
-      return s;
-
-   }
-
-   string
-   get_wind_category_string (const Wind_Category wind_category)
-   {
-
-      string s ("XXXXXXXXX");
-
-      switch (wind_category)
-      {
-         case CALM:      s.assign ("Calm");      break;
-         case LIGHT:     s.assign ("Light");     break;
-         case MODERATE:  s.assign ("Moderate");  break;
-         case FRESH:     s.assign ("Fresh");     break;
-         case STRONG:    s.assign ("Strong");    break;
-         case GALE:      s.assign ("Gale");      break;
-         case STORM:     s.assign ("Storm");     break;
-         case HURRICANE: s.assign ("Hurricane"); break;
       }
 
       return s;
@@ -309,7 +257,7 @@ Tc_Symbol::Tc_Symbol (const bool southern_hemisphere,
 
 }
 
-Octa::Octa (const Octa_Type octa_type,
+Octa::Octa (const Octa::Number octa_number,
             const Real size,
             const Real width)
   : Symbol (size)
@@ -321,7 +269,7 @@ Octa::Octa (const Octa_Type octa_type,
    Real w = (gsl_finite (width) ? width : size / 3);
    Real s_i = s_o - w;
 
-   switch (octa_type)
+   switch (octa_number)
    {
 
       case OCTA_ZERO:
@@ -638,6 +586,35 @@ Wind::get_string (const Real speed_multiplier,
    const Real direction = get_direction ();
    const Real speed = get_speed () * speed_multiplier;
    return string_render (format.c_str (), direction, speed);
+}
+
+Wind::Category
+Wind::get_category (const Real speed)
+{
+        if (speed >= 32.7) { return HURRICANE; }
+   else if (speed >= 24.5) { return STORM; }
+   else if (speed >= 17.2) { return GALE; }
+   else if (speed >= 10.8) { return STRONG; }
+   else if (speed >= 8.0)  { return FRESH; }
+   else if (speed >= 3.4)  { return MODERATE; }
+   else if (speed >= 0.2)  { return LIGHT; }
+   else                    { return CALM; }
+}
+
+string
+Wind::get_category_string (const Wind::Category category)
+{
+   switch (category)
+   {
+      case CALM:      return string ("Calm");      break;
+      case LIGHT:     return string ("Light");     break;
+      case MODERATE:  return string ("Moderate");  break;
+      case FRESH:     return string ("Fresh");     break;
+      case STRONG:    return string ("Strong");    break;
+      case GALE:      return string ("Gale");      break;
+      case STORM:     return string ("Storm");     break;
+      case HURRICANE: return string ("Hurricane"); break;
+   }
 }
 
 Wind
@@ -2576,7 +2553,7 @@ Fire::get_ffdi (const Real t,
 }
 
 Level::Level ()
-   : type (NOT_A_LEVEL),
+   : type (NAL),
      value (GSL_NAN),
      value_ (GSL_NAN)
 {
@@ -2595,59 +2572,59 @@ Level::Level (const string& str)
 {
    if (str == "Screen")
    {
-      type = SCREEN_LEVEL;
+      type = SCREEN;
    }
    else
    if (str == "10m")
    {
-      type = TEN_METRE_LEVEL;
+      type = TEN_METRE;
    }
    else
    if (str == "50m")
    {
-      type = FIFTY_METRE_LEVEL;
+      type = FIFTY_METRE;
    }
    else
    if (str == "MSL")
    {
-      type = MEAN_SEA_LEVEL;
+      type = MEAN_SEA;
    }
    else
    if (str == "Nil")
    {
-      type = NIL_LEVEL;
+      type = NIL;
    }
    else
    if (str == "Surface")
    {
-      type = SURFACE_LEVEL;
+      type = SURFACE;
    }
    else
    if (str.find ("m") != string::npos)
    {
-      type = HEIGHT_LEVEL;
+      type = HEIGHT;
       value = stof (str);
    }
    else
    if (str.find ("hPa") != string::npos)
    {
-      type = PRESSURE_LEVEL;
+      type = PRESSURE;
       value = stof (str) * 1e2;
    }
    else
    if (str.find ("K") != string::npos)
    {
-      type = THETA_LEVEL;
+      type = THETA;
       value = stof (str);
    }
    else
    {
-      type = SIGMA_LEVEL;
+      type = SIGMA;
       value = stof (str);
    }
 }
 
-Level::Level (const Level_Type type,
+Level::Level (const Level::Type type,
               const Real value)
    : type (type),
      value (value),
@@ -2655,7 +2632,7 @@ Level::Level (const Level_Type type,
 {
 }
 
-Level::Level (const Level_Type type,
+Level::Level (const Level::Type type,
               const Real value_0,
               const Real value_1)
    : type (type),
@@ -2680,123 +2657,123 @@ Level::order ()
 Level
 Level::theta_level (const Real theta)
 {
-   return Level (THETA_LEVEL, theta, GSL_NAN);
+   return Level (THETA, theta, GSL_NAN);
 }
 
 Level
 Level::sigma_level (const Real sigma)
 {
-   return Level (SIGMA_LEVEL, sigma, GSL_NAN);
+   return Level (SIGMA, sigma, GSL_NAN);
 }
 
 Level
 Level::pressure_level (const Real pressure)
 {
-   return Level (PRESSURE_LEVEL, pressure, GSL_NAN);
+   return Level (PRESSURE, pressure, GSL_NAN);
 }
 
 Level
 Level::z_level (const Real z)
 {
-   return Level (HEIGHT_LEVEL, z, GSL_NAN);
+   return Level (HEIGHT, z, GSL_NAN);
 }
 
 Level
 Level::screen_level ()
 {
-   return Level (SCREEN_LEVEL);
+   return Level (SCREEN);
 }
 Level
 Level::fifty_metre_level ()
 {
-   return Level (FIFTY_METRE_LEVEL);
+   return Level (FIFTY_METRE);
 }
 
 Level
 Level::ten_metre_level ()
 {
-   return Level (TEN_METRE_LEVEL);
+   return Level (TEN_METRE);
 }
 
 Level
 Level::mean_sea_level ()
 {
-   return Level (MEAN_SEA_LEVEL);
+   return Level (MEAN_SEA);
 }
 
 Level
 Level::nil_level ()
 {
-   return Level (NIL_LEVEL);
+   return Level (NIL);
 }
 
 Level
 Level::surface_level ()
 {
-   return Level (SURFACE_LEVEL);
+   return Level (SURFACE);
 }
 
 void
 Level::set_height (const Real z)
 {
-   this->type = HEIGHT_LEVEL;
+   this->type = HEIGHT;
    this->value = z;
 }
 
 void
 Level::set_pressure (const Real pressure)
 {
-   this->type = PRESSURE_LEVEL;
+   this->type = PRESSURE;
    this->value = pressure;
 }
 
 void
 Level::set_theta (const Real theta)
 {
-   this->type = THETA_LEVEL;
+   this->type = THETA;
    this->value = theta;
 }
 
 void
 Level::set_sigma (const Real sigma)
 {
-   this->type = SIGMA_LEVEL;
+   this->type = SIGMA;
    this->value = sigma;
 }
 
 void
 Level::set_screen ()
 {
-   this->type = SCREEN_LEVEL;
+   this->type = SCREEN;
 }
 void
 Level::set_fifty_metre ()
 {
-   this->type = FIFTY_METRE_LEVEL;
+   this->type = FIFTY_METRE;
 }
 
 void
 Level::set_ten_metre ()
 {
-   this->type = TEN_METRE_LEVEL;
+   this->type = TEN_METRE;
 }
 
 void
 Level::set_mean_sea ()
 {
-   this->type = MEAN_SEA_LEVEL;
+   this->type = MEAN_SEA;
 }
 
 void
 Level::set_nil ()
 {
-   this->type = NIL_LEVEL;
+   this->type = NIL;
 }
 
 void
 Level::set_surface ()
 {
-   this->type = SURFACE_LEVEL;
+   this->type = SURFACE;
 }
 
 void
@@ -2820,27 +2797,27 @@ Level::get_string () const
 
       switch (type)
       {
-         case THETA_LEVEL:
+         case THETA:
             return string_render ("%.0fK", round (value));
-         case SIGMA_LEVEL:
+         case SIGMA:
             return string_render ("%.4f", value);
-         case PRESSURE_LEVEL:
+         case PRESSURE:
             return string_render ("%.0fhPa", round (value * 1e-2));
-         case HEIGHT_LEVEL:
+         case HEIGHT:
             return string_render ("%.0fm", round (value));
-         case SCREEN_LEVEL:
+         case SCREEN:
             return "Screen";
-         case FIFTY_METRE_LEVEL:
+         case FIFTY_METRE:
             return "50m";
-         case TEN_METRE_LEVEL:
+         case TEN_METRE:
             return "10m";
-         case MEAN_SEA_LEVEL:
+         case MEAN_SEA:
             return "MSL";
-         case NIL_LEVEL:
+         case NIL:
             return "";
-         case SURFACE_LEVEL:
+         case SURFACE:
             return "Surface";
-         case NOT_A_LEVEL:
+         case NAL:
             return "";
       }
 
@@ -2851,26 +2828,26 @@ Level::get_string () const
       switch (type)
       {
 
-         case THETA_LEVEL:
+         case THETA:
          {
             const Real theta_0 = round (value);
             const Real theta_1 = round (value_);
             return string_render ("%.0fK to %.0fK", theta_0, theta_1);
          }
 
-         case SIGMA_LEVEL:
+         case SIGMA:
          {
             return string_render ("%.4f to %.4f", value, value_);
          }
 
-         case PRESSURE_LEVEL:
+         case PRESSURE:
          {
             const Real p_0 = round (value * 1e-2);
             const Real p_1 = round (value_ * 1e-2);
             return string_render ("%.0fhPa to %.0fhPa", p_0, p_1);
          }
 
-         case HEIGHT_LEVEL:
+         case HEIGHT:
          {
             return string_render ("%.0fm to %.0fm", value, value_);
          }
@@ -2896,16 +2873,16 @@ Level::get_level_1 () const
 void
 Level::set_nal ()
 {
-   type = NOT_A_LEVEL;
+   type = NAL;
 }
 
 bool
 Level::is_nal () const
 {
-   return (type == NOT_A_LEVEL);
+   return (type == NAL);
 }
 
-Layer::Layer (const Level_Type type,
+Layer::Layer (const Level::Type type,
               const Real value_0,
               const Real value_1)
    : Level (type, value_0, value_1)
@@ -2921,14 +2898,14 @@ Layer::set (const Real value_0,
 }
 
 Z_Layer::Z_Layer (const Z_Layer& z_layer)
-   : Level (HEIGHT_LEVEL, z_layer.get_start_z (), z_layer.get_end_z ())
+   : Level (HEIGHT, z_layer.get_start_z (), z_layer.get_end_z ())
 {
    order ();
 }
 
 Z_Layer::Z_Layer (const Real start_z,
                   const Real end_z)
-   : Level (HEIGHT_LEVEL, start_z, end_z)
+   : Level (HEIGHT, start_z, end_z)
 {
    order ();
 }
@@ -2985,14 +2962,14 @@ Z_Layer::get_span_z () const
 }
 
 P_Layer::P_Layer (const P_Layer& p_layer)
-   : Level (PRESSURE_LEVEL, p_layer.get_start_p (), p_layer.get_end_p ())
+   : Level (PRESSURE, p_layer.get_start_p (), p_layer.get_end_p ())
 {
    order ();
 }
 
 P_Layer::P_Layer (const Real start_p,
                   const Real end_p)
-   : Level (PRESSURE_LEVEL, start_p, end_p)
+   : Level (PRESSURE, start_p, end_p)
 {
    order ();
 }

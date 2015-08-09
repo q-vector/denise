@@ -4629,10 +4629,10 @@ Level_Panel::get_level_tuple () const
    switch (level.type)
    {
       default:
-      case HEIGHT_LEVEL:   return level_tuple_z;
-      case PRESSURE_LEVEL: return level_tuple_p;
-      case SIGMA_LEVEL:    return level_tuple_sigma;
-      case THETA_LEVEL:    return level_tuple_theta;
+      case Level::HEIGHT:   return level_tuple_z;
+      case Level::PRESSURE: return level_tuple_p;
+      case Level::SIGMA:    return level_tuple_sigma;
+      case Level::THETA:    return level_tuple_theta;
    }
 
    throw Nwp_Exception ("Level_Tuple::get_level_tuple confused");
@@ -4671,7 +4671,7 @@ Level_Panel::get_level (const Real y) const
          }
       }
       Level level;
-      level.type = NOT_A_LEVEL;
+      level.type = Level::NAL;
       return level;
    }
    else
@@ -4679,17 +4679,17 @@ Level_Panel::get_level (const Real y) const
       switch (level.type)
       {
          default:
-            return Level (NOT_A_LEVEL, GSL_NAN);
-         case SCREEN_LEVEL:
-         case TEN_METRE_LEVEL:
-         case FIFTY_METRE_LEVEL:
-         case HEIGHT_LEVEL:
+            return Level (Level::NAL, GSL_NAN);
+         case Level::SCREEN:
+         case Level::TEN_METRE:
+         case Level::FIFTY_METRE:
+         case Level::HEIGHT:
             return get_level_z (y);
-         case PRESSURE_LEVEL:
+         case Level::PRESSURE:
             return get_level_p (y);
-         case THETA_LEVEL:
+         case Level::THETA:
             return get_level_theta (y);
-         case SIGMA_LEVEL:
+         case Level::SIGMA:
             return get_level_sigma (y);
       }
    }
@@ -4862,13 +4862,13 @@ Level_Panel::get_y (const Level& level) const
    switch (level.type)
    {
       default:
-      case HEIGHT_LEVEL:
+      case Level::HEIGHT:
          return get_y_z (level.value);
-      case PRESSURE_LEVEL:
+      case Level::PRESSURE:
          return get_y_p (level.value);
-      case THETA_LEVEL:
+      case Level::THETA:
          return get_y_theta (level.value);
-      case SIGMA_LEVEL:
+      case Level::SIGMA:
          return get_y_sigma (level.value);
    }
 }
@@ -4976,20 +4976,20 @@ Level_Panel::render_background (const RefPtr<Context> cr) const
    cr->set_font_size (font_size);
    Color (0, 0, 0, 0.5).cairo (cr);
 
-//   if (level.type == PRESSURE_LEVEL ||
-//       level.type == THETA_LEVEL ||
-//       level.type == SIGMA_LEVEL)
+//   if (level.type == Level::PRESSURE ||
+//       level.type == Level::THETA ||
+//       level.type == Level::SIGMA)
    {
 
 
-      Level_Type level_type = level.type;
+      Level::Type level_type = level.type;
 
       switch (level.type)
       {
-         case SCREEN_LEVEL:   
-         case FIFTY_METRE_LEVEL:
-         case TEN_METRE_LEVEL:
-            level_type = PRESSURE_LEVEL;
+         case Level::SCREEN:   
+         case Level::FIFTY_METRE:
+         case Level::TEN_METRE:
+            level_type = Level::PRESSURE;
             break;
       }
 
@@ -5091,7 +5091,7 @@ bool
 Level_Panel::on_mouse_button_pressed (const Dmouse_Button_Event& event)
 {
 
-   if (level.type == NOT_A_LEVEL && !level.is_layer ())
+   if (level.type == Level::NAL && !level.is_layer ())
    {
       return false;
    }
@@ -5185,7 +5185,7 @@ Level_Panel::on_mouse_motion (const Dmouse_Motion_Event& event)
       if (setting_level)
       {
          candidate_level = get_level (y);
-         if (candidate_level.type != NOT_A_LEVEL)
+         if (candidate_level.type != Level::NAL)
          {
             level = candidate_level;
             level_signal.emit (get_level ());
@@ -5240,17 +5240,17 @@ Level_Panel::on_mouse_button_released (const Dmouse_Button_Event& event)
       {
 
          setting_level = false;
-         candidate_level.type = NOT_A_LEVEL;
+         candidate_level.type = Level::NAL;
          const Real y = event.point.y - anchor.y;
          const Level& l = get_level (y);
 
-         if (l.type != NOT_A_LEVEL)
+         if (l.type != Level::NAL)
          {
             level = l;
             level_signal.emit (get_level ());
             full_level_signal.emit (get_level (), event);
             canvas.queue_draw ();
-            candidate_level.type = NOT_A_LEVEL;
+            candidate_level.type = Level::NAL;
             return true;
          }
 
@@ -5265,10 +5265,10 @@ Level_Panel::Level_Panel (Dcanvas& dcanvas,
                           const Real font_size)
    : Dv_Pack_Box (dcanvas, 0, 6/*margin*/),
      dcanvas (dcanvas),
-     level_tuple_z (HEIGHT_LEVEL, "40000:36000:32000:28000:24000:20000:18000:16000:14000:12000:10000:9000:8000:7000:6000:5000:4500:4000:3500:3000:2500:2000:1800:1600:1400:1200:1000:900:800:700:600:500:400:350:300:250:200:150:100:75:45:20:5:0"),
-     level_tuple_sigma (SIGMA_LEVEL, "0.2:0.25:0.3:0.35:0.4:0.45:0.5:0.55:0.6:0.65:0.7:0.75:0.8:0.85:0.875:0.9:0.925:0.95:0.975:0.9943:0.9975:0.9988"),
-     level_tuple_theta (THETA_LEVEL, "355:350:345:340:335:330:325:320:315:310:305:300:295:290:285:280:275:270"),
-     level_tuple_p (PRESSURE_LEVEL, "200e2:250e2:300e2:350e2:400e2:450e2:500e2:550e2:600e2:650e2:700e2:750e2:800e2:850e2:900e2:925e2:950e2:975e2:995e2:1000e2"),
+     level_tuple_z (Level::HEIGHT, "40000:36000:32000:28000:24000:20000:18000:16000:14000:12000:10000:9000:8000:7000:6000:5000:4500:4000:3500:3000:2500:2000:1800:1600:1400:1200:1000:900:800:700:600:500:400:350:300:250:200:150:100:75:45:20:5:0"),
+     level_tuple_sigma (Level::SIGMA, "0.2:0.25:0.3:0.35:0.4:0.45:0.5:0.55:0.6:0.65:0.7:0.75:0.8:0.85:0.875:0.9:0.925:0.95:0.975:0.9943:0.9975:0.9988"),
+     level_tuple_theta (Level::THETA, "355:350:345:340:335:330:325:320:315:310:305:300:295:290:285:280:275:270"),
+     level_tuple_p (Level::PRESSURE, "200e2:250e2:300e2:350e2:400e2:450e2:500e2:550e2:600e2:650e2:700e2:750e2:800e2:850e2:900e2:925e2:950e2:975e2:995e2:1000e2"),
      start_margin (50),
      end_margin (90),
 
@@ -5292,8 +5292,8 @@ Level_Panel::Level_Panel (Dcanvas& dcanvas,
      //sigma_button (dcanvas, "S", font_size)
 {
 
-   level.type = NOT_A_LEVEL;
-   candidate_level.type = NOT_A_LEVEL;
+   level.type = Level::NAL;
+   candidate_level.type = Level::NAL;
 
    //pressure_button.get_signal ().connect (
    //   sigc::mem_fun (*this, &Level_Panel::set_p_buttons));
@@ -5334,8 +5334,8 @@ Level_Panel::add_extra_level (const Level& level)
 void
 Level_Panel::cairo (const RefPtr<Context>& cr)
 {
-//   if (level.type == NOT_A_LEVEL && !level.is_layer ())
-   if (level.type == NOT_A_LEVEL)
+//   if (level.type == Level::NAL && !level.is_layer ())
+   if (level.type == Level::NAL)
    {
       return;
    }
@@ -5376,9 +5376,9 @@ Level_Panel::set_level (const Level& level)
    this->level = level;
    switch (level.type)
    {
-      case PRESSURE_LEVEL: pressure = level.value; break;
-      case THETA_LEVEL: theta = level.value; break;
-      case SIGMA_LEVEL: sigma = level.value; break;
+      case Level::PRESSURE: pressure = level.value; break;
+      case Level::THETA: theta = level.value; break;
+      case Level::SIGMA: sigma = level.value; break;
    }
 }
 
@@ -5405,7 +5405,7 @@ void
 Level_Panel::set_no_buttons ()
 {
 
-   level.type = NOT_A_LEVEL;
+   level.type = Level::NAL;
    level.value_ = GSL_NAN;
    extra_level_vector.clear ();
 
@@ -5420,12 +5420,12 @@ void
 Level_Panel::set_theta_buttons ()
 {
 
-   if (level.type != THETA_LEVEL)
+   if (level.type != Level::THETA)
    {
       level.value = theta;
    }
 
-   level.type = THETA_LEVEL;
+   level.type = Level::THETA;
    level.value_ = GSL_NAN;
    extra_level_vector.clear ();
 
@@ -5440,12 +5440,12 @@ void
 Level_Panel::set_sigma_buttons ()
 {
 
-   if (level.type != SIGMA_LEVEL)
+   if (level.type != Level::SIGMA)
    {
       level.value = sigma;
    }
 
-   level.type = SIGMA_LEVEL;
+   level.type = Level::SIGMA;
    level.value_ = GSL_NAN;
    extra_level_vector.clear ();
 
@@ -5460,13 +5460,13 @@ void
 Level_Panel::set_p_buttons ()
 {
 
-   if (level.type == HEIGHT_LEVEL ||
-       level.type == THETA_LEVEL ||
-       level.type == SIGMA_LEVEL ||
-       level.type == NOT_A_LEVEL)
+   if (level.type == Level::HEIGHT ||
+       level.type == Level::THETA ||
+       level.type == Level::SIGMA ||
+       level.type == Level::NAL)
    {
       level.value = pressure;
-      level.type = PRESSURE_LEVEL;
+      level.type = Level::PRESSURE;
       level.value_ = GSL_NAN;
    }
 
@@ -5487,9 +5487,9 @@ Level_Panel::set_wind_level_buttons ()
    extra_level_vector.push_back (Level ("10m"));
    extra_level_vector.push_back (Level ("50m"));
 
-   if (level.type == SCREEN_LEVEL)
+   if (level.type == Level::SCREEN)
    {
-      level.type = TEN_METRE_LEVEL;
+      level.type = Level::TEN_METRE;
    }
 
 
@@ -5521,10 +5521,10 @@ Level_Panel::set_temperature_level_buttons ()
    extra_level_vector.clear ();
    extra_level_vector.push_back (Level ("Screen"));
 
-   if (level.type == TEN_METRE_LEVEL ||
-       level.type == FIFTY_METRE_LEVEL)
+   if (level.type == Level::TEN_METRE ||
+       level.type == Level::FIFTY_METRE)
    {
-      level.type = SCREEN_LEVEL;
+      level.type = Level::SCREEN;
    }
 
 //   clear ();
@@ -5558,9 +5558,9 @@ Level_Panel::move_level_up (const Devent& event)
          level.value = level_tuple.get_next_up (level.value);
          switch (level.type)
          {
-            case PRESSURE_LEVEL: pressure = level.value; break;
-            case THETA_LEVEL: theta = level.value; break;
-            case SIGMA_LEVEL: sigma = level.value; break;
+            case Level::PRESSURE: pressure = level.value; break;
+            case Level::THETA: theta = level.value; break;
+            case Level::SIGMA: sigma = level.value; break;
          }
       }
       catch (const Nwp_Exception& ne)
@@ -5606,9 +5606,9 @@ Level_Panel::move_level_down (const Devent& event)
             level.value = level_tuple.get_next_down (level.value);
             switch (level.type)
             {
-               case PRESSURE_LEVEL: pressure = level.value; break;
-               case THETA_LEVEL: theta = level.value; break;
-               case SIGMA_LEVEL: sigma = level.value; break;
+               case Level::PRESSURE: pressure = level.value; break;
+               case Level::THETA: theta = level.value; break;
+               case Level::SIGMA: sigma = level.value; break;
             }
          }
          catch (const Nwp_Exception& ne)

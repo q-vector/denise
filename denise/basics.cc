@@ -488,6 +488,13 @@ Point_2D::Point_2D (const Index_2D& index)
 {
 }
 
+Point_2D::Point_2D (const string& str)
+{
+   const Tokens tokens (str, ",");
+   this->x = stof (tokens[0]);
+   this->y = stof (tokens[1]);
+}
+
 complex<Real>
 Point_2D::get_complex () const
 {

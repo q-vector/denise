@@ -310,15 +310,15 @@ Edge::get_intersection_tuple (const Polygon& polygon) const
    const bool steep = fabs (dy / dx) > 1;
 
    Tuple t_tuple;
-   const Polygon_Vertex* first_handle_ptr = polygon.get_first_handle_ptr ();
-   Polygon_Vertex* current_handle_ptr = (Polygon_Vertex*)first_handle_ptr;
+   const Polygon::Vertex* first_handle_ptr = polygon.get_first_handle_ptr ();
+   Polygon::Vertex* current_handle_ptr = (Polygon::Vertex*)first_handle_ptr;
 
    if (current_handle_ptr != NULL)
    {
 
       Point_2D p;
-      Polygon_Vertex* current_ptr;
-      Polygon_Vertex* next_ptr;
+      Polygon::Vertex* current_ptr;
+      Polygon::Vertex* next_ptr;
 
       // determine the intersections on the edge
       do
@@ -326,7 +326,7 @@ Edge::get_intersection_tuple (const Polygon& polygon) const
 
          const Integer n = current_handle_ptr->n;
 
-         current_ptr = (Polygon_Vertex*)current_handle_ptr;
+         current_ptr = (Polygon::Vertex*)current_handle_ptr;
          next_ptr = current_ptr->next_ptr;
 
          for (Integer i = 0; i < n; i++)
@@ -1390,6 +1390,22 @@ Simple_Polyline::implant (const Point_2D& point_2d,
 
 }
 
+Polygon::Vertex::Vertex (const Point_2D& point)
+   : Point_2D (point),
+     action (NOT_DECIDED),
+     n (0),
+     alpha (GSL_NAN),
+     intersections (0),
+     next_ptr (NULL),
+     prev_ptr (NULL),
+     handle_ptr (NULL),
+     next_handle_ptr (NULL),
+     prev_handle_ptr (NULL),
+     neighbor_ptr (NULL),
+     intersection (INTERSECTION_NOT)
+{
+}
+
 void
 Polyline::init (const Point_2D& point)
 {
@@ -1508,22 +1524,6 @@ Polyline::cairo (const RefPtr<Context>& cr,
    }
 }
 
-Polygon_Vertex::Polygon_Vertex (const Point_2D& point)
-                    : Point_2D (point),
-                        action (NOT_DECIDED),
-                             n (0),
-                         alpha (GSL_NAN),
-                 intersections (0),
-                      next_ptr (NULL),
-                      prev_ptr (NULL),
-                    handle_ptr (NULL),
-               next_handle_ptr (NULL),
-               prev_handle_ptr (NULL),
-                  neighbor_ptr (NULL),
-                  intersection (INTERSECTION_NOT)
-{
-}
-
 inline
 Real
 Polygon::determinant (const Point_2D& point,
@@ -1564,7 +1564,7 @@ Polygon::modify (Integer& winding_number,
 
 void
 Polygon::iterate_winding_number (Integer& w,
-                                 const Polygon_Vertex* handle_ptr,
+                                 const Polygon::Vertex* handle_ptr,
                                  const Point_2D& point)
 {
 
@@ -1572,13 +1572,13 @@ Polygon::iterate_winding_number (Integer& w,
    const Geometry_Exception gee ("point on edge");
 
    const Integer n = handle_ptr->n;
-   Polygon_Vertex* current_ptr = (Polygon_Vertex*)handle_ptr;
+   Polygon::Vertex* current_ptr = (Polygon::Vertex*)handle_ptr;
    if (((const Point_2D&)(*current_ptr)) == point) { throw gev; }
 
    for (Integer i = 0; i < n; i++)
    {
 
-      const Polygon_Vertex* next_ptr = current_ptr->next_ptr;
+      const Polygon::Vertex* next_ptr = current_ptr->next_ptr;
       const Point_2D& p = (const Point_2D&)(*current_ptr);
       const Point_2D& np = (const Point_2D&)(*next_ptr);
 
@@ -1620,7 +1620,7 @@ Polygon::iterate_winding_number (Integer& w,
 }
 
 Integer
-Polygon::get_winding_number (const Polygon_Vertex* handle_ptr,
+Polygon::get_winding_number (const Polygon::Vertex* handle_ptr,
                              const Point_2D& point)
 {
    Integer w = 0;
@@ -1629,7 +1629,7 @@ Polygon::get_winding_number (const Polygon_Vertex* handle_ptr,
 }
 
 bool
-Polygon::contains (const Polygon_Vertex* handle_ptr,
+Polygon::contains (const Polygon::Vertex* handle_ptr,
                    const Point_2D& point,
                    bool border_included)
 {
@@ -1639,23 +1639,23 @@ Polygon::contains (const Polygon_Vertex* handle_ptr,
 
 inline
 void
-Polygon::toggle_intersection (Polygon_Intersection& i)
+Polygon::toggle_intersection (Polygon::Intersection& i)
 {
         if (i == INTERSECTION_ENTRY) { i = INTERSECTION_EXIT; }
    else if (i == INTERSECTION_EXIT) { i = INTERSECTION_ENTRY; }
 }
 
-Polygon_Vertex*
+Polygon::Vertex*
 Polygon::get_intersection_ptr () const
 {
 
-   Polygon_Vertex* intersection_ptr = NULL;
-   Polygon_Vertex* current_handle_ptr = first_handle_ptr;
+   Polygon::Vertex* intersection_ptr = NULL;
+   Polygon::Vertex* current_handle_ptr = first_handle_ptr;
 
    do
    {
 
-      Polygon_Vertex* current_ptr = current_handle_ptr;
+      Polygon::Vertex* current_ptr = current_handle_ptr;
 
       for (Integer i = 0; i < current_handle_ptr->n; i++)
       {
@@ -1707,10 +1707,10 @@ Polygon::boolean_op_phase_0 (const Polygon& polygon_a,
                              const Real epsilon)
 {
 
-   typedef Polygon_Vertex Pv;
+   typedef Polygon::Vertex Pv;
 
    const Pv* first_handle_b_ptr = polygon_b.first_handle_ptr;
-   Pv* current_handle_b_ptr = (Polygon_Vertex*)first_handle_b_ptr;
+   Pv* current_handle_b_ptr = (Polygon::Vertex*)first_handle_b_ptr;
 
    do
    {
@@ -1731,8 +1731,8 @@ Polygon::boolean_op_phase_0 (const Polygon& polygon_a,
             do
             {
 
-               Polygon_Vertex* next_a_ptr = current_a_ptr->next_ptr;
-               Polygon_Vertex* next_b_ptr = current_b_ptr->next_ptr;
+               Polygon::Vertex* next_a_ptr = current_a_ptr->next_ptr;
+               Polygon::Vertex* next_b_ptr = current_b_ptr->next_ptr;
 
                Point_2D& pa = ((Point_2D&)(*current_a_ptr));
                Point_2D& npa = ((Point_2D&)(*next_a_ptr));
@@ -1767,14 +1767,14 @@ Polygon::boolean_op_phase_a (const Polygon& polygon_a,
    Point_2D ip;
    Real alpha_a, alpha_b;
 
-   typedef Polygon_Vertex Pv;
-   typedef Polygon_Vertex* Pv_Ptr;
+   typedef Polygon::Vertex Pv;
+   typedef Polygon::Vertex* Pv_Ptr;
    typedef list<Pv_Ptr> Vertex_Ptr_List;
 
    Vertex_Ptr_List vertex_ptr_list;
 
    const Pv* first_handle_a_ptr = polygon_a.first_handle_ptr;
-   Pv* current_handle_a_ptr = (Polygon_Vertex*)first_handle_a_ptr;
+   Pv* current_handle_a_ptr = (Polygon::Vertex*)first_handle_a_ptr;
 
    do
    {
@@ -1795,8 +1795,8 @@ Polygon::boolean_op_phase_a (const Polygon& polygon_a,
             do
             {
 
-               Polygon_Vertex* next_a_ptr = current_a_ptr->next_ptr;
-               Polygon_Vertex* next_b_ptr = current_b_ptr->next_ptr;
+               Polygon::Vertex* next_a_ptr = current_a_ptr->next_ptr;
+               Polygon::Vertex* next_b_ptr = current_b_ptr->next_ptr;
 
                Point_2D& pa = ((Point_2D&)(*current_a_ptr));
                Point_2D& pb = ((Point_2D&)(*current_b_ptr));
@@ -1806,8 +1806,8 @@ Polygon::boolean_op_phase_a (const Polygon& polygon_a,
                if (Edge::intersection (ip, alpha_a, alpha_b, pa, npa, pb, npb))
                {
 
-                  Polygon_Vertex* iva_ptr = new Polygon_Vertex (ip);
-                  Polygon_Vertex* ivb_ptr = new Polygon_Vertex (ip);
+                  Polygon::Vertex* iva_ptr = new Polygon::Vertex (ip);
+                  Polygon::Vertex* ivb_ptr = new Polygon::Vertex (ip);
 
                   iva_ptr->neighbor_ptr = ivb_ptr;
                   iva_ptr->handle_ptr = current_handle_a_ptr;
@@ -1916,15 +1916,15 @@ Polygon::boolean_op_phase_b (const Polygon& polygon_a,
                              const bool flip)
 {
 
-   Polygon_Intersection intersection;
+   Polygon::Intersection intersection;
 
-   const Polygon_Vertex* first_handle_ptr = polygon_a.first_handle_ptr;
-   Polygon_Vertex* current_handle_ptr = (Polygon_Vertex*)first_handle_ptr;
+   const Polygon::Vertex* first_handle_ptr = polygon_a.first_handle_ptr;
+   Polygon::Vertex* current_handle_ptr = (Polygon::Vertex*)first_handle_ptr;
 
    do
    {
 
-      Polygon_Vertex* current_ptr = current_handle_ptr;
+      Polygon::Vertex* current_ptr = current_handle_ptr;
 
       for (Integer i = 0; i < current_handle_ptr->n; i++)
       {
@@ -1962,14 +1962,14 @@ Polygon::boolean_op_phase_c (Polygon& polygon,
                              const Boolean_Op boolean_op)
 {
 
-   Polygon_Vertex* first_intersection_ptr;
+   Polygon::Vertex* first_intersection_ptr;
 
-   vector<Polygon_Vertex*> remove_vector;
+   vector<Polygon::Vertex*> remove_vector;
 
    while ((first_intersection_ptr = polygon_a.get_intersection_ptr ()) != NULL)
    {
 
-      Polygon_Vertex* current_ptr = first_intersection_ptr;
+      Polygon::Vertex* current_ptr = first_intersection_ptr;
 
       const Point_2D& point = ((const Point_2D&)(*current_ptr));
       polygon.add (point, true);
@@ -1977,7 +1977,7 @@ Polygon::boolean_op_phase_c (Polygon& polygon,
       do
       {
 
-         Polygon_Intersection intersection = current_ptr->intersection;
+         Polygon::Intersection intersection = current_ptr->intersection;
 
          do
          {
@@ -2017,10 +2017,10 @@ Polygon::boolean_op_phase_c (Polygon& polygon,
 
    boolean_op_phase_c_tilde (polygon, polygon_a, polygon_b, boolean_op);
 
-   for (vector<Polygon_Vertex*>::iterator iterator = remove_vector.begin ();
+   for (vector<Polygon::Vertex*>::iterator iterator = remove_vector.begin ();
         iterator != remove_vector.end (); iterator++)
    {
-      Polygon_Vertex* vertex_ptr = *(iterator);
+      Polygon::Vertex* vertex_ptr = *(iterator);
       (vertex_ptr->handle_ptr->intersections)--;
       Polygon::remove (vertex_ptr);
    }
@@ -2034,10 +2034,10 @@ Polygon::boolean_op_phase_c_tilde (Polygon& polygon,
                                    const Boolean_Op boolean_op)
 {
 
-   const Polygon_Vertex* first_handle_a_ptr = polygon_a.first_handle_ptr;
-   const Polygon_Vertex* first_handle_b_ptr = polygon_b.first_handle_ptr;
+   const Polygon::Vertex* first_handle_a_ptr = polygon_a.first_handle_ptr;
+   const Polygon::Vertex* first_handle_b_ptr = polygon_b.first_handle_ptr;
 
-   Polygon_Vertex* current_handle_a_ptr = (Polygon_Vertex*)first_handle_a_ptr;
+   Polygon::Vertex* current_handle_a_ptr = (Polygon::Vertex*)first_handle_a_ptr;
 
    do
    {
@@ -2045,19 +2045,19 @@ Polygon::boolean_op_phase_c_tilde (Polygon& polygon,
       if (current_handle_a_ptr->intersections == 0)
       {
 
-         Polygon_Vertex* current_handle_b_ptr = (Polygon_Vertex*)first_handle_b_ptr;
+         Polygon::Vertex* current_handle_b_ptr = (Polygon::Vertex*)first_handle_b_ptr;
 
          do
          {
 
-            Polygon_Relation relation = get_polygon_relation (
+            Polygon::Relation relation = get_relation (
                current_handle_a_ptr, current_handle_b_ptr);
 
-            if ((boolean_op == INTERSECTION && relation == A_ENTIRELY_IN_B) ||
-                (boolean_op == DIFFERENCE && relation == B_ENTIRELY_IN_A) ||
-                (boolean_op == DIFFERENCE && relation == DISJOINT) ||
-                (boolean_op == UNION && relation == B_ENTIRELY_IN_A) ||
-                (boolean_op == UNION && relation == DISJOINT))
+            if ((boolean_op == INTERSECTION && relation == Polygon::A_ENTIRELY_IN_B) ||
+                (boolean_op == DIFFERENCE && relation == Polygon::B_ENTIRELY_IN_A) ||
+                (boolean_op == DIFFERENCE && relation == Polygon::DISJOINT) ||
+                (boolean_op == UNION && relation == Polygon::B_ENTIRELY_IN_A) ||
+                (boolean_op == UNION && relation == Polygon::DISJOINT))
             {
                if (boolean_op == INTERSECTION &&
                    current_handle_a_ptr->action == APPEND)
@@ -2071,8 +2071,8 @@ Polygon::boolean_op_phase_c_tilde (Polygon& polygon,
                }
             }
             else
-            if ((boolean_op == DIFFERENCE && relation == A_ENTIRELY_IN_B) ||
-                (boolean_op == UNION && relation == A_ENTIRELY_IN_B))
+            if ((boolean_op == DIFFERENCE && relation == Polygon::A_ENTIRELY_IN_B) ||
+                (boolean_op == UNION && relation == Polygon::A_ENTIRELY_IN_B))
             {
                current_handle_a_ptr->action = DO_NOT_APPEND;
             }
@@ -2089,7 +2089,7 @@ Polygon::boolean_op_phase_c_tilde (Polygon& polygon,
    }
    while (current_handle_a_ptr != first_handle_a_ptr);
 
-   Polygon_Vertex* current_handle_b_ptr = (Polygon_Vertex*)first_handle_b_ptr;
+   Polygon::Vertex* current_handle_b_ptr = (Polygon::Vertex*)first_handle_b_ptr;
 
    do
    {
@@ -2097,18 +2097,18 @@ Polygon::boolean_op_phase_c_tilde (Polygon& polygon,
       if (current_handle_b_ptr->intersections == 0)
       {
 
-         Polygon_Vertex* current_handle_a_ptr = (Polygon_Vertex*)first_handle_a_ptr;
+         Polygon::Vertex* current_handle_a_ptr = (Polygon::Vertex*)first_handle_a_ptr;
 
          do
          {
 
-            Polygon_Relation relation = get_polygon_relation (
+            Polygon::Relation relation = get_relation (
                current_handle_a_ptr, current_handle_b_ptr);
 
-            if ((boolean_op == INTERSECTION && relation == B_ENTIRELY_IN_A) ||
-                (boolean_op == DIFFERENCE && relation == B_ENTIRELY_IN_A) ||
-                (boolean_op == UNION && relation == A_ENTIRELY_IN_B) ||
-                (boolean_op == UNION && relation == DISJOINT))
+            if ((boolean_op == INTERSECTION && relation == Polygon::B_ENTIRELY_IN_A) ||
+                (boolean_op == DIFFERENCE && relation == Polygon::B_ENTIRELY_IN_A) ||
+                (boolean_op == UNION && relation == Polygon::A_ENTIRELY_IN_B) ||
+                (boolean_op == UNION && relation == Polygon::DISJOINT))
             {
                if (boolean_op == INTERSECTION &&
                    current_handle_b_ptr->action == APPEND)
@@ -2122,7 +2122,7 @@ Polygon::boolean_op_phase_c_tilde (Polygon& polygon,
                }
             }
             else
-            if ((boolean_op == UNION && relation == B_ENTIRELY_IN_A))
+            if ((boolean_op == UNION && relation == Polygon::B_ENTIRELY_IN_A))
             {
                current_handle_a_ptr->action = DO_NOT_APPEND;
             }
@@ -2141,7 +2141,7 @@ Polygon::boolean_op_phase_c_tilde (Polygon& polygon,
 
    {
 
-      Polygon_Vertex* current_handle_a_ptr = (Polygon_Vertex*)first_handle_a_ptr;
+      Polygon::Vertex* current_handle_a_ptr = (Polygon::Vertex*)first_handle_a_ptr;
       do
       {
 
@@ -2156,7 +2156,7 @@ Polygon::boolean_op_phase_c_tilde (Polygon& polygon,
       }
       while (current_handle_a_ptr != first_handle_a_ptr);
 
-      Polygon_Vertex* current_handle_b_ptr = (Polygon_Vertex*)first_handle_b_ptr;
+      Polygon::Vertex* current_handle_b_ptr = (Polygon::Vertex*)first_handle_b_ptr;
       do
       {
 
@@ -2180,22 +2180,22 @@ Polygon::simplify_phase_a (Polygon& polygon)
 {
 
    Point_2D ip;
-   set<Polygon_Vertex*> pv_ptr_set;
-   Polygon_Vertex* first_handle_ptr = polygon.first_handle_ptr;
+   set<Polygon::Vertex*> pv_ptr_set;
+   Polygon::Vertex* first_handle_ptr = polygon.first_handle_ptr;
 
-   Polygon_Vertex* a_current_handle_ptr = first_handle_ptr;
+   Polygon::Vertex* a_current_handle_ptr = first_handle_ptr;
    do
    {
 
-      Polygon_Vertex* a_current_ptr = a_current_handle_ptr;
+      Polygon::Vertex* a_current_ptr = a_current_handle_ptr;
       do
       {
 
-         Polygon_Vertex* b_current_handle_ptr = a_current_handle_ptr;
+         Polygon::Vertex* b_current_handle_ptr = a_current_handle_ptr;
          do
          {
 
-            Polygon_Vertex* b_current_ptr = a_current_ptr;
+            Polygon::Vertex* b_current_ptr = a_current_ptr;
             if (b_current_handle_ptr != a_current_handle_ptr)
             {
                b_current_ptr = b_current_handle_ptr;
@@ -2204,8 +2204,8 @@ Polygon::simplify_phase_a (Polygon& polygon)
             do
             {
 
-               Polygon_Vertex* a_next_ptr = a_current_ptr->next_ptr;
-               Polygon_Vertex* b_next_ptr = b_current_ptr->next_ptr;
+               Polygon::Vertex* a_next_ptr = a_current_ptr->next_ptr;
+               Polygon::Vertex* b_next_ptr = b_current_ptr->next_ptr;
 
                const Point_2D& pa = ((Point_2D&)(*a_current_ptr));
                const Point_2D& npa = ((Point_2D&)(*a_next_ptr));
@@ -2220,8 +2220,8 @@ Polygon::simplify_phase_a (Polygon& polygon)
                   if (Edge::intersection (ip, pa, npa, pb, npb))
                   {
 
-                     Polygon_Vertex* iva_ptr = new Polygon_Vertex (ip);
-                     Polygon_Vertex* ivb_ptr = new Polygon_Vertex (ip);
+                     Polygon::Vertex* iva_ptr = new Polygon::Vertex (ip);
+                     Polygon::Vertex* ivb_ptr = new Polygon::Vertex (ip);
 
                      iva_ptr->intersection = INTERSECTION_SELF;
                      iva_ptr->prev_ptr = a_current_ptr;
@@ -2263,15 +2263,15 @@ Polygon::simplify_phase_a (Polygon& polygon)
    }
    while (a_current_handle_ptr != first_handle_ptr);
 
-   for (set<Polygon_Vertex*>::iterator iterator = pv_ptr_set.begin ();
+   for (set<Polygon::Vertex*>::iterator iterator = pv_ptr_set.begin ();
         iterator != pv_ptr_set.end (); iterator++)
    {
 
-      Polygon_Vertex* iva_ptr = *(iterator);
-      Polygon_Vertex* ivb_ptr = iva_ptr->neighbor_ptr;
+      Polygon::Vertex* iva_ptr = *(iterator);
+      Polygon::Vertex* ivb_ptr = iva_ptr->neighbor_ptr;
 
-      Polygon_Vertex* next_a_ptr = iva_ptr->next_ptr;
-      Polygon_Vertex* next_b_ptr = ivb_ptr->next_ptr;
+      Polygon::Vertex* next_a_ptr = iva_ptr->next_ptr;
+      Polygon::Vertex* next_b_ptr = ivb_ptr->next_ptr;
 
       iva_ptr->next_ptr = next_b_ptr;
       ivb_ptr->next_ptr = next_a_ptr;
@@ -2290,11 +2290,11 @@ void
 Polygon::simplify_phase_b (Polygon& polygon)
 {
 
-   Polygon_Vertex* first_handle_ptr = polygon.first_handle_ptr;
-   Polygon_Vertex* current_handle_ptr = first_handle_ptr;
+   Polygon::Vertex* first_handle_ptr = polygon.first_handle_ptr;
+   Polygon::Vertex* current_handle_ptr = first_handle_ptr;
    do
    {
-      Polygon_Vertex* next_handle_ptr = current_handle_ptr->next_handle_ptr;
+      Polygon::Vertex* next_handle_ptr = current_handle_ptr->next_handle_ptr;
 
       current_handle_ptr->prev_handle_ptr = NULL;
       current_handle_ptr->next_handle_ptr = NULL;
@@ -2306,19 +2306,19 @@ Polygon::simplify_phase_b (Polygon& polygon)
    first_handle_ptr->next_handle_ptr = first_handle_ptr;
    first_handle_ptr->prev_handle_ptr = first_handle_ptr;
 
-   set<Polygon_Vertex*> pv_ptr_set;
+   set<Polygon::Vertex*> pv_ptr_set;
    pv_ptr_set.insert (first_handle_ptr);
 
    while (pv_ptr_set.size () > 0)
    {
 
-      Polygon_Vertex* handle_ptr = *(pv_ptr_set.begin ());
+      Polygon::Vertex* handle_ptr = *(pv_ptr_set.begin ());
       pv_ptr_set.erase (handle_ptr);
 
       if (handle_ptr != first_handle_ptr)
       {
 
-         Polygon_Vertex* last_handle_ptr = first_handle_ptr->prev_handle_ptr;
+         Polygon::Vertex* last_handle_ptr = first_handle_ptr->prev_handle_ptr;
 
          handle_ptr->next_handle_ptr = first_handle_ptr;
          handle_ptr->prev_handle_ptr = last_handle_ptr;
@@ -2328,7 +2328,7 @@ Polygon::simplify_phase_b (Polygon& polygon)
 
       }
 
-      Polygon_Vertex* current_ptr = handle_ptr;
+      Polygon::Vertex* current_ptr = handle_ptr;
 
       do
       {
@@ -2336,14 +2336,14 @@ Polygon::simplify_phase_b (Polygon& polygon)
          if (current_ptr->intersection == INTERSECTION_SELF)
          {
 
-            Polygon_Vertex* neighbor_ptr = current_ptr->neighbor_ptr;
+            Polygon::Vertex* neighbor_ptr = current_ptr->neighbor_ptr;
 
             current_ptr->neighbor_ptr = NULL;
             neighbor_ptr->neighbor_ptr = NULL;
             current_ptr->intersection = INTERSECTION_NOT;
             neighbor_ptr->intersection = INTERSECTION_NOT;
 
-            Polygon_Vertex* candidate_handle_ptr = neighbor_ptr;
+            Polygon::Vertex* candidate_handle_ptr = neighbor_ptr;
             pv_ptr_set.insert (candidate_handle_ptr);
 
          }
@@ -2359,21 +2359,21 @@ Polygon::simplify_phase_b (Polygon& polygon)
 
 }
 
-Polygon_Relation
-Polygon::get_polygon_relation (const Polygon_Vertex* handle_a_ptr,
-                               const Polygon_Vertex* handle_b_ptr)
+Polygon::Relation
+Polygon::get_relation (const Polygon::Vertex* handle_a_ptr,
+                       const Polygon::Vertex* handle_b_ptr)
 {
 
-   Polygon_Relation relation = DISJOINT;
+   Polygon::Relation relation = Polygon::DISJOINT;
 
    if (entirely_within (handle_a_ptr, handle_b_ptr))
    {
-      relation = A_ENTIRELY_IN_B;
+      relation = Polygon::A_ENTIRELY_IN_B;
    }
    else
    if (entirely_within (handle_b_ptr, handle_a_ptr))
    {
-      relation = B_ENTIRELY_IN_A;
+      relation = Polygon::B_ENTIRELY_IN_A;
    }
 
    return relation;
@@ -2381,12 +2381,12 @@ Polygon::get_polygon_relation (const Polygon_Vertex* handle_a_ptr,
 }
 
 bool
-Polygon::entirely_within (const Polygon_Vertex* handle_a_ptr,
-                          const Polygon_Vertex* handle_b_ptr)
+Polygon::entirely_within (const Polygon::Vertex* handle_a_ptr,
+                          const Polygon::Vertex* handle_b_ptr)
 {
 
    bool b = true;
-   Polygon_Vertex* current_a_ptr = (Polygon_Vertex*)handle_a_ptr;
+   Polygon::Vertex* current_a_ptr = (Polygon::Vertex*)handle_a_ptr;
 
    do
    {
@@ -2405,11 +2405,11 @@ Polygon::entirely_within (const Polygon_Vertex* handle_a_ptr,
 }
 
 bool
-Polygon::append (Polygon_Vertex* handle_ptr)
+Polygon::append (Polygon::Vertex* handle_ptr)
 {
 
    bool first_point = true;
-   Polygon_Vertex* current_ptr = (Polygon_Vertex*)handle_ptr;
+   Polygon::Vertex* current_ptr = (Polygon::Vertex*)handle_ptr;
 
    do
    {
@@ -2570,17 +2570,17 @@ Polygon::clear ()
 {
 
    if (size () == 0) { return; }
-   Polygon_Vertex* current_handle_ptr = first_handle_ptr;
+   Polygon::Vertex* current_handle_ptr = first_handle_ptr;
 
    while (true)
    {
 
-      Polygon_Vertex* next_handle_ptr = current_handle_ptr->next_handle_ptr;
-      Polygon_Vertex* current_ptr = current_handle_ptr;
+      Polygon::Vertex* next_handle_ptr = current_handle_ptr->next_handle_ptr;
+      Polygon::Vertex* current_ptr = current_handle_ptr;
 
       const Integer n = current_handle_ptr->n;
 
-      Polygon_Vertex* next_ptr = current_ptr->next_ptr;
+      Polygon::Vertex* next_ptr = current_ptr->next_ptr;
 
       while (true)
       {
@@ -2612,14 +2612,14 @@ void
 Polygon::attract_by (const Attractor& attractor)
 {
 
-   const Polygon_Vertex* first_handle_ptr = get_first_handle_ptr ();
-   Polygon_Vertex* current_handle_ptr = (Polygon_Vertex*)first_handle_ptr;
+   const Polygon::Vertex* first_handle_ptr = get_first_handle_ptr ();
+   Polygon::Vertex* current_handle_ptr = (Polygon::Vertex*)first_handle_ptr;
 
    do
    {
 
       const Integer n = current_handle_ptr->n;
-      Polygon_Vertex* current_ptr = (Polygon_Vertex*)current_handle_ptr;
+      Polygon::Vertex* current_ptr = (Polygon::Vertex*)current_handle_ptr;
 
       for (Integer i = 0; i < n; i++)
       {
@@ -2640,7 +2640,7 @@ Polygon::add (const Point_2D& point,
               const bool new_handle)
 {
 
-   Polygon_Vertex* vertex_ptr = new Polygon_Vertex (point);
+   Polygon::Vertex* vertex_ptr = new Polygon::Vertex (point);
 
    if (first_handle_ptr == NULL)
    {
@@ -2659,7 +2659,7 @@ Polygon::add (const Point_2D& point,
    else
    {
 
-      Polygon_Vertex* last_handle_ptr = first_handle_ptr->prev_handle_ptr;
+      Polygon::Vertex* last_handle_ptr = first_handle_ptr->prev_handle_ptr;
 
       if (new_handle) // main handle_ptr != NULL
       {
@@ -2679,7 +2679,7 @@ Polygon::add (const Point_2D& point,
       else
       {
 
-         Polygon_Vertex* last_ptr = last_handle_ptr->prev_ptr;
+         Polygon::Vertex* last_ptr = last_handle_ptr->prev_ptr;
 
          if (point.x == last_ptr->x && point.y == last_ptr->y)
          {
@@ -2727,14 +2727,14 @@ void
 Polygon::add (const Polygon& polygon)
 {
 
-   const Polygon_Vertex* first_handle_ptr = polygon.get_first_handle_ptr ();
-   Polygon_Vertex* current_handle_ptr = (Polygon_Vertex*)first_handle_ptr;
+   const Polygon::Vertex* first_handle_ptr = polygon.get_first_handle_ptr ();
+   Polygon::Vertex* current_handle_ptr = (Polygon::Vertex*)first_handle_ptr;
 
    do
    {
 
       Integer n = current_handle_ptr->n;
-      Polygon_Vertex* current_ptr = (Polygon_Vertex*)current_handle_ptr;
+      Polygon::Vertex* current_ptr = (Polygon::Vertex*)current_handle_ptr;
 
       for (Integer i = 0; i < n; i++)
       {
@@ -2755,14 +2755,14 @@ Polygon::add (const Polygon& polygon,
               const Point_2D& offset)
 {
 
-   const Polygon_Vertex* first_handle_ptr = polygon.get_first_handle_ptr ();
-   Polygon_Vertex* current_handle_ptr = (Polygon_Vertex*)first_handle_ptr;
+   const Polygon::Vertex* first_handle_ptr = polygon.get_first_handle_ptr ();
+   Polygon::Vertex* current_handle_ptr = (Polygon::Vertex*)first_handle_ptr;
 
    do
    {
 
       Integer n = current_handle_ptr->n;
-      Polygon_Vertex* current_ptr = (Polygon_Vertex*)current_handle_ptr;
+      Polygon::Vertex* current_ptr = (Polygon::Vertex*)current_handle_ptr;
 
       for (Integer i = 0; i < n; i++)
       {
@@ -2794,12 +2794,12 @@ void
 Polygon::transform (const Transform_2D& transform)
 {
 
-   const Polygon_Vertex* first_handle_ptr = get_first_handle_ptr ();
-   Polygon_Vertex* current_handle_ptr = (Polygon_Vertex*)first_handle_ptr;
+   const Polygon::Vertex* first_handle_ptr = get_first_handle_ptr ();
+   Polygon::Vertex* current_handle_ptr = (Polygon::Vertex*)first_handle_ptr;
 
    do
    {
-      Polygon_Vertex* current_ptr = current_handle_ptr;
+      Polygon::Vertex* current_ptr = current_handle_ptr;
       do
       {
          Real& x = current_ptr->x;
@@ -2818,12 +2818,12 @@ void
 Polygon::reverse (const Transform_2D& transform)
 {
 
-   const Polygon_Vertex* first_handle_ptr = get_first_handle_ptr ();
-   Polygon_Vertex* current_handle_ptr = (Polygon_Vertex*)first_handle_ptr;
+   const Polygon::Vertex* first_handle_ptr = get_first_handle_ptr ();
+   Polygon::Vertex* current_handle_ptr = (Polygon::Vertex*)first_handle_ptr;
 
    do
    {
-      Polygon_Vertex* current_ptr = current_handle_ptr;
+      Polygon::Vertex* current_ptr = current_handle_ptr;
       do
       {
          Real& x = current_ptr->x;
@@ -2854,14 +2854,14 @@ Polygon::translate (const Point_2D& point)
 
    if (size () <= 1) { return; }
 
-   const Polygon_Vertex* first_handle_ptr = get_first_handle_ptr ();
-   Polygon_Vertex* current_handle_ptr = (Polygon_Vertex*)first_handle_ptr;
+   const Polygon::Vertex* first_handle_ptr = get_first_handle_ptr ();
+   Polygon::Vertex* current_handle_ptr = (Polygon::Vertex*)first_handle_ptr;
 
    do
    {
 
       const Integer n = current_handle_ptr->n;
-      Polygon_Vertex* current_ptr = (Polygon_Vertex*)current_handle_ptr;
+      Polygon::Vertex* current_ptr = (Polygon::Vertex*)current_handle_ptr;
 
       for (Integer i = 0; i < n; i++)
       {
@@ -2879,19 +2879,19 @@ Polygon::translate (const Point_2D& point)
 }
 
 void
-Polygon::remove (Polygon_Vertex* vertex_ptr)
+Polygon::remove (Polygon::Vertex* vertex_ptr)
 {
 
    (vertex_ptr->handle_ptr->n)--;
 
-   Polygon_Vertex* prev_ptr = vertex_ptr->prev_ptr;
-   Polygon_Vertex* next_ptr = vertex_ptr->next_ptr;
+   Polygon::Vertex* prev_ptr = vertex_ptr->prev_ptr;
+   Polygon::Vertex* next_ptr = vertex_ptr->next_ptr;
 
    if (vertex_ptr->handle_ptr == vertex_ptr) // is a handle
    {
 
       // next_ptr is new handle
-      for (Polygon_Vertex* current_ptr = next_ptr;
+      for (Polygon::Vertex* current_ptr = next_ptr;
            current_ptr != vertex_ptr;
            current_ptr = current_ptr->next_ptr)
       {
@@ -2921,7 +2921,7 @@ Polygon::size () const
 
       Integer n = 0;
 
-      Polygon_Vertex* current_handle_ptr = first_handle_ptr;
+      Polygon::Vertex* current_handle_ptr = first_handle_ptr;
       do
       {
          n += current_handle_ptr->n;
@@ -2945,7 +2945,7 @@ Polygon::get_number_of_single_polygons () const
 
       Integer n = 0;
 
-      Polygon_Vertex* current_handle_ptr = first_handle_ptr;
+      Polygon::Vertex* current_handle_ptr = first_handle_ptr;
       do
       {
          n++;
@@ -2959,13 +2959,13 @@ Polygon::get_number_of_single_polygons () const
 
 }
 
-const Polygon_Vertex*
+const Polygon::Vertex*
 Polygon::get_first_handle_ptr () const
 {
    return first_handle_ptr;
 }
 
-const Polygon_Vertex*
+const Polygon::Vertex*
 Polygon::get_last_handle_ptr () const
 {
    return first_handle_ptr->prev_handle_ptr;
@@ -2984,16 +2984,16 @@ Polygon::get_domain_y () const
 }
 
 Real
-Polygon::get_simple_polygon_area (const Polygon_Vertex* pv_ptr)
+Polygon::get_simple_polygon_area (const Polygon::Vertex* pv_ptr)
 {
 
    Real area = 0;
-   Polygon_Vertex* current_ptr = ((Polygon_Vertex*)pv_ptr);
+   Polygon::Vertex* current_ptr = ((Polygon::Vertex*)pv_ptr);
 
    do
    {
 
-      Polygon_Vertex* next_ptr = current_ptr->next_ptr;
+      Polygon::Vertex* next_ptr = current_ptr->next_ptr;
       const Point_2D& current_point = (const Point_2D&)(*current_ptr);
       const Point_2D& next_point = (const Point_2D&)(*next_ptr);
 
@@ -3014,7 +3014,7 @@ Polygon::get_area () const
 {
 
    Real area = 0;
-   Polygon_Vertex* current_handle_ptr = first_handle_ptr;
+   Polygon::Vertex* current_handle_ptr = first_handle_ptr;
 
    do
    {
@@ -3032,7 +3032,7 @@ Polygon::get_positive_area () const
 {
 
    Real area = 0;
-   Polygon_Vertex* current_handle_ptr = first_handle_ptr;
+   Polygon::Vertex* current_handle_ptr = first_handle_ptr;
 
    do
    {
@@ -3051,7 +3051,7 @@ Polygon::get_negative_area () const
 {
 
    Real area = 0;
-   Polygon_Vertex* current_handle_ptr = first_handle_ptr;
+   Polygon::Vertex* current_handle_ptr = first_handle_ptr;
 
    do
    {
@@ -3071,13 +3071,13 @@ Polygon::get_centroid () const
 
    Integer n = 0;
    Point_2D centroid (0, 0);
-   Polygon_Vertex* current_handle_ptr = first_handle_ptr;
+   Polygon::Vertex* current_handle_ptr = first_handle_ptr;
 
    do
    {
 
       n += current_handle_ptr->n;
-      Polygon_Vertex* current_ptr = current_handle_ptr;
+      Polygon::Vertex* current_ptr = current_handle_ptr;
 
       for (Integer i = 0; i < current_handle_ptr->n; i++)
       {
@@ -3106,7 +3106,7 @@ Polygon::get_winding_number (const Point_2D& point) const
    if (size () == 0) { return 0; }
 
    Integer w = 0;
-   Polygon_Vertex* current_handle_ptr = first_handle_ptr;
+   Polygon::Vertex* current_handle_ptr = first_handle_ptr;
 
    do
    {
@@ -3203,14 +3203,14 @@ Polygon::cairo (const RefPtr<Context>& cr,
 
    if (size () <= 1) { return; }
 
-   const Polygon_Vertex* first_handle_ptr = get_first_handle_ptr ();
-   Polygon_Vertex* current_handle_ptr = (Polygon_Vertex*)first_handle_ptr;
+   const Polygon::Vertex* first_handle_ptr = get_first_handle_ptr ();
+   Polygon::Vertex* current_handle_ptr = (Polygon::Vertex*)first_handle_ptr;
 
    do
    {
 
       const Integer n = current_handle_ptr->n;
-      Polygon_Vertex* current_ptr = (Polygon_Vertex*)current_handle_ptr;
+      Polygon::Vertex* current_ptr = (Polygon::Vertex*)current_handle_ptr;
 
       for (Integer i = 0; i < n; i++)
       {
@@ -3236,14 +3236,14 @@ Polygon::cairo (const RefPtr<Context>& cr,
 
    if (size () <= 1) { return; }
 
-   const Polygon_Vertex* first_handle_ptr = get_first_handle_ptr ();
-   Polygon_Vertex* current_handle_ptr = (Polygon_Vertex*)first_handle_ptr;
+   const Polygon::Vertex* first_handle_ptr = get_first_handle_ptr ();
+   Polygon::Vertex* current_handle_ptr = (Polygon::Vertex*)first_handle_ptr;
 
    do
    {
 
       const Integer n = current_handle_ptr->n;
-      Polygon_Vertex* current_ptr = (Polygon_Vertex*)current_handle_ptr;
+      Polygon::Vertex* current_ptr = (Polygon::Vertex*)current_handle_ptr;
 
       for (Integer i = 0; i < n; i++)
       {
@@ -3265,10 +3265,10 @@ Polygon::cairo (const RefPtr<Context>& cr,
 
 void
 Polygon::cairo (const RefPtr<Context>& cr,
-                const Polygon_Vertex* polygon_vertex_ptr)
+                const Polygon::Vertex* polygon_vertex_ptr)
 {
 
-   Polygon_Vertex* current_ptr = (Polygon_Vertex*)polygon_vertex_ptr;
+   Polygon::Vertex* current_ptr = (Polygon::Vertex*)polygon_vertex_ptr;
 
    do
    {
@@ -3297,15 +3297,15 @@ Polygon::debug_print (const string& prefix,
                       ostream& out_stream) const
 {
 
-   const Polygon_Vertex* handle_ptr = first_handle_ptr;
-   Polygon_Vertex* current_handle_ptr = (Polygon_Vertex*)first_handle_ptr;
+   const Polygon::Vertex* handle_ptr = first_handle_ptr;
+   Polygon::Vertex* current_handle_ptr = (Polygon::Vertex*)first_handle_ptr;
 
    do
    {
 
       out_stream << prefix << "new handle" << endl;
       Integer n = current_handle_ptr->n;
-      Polygon_Vertex* current_ptr = current_handle_ptr;
+      Polygon::Vertex* current_ptr = current_handle_ptr;
 
       do
       {
@@ -3802,14 +3802,14 @@ Path::Path ()
 Path::Path (const Polygon& polygon)
 {
 
-   const Polygon_Vertex* first_handle_ptr = polygon.get_first_handle_ptr ();
-   Polygon_Vertex* current_handle_ptr = (Polygon_Vertex*)first_handle_ptr;
+   const Polygon::Vertex* first_handle_ptr = polygon.get_first_handle_ptr ();
+   Polygon::Vertex* current_handle_ptr = (Polygon::Vertex*)first_handle_ptr;
 
    do
    {
 
       const Integer n = current_handle_ptr->n;
-      Polygon_Vertex* current_ptr = (Polygon_Vertex*)current_handle_ptr;
+      Polygon::Vertex* current_ptr = (Polygon::Vertex*)current_handle_ptr;
 
       for (Integer i = 0; i < n; i++)
       {
@@ -4694,14 +4694,14 @@ namespace denise
 
       if (polygon.size () == 0) { return out_file; }
 
-      const Polygon_Vertex* first_handle_ptr = polygon.get_first_handle_ptr ();
-      Polygon_Vertex* current_handle_ptr = (Polygon_Vertex*)first_handle_ptr;
+      const Polygon::Vertex* first_handle_ptr = polygon.get_first_handle_ptr ();
+      Polygon::Vertex* current_handle_ptr = (Polygon::Vertex*)first_handle_ptr;
 
       do
       {
 
          Integer n = current_handle_ptr->n;
-         Polygon_Vertex* current_ptr = (Polygon_Vertex*)current_handle_ptr;
+         Polygon::Vertex* current_ptr = (Polygon::Vertex*)current_handle_ptr;
 
          for (Integer i = 0; i < n; i++)
          {

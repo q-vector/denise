@@ -2099,14 +2099,14 @@ namespace denise
 
 };
 
-Access::Data_3D::Data_3D (const vector<Nwp_Element>& nwp_element_vector,
+Access::Data_3D::Data_3D (const vector<Met_Element>& met_element_vector,
                           const Key& key)
-   : Nwp::Data_3D (nwp_element_vector, key)
+   : Nwp::Data_3D (met_element_vector, key)
 {
 }
 
 Real
-Access::Data_3D::evaluate (const Nwp_Element element,
+Access::Data_3D::evaluate (const Met_Element element,
                            const Real p,
                            const Real latitude,
                            const Real longitude,
@@ -2118,8 +2118,8 @@ Access::Data_3D::evaluate (const Nwp_Element element,
 
       case denise::DEW_POINT:
       {
-         const Nwp_Element& T = denise::TEMPERATURE;
-         const Nwp_Element& RH = denise::RELATIVE_HUMIDITY;
+         const Met_Element& T = denise::TEMPERATURE;
+         const Met_Element& RH = denise::RELATIVE_HUMIDITY;
          const Real t = Nwp::Data_3D::evaluate (T, p, latitude, longitude);
          const Real rh = Nwp::Data_3D::evaluate (RH, p, latitude, longitude);
          const Thermo_Medium thermo_medium = (t < 0 ? ICE : WATER);
@@ -2128,8 +2128,8 @@ Access::Data_3D::evaluate (const Nwp_Element element,
 
       case denise::OMEGA:
       {
-         const Nwp_Element& T = TEMPERATURE;
-         const Nwp_Element& W = VERTICAL_VELOCITY;
+         const Met_Element& T = TEMPERATURE;
+         const Met_Element& W = VERTICAL_VELOCITY;
          const Real t = Nwp::Data_3D::evaluate (T, p, latitude, longitude);
          const Real w = Nwp::Data_3D::evaluate (W, p, latitude, longitude);
          const Real rho = p / (R_d * t);
@@ -2145,7 +2145,7 @@ Access::Data_3D::evaluate (const Nwp_Element element,
 
 Grib::Key
 Access::get_grib_key (const Key& key,
-                      const Nwp_Element nwp_element,
+                      const Met_Element met_element,
                       const Level& level) const
 {
 
@@ -2153,8 +2153,8 @@ Access::get_grib_key (const Key& key,
    const Integer forecast_hour = key.forecast_hour;
 
    Grib::Key grib_key;
-   set_grib_key (grib_key, nwp_element, base_time, forecast_hour);
-   set_grib_key (grib_key, nwp_element, level);
+   set_grib_key (grib_key, met_element, base_time, forecast_hour);
+   set_grib_key (grib_key, met_element, level);
 
    return grib_key;
 
@@ -2162,7 +2162,7 @@ Access::get_grib_key (const Key& key,
 
 void
 Access::set_grib_key (Grib::Key& grib_key,
-                      const Nwp_Element nwp_element,
+                      const Met_Element met_element,
                       const Dtime& base_time,
                       const Integer forecast_hour) const
 {
@@ -2188,7 +2188,7 @@ Access::set_grib_key (Grib::Key& grib_key,
    buffer[10] = 0;
    buffer[11] = 0;
 
-   if (nwp_element == RAINFALL_CUMULATIVE)
+   if (met_element == RAINFALL_CUMULATIVE)
    {
       buffer[7] = 0;
       buffer[8] = uint8_t (forecast_hour);
@@ -2201,16 +2201,16 @@ Access::set_grib_key (Grib::Key& grib_key,
 
 void
 Access::set_grib_key (Grib::Key& grib_key,
-                      const Nwp_Element nwp_element,
+                      const Met_Element met_element,
                       const denise::Level& level) const
 {
 
    uint8_t* buffer = grib_key.buffer;
    const uint8_t n = (omega_as_w ? 135 : 134);
 
-   if (level.type == PRESSURE_LEVEL)
+   if (level.type == Level::PRESSURE)
    {
-      switch (nwp_element)
+      switch (met_element)
       {
          case denise::ZONAL_WIND:          { buffer[12] = 131; break; }
          case denise::MERIDIONAL_WIND:     { buffer[12] = 132; break; }
@@ -2229,7 +2229,7 @@ Access::set_grib_key (Grib::Key& grib_key,
    else
    {
 
-      switch (nwp_element)
+      switch (met_element)
       {
          case MEAN_SEA_LEVEL_PRESSURE:
             buffer[12] = 151;
@@ -2302,7 +2302,7 @@ void
 Access::initialize_3d_data (const Key& key)
 {
    typedef Access::Data_3D Ad_3d;
-   Ad_3d* ad_3d_ptr = new Ad_3d (nwp_element_vector, key);
+   Ad_3d* ad_3d_ptr = new Ad_3d (met_element_vector, key);
    data_3d_ptr_map.insert (make_pair (key, ad_3d_ptr));
 }
 
@@ -2310,15 +2310,15 @@ void
 Access::load_3d_data (Nwp::Data_3D& data_3d)
 {
 
-   typedef vector<Nwp_Element>::const_iterator Iterator;
+   typedef vector<Met_Element>::const_iterator Iterator;
    const Key& key = data_3d.key;
 
-   for (Iterator iterator = nwp_element_vector.begin ();
-        iterator != nwp_element_vector.end (); iterator++)
+   for (Iterator iterator = met_element_vector.begin ();
+        iterator != met_element_vector.end (); iterator++)
    {
-      const Nwp_Element& nwp_element = *(iterator);
-      Geodetic_Vector_Data_3D* gvd_3d_ptr = get_gvd_3d_ptr (nwp_element, key);
-      data_3d.set_gvd_3d_ptr (nwp_element, gvd_3d_ptr);
+      const Met_Element& met_element = *(iterator);
+      Geodetic_Vector_Data_3D* gvd_3d_ptr = get_gvd_3d_ptr (met_element, key);
+      data_3d.set_gvd_3d_ptr (met_element, gvd_3d_ptr);
    }
 
    data_3d.set_available ();
@@ -2341,25 +2341,25 @@ Access::fill_ts_diagnosis_data (Geodetic_Vector_Data_2D& gvd_2d,
                                 const Integer vector_index,
                                 const Key& key,
                                 const Level& level,
-                                const Nwp_Element nwp_element)
+                                const Met_Element met_element)
 {
 
    const Integer vi = vector_index;
 
-   switch (nwp_element)
+   switch (met_element)
    {
 
       case CAPE:
       case PRECIPITABLE_WATER:
       {
          const Level& surface = Level::surface_level ();
-         fill_grib_data (gvd_2d, vi, nwp_element, key, surface);
+         fill_grib_data (gvd_2d, vi, met_element, key, surface);
          return;
       }
 
    }
 
-   Nwp::fill_ts_diagnosis_data (gvd_2d, vi, key, level, nwp_element);
+   Nwp::fill_ts_diagnosis_data (gvd_2d, vi, key, level, met_element);
 
 }
 
@@ -2367,10 +2367,10 @@ void
 Access::fill_rain_data (Geodetic_Vector_Data_2D& gvd_2d,
                         const Integer vector_index,
                         const Key& key,
-                        const Nwp_Element nwp_element)
+                        const Met_Element met_element)
 {
 
-   switch (nwp_element)
+   switch (met_element)
    {
 
       case RAINFALL_CUMULATIVE:
@@ -2391,7 +2391,7 @@ Access::fill_rain_data (Geodetic_Vector_Data_2D& gvd_2d,
 
    }
 
-   Nwp::fill_rain_data (gvd_2d, vector_index, key, nwp_element);
+   Nwp::fill_rain_data (gvd_2d, vector_index, key, met_element);
 
 }
 
@@ -2399,28 +2399,28 @@ void
 Access::fill_cloud_data (Geodetic_Vector_Data_2D& gvd_2d,
                          const Integer vector_index,
                          const Key& key,
-                         const Nwp_Element nwp_element)
+                         const Met_Element met_element)
 {
    const Level& nil_level = Level::nil_level ();
-   fill_grib_data (gvd_2d, vector_index, nwp_element, key, nil_level);
+   fill_grib_data (gvd_2d, vector_index, met_element, key, nil_level);
 }
 
 void
 Access::fill_screen_level_data (Geodetic_Vector_Data_2D& gvd_2d,
                                 const Integer vector_index,
                                 const Key& key,
-                                const Nwp_Element nwp_element)
+                                const Met_Element met_element)
 {
 
    const Level& screen = Level::screen_level ();
 
-   switch (nwp_element)
+   switch (met_element)
    {
 
       case TEMPERATURE:
       case DEW_POINT:
       {
-         fill_grib_data (gvd_2d, vector_index, nwp_element, key, screen);
+         fill_grib_data (gvd_2d, vector_index, met_element, key, screen);
          return;
       }
 
@@ -2451,7 +2451,7 @@ Access::fill_screen_level_data (Geodetic_Vector_Data_2D& gvd_2d,
 
    }
 
-   Nwp::fill_screen_level_data (gvd_2d, vector_index, key, nwp_element);
+   Nwp::fill_screen_level_data (gvd_2d, vector_index, key, met_element);
 
 }
 
@@ -2459,24 +2459,24 @@ void
 Access::fill_10m_level_data (Geodetic_Vector_Data_2D& gvd_2d,
                              const Integer vector_index,
                              const Key& key,
-                             const Nwp_Element nwp_element)
+                             const Met_Element met_element)
 {
 
    const Level& ten = Level::ten_metre_level ();
 
-   switch (nwp_element)
+   switch (met_element)
    {
 
       case ZONAL_WIND:
       case MERIDIONAL_WIND:
       {
-         fill_grib_data (gvd_2d, vector_index, nwp_element, key, ten);
+         fill_grib_data (gvd_2d, vector_index, met_element, key, ten);
          return;
       }
 
    }
 
-   Nwp::fill_10m_level_data (gvd_2d, vector_index, key, nwp_element);
+   Nwp::fill_10m_level_data (gvd_2d, vector_index, key, met_element);
 
 }
 
@@ -2484,25 +2484,25 @@ void
 Access::fill_msl_data (Geodetic_Vector_Data_2D& gvd_2d,
                        const Integer vector_index,
                        const Key& key,
-                       const Nwp_Element nwp_element)
+                       const Met_Element met_element)
 {
 
    const Level& msl = Level::mean_sea_level ();
 
-   switch (nwp_element)
+   switch (met_element)
    {
 
       case PRESSURE:
       case MEAN_SEA_LEVEL_PRESSURE:
       {
-         const Nwp_Element mslp = MEAN_SEA_LEVEL_PRESSURE;
+         const Met_Element mslp = MEAN_SEA_LEVEL_PRESSURE;
          fill_grib_data (gvd_2d, vector_index, mslp, key, msl);
          return;
       }
 
    }
 
-   Nwp::fill_msl_data (gvd_2d, vector_index, key, nwp_element);
+   Nwp::fill_msl_data (gvd_2d, vector_index, key, met_element);
 
 }
 
@@ -2510,12 +2510,12 @@ void
 Access::fill_surface_level_data (Geodetic_Vector_Data_2D& gvd_2d,
                                  const Integer vector_index,
                                  const Key& key,
-                                 const Nwp_Element nwp_element)
+                                 const Met_Element met_element)
 {
 
    const Level& surface = Level::surface_level ();
 
-   switch (nwp_element)
+   switch (met_element)
    {
 
       case PRESSURE:
@@ -2526,12 +2526,12 @@ Access::fill_surface_level_data (Geodetic_Vector_Data_2D& gvd_2d,
 
    }
 
-   Nwp::fill_surface_level_data (gvd_2d, vector_index, key, nwp_element);
+   Nwp::fill_surface_level_data (gvd_2d, vector_index, key, met_element);
 
 }
 
 Geodetic_Vector_Data_3D*
-Access::get_gvd_3d_ptr (const Nwp_Element nwp_element,
+Access::get_gvd_3d_ptr (const Met_Element met_element,
                         const Key& key) const
 {
 
@@ -2539,23 +2539,23 @@ Access::get_gvd_3d_ptr (const Nwp_Element nwp_element,
       new Geodetic_Vector_Data_3D (1, tuple_p, size_2d, domain_2d);
    Geodetic_Vector_Data_3D& gvd_3d = *gvd_3d_ptr;
 
-   const bool is_rh = (nwp_element == RELATIVE_HUMIDITY);
-   const bool is_zonal_wind = (nwp_element == ZONAL_WIND);
-   const bool is_meridional_wind = (nwp_element == MERIDIONAL_WIND);
+   const bool is_rh = (met_element == RELATIVE_HUMIDITY);
+   const bool is_zonal_wind = (met_element == ZONAL_WIND);
+   const bool is_meridional_wind = (met_element == MERIDIONAL_WIND);
    const bool is_wind = (is_zonal_wind || is_meridional_wind);
 
    for (Integer k = 0; k < tuple_p.size (); k++)
    {
 
       const Real p = tuple_p[k];
-      const denise::Level level (PRESSURE_LEVEL, p);
-      const Grib::Key& grib_key = get_grib_key (key, nwp_element, level);
+      const denise::Level level (Level::PRESSURE, p);
+      const Grib::Key& grib_key = get_grib_key (key, met_element, level);
 
       Access::const_iterator iterator = find (grib_key);
       if (iterator == end ())
       {
          cout << key.base_time << " " << key.forecast_hour << " " <<
-                 nwp_element << " " << level.get_string () <<
+                 met_element << " " << level.get_string () <<
                  " throw exception " << endl;
          throw Nwp_Exception ("Access::gvd_3d_ptr Not Available");
       }
@@ -2611,12 +2611,12 @@ Access::get_grib_data_ptr (const Grib& grib,
 void
 Access::fill_grib_data (Geodetic_Vector_Data_2D& gvd_2d,
                         const Integer vector_index,
-                        const Nwp_Element nwp_element,
+                        const Met_Element met_element,
                         const Key& key,
                         const Level& level) const
 {
 
-   const Grib::Key& grib_key = get_grib_key (key, nwp_element, level);
+   const Grib::Key& grib_key = get_grib_key (key, met_element, level);
    const Nwp_Exception exception ("Access::fill_grib_data Not Available");
 
    Access::const_iterator iterator = find (grib_key);
@@ -2625,8 +2625,8 @@ Access::fill_grib_data (Geodetic_Vector_Data_2D& gvd_2d,
 
    Geodetic_Vector_Data_2D* grib_data_ptr = get_grib_data_ptr (grib, grib_key);
 
-   const bool is_zonal_wind = (nwp_element == ZONAL_WIND);
-   const bool is_meridional_wind = (nwp_element == MERIDIONAL_WIND);
+   const bool is_zonal_wind = (met_element == ZONAL_WIND);
+   const bool is_meridional_wind = (met_element == MERIDIONAL_WIND);
    const bool is_wind = (is_zonal_wind || is_meridional_wind);
 
    #pragma omp parallel for
@@ -2657,12 +2657,12 @@ Access::Access (const string& description,
 
    this->status = "Unloaded";
 
-   nwp_element_vector.push_back (denise::TEMPERATURE);
-   nwp_element_vector.push_back (denise::RELATIVE_HUMIDITY);
-   nwp_element_vector.push_back (denise::GEOPOTENTIAL_HEIGHT);
-   nwp_element_vector.push_back (denise::ZONAL_WIND);
-   nwp_element_vector.push_back (denise::MERIDIONAL_WIND);
-   nwp_element_vector.push_back (denise::VERTICAL_VELOCITY);
+   met_element_vector.push_back (denise::TEMPERATURE);
+   met_element_vector.push_back (denise::RELATIVE_HUMIDITY);
+   met_element_vector.push_back (denise::GEOPOTENTIAL_HEIGHT);
+   met_element_vector.push_back (denise::ZONAL_WIND);
+   met_element_vector.push_back (denise::MERIDIONAL_WIND);
+   met_element_vector.push_back (denise::VERTICAL_VELOCITY);
 
 }
 
@@ -2795,14 +2795,14 @@ Access::clean_up ()
 
 }
 
-Ecmwf::Data_3D::Data_3D (const vector<Nwp_Element>& nwp_element_vector,
+Ecmwf::Data_3D::Data_3D (const vector<Met_Element>& met_element_vector,
                          const Key& key)
-   : Nwp::Data_3D (nwp_element_vector, key)
+   : Nwp::Data_3D (met_element_vector, key)
 {
 }
 
 Real
-Ecmwf::Data_3D::evaluate (const Nwp_Element element,
+Ecmwf::Data_3D::evaluate (const Met_Element element,
                           const Real p,
                           const Real latitude,
                           const Real longitude,
@@ -2814,8 +2814,8 @@ Ecmwf::Data_3D::evaluate (const Nwp_Element element,
 
       case denise::DEW_POINT:
       {
-         const Nwp_Element& T = denise::TEMPERATURE;
-         const Nwp_Element& R = denise::MIXING_RATIO;
+         const Met_Element& T = denise::TEMPERATURE;
+         const Met_Element& R = denise::MIXING_RATIO;
          const Real t = Nwp::Data_3D::evaluate (T, p, latitude, longitude);
          const Real q = Nwp::Data_3D::evaluate (R, p, latitude, longitude);
          const Real rh = 0.00263 * p*q / (exp ((17.67 * (t-K) / (t-29.65))));
@@ -2824,8 +2824,8 @@ Ecmwf::Data_3D::evaluate (const Nwp_Element element,
 
       case denise::RELATIVE_HUMIDITY:
       {
-         const Nwp_Element& T = denise::TEMPERATURE;
-         const Nwp_Element& R = denise::MIXING_RATIO;
+         const Met_Element& T = denise::TEMPERATURE;
+         const Met_Element& R = denise::MIXING_RATIO;
          const Real t = Nwp::Data_3D::evaluate (T, p, latitude, longitude);
          const Real q = Nwp::Data_3D::evaluate (R, p, latitude, longitude);
          return 0.00263 * p * q / (exp ((17.67 * (t - K) / (t - 29.65))));
@@ -2833,8 +2833,8 @@ Ecmwf::Data_3D::evaluate (const Nwp_Element element,
 
       case denise::OMEGA:
       {
-         const Nwp_Element& T = TEMPERATURE;
-         const Nwp_Element& W = VERTICAL_VELOCITY;
+         const Met_Element& T = TEMPERATURE;
+         const Met_Element& W = VERTICAL_VELOCITY;
          const Real t = Nwp::Data_3D::evaluate (T, p, latitude, longitude);
          const Real w = Nwp::Data_3D::evaluate (W, p, latitude, longitude);
          const Real rho = p / (R_d * t);
@@ -2850,7 +2850,7 @@ Ecmwf::Data_3D::evaluate (const Nwp_Element element,
 
 Grib::Key
 Ecmwf::get_grib_key (const Key& key,
-                     const Nwp_Element nwp_element,
+                     const Met_Element met_element,
                      const Level& level) const
 {
 
@@ -2858,8 +2858,8 @@ Ecmwf::get_grib_key (const Key& key,
    const Integer forecast_hour = key.forecast_hour;
 
    Grib::Key grib_key;
-   set_grib_key (grib_key, nwp_element, base_time, forecast_hour);
-   set_grib_key (grib_key, nwp_element, level);
+   set_grib_key (grib_key, met_element, base_time, forecast_hour);
+   set_grib_key (grib_key, met_element, level);
 
    return grib_key;
 
@@ -2867,7 +2867,7 @@ Ecmwf::get_grib_key (const Key& key,
 
 void
 Ecmwf::set_grib_key (Grib::Key& grib_key,
-                     const Nwp_Element nwp_element,
+                     const Met_Element met_element,
                      const Dtime& base_time,
                      const Integer forecast_hour) const
 {
@@ -2893,7 +2893,7 @@ Ecmwf::set_grib_key (Grib::Key& grib_key,
    buffer[10] = 0;
    buffer[11] = 0;
 
-   if (nwp_element == RAINFALL_CUMULATIVE)
+   if (met_element == RAINFALL_CUMULATIVE)
    {
       buffer[7] = 0;
       buffer[8] = uint8_t (forecast_hour);
@@ -2908,16 +2908,16 @@ Ecmwf::set_grib_key (Grib::Key& grib_key,
 
 void
 Ecmwf::set_grib_key (Grib::Key& grib_key,
-                     const Nwp_Element nwp_element,
+                     const Met_Element met_element,
                      const denise::Level& level) const
 {
 
    uint8_t* buffer = grib_key.buffer;
    //const uint8_t n = (omega_as_w ? 135 : 134);
 
-   if (level.type == PRESSURE_LEVEL)
+   if (level.type == Level::PRESSURE)
    {
-      switch (nwp_element)
+      switch (met_element)
       {
          case denise::ZONAL_WIND:          { buffer[12] = 131; break; }
          case denise::MERIDIONAL_WIND:     { buffer[12] = 132; break; }
@@ -2936,7 +2936,7 @@ Ecmwf::set_grib_key (Grib::Key& grib_key,
    else
    {
 
-      switch (nwp_element)
+      switch (met_element)
       {
          case MEAN_SEA_LEVEL_PRESSURE:
             buffer[12] = 151;
@@ -3010,7 +3010,7 @@ void
 Ecmwf::initialize_3d_data (const Key& key)
 {
    typedef Ecmwf::Data_3D Ed_3d;
-   Ed_3d* ed_3d_ptr = new Ed_3d (nwp_element_vector, key);
+   Ed_3d* ed_3d_ptr = new Ed_3d (met_element_vector, key);
    data_3d_ptr_map.insert (make_pair (key, ed_3d_ptr));
 }
 
@@ -3018,15 +3018,15 @@ void
 Ecmwf::load_3d_data (Nwp::Data_3D& data_3d)
 {
 
-   typedef vector<Nwp_Element>::const_iterator Iterator;
+   typedef vector<Met_Element>::const_iterator Iterator;
    const Key& key = data_3d.key;
 
-   for (Iterator iterator = nwp_element_vector.begin ();
-        iterator != nwp_element_vector.end (); iterator++)
+   for (Iterator iterator = met_element_vector.begin ();
+        iterator != met_element_vector.end (); iterator++)
    {
-      const Nwp_Element& nwp_element = *(iterator);
-      Geodetic_Vector_Data_3D* gvd_3d_ptr = get_gvd_3d_ptr (nwp_element, key);
-      data_3d.set_gvd_3d_ptr (nwp_element, gvd_3d_ptr);
+      const Met_Element& met_element = *(iterator);
+      Geodetic_Vector_Data_3D* gvd_3d_ptr = get_gvd_3d_ptr (met_element, key);
+      data_3d.set_gvd_3d_ptr (met_element, gvd_3d_ptr);
    }
 
    data_3d.set_available ();
@@ -3050,25 +3050,25 @@ Ecmwf::fill_ts_diagnosis_data (Geodetic_Vector_Data_2D& gvd_2d,
                                const Integer vector_index,
                                const Key& key,
                                const Level& level,
-                               const Nwp_Element nwp_element)
+                               const Met_Element met_element)
 {
 
    const Integer vi = vector_index;
 
-   switch (nwp_element)
+   switch (met_element)
    {
 
       case CAPE:
       case PRECIPITABLE_WATER:
       {
          const Level& surface = Level::surface_level ();
-         fill_grib_data (gvd_2d, vi, nwp_element, key, surface);
+         fill_grib_data (gvd_2d, vi, met_element, key, surface);
          return;
       }
 
    }
 
-   Nwp::fill_ts_diagnosis_data (gvd_2d, vi, key, level, nwp_element);
+   Nwp::fill_ts_diagnosis_data (gvd_2d, vi, key, level, met_element);
 
 }
 
@@ -3076,10 +3076,10 @@ void
 Ecmwf::fill_rain_data (Geodetic_Vector_Data_2D& gvd_2d,
                        const Integer vector_index,
                        const Key& key,
-                       const Nwp_Element nwp_element)
+                       const Met_Element met_element)
 {
 
-   switch (nwp_element)
+   switch (met_element)
    {
 
       case RAINFALL_CUMULATIVE:
@@ -3100,7 +3100,7 @@ Ecmwf::fill_rain_data (Geodetic_Vector_Data_2D& gvd_2d,
 
    }
 
-   Nwp::fill_rain_data (gvd_2d, vector_index, key, nwp_element);
+   Nwp::fill_rain_data (gvd_2d, vector_index, key, met_element);
 
 }
 
@@ -3108,28 +3108,28 @@ void
 Ecmwf::fill_cloud_data (Geodetic_Vector_Data_2D& gvd_2d,
                         const Integer vector_index,
                         const Key& key,
-                        const Nwp_Element nwp_element)
+                        const Met_Element met_element)
 {
    const Level& nil_level = Level::nil_level ();
-   fill_grib_data (gvd_2d, vector_index, nwp_element, key, nil_level);
+   fill_grib_data (gvd_2d, vector_index, met_element, key, nil_level);
 }
 
 void
 Ecmwf::fill_screen_level_data (Geodetic_Vector_Data_2D& gvd_2d,
                                const Integer vector_index,
                                const Key& key,
-                               const Nwp_Element nwp_element)
+                               const Met_Element met_element)
 {
 
    const Level& screen = Level::screen_level ();
 
-   switch (nwp_element)
+   switch (met_element)
    {
 
       case TEMPERATURE:
       case DEW_POINT:
       {
-         fill_grib_data (gvd_2d, vector_index, nwp_element, key, screen);
+         fill_grib_data (gvd_2d, vector_index, met_element, key, screen);
          return;
       }
 
@@ -3163,7 +3163,7 @@ Ecmwf::fill_screen_level_data (Geodetic_Vector_Data_2D& gvd_2d,
 
    }
 
-   Nwp::fill_screen_level_data (gvd_2d, vector_index, key, nwp_element);
+   Nwp::fill_screen_level_data (gvd_2d, vector_index, key, met_element);
 
 }
 
@@ -3171,24 +3171,24 @@ void
 Ecmwf::fill_10m_level_data (Geodetic_Vector_Data_2D& gvd_2d,
                             const Integer vector_index,
                             const Key& key,
-                            const Nwp_Element nwp_element)
+                            const Met_Element met_element)
 {
 
    const Level& ten = Level::ten_metre_level ();
 
-   switch (nwp_element)
+   switch (met_element)
    {
 
       case ZONAL_WIND:
       case MERIDIONAL_WIND:
       {
-         fill_grib_data (gvd_2d, vector_index, nwp_element, key, ten);
+         fill_grib_data (gvd_2d, vector_index, met_element, key, ten);
          return;
       }
 
    }
 
-   Nwp::fill_10m_level_data (gvd_2d, vector_index, key, nwp_element);
+   Nwp::fill_10m_level_data (gvd_2d, vector_index, key, met_element);
 
 }
 
@@ -3196,25 +3196,25 @@ void
 Ecmwf::fill_msl_data (Geodetic_Vector_Data_2D& gvd_2d,
                       const Integer vector_index,
                       const Key& key,
-                      const Nwp_Element nwp_element)
+                      const Met_Element met_element)
 {
 
    const Level& msl = Level::mean_sea_level ();
 
-   switch (nwp_element)
+   switch (met_element)
    {
 
       case PRESSURE:
       case MEAN_SEA_LEVEL_PRESSURE:
       {
-         const Nwp_Element mslp = MEAN_SEA_LEVEL_PRESSURE;
+         const Met_Element mslp = MEAN_SEA_LEVEL_PRESSURE;
          fill_grib_data (gvd_2d, vector_index, mslp, key, msl);
          return;
       }
 
    }
 
-   Nwp::fill_msl_data (gvd_2d, vector_index, key, nwp_element);
+   Nwp::fill_msl_data (gvd_2d, vector_index, key, met_element);
 
 }
 
@@ -3222,12 +3222,12 @@ void
 Ecmwf::fill_surface_level_data (Geodetic_Vector_Data_2D& gvd_2d,
                                 const Integer vector_index,
                                 const Key& key,
-                                const Nwp_Element nwp_element)
+                                const Met_Element met_element)
 {
 
    const Level& surface = Level::surface_level ();
 
-   switch (nwp_element)
+   switch (met_element)
    {
 
       case PRESSURE:
@@ -3238,38 +3238,38 @@ Ecmwf::fill_surface_level_data (Geodetic_Vector_Data_2D& gvd_2d,
 
    }
 
-   Nwp::fill_surface_level_data (gvd_2d, vector_index, key, nwp_element);
+   Nwp::fill_surface_level_data (gvd_2d, vector_index, key, met_element);
 
 }
 
 Geodetic_Vector_Data_3D*
-Ecmwf::get_gvd_3d_ptr (const Nwp_Element nwp_element,
+Ecmwf::get_gvd_3d_ptr (const Met_Element met_element,
                        const Key& key) const
 {
 
    const Size_2D& size_2d = size_2d_map.at (1000);
-cout << "GVD 3D " << size_2d << " " << tuple_p << " " << nwp_element << endl;
+cout << "GVD 3D " << size_2d << " " << tuple_p << " " << met_element << endl;
    Geodetic_Vector_Data_3D* gvd_3d_ptr =
       new Geodetic_Vector_Data_3D (1, tuple_p, size_2d, domain_2d);
    Geodetic_Vector_Data_3D& gvd_3d = *gvd_3d_ptr;
 
-   const bool is_rh = (nwp_element == RELATIVE_HUMIDITY);
-   const bool is_zonal_wind = (nwp_element == ZONAL_WIND);
-   const bool is_meridional_wind = (nwp_element == MERIDIONAL_WIND);
+   const bool is_rh = (met_element == RELATIVE_HUMIDITY);
+   const bool is_zonal_wind = (met_element == ZONAL_WIND);
+   const bool is_meridional_wind = (met_element == MERIDIONAL_WIND);
    const bool is_wind = (is_zonal_wind || is_meridional_wind);
 
    for (Integer k = 0; k < tuple_p.size (); k++)
    {
 
       const Real p = tuple_p[k];
-      const denise::Level level (PRESSURE_LEVEL, p);
-      const Grib::Key& grib_key = get_grib_key (key, nwp_element, level);
+      const denise::Level level (Level::PRESSURE, p);
+      const Grib::Key& grib_key = get_grib_key (key, met_element, level);
 
       Ecmwf::const_iterator iterator = find (grib_key);
       if (iterator == end ())
       {
          //cout << key.base_time << " " << key.forecast_hour << " " <<
-         //        nwp_element << " " << level.get_string () <<
+         //        met_element << " " << level.get_string () <<
          //        " throw exception " << endl;
          throw Nwp_Exception ("Ecmwf::gvd_3d_ptr Not Available");
       }
@@ -3335,12 +3335,12 @@ Ecmwf::get_grib_data_ptr (const Grib& grib,
 void
 Ecmwf::fill_grib_data (Geodetic_Vector_Data_2D& gvd_2d,
                        const Integer vector_index,
-                       const Nwp_Element nwp_element,
+                       const Met_Element met_element,
                        const Key& key,
                        const Level& level) const
 {
 
-   const Grib::Key& grib_key = get_grib_key (key, nwp_element, level);
+   const Grib::Key& grib_key = get_grib_key (key, met_element, level);
    const Nwp_Exception exception ("Ecmwf::fill_grib_data Not Available");
 
    Ecmwf::const_iterator iterator = find (grib_key);
@@ -3349,8 +3349,8 @@ Ecmwf::fill_grib_data (Geodetic_Vector_Data_2D& gvd_2d,
 
    Geodetic_Vector_Data_2D* grib_data_ptr = get_grib_data_ptr (grib, grib_key);
 
-   const bool is_zonal_wind = (nwp_element == ZONAL_WIND);
-   const bool is_meridional_wind = (nwp_element == MERIDIONAL_WIND);
+   const bool is_zonal_wind = (met_element == ZONAL_WIND);
+   const bool is_meridional_wind = (met_element == MERIDIONAL_WIND);
    const bool is_wind = (is_zonal_wind || is_meridional_wind);
 
    const Size_2D& size_2d = gvd_2d.get_size_2d ();
@@ -3384,12 +3384,12 @@ Ecmwf::Ecmwf (const string& description,
 
    this->status = "Unloaded";
 
-   nwp_element_vector.push_back (denise::TEMPERATURE);
-   nwp_element_vector.push_back (denise::MIXING_RATIO);
-   nwp_element_vector.push_back (denise::GEOPOTENTIAL_HEIGHT);
-   nwp_element_vector.push_back (denise::ZONAL_WIND);
-   nwp_element_vector.push_back (denise::MERIDIONAL_WIND);
-   nwp_element_vector.push_back (denise::VERTICAL_VELOCITY);
+   met_element_vector.push_back (denise::TEMPERATURE);
+   met_element_vector.push_back (denise::MIXING_RATIO);
+   met_element_vector.push_back (denise::GEOPOTENTIAL_HEIGHT);
+   met_element_vector.push_back (denise::ZONAL_WIND);
+   met_element_vector.push_back (denise::MERIDIONAL_WIND);
+   met_element_vector.push_back (denise::VERTICAL_VELOCITY);
 
 }
 
@@ -3523,14 +3523,14 @@ Ecmwf::clean_up ()
 
 }
 
-Gfs3::Data_3D::Data_3D (const vector<Nwp_Element>& nwp_element_vector,
+Gfs3::Data_3D::Data_3D (const vector<Met_Element>& met_element_vector,
                         const Key& key)
-   : Nwp::Data_3D (nwp_element_vector, key)
+   : Nwp::Data_3D (met_element_vector, key)
 {
 }
 
 Real
-Gfs3::Data_3D::evaluate (const Nwp_Element element,
+Gfs3::Data_3D::evaluate (const Met_Element element,
                          const Real p,
                          const Real latitude,
                          const Real longitude,
@@ -3545,8 +3545,8 @@ Gfs3::Data_3D::evaluate (const Nwp_Element element,
 
       case denise::DEW_POINT:
       {
-         const Nwp_Element& T = denise::TEMPERATURE;
-         const Nwp_Element& RH = denise::RELATIVE_HUMIDITY;
+         const Met_Element& T = denise::TEMPERATURE;
+         const Met_Element& RH = denise::RELATIVE_HUMIDITY;
          const Real t = Nwp::Data_3D::evaluate (T, p, latitude, longitude);
          const Real rh = Nwp::Data_3D::evaluate (RH, p, latitude, longitude);
          return Moisture::get_t_d (t, rh);
@@ -3555,8 +3555,8 @@ Gfs3::Data_3D::evaluate (const Nwp_Element element,
       case denise::VERTICAL_VELOCITY:
       {
 
-         const Nwp_Element& T = denise::TEMPERATURE;
-         const Nwp_Element& O = denise::OMEGA;
+         const Met_Element& T = denise::TEMPERATURE;
+         const Met_Element& O = denise::OMEGA;
 
          if (evaluate_op == DX || evaluate_op == DY)
          {
@@ -3587,7 +3587,7 @@ Gfs3::Data_3D::evaluate (const Nwp_Element element,
 
 Grib::Key
 Gfs3::get_grib_key (const Key& key,
-                    const Nwp_Element nwp_element,
+                    const Met_Element met_element,
                     const Level& level) const
 {
 
@@ -3596,9 +3596,9 @@ Gfs3::get_grib_key (const Key& key,
 
    Grib::Key grib_key;
    set_grib_key (grib_key, base_time);
-   set_grib_key (grib_key, nwp_element, forecast_hour);
-   set_grib_key (grib_key, nwp_element);
-   set_grib_key (grib_key, nwp_element, level);
+   set_grib_key (grib_key, met_element, forecast_hour);
+   set_grib_key (grib_key, met_element);
+   set_grib_key (grib_key, met_element, level);
 
    return grib_key;
 
@@ -3628,7 +3628,7 @@ Gfs3::set_grib_key (Grib::Key& grib_key,
 
 void
 Gfs3::set_grib_key (Grib::Key& grib_key,
-                    const Nwp_Element nwp_element,
+                    const Met_Element met_element,
                     const Integer forecast_hour) const
 {
 
@@ -3638,7 +3638,7 @@ Gfs3::set_grib_key (Grib::Key& grib_key,
    buffer[10] = 0;
    buffer[11] = 0;
 
-   switch (nwp_element)
+   switch (met_element)
    {
 
       default:
@@ -3697,13 +3697,13 @@ Gfs3::set_grib_key (Grib::Key& grib_key,
 
 void
 Gfs3::set_grib_key (Grib::Key& grib_key,
-                    const Nwp_Element nwp_element) const
+                    const Met_Element met_element) const
 {
 
    uint8_t* buffer = grib_key.buffer;
    uint8_t& octet = buffer[12];
 
-   switch (nwp_element)
+   switch (met_element)
    {
       case PRESSURE:
          octet = 1;
@@ -3831,13 +3831,13 @@ Gfs3::set_grib_key (Grib::Key& grib_key,
 
 void
 Gfs3::set_grib_key (Grib::Key& grib_key,
-                    const Nwp_Element nwp_element,
+                    const Met_Element met_element,
                     const denise::Level& level) const
 {
 
    uint8_t* buffer = grib_key.buffer;
 
-   switch (nwp_element)
+   switch (met_element)
    {
       case TOTAL_CLOUD:
          buffer[13] = 200;
@@ -3868,7 +3868,7 @@ Gfs3::set_grib_key (Grib::Key& grib_key,
 
    switch (level.type)
    {
-      case PRESSURE_LEVEL:
+      case Level::PRESSURE:
       {
          const uint16_t p = uint16_t (round (level.value * 1e-2));
          buffer[13] = 100;
@@ -3876,7 +3876,7 @@ Gfs3::set_grib_key (Grib::Key& grib_key,
          buffer[15] = uint8_t (p % 256);
          break;
       }
-      case THETA_LEVEL:
+      case Level::THETA:
       {
          const uint16_t theta = uint16_t (round (level.value));
          buffer[13] = 113;
@@ -3884,7 +3884,7 @@ Gfs3::set_grib_key (Grib::Key& grib_key,
          buffer[15] = uint8_t (theta % 256);
          break;
       }
-      case SIGMA_LEVEL:
+      case Level::SIGMA:
       {
          const uint16_t sigma = uint16_t (round (level.value * 10000));
          buffer[13] = 107;
@@ -3892,7 +3892,7 @@ Gfs3::set_grib_key (Grib::Key& grib_key,
          buffer[15] = uint8_t (sigma % 256);
          break;
       }
-      case SCREEN_LEVEL:
+      case Level::SCREEN:
       {
          const uint16_t z = uint16_t (2);
          buffer[13] = 105;
@@ -3900,7 +3900,7 @@ Gfs3::set_grib_key (Grib::Key& grib_key,
          buffer[15] = uint8_t (z % 256);
          break;
       }
-      case FIFTY_METRE_LEVEL:
+      case Level::FIFTY_METRE:
       {
          const uint16_t z = uint16_t (50);
          buffer[13] = 105;
@@ -3908,7 +3908,7 @@ Gfs3::set_grib_key (Grib::Key& grib_key,
          buffer[15] = uint8_t (z % 256);
          break;
       }
-      case TEN_METRE_LEVEL:
+      case Level::TEN_METRE:
       {
          const uint16_t z = uint16_t (10);
          buffer[13] = 105;
@@ -3916,22 +3916,22 @@ Gfs3::set_grib_key (Grib::Key& grib_key,
          buffer[15] = uint8_t (z % 256);
          break;
       }
-      case MEAN_SEA_LEVEL:
+      case Level::MEAN_SEA:
       {
          buffer[13] = 102;
          buffer[14] = 0;
          buffer[15] = 0;
          break;
       }
-      case SURFACE_LEVEL:
+      case Level::SURFACE:
       {
          buffer[13] = 1;
          buffer[14] = 0;
          buffer[15] = 0;
          break;
       }
-      case NIL_LEVEL:
-      case NOT_A_LEVEL:
+      case Level::NIL:
+      case Level::NAL:
       {
          buffer[13] = 0;
          buffer[14] = 0;
@@ -3946,7 +3946,7 @@ void
 Gfs3::initialize_3d_data (const Key& key)
 {
    typedef Gfs3::Data_3D G3d_3d;
-   G3d_3d* g3d_3d_ptr = new G3d_3d (nwp_element_vector, key);
+   G3d_3d* g3d_3d_ptr = new G3d_3d (met_element_vector, key);
    data_3d_ptr_map.insert (make_pair (key, g3d_3d_ptr));
 cout << "data_3d_ptr_map.size () = " << &data_3d_ptr_map << ": " << data_3d_ptr_map.size () << "  key = " << key.base_time.get_string () << " " << key.forecast_hour << endl;
 }
@@ -3955,15 +3955,15 @@ void
 Gfs3::load_3d_data (Nwp::Data_3D& data_3d)
 {
 
-   typedef vector<Nwp_Element>::const_iterator Iterator;
+   typedef vector<Met_Element>::const_iterator Iterator;
    const Key& key = data_3d.key;
 
-   for (Iterator iterator = nwp_element_vector.begin ();
-        iterator != nwp_element_vector.end (); iterator++)
+   for (Iterator iterator = met_element_vector.begin ();
+        iterator != met_element_vector.end (); iterator++)
    {
-      const Nwp_Element& nwp_element = *(iterator);
-      Geodetic_Vector_Data_3D* gvd_3d_ptr = get_gvd_3d_ptr (nwp_element, key);
-      data_3d.set_gvd_3d_ptr (nwp_element, gvd_3d_ptr);
+      const Met_Element& met_element = *(iterator);
+      Geodetic_Vector_Data_3D* gvd_3d_ptr = get_gvd_3d_ptr (met_element, key);
+      data_3d.set_gvd_3d_ptr (met_element, gvd_3d_ptr);
    }
 
    data_3d.set_available ();
@@ -3986,25 +3986,25 @@ Gfs3::fill_ts_diagnosis_data (Geodetic_Vector_Data_2D& gvd_2d,
                               const Integer vector_index,
                               const Key& key,
                               const Level& level,
-                              const Nwp_Element nwp_element)
+                              const Met_Element met_element)
 {
 
    const Integer vi = vector_index;
 
-   switch (nwp_element)
+   switch (met_element)
    {
 
       case CAPE:
       case PRECIPITABLE_WATER:
       {
          const Level& surface = Level::surface_level ();
-         fill_grib_data (gvd_2d, vi, nwp_element, key, surface);
+         fill_grib_data (gvd_2d, vi, met_element, key, surface);
          return;
       }
 
    }
 
-   Nwp::fill_ts_diagnosis_data (gvd_2d, vi, key, level, nwp_element);
+   Nwp::fill_ts_diagnosis_data (gvd_2d, vi, key, level, met_element);
 
 }
 
@@ -4121,10 +4121,10 @@ void
 Gfs3::fill_rain_data (Geodetic_Vector_Data_2D& gvd_2d,
                       const Integer vector_index,
                       const Key& key,
-                      const Nwp_Element nwp_element)
+                      const Met_Element met_element)
 {
 
-   switch (nwp_element)
+   switch (met_element)
    {
 
       case RAINFALL_CUMULATIVE:
@@ -4141,7 +4141,7 @@ Gfs3::fill_rain_data (Geodetic_Vector_Data_2D& gvd_2d,
 
    }
 
-   Nwp::fill_rain_data (gvd_2d, vector_index, key, nwp_element);
+   Nwp::fill_rain_data (gvd_2d, vector_index, key, met_element);
 
 }
 
@@ -4149,23 +4149,23 @@ void
 Gfs3::fill_cloud_data (Geodetic_Vector_Data_2D& gvd_2d,
                        const Integer vector_index,
                        const Key& key,
-                       const Nwp_Element nwp_element)
+                       const Met_Element met_element)
 {
    const Level& nil_level = Level::nil_level ();
-   fill_grib_data (gvd_2d, vector_index, nwp_element, key, nil_level);
+   fill_grib_data (gvd_2d, vector_index, met_element, key, nil_level);
 }
 
 void
 Gfs3::fill_screen_level_data (Geodetic_Vector_Data_2D& gvd_2d,
                               const Integer vector_index,
                               const Key& key,
-                              const Nwp_Element nwp_element)
+                              const Met_Element met_element)
 {
 
    const Level& screen = Level::screen_level ();
    const Level& surface = Level::surface_level ();
 
-   switch (nwp_element)
+   switch (met_element)
    {
 
       case TEMPERATURE:
@@ -4207,7 +4207,7 @@ Gfs3::fill_screen_level_data (Geodetic_Vector_Data_2D& gvd_2d,
 
    }
 
-   Nwp::fill_screen_level_data (gvd_2d, vector_index, key, nwp_element);
+   Nwp::fill_screen_level_data (gvd_2d, vector_index, key, met_element);
 
 }
 
@@ -4215,12 +4215,12 @@ void
 Gfs3::fill_10m_level_data (Geodetic_Vector_Data_2D& gvd_2d,
                            const Integer vector_index,
                            const Key& key,
-                           const Nwp_Element nwp_element)
+                           const Met_Element met_element)
 {
 
    const Level& ten = Level::ten_metre_level ();
 
-   switch (nwp_element)
+   switch (met_element)
    {
 
       case ZONAL_WIND:
@@ -4237,7 +4237,7 @@ Gfs3::fill_10m_level_data (Geodetic_Vector_Data_2D& gvd_2d,
 
    }
 
-   Nwp::fill_10m_level_data (gvd_2d, vector_index, key, nwp_element);
+   Nwp::fill_10m_level_data (gvd_2d, vector_index, key, met_element);
 
 }
 
@@ -4245,25 +4245,25 @@ void
 Gfs3::fill_msl_data (Geodetic_Vector_Data_2D& gvd_2d,
                      const Integer vector_index,
                      const Key& key,
-                     const Nwp_Element nwp_element)
+                     const Met_Element met_element)
 {
 
    const Level& msl = Level::mean_sea_level ();
 
-   switch (nwp_element)
+   switch (met_element)
    {
 
       case PRESSURE:
       case MEAN_SEA_LEVEL_PRESSURE:
       {
-         const Nwp_Element mslp = MEAN_SEA_LEVEL_PRESSURE;
+         const Met_Element mslp = MEAN_SEA_LEVEL_PRESSURE;
          fill_grib_data (gvd_2d, vector_index, mslp, key, msl);
          return;
       }
 
    }
 
-   Nwp::fill_msl_data (gvd_2d, vector_index, key, nwp_element);
+   Nwp::fill_msl_data (gvd_2d, vector_index, key, met_element);
 
 }
 
@@ -4271,12 +4271,12 @@ void
 Gfs3::fill_surface_level_data (Geodetic_Vector_Data_2D& gvd_2d,
                                const Integer vector_index,
                                const Key& key,
-                               const Nwp_Element nwp_element)
+                               const Met_Element met_element)
 {
 
    const Level& surface = Level::surface_level ();
 
-   switch (nwp_element)
+   switch (met_element)
    {
 
       case PRESSURE:
@@ -4287,7 +4287,7 @@ Gfs3::fill_surface_level_data (Geodetic_Vector_Data_2D& gvd_2d,
 
    }
 
-   Nwp::fill_surface_level_data (gvd_2d, vector_index, key, nwp_element);
+   Nwp::fill_surface_level_data (gvd_2d, vector_index, key, met_element);
 
 }
 
@@ -4295,7 +4295,7 @@ Gfs3::fill_surface_level_data (Geodetic_Vector_Data_2D& gvd_2d,
 void
 Gfs3::fill_grib_data (Geodetic_Vector_Data_3D& gvd_3d,
                       const Integer vector_index,
-                      const Nwp_Element nwp_element,
+                      const Met_Element met_element,
                       const Key& key) const
 {
 
@@ -4306,8 +4306,8 @@ Gfs3::fill_grib_data (Geodetic_Vector_Data_3D& gvd_3d,
    for (Integer k = 0; k < tuple_p.size (); k++)
    {
       const Real p = tuple_p[k];
-      const Level level (PRESSURE_LEVEL, p);
-      const Grib::Key& key = get_grib_key (key, nwp_element, level);
+      const Level level (Level::PRESSURE, p);
+      const Grib::Key& key = get_grib_key (key, met_element, level);
       grib.fill_data (gvd_3d, vector_index, k, key);
    }
 
@@ -4315,7 +4315,7 @@ Gfs3::fill_grib_data (Geodetic_Vector_Data_3D& gvd_3d,
 */
 
 Geodetic_Vector_Data_3D*
-Gfs3::get_gvd_3d_ptr (const Nwp_Element nwp_element,
+Gfs3::get_gvd_3d_ptr (const Met_Element met_element,
                       const Key& key) const
 {
 
@@ -4327,8 +4327,8 @@ Gfs3::get_gvd_3d_ptr (const Nwp_Element nwp_element,
    {
 
       const Real p = tuple_p[k];
-      const denise::Level level (PRESSURE_LEVEL, p);
-      const Grib::Key& grib_key = get_grib_key (key, nwp_element, level);
+      const denise::Level level (Level::PRESSURE, p);
+      const Grib::Key& grib_key = get_grib_key (key, met_element, level);
 
       Gfs3::const_iterator iterator = find (key);
       if (iterator == end ()) { throw Nwp_Exception ("Not Available"); }
@@ -4382,7 +4382,7 @@ Gfs3::get_grib_data_ptr (const Grib& grib,
 void
 Gfs3::fill_grib_data (Geodetic_Vector_Data_2D& gvd_2d,
                       const Integer vector_index,
-                      const Nwp_Element nwp_element,
+                      const Met_Element met_element,
                       const Key& key,
                       const Level& level) const
 {
@@ -4391,7 +4391,7 @@ Gfs3::fill_grib_data (Geodetic_Vector_Data_2D& gvd_2d,
    if (iterator == end ()) { throw Nwp_Exception ("Not Available"); }
    const Grib& grib = *(iterator->second);
 
-   const Grib::Key& grib_key = get_grib_key (key, nwp_element, level);
+   const Grib::Key& grib_key = get_grib_key (key, met_element, level);
    Geodetic_Vector_Data_2D* grib_data_ptr = get_grib_data_ptr (grib, grib_key);
 
    Geodetic_Vector_Data_2D grib_data (1, size_2d, domain_2d, true);
@@ -4421,12 +4421,12 @@ Gfs3::Gfs3 (const string& data_path)
 
    this->status = "Unloaded";
 
-   nwp_element_vector.push_back (denise::TEMPERATURE);
-   nwp_element_vector.push_back (denise::RELATIVE_HUMIDITY);
-   nwp_element_vector.push_back (denise::GEOPOTENTIAL_HEIGHT);
-   nwp_element_vector.push_back (denise::ZONAL_WIND);
-   nwp_element_vector.push_back (denise::MERIDIONAL_WIND);
-   nwp_element_vector.push_back (denise::OMEGA);
+   met_element_vector.push_back (denise::TEMPERATURE);
+   met_element_vector.push_back (denise::RELATIVE_HUMIDITY);
+   met_element_vector.push_back (denise::GEOPOTENTIAL_HEIGHT);
+   met_element_vector.push_back (denise::ZONAL_WIND);
+   met_element_vector.push_back (denise::MERIDIONAL_WIND);
+   met_element_vector.push_back (denise::OMEGA);
 
 }
 
@@ -4655,14 +4655,14 @@ Gfs3::acquire_base_time_forecast_hour (Dtime& base_time,
 
 }
 
-Gfs4::Data_3D::Data_3D (const vector<Nwp_Element>& nwp_element_vector,
+Gfs4::Data_3D::Data_3D (const vector<Met_Element>& met_element_vector,
                         const Key& key)
-   : Nwp::Data_3D (nwp_element_vector, key)
+   : Nwp::Data_3D (met_element_vector, key)
 {
 }
 
 Real
-Gfs4::Data_3D::evaluate (const Nwp_Element element,
+Gfs4::Data_3D::evaluate (const Met_Element element,
                          const Real p,
                          const Real latitude,
                          const Real longitude,
@@ -4677,8 +4677,8 @@ Gfs4::Data_3D::evaluate (const Nwp_Element element,
 
       case denise::DEW_POINT:
       {
-         const Nwp_Element& T = denise::TEMPERATURE;
-         const Nwp_Element& RH = denise::RELATIVE_HUMIDITY;
+         const Met_Element& T = denise::TEMPERATURE;
+         const Met_Element& RH = denise::RELATIVE_HUMIDITY;
          const Real t = Nwp::Data_3D::evaluate (T, p, latitude, longitude);
          const Real rh = Nwp::Data_3D::evaluate (RH, p, latitude, longitude);
          return Moisture::get_t_d (t, rh);
@@ -4687,8 +4687,8 @@ Gfs4::Data_3D::evaluate (const Nwp_Element element,
       case denise::VERTICAL_VELOCITY:
       {
 
-         const Nwp_Element& T = denise::TEMPERATURE;
-         const Nwp_Element& O = denise::OMEGA;
+         const Met_Element& T = denise::TEMPERATURE;
+         const Met_Element& O = denise::OMEGA;
 
          if (evaluate_op == DX || evaluate_op == DY)
          {
@@ -4719,7 +4719,7 @@ Gfs4::Data_3D::evaluate (const Nwp_Element element,
 
 Grib2::Key
 Gfs4::get_grib_key (const Key& key,
-                    const Nwp_Element nwp_element,
+                    const Met_Element met_element,
                     const Level& level) const
 {
 
@@ -4728,9 +4728,9 @@ Gfs4::get_grib_key (const Key& key,
 
    Grib2::Key grib_key;
    set_grib_key (grib_key, base_time);
-   set_grib_key (grib_key, nwp_element, forecast_hour);
-   set_grib_key (grib_key, nwp_element);
-   set_grib_key (grib_key, nwp_element, level);
+   set_grib_key (grib_key, met_element, forecast_hour);
+   set_grib_key (grib_key, met_element);
+   set_grib_key (grib_key, met_element, level);
    return grib_key;
 
 }
@@ -4761,14 +4761,14 @@ Gfs4::set_grib_key (Grib2::Key& grib_key,
 
 void
 Gfs4::set_grib_key (Grib2::Key& grib_key,
-                    const Nwp_Element nwp_element,
+                    const Met_Element met_element,
                     const Integer forecast_hour) const
 {
 
    uint8_t* buffer = grib_key.buffer;
    buffer[7] = 1;
 
-   switch (nwp_element)
+   switch (met_element)
    {
 
       default:
@@ -4850,12 +4850,12 @@ Gfs4::set_grib_key (Grib2::Key& grib_key,
 
 void
 Gfs4::set_grib_key (Grib2::Key& grib_key,
-                    const Nwp_Element nwp_element) const
+                    const Met_Element met_element) const
 {
 
    uint8_t* buffer = grib_key.buffer;
 
-   switch (nwp_element)
+   switch (met_element)
    {
       case PRESSURE:
          buffer[12] = 3;
@@ -5023,13 +5023,13 @@ Gfs4::set_grib_key (Grib2::Key& grib_key,
 
 void
 Gfs4::set_grib_key (Grib2::Key& grib_key,
-                    const Nwp_Element nwp_element,
+                    const Met_Element met_element,
                     const denise::Level& level) const
 {
 
    uint8_t* buffer = grib_key.buffer;
 
-   switch (nwp_element)
+   switch (met_element)
    {
       case TOTAL_CLOUD:
          buffer[14] = 200;
@@ -5096,7 +5096,7 @@ Gfs4::set_grib_key (Grib2::Key& grib_key,
 
    switch (level.type)
    {
-      case PRESSURE_LEVEL:
+      case Level::PRESSURE:
       {
          uint32_t p = uint32_t (round (level.value));
          buffer[14] = 100;
@@ -5113,7 +5113,7 @@ Gfs4::set_grib_key (Grib2::Key& grib_key,
          buffer[25] = 0;
          break;
       }
-      case THETA_LEVEL:
+      case Level::THETA:
       {
          uint32_t theta = uint32_t (round (level.value));
          buffer[14] = 107;
@@ -5130,7 +5130,7 @@ Gfs4::set_grib_key (Grib2::Key& grib_key,
          buffer[25] = 0;
          break;
       }
-      case SIGMA_LEVEL:
+      case Level::SIGMA:
       {
          uint32_t sigma = uint32_t (round (level.value * 10000));
          buffer[14] = 113;
@@ -5143,7 +5143,7 @@ Gfs4::set_grib_key (Grib2::Key& grib_key,
          buffer[25] = 0;
          break;
       }
-      case SCREEN_LEVEL:
+      case Level::SCREEN:
       {
          buffer[14] = 103;
          buffer[15] = 0;
@@ -5159,7 +5159,7 @@ Gfs4::set_grib_key (Grib2::Key& grib_key,
          buffer[25] = 0;
          break;
       }
-      case FIFTY_METRE_LEVEL:
+      case Level::FIFTY_METRE:
       {
          buffer[14] = 103;
          buffer[15] = 0;
@@ -5175,7 +5175,7 @@ Gfs4::set_grib_key (Grib2::Key& grib_key,
          buffer[25] = 0;
          break;
       }
-      case TEN_METRE_LEVEL:
+      case Level::TEN_METRE:
       {
          buffer[14] = 103;
          buffer[15] = 0;
@@ -5191,7 +5191,7 @@ Gfs4::set_grib_key (Grib2::Key& grib_key,
          buffer[25] = 0;
          break;
       }
-      case MEAN_SEA_LEVEL:
+      case Level::MEAN_SEA:
       {
          buffer[14] = 101;
          buffer[15] = 0;
@@ -5207,7 +5207,7 @@ Gfs4::set_grib_key (Grib2::Key& grib_key,
          buffer[25] = 0;
          break;
       }
-      case SURFACE_LEVEL:
+      case Level::SURFACE:
       {
          buffer[14] = 1;
          buffer[15] = 0;
@@ -5223,8 +5223,8 @@ Gfs4::set_grib_key (Grib2::Key& grib_key,
          buffer[25] = 0;
          break;
       }
-      case NIL_LEVEL:
-      case NOT_A_LEVEL:
+      case Level::NIL:
+      case Level::NAL:
       {
          buffer[14] = 1;
          buffer[15] = 0;
@@ -5248,7 +5248,7 @@ void
 Gfs4::initialize_3d_data (const Key& key)
 {
    typedef Gfs4::Data_3D G3d_3d;
-   G3d_3d* g3d_3d_ptr = new G3d_3d (nwp_element_vector, key);
+   G3d_3d* g3d_3d_ptr = new G3d_3d (met_element_vector, key);
    data_3d_ptr_map.insert (make_pair (key, g3d_3d_ptr));
 }
 
@@ -5256,15 +5256,15 @@ void
 Gfs4::load_3d_data (Nwp::Data_3D& data_3d)
 {
 
-   typedef vector<Nwp_Element>::const_iterator Iterator;
+   typedef vector<Met_Element>::const_iterator Iterator;
    const Key& key = data_3d.key;
 
-   for (Iterator iterator = nwp_element_vector.begin ();
-        iterator != nwp_element_vector.end (); iterator++)
+   for (Iterator iterator = met_element_vector.begin ();
+        iterator != met_element_vector.end (); iterator++)
    {
-      const Nwp_Element& nwp_element = *(iterator);
-      Geodetic_Vector_Data_3D* gvd_3d_ptr = get_gvd_3d_ptr (nwp_element, key);
-      data_3d.set_gvd_3d_ptr (nwp_element, gvd_3d_ptr);
+      const Met_Element& met_element = *(iterator);
+      Geodetic_Vector_Data_3D* gvd_3d_ptr = get_gvd_3d_ptr (met_element, key);
+      data_3d.set_gvd_3d_ptr (met_element, gvd_3d_ptr);
    }
 
    data_3d.set_available ();
@@ -5287,25 +5287,25 @@ Gfs4::fill_ts_diagnosis_data (Geodetic_Vector_Data_2D& gvd_2d,
                               const Integer vector_index,
                               const Key& key,
                               const Level& level,
-                              const Nwp_Element nwp_element)
+                              const Met_Element met_element)
 {
 
    const Integer vi = vector_index;
 
-   switch (nwp_element)
+   switch (met_element)
    {
 
       case CAPE:
       case PRECIPITABLE_WATER:
       {
          const Level& surface = Level::surface_level ();
-         fill_grib_data (gvd_2d, vi, nwp_element, key, surface);
+         fill_grib_data (gvd_2d, vi, met_element, key, surface);
          return;
       }
 
    }
 
-   Nwp::fill_ts_diagnosis_data (gvd_2d, vi, key, level, nwp_element);
+   Nwp::fill_ts_diagnosis_data (gvd_2d, vi, key, level, met_element);
 
 }
 
@@ -5424,10 +5424,10 @@ void
 Gfs4::fill_rain_data (Geodetic_Vector_Data_2D& gvd_2d,
                       const Integer vector_index,
                       const Key& key,
-                      const Nwp_Element nwp_element)
+                      const Met_Element met_element)
 {
 
-   switch (nwp_element)
+   switch (met_element)
    {
 
       case RAINFALL_CUMULATIVE:
@@ -5444,7 +5444,7 @@ Gfs4::fill_rain_data (Geodetic_Vector_Data_2D& gvd_2d,
 
    }
 
-   Nwp::fill_rain_data (gvd_2d, vector_index, key, nwp_element);
+   Nwp::fill_rain_data (gvd_2d, vector_index, key, met_element);
 
 }
 
@@ -5452,23 +5452,23 @@ void
 Gfs4::fill_cloud_data (Geodetic_Vector_Data_2D& gvd_2d,
                        const Integer vector_index,
                        const Key& key,
-                       const Nwp_Element nwp_element)
+                       const Met_Element met_element)
 {
    const Level& nil_level = Level::nil_level ();
-   fill_grib_data (gvd_2d, vector_index, nwp_element, key, nil_level);
+   fill_grib_data (gvd_2d, vector_index, met_element, key, nil_level);
 }
 
 void
 Gfs4::fill_screen_level_data (Geodetic_Vector_Data_2D& gvd_2d,
                               const Integer vector_index,
                               const Key& key,
-                              const Nwp_Element nwp_element)
+                              const Met_Element met_element)
 {
 
    const Level& screen = Level::screen_level ();
    const Level& surface = Level::surface_level ();
 
-   switch (nwp_element)
+   switch (met_element)
    {
 
       case TEMPERATURE:
@@ -5510,7 +5510,7 @@ Gfs4::fill_screen_level_data (Geodetic_Vector_Data_2D& gvd_2d,
 
    }
 
-   Nwp::fill_screen_level_data (gvd_2d, vector_index, key, nwp_element);
+   Nwp::fill_screen_level_data (gvd_2d, vector_index, key, met_element);
 
 }
 
@@ -5518,12 +5518,12 @@ void
 Gfs4::fill_10m_level_data (Geodetic_Vector_Data_2D& gvd_2d,
                            const Integer vector_index,
                            const Key& key,
-                           const Nwp_Element nwp_element)
+                           const Met_Element met_element)
 {
 
    const Level& ten = Level::ten_metre_level ();
 
-   switch (nwp_element)
+   switch (met_element)
    {
 
       case ZONAL_WIND:
@@ -5540,7 +5540,7 @@ Gfs4::fill_10m_level_data (Geodetic_Vector_Data_2D& gvd_2d,
 
    }
 
-   Nwp::fill_10m_level_data (gvd_2d, vector_index, key, nwp_element);
+   Nwp::fill_10m_level_data (gvd_2d, vector_index, key, met_element);
 
 }
 
@@ -5548,25 +5548,25 @@ void
 Gfs4::fill_msl_data (Geodetic_Vector_Data_2D& gvd_2d,
                      const Integer vector_index,
                      const Key& key,
-                     const Nwp_Element nwp_element)
+                     const Met_Element met_element)
 {
 
    const Level& msl = Level::mean_sea_level ();
 
-   switch (nwp_element)
+   switch (met_element)
    {
 
       case PRESSURE:
       case MEAN_SEA_LEVEL_PRESSURE:
       {
-         const Nwp_Element mslp = MEAN_SEA_LEVEL_PRESSURE;
+         const Met_Element mslp = MEAN_SEA_LEVEL_PRESSURE;
          fill_grib_data (gvd_2d, vector_index, mslp, key, msl);
          return;
       }
 
    }
 
-   Nwp::fill_msl_data (gvd_2d, vector_index, key, nwp_element);
+   Nwp::fill_msl_data (gvd_2d, vector_index, key, met_element);
 
 }
 
@@ -5574,12 +5574,12 @@ void
 Gfs4::fill_surface_level_data (Geodetic_Vector_Data_2D& gvd_2d,
                                const Integer vector_index,
                                const Key& key,
-                               const Nwp_Element nwp_element)
+                               const Met_Element met_element)
 {
 
    const Level& surface = Level::surface_level ();
 
-   switch (nwp_element)
+   switch (met_element)
    {
 
       case PRESSURE:
@@ -5590,7 +5590,7 @@ Gfs4::fill_surface_level_data (Geodetic_Vector_Data_2D& gvd_2d,
 
    }
 
-   Nwp::fill_surface_level_data (gvd_2d, vector_index, key, nwp_element);
+   Nwp::fill_surface_level_data (gvd_2d, vector_index, key, met_element);
 
 }
 
@@ -5598,7 +5598,7 @@ Gfs4::fill_surface_level_data (Geodetic_Vector_Data_2D& gvd_2d,
 void
 Gfs4::fill_grib_data (Geodetic_Vector_Data_3D& gvd_3d,
                       const Integer vector_index,
-                      const Nwp_Element nwp_element,
+                      const Met_Element met_element,
                       const Key& key) const
 {
 
@@ -5611,8 +5611,8 @@ Gfs4::fill_grib_data (Geodetic_Vector_Data_3D& gvd_3d,
    for (Integer k = 0; k < tuple_p.size (); k++)
    {
       const Real p = tuple_p[k];
-      const Level level (PRESSURE_LEVEL, p);
-      const Grib2::Key& key = get_grib_key (key, nwp_element, level);
+      const Level level (Level::PRESSURE, p);
+      const Grib2::Key& key = get_grib_key (key, met_element, level);
       grib.fill_data (gvd_3d, vector_index, k, key);
    }
 
@@ -5620,7 +5620,7 @@ Gfs4::fill_grib_data (Geodetic_Vector_Data_3D& gvd_3d,
 */
 
 Geodetic_Vector_Data_3D*
-Gfs4::get_gvd_3d_ptr (const Nwp_Element nwp_element,
+Gfs4::get_gvd_3d_ptr (const Met_Element met_element,
                       const Key& key) const
 {
 
@@ -5632,8 +5632,8 @@ Gfs4::get_gvd_3d_ptr (const Nwp_Element nwp_element,
    {
 
       const Real p = tuple_p[k];
-      const denise::Level level (PRESSURE_LEVEL, p);
-      const Grib2::Key& grib_key = get_grib_key (key, nwp_element, level);
+      const denise::Level level (Level::PRESSURE, p);
+      const Grib2::Key& grib_key = get_grib_key (key, met_element, level);
 
       Gfs4::const_iterator iterator = find (key);
       if (iterator == end ()) { throw Nwp_Exception ("Not Available"); }
@@ -5687,7 +5687,7 @@ Gfs4::get_grib_data_ptr (const Grib2& grib,
 void
 Gfs4::fill_grib_data (Geodetic_Vector_Data_2D& gvd_2d,
                       const Integer vector_index,
-                      const Nwp_Element nwp_element,
+                      const Met_Element met_element,
                       const Key& key,
                       const Level& level) const
 {
@@ -5696,7 +5696,7 @@ Gfs4::fill_grib_data (Geodetic_Vector_Data_2D& gvd_2d,
    if (iterator == end ()) { throw Nwp_Exception ("Not Available"); }
    const Grib2& grib = *(iterator->second);
 
-   const Grib2::Key& grib_key = get_grib_key (key, nwp_element, level);
+   const Grib2::Key& grib_key = get_grib_key (key, met_element, level);
    Geodetic_Vector_Data_2D* grib_data_ptr = get_grib_data_ptr (grib, grib_key);
 
    Geodetic_Vector_Data_2D grib_data (1, grib_size_2d, grib_domain_2d, true);
@@ -5728,12 +5728,12 @@ Gfs4::Gfs4 (const string& data_path)
 
    this->status = "Unloaded";
 
-   nwp_element_vector.push_back (denise::TEMPERATURE);
-   nwp_element_vector.push_back (denise::RELATIVE_HUMIDITY);
-   nwp_element_vector.push_back (denise::GEOPOTENTIAL_HEIGHT);
-   nwp_element_vector.push_back (denise::ZONAL_WIND);
-   nwp_element_vector.push_back (denise::MERIDIONAL_WIND);
-   nwp_element_vector.push_back (denise::OMEGA);
+   met_element_vector.push_back (denise::TEMPERATURE);
+   met_element_vector.push_back (denise::RELATIVE_HUMIDITY);
+   met_element_vector.push_back (denise::GEOPOTENTIAL_HEIGHT);
+   met_element_vector.push_back (denise::ZONAL_WIND);
+   met_element_vector.push_back (denise::MERIDIONAL_WIND);
+   met_element_vector.push_back (denise::OMEGA);
 
 }
 
@@ -5970,14 +5970,14 @@ Gfs4::acquire_base_time_forecast_hour (Dtime& base_time,
 
 }
 
-Gfs::Data_3D::Data_3D (const vector<Nwp_Element>& nwp_element_vector,
+Gfs::Data_3D::Data_3D (const vector<Met_Element>& met_element_vector,
                        const Key& key)
-   : Nwp::Data_3D (nwp_element_vector, key)
+   : Nwp::Data_3D (met_element_vector, key)
 {
 }
 
 Real
-Gfs::Data_3D::evaluate (const Nwp_Element element,
+Gfs::Data_3D::evaluate (const Met_Element element,
                         const Real p,
                         const Real latitude,
                         const Real longitude,
@@ -5992,8 +5992,8 @@ Gfs::Data_3D::evaluate (const Nwp_Element element,
 
       case denise::DEW_POINT:
       {
-         const Nwp_Element& T = denise::TEMPERATURE;
-         const Nwp_Element& RH = denise::RELATIVE_HUMIDITY;
+         const Met_Element& T = denise::TEMPERATURE;
+         const Met_Element& RH = denise::RELATIVE_HUMIDITY;
          const Real t = Nwp::Data_3D::evaluate (T, p, latitude, longitude);
          const Real rh = Nwp::Data_3D::evaluate (RH, p, latitude, longitude);
          return Moisture::get_t_d (t, rh);
@@ -6002,8 +6002,8 @@ Gfs::Data_3D::evaluate (const Nwp_Element element,
       case denise::VERTICAL_VELOCITY:
       {
 
-         const Nwp_Element& T = denise::TEMPERATURE;
-         const Nwp_Element& O = denise::OMEGA;
+         const Met_Element& T = denise::TEMPERATURE;
+         const Met_Element& O = denise::OMEGA;
 
          if (evaluate_op == DX || evaluate_op == DY)
          {
@@ -6034,7 +6034,7 @@ Gfs::Data_3D::evaluate (const Nwp_Element element,
 
 Grib2::Key
 Gfs::get_grib_key (const Key& key,
-                   const Nwp_Element nwp_element,
+                   const Met_Element met_element,
                    const Level& level) const
 {
 
@@ -6043,9 +6043,9 @@ Gfs::get_grib_key (const Key& key,
 
    Grib2::Key grib_key;
    set_grib_key (grib_key, base_time);
-   set_grib_key (grib_key, nwp_element, forecast_hour);
-   set_grib_key (grib_key, nwp_element);
-   set_grib_key (grib_key, nwp_element, level);
+   set_grib_key (grib_key, met_element, forecast_hour);
+   set_grib_key (grib_key, met_element);
+   set_grib_key (grib_key, met_element, level);
    return grib_key;
 
 }
@@ -6076,14 +6076,14 @@ Gfs::set_grib_key (Grib2::Key& grib_key,
 
 void
 Gfs::set_grib_key (Grib2::Key& grib_key,
-                   const Nwp_Element nwp_element,
+                   const Met_Element met_element,
                    const Integer forecast_hour) const
 {
 
    uint8_t* buffer = grib_key.buffer;
    buffer[7] = 1;
 
-   switch (nwp_element)
+   switch (met_element)
    {
 
       default:
@@ -6165,12 +6165,12 @@ Gfs::set_grib_key (Grib2::Key& grib_key,
 
 void
 Gfs::set_grib_key (Grib2::Key& grib_key,
-                   const Nwp_Element nwp_element) const
+                   const Met_Element met_element) const
 {
 
    uint8_t* buffer = grib_key.buffer;
 
-   switch (nwp_element)
+   switch (met_element)
    {
       case PRESSURE:
          buffer[12] = 3;
@@ -6338,13 +6338,13 @@ Gfs::set_grib_key (Grib2::Key& grib_key,
 
 void
 Gfs::set_grib_key (Grib2::Key& grib_key,
-                   const Nwp_Element nwp_element,
+                   const Met_Element met_element,
                    const denise::Level& level) const
 {
 
    uint8_t* buffer = grib_key.buffer;
 
-   switch (nwp_element)
+   switch (met_element)
    {
       case TOTAL_CLOUD:
          buffer[14] = 200;
@@ -6411,7 +6411,7 @@ Gfs::set_grib_key (Grib2::Key& grib_key,
 
    switch (level.type)
    {
-      case PRESSURE_LEVEL:
+      case Level::PRESSURE:
       {
          uint32_t p = uint32_t (round (level.value));
          buffer[14] = 100;
@@ -6428,7 +6428,7 @@ Gfs::set_grib_key (Grib2::Key& grib_key,
          buffer[25] = 0;
          break;
       }
-      case THETA_LEVEL:
+      case Level::THETA:
       {
          uint32_t theta = uint32_t (round (level.value));
          buffer[14] = 107;
@@ -6445,7 +6445,7 @@ Gfs::set_grib_key (Grib2::Key& grib_key,
          buffer[25] = 0;
          break;
       }
-      case SIGMA_LEVEL:
+      case Level::SIGMA:
       {
          uint32_t sigma = uint32_t (round (level.value * 10000));
          buffer[14] = 113;
@@ -6458,7 +6458,7 @@ Gfs::set_grib_key (Grib2::Key& grib_key,
          buffer[25] = 0;
          break;
       }
-      case SCREEN_LEVEL:
+      case Level::SCREEN:
       {
          buffer[14] = 103;
          buffer[15] = 0;
@@ -6474,7 +6474,7 @@ Gfs::set_grib_key (Grib2::Key& grib_key,
          buffer[25] = 0;
          break;
       }
-      case FIFTY_METRE_LEVEL:
+      case Level::FIFTY_METRE:
       {
          buffer[14] = 103;
          buffer[15] = 0;
@@ -6490,7 +6490,7 @@ Gfs::set_grib_key (Grib2::Key& grib_key,
          buffer[25] = 0;
          break;
       }
-      case TEN_METRE_LEVEL:
+      case Level::TEN_METRE:
       {
          buffer[14] = 103;
          buffer[15] = 0;
@@ -6506,7 +6506,7 @@ Gfs::set_grib_key (Grib2::Key& grib_key,
          buffer[25] = 0;
          break;
       }
-      case MEAN_SEA_LEVEL:
+      case Level::MEAN_SEA:
       {
          buffer[14] = 101;
          buffer[15] = 0;
@@ -6522,7 +6522,7 @@ Gfs::set_grib_key (Grib2::Key& grib_key,
          buffer[25] = 0;
          break;
       }
-      case SURFACE_LEVEL:
+      case Level::SURFACE:
       {
          buffer[14] = 1;
          buffer[15] = 0;
@@ -6538,8 +6538,8 @@ Gfs::set_grib_key (Grib2::Key& grib_key,
          buffer[25] = 0;
          break;
       }
-      case NIL_LEVEL:
-      case NOT_A_LEVEL:
+      case Level::NIL:
+      case Level::NAL:
       {
          buffer[14] = 1;
          buffer[15] = 0;
@@ -6563,7 +6563,7 @@ void
 Gfs::initialize_3d_data (const Key& key)
 {
    typedef Gfs::Data_3D G3d_3d;
-   G3d_3d* g3d_3d_ptr = new G3d_3d (nwp_element_vector, key);
+   G3d_3d* g3d_3d_ptr = new G3d_3d (met_element_vector, key);
    data_3d_ptr_map.insert (make_pair (key, g3d_3d_ptr));
 }
 
@@ -6571,15 +6571,15 @@ void
 Gfs::load_3d_data (Nwp::Data_3D& data_3d)
 {
 
-   typedef vector<Nwp_Element>::const_iterator Iterator;
+   typedef vector<Met_Element>::const_iterator Iterator;
    const Key& key = data_3d.key;
 
-   for (Iterator iterator = nwp_element_vector.begin ();
-        iterator != nwp_element_vector.end (); iterator++)
+   for (Iterator iterator = met_element_vector.begin ();
+        iterator != met_element_vector.end (); iterator++)
    {
-      const Nwp_Element& nwp_element = *(iterator);
-      Geodetic_Vector_Data_3D* gvd_3d_ptr = get_gvd_3d_ptr (nwp_element, key);
-      data_3d.set_gvd_3d_ptr (nwp_element, gvd_3d_ptr);
+      const Met_Element& met_element = *(iterator);
+      Geodetic_Vector_Data_3D* gvd_3d_ptr = get_gvd_3d_ptr (met_element, key);
+      data_3d.set_gvd_3d_ptr (met_element, gvd_3d_ptr);
    }
 
    data_3d.set_available ();
@@ -6602,25 +6602,25 @@ Gfs::fill_ts_diagnosis_data (Geodetic_Vector_Data_2D& gvd_2d,
                               const Integer vector_index,
                               const Key& key,
                               const Level& level,
-                              const Nwp_Element nwp_element)
+                              const Met_Element met_element)
 {
 
    const Integer vi = vector_index;
 
-   switch (nwp_element)
+   switch (met_element)
    {
 
       case CAPE:
       case PRECIPITABLE_WATER:
       {
          const Level& surface = Level::surface_level ();
-         fill_grib_data (gvd_2d, vi, nwp_element, key, surface);
+         fill_grib_data (gvd_2d, vi, met_element, key, surface);
          return;
       }
 
    }
 
-   Nwp::fill_ts_diagnosis_data (gvd_2d, vi, key, level, nwp_element);
+   Nwp::fill_ts_diagnosis_data (gvd_2d, vi, key, level, met_element);
 
 }
 
@@ -6739,10 +6739,10 @@ void
 Gfs::fill_rain_data (Geodetic_Vector_Data_2D& gvd_2d,
                       const Integer vector_index,
                       const Key& key,
-                      const Nwp_Element nwp_element)
+                      const Met_Element met_element)
 {
 
-   switch (nwp_element)
+   switch (met_element)
    {
 
       case RAINFALL_CUMULATIVE:
@@ -6759,7 +6759,7 @@ Gfs::fill_rain_data (Geodetic_Vector_Data_2D& gvd_2d,
 
    }
 
-   Nwp::fill_rain_data (gvd_2d, vector_index, key, nwp_element);
+   Nwp::fill_rain_data (gvd_2d, vector_index, key, met_element);
 
 }
 
@@ -6767,23 +6767,23 @@ void
 Gfs::fill_cloud_data (Geodetic_Vector_Data_2D& gvd_2d,
                       const Integer vector_index,
                       const Key& key,
-                      const Nwp_Element nwp_element)
+                      const Met_Element met_element)
 {
    const Level& nil_level = Level::nil_level ();
-   fill_grib_data (gvd_2d, vector_index, nwp_element, key, nil_level);
+   fill_grib_data (gvd_2d, vector_index, met_element, key, nil_level);
 }
 
 void
 Gfs::fill_screen_level_data (Geodetic_Vector_Data_2D& gvd_2d,
                              const Integer vector_index,
                              const Key& key,
-                             const Nwp_Element nwp_element)
+                             const Met_Element met_element)
 {
 
    const Level& screen = Level::screen_level ();
    const Level& surface = Level::surface_level ();
 
-   switch (nwp_element)
+   switch (met_element)
    {
 
       case TEMPERATURE:
@@ -6825,7 +6825,7 @@ Gfs::fill_screen_level_data (Geodetic_Vector_Data_2D& gvd_2d,
 
    }
 
-   Nwp::fill_screen_level_data (gvd_2d, vector_index, key, nwp_element);
+   Nwp::fill_screen_level_data (gvd_2d, vector_index, key, met_element);
 
 }
 
@@ -6833,12 +6833,12 @@ void
 Gfs::fill_10m_level_data (Geodetic_Vector_Data_2D& gvd_2d,
                           const Integer vector_index,
                           const Key& key,
-                          const Nwp_Element nwp_element)
+                          const Met_Element met_element)
 {
 
    const Level& ten = Level::ten_metre_level ();
 
-   switch (nwp_element)
+   switch (met_element)
    {
 
       case ZONAL_WIND:
@@ -6855,7 +6855,7 @@ Gfs::fill_10m_level_data (Geodetic_Vector_Data_2D& gvd_2d,
 
    }
 
-   Nwp::fill_10m_level_data (gvd_2d, vector_index, key, nwp_element);
+   Nwp::fill_10m_level_data (gvd_2d, vector_index, key, met_element);
 
 }
 
@@ -6863,25 +6863,25 @@ void
 Gfs::fill_msl_data (Geodetic_Vector_Data_2D& gvd_2d,
                     const Integer vector_index,
                     const Key& key,
-                    const Nwp_Element nwp_element)
+                    const Met_Element met_element)
 {
 
    const Level& msl = Level::mean_sea_level ();
 
-   switch (nwp_element)
+   switch (met_element)
    {
 
       case PRESSURE:
       case MEAN_SEA_LEVEL_PRESSURE:
       {
-         const Nwp_Element mslp = MEAN_SEA_LEVEL_PRESSURE;
+         const Met_Element mslp = MEAN_SEA_LEVEL_PRESSURE;
          fill_grib_data (gvd_2d, vector_index, mslp, key, msl);
          return;
       }
 
    }
 
-   Nwp::fill_msl_data (gvd_2d, vector_index, key, nwp_element);
+   Nwp::fill_msl_data (gvd_2d, vector_index, key, met_element);
 
 }
 
@@ -6889,12 +6889,12 @@ void
 Gfs::fill_surface_level_data (Geodetic_Vector_Data_2D& gvd_2d,
                               const Integer vector_index,
                               const Key& key,
-                              const Nwp_Element nwp_element)
+                              const Met_Element met_element)
 {
 
    const Level& surface = Level::surface_level ();
 
-   switch (nwp_element)
+   switch (met_element)
    {
 
       case PRESSURE:
@@ -6905,7 +6905,7 @@ Gfs::fill_surface_level_data (Geodetic_Vector_Data_2D& gvd_2d,
 
    }
 
-   Nwp::fill_surface_level_data (gvd_2d, vector_index, key, nwp_element);
+   Nwp::fill_surface_level_data (gvd_2d, vector_index, key, met_element);
 
 }
 
@@ -6913,7 +6913,7 @@ Gfs::fill_surface_level_data (Geodetic_Vector_Data_2D& gvd_2d,
 void
 Gfs::fill_grib_data (Geodetic_Vector_Data_3D& gvd_3d,
                      const Integer vector_index,
-                     const Nwp_Element nwp_element,
+                     const Met_Element met_element,
                      const Key& key) const
 {
 
@@ -6926,8 +6926,8 @@ Gfs::fill_grib_data (Geodetic_Vector_Data_3D& gvd_3d,
    for (Integer k = 0; k < tuple_p.size (); k++)
    {
       const Real p = tuple_p[k];
-      const Level level (PRESSURE_LEVEL, p);
-      const Grib2::Key& key = get_grib_key (key, nwp_element, level);
+      const Level level (Level::PRESSURE, p);
+      const Grib2::Key& key = get_grib_key (key, met_element, level);
       grib.fill_data (gvd_3d, vector_index, k, key);
    }
 
@@ -6935,7 +6935,7 @@ Gfs::fill_grib_data (Geodetic_Vector_Data_3D& gvd_3d,
 */
 
 Geodetic_Vector_Data_3D*
-Gfs::get_gvd_3d_ptr (const Nwp_Element nwp_element,
+Gfs::get_gvd_3d_ptr (const Met_Element met_element,
                      const Key& key) const
 {
 
@@ -6947,8 +6947,8 @@ Gfs::get_gvd_3d_ptr (const Nwp_Element nwp_element,
    {
 
       const Real p = tuple_p[k];
-      const denise::Level level (PRESSURE_LEVEL, p);
-      const Grib2::Key& grib_key = get_grib_key (key, nwp_element, level);
+      const denise::Level level (Level::PRESSURE, p);
+      const Grib2::Key& grib_key = get_grib_key (key, met_element, level);
 
       Gfs::const_iterator iterator = find (key);
       if (iterator == end ()) { throw Nwp_Exception ("Not Available"); }
@@ -7002,7 +7002,7 @@ Gfs::get_grib_data_ptr (const Grib2& grib,
 void
 Gfs::fill_grib_data (Geodetic_Vector_Data_2D& gvd_2d,
                      const Integer vector_index,
-                     const Nwp_Element nwp_element,
+                     const Met_Element met_element,
                      const Key& key,
                      const Level& level) const
 {
@@ -7011,7 +7011,7 @@ Gfs::fill_grib_data (Geodetic_Vector_Data_2D& gvd_2d,
    if (iterator == end ()) { throw Nwp_Exception ("Not Available"); }
    const Grib2& grib = *(iterator->second);
 
-   const Grib2::Key& grib_key = get_grib_key (key, nwp_element, level);
+   const Grib2::Key& grib_key = get_grib_key (key, met_element, level);
    Geodetic_Vector_Data_2D* grib_data_ptr = get_grib_data_ptr (grib, grib_key);
 
    Geodetic_Vector_Data_2D grib_data (1, grib_size_2d, grib_domain_2d, true);
@@ -7043,12 +7043,12 @@ Gfs::Gfs (const string& data_path)
 
    this->status = "Unloaded";
 
-   nwp_element_vector.push_back (denise::TEMPERATURE);
-   nwp_element_vector.push_back (denise::RELATIVE_HUMIDITY);
-   nwp_element_vector.push_back (denise::GEOPOTENTIAL_HEIGHT);
-   nwp_element_vector.push_back (denise::ZONAL_WIND);
-   nwp_element_vector.push_back (denise::MERIDIONAL_WIND);
-   nwp_element_vector.push_back (denise::OMEGA);
+   met_element_vector.push_back (denise::TEMPERATURE);
+   met_element_vector.push_back (denise::RELATIVE_HUMIDITY);
+   met_element_vector.push_back (denise::GEOPOTENTIAL_HEIGHT);
+   met_element_vector.push_back (denise::ZONAL_WIND);
+   met_element_vector.push_back (denise::MERIDIONAL_WIND);
+   met_element_vector.push_back (denise::OMEGA);
 
 }
 

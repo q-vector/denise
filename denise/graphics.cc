@@ -45,26 +45,40 @@ namespace denise
                 const string& format,
                 const string& file_path)
    {
-      
-      if (format == "pdf" || format == "PDF")
+
+      const string& f = get_lower_case (format);
+      const Integer ww = size_2d.i;
+      const Integer hh = size_2d.j;
+
+      if (f == "pdf")
       {
-         return Cairo::PdfSurface::create (file_path, size_2d.i, size_2d.j);
+         return Cairo::PdfSurface::create (file_path, ww, hh);
       }
       else
-      if (format == "svg" || format == "SVG")
+      if (f == "svg")
       {
-         return Cairo::SvgSurface::create (file_path, size_2d.i, size_2d.j);
+         return Cairo::SvgSurface::create (file_path, ww, hh);
       }
       else
-      if (format == "ps" || format == "PS" ||
-          format == "eps" || format == "EPS")
+      if (f == "ps")
       {
-         return Cairo::PsSurface::create (file_path, size_2d.i, size_2d.j);
+         auto surface = Cairo::PsSurface::create (file_path, ww, hh);
+         surface->set_eps (false);
+         return surface;
       }
       else
+      if (f == "eps")
       {
-         return ImageSurface::create (FORMAT_ARGB32, size_2d.i, size_2d.j);
+         auto surface = Cairo::PsSurface::create (file_path, ww, hh);
+         surface->set_eps (true);
+         return surface;
       }
+      else
+      //if (e == "png")
+      {
+         return ImageSurface::create (FORMAT_ARGB32, ww, hh);
+      }
+
    }
 
    RefPtr<ImageSurface>
@@ -846,25 +860,25 @@ Gray_Color_Chooser::Gray_Color_Chooser (const Real start_value,
 
 Mono_Color_Chooser::Mono_Color_Chooser (const Real end_value,
                                         const Real start_value,
-                                        const Color_Mode color_mode,
+                                        const Mono_Color_Chooser::Mode mode,
                                         const Real alpha,
                                         const Real hue,
                                         const Real saturation,
                                         const Real brightness,
                                         const Color& invalid_color)
-                       : Color_Chooser (invalid_color),
-                             end_value (end_value),
-                           start_value (start_value),
-                            end_extent (1),
-                          start_extent (0),
-                            color_mode (color_mode),
-                                 alpha (alpha),
-                                   hue (hue),
-                            saturation (saturation),
-                            brightness (brightness)
+   : Color_Chooser (invalid_color),
+     end_value (end_value),
+     start_value (start_value),
+     end_extent (1),
+     start_extent (0),
+     mode (mode),
+     alpha (alpha),
+     hue (hue),
+     saturation (saturation),
+     brightness (brightness)
 {
 
-   if (color_mode == HUE)
+   if (mode == Mono_Color_Chooser::HUE)
    {
       this->start_extent = 0.833;
       this->end_extent = 0;
@@ -878,22 +892,22 @@ Mono_Color_Chooser::Mono_Color_Chooser (const Real end_value,
                                         const Real start_value,
                                         const Real end_extent,
                                         const Real start_extent,
-                                        const Color_Mode color_mode,
+                                        const Mono_Color_Chooser::Mode mode,
                                         const Real alpha,
                                         const Real hue,
                                         const Real saturation,
                                         const Real brightness,
                                         const Color& invalid_color)
-                       : Color_Chooser (invalid_color),
-                             end_value (end_value),
-                           start_value (start_value),
-                            end_extent (end_extent),
-                          start_extent (start_extent),
-                            color_mode (color_mode),
-                                 alpha (alpha),
-                                   hue (hue),
-                            saturation (saturation),
-                            brightness (brightness)
+   : Color_Chooser (invalid_color),
+     end_value (end_value),
+     start_value (start_value),
+     end_extent (end_extent),
+     start_extent (start_extent),
+     mode (mode),
+     alpha (alpha),
+     hue (hue),
+     saturation (saturation),
+     brightness (brightness)
 {
    this->value_range = end_value - start_value;
    this->extent_range = end_extent - start_extent;
@@ -912,22 +926,22 @@ Mono_Color_Chooser::get_color (const Real value) const
         if (fraction > 1) { fraction = 1; }
    else if (fraction < 0) { fraction = 0; }
 
-   switch (color_mode)
+   switch (mode)
    {
 
-      case ALPHA:
+      case Mono_Color_Chooser::ALPHA:
          color.set_hsb (hue, saturation, brightness, fraction);
          break;
 
-      case HUE:
+      case Mono_Color_Chooser::HUE:
          color.set_hsb (fraction, saturation, brightness, alpha);
          break;
 
-      case SATURATION:
+      case Mono_Color_Chooser::SATURATION:
          color.set_hsb (hue, fraction, brightness, alpha);
          break;
 
-      case BRIGHTNESS:
+      case Mono_Color_Chooser::BRIGHTNESS:
          color.set_hsb (hue, saturation, fraction, alpha);
          break;
 
@@ -1230,30 +1244,29 @@ Label::cairo_text (const RefPtr<Context>& cr,
 }
 
 string
-Label::get_string (const Real number,
-                   const Number_Type number_type,
+Label::get_string (const Real value,
+                   const Number number,
                    const string& format_str,
                    const Real multiplier,
                    const Real offset)
 {
 
-   const Real x = number * multiplier + offset;
+   const Real x = value * multiplier + offset;
 
-   switch (number_type)
+   switch (number)
    {
 
-      default:
-      case NUMBER_REAL:
+      case Label::REAL:
       {
          return string_render (format_str.c_str (), x);
       }
 
-      case NUMBER_TIME:
+      case Label::TIME:
       {
          return Dtime (x).get_string (format_str);
       }
 
-      case NUMBER_LATITUDE:
+      case Label::LATITUDE:
       {
          const bool small = fabs (x) < 0.0001;
          const bool positive = x > 0;
@@ -1262,7 +1275,7 @@ Label::get_string (const Real number,
          return string_render (fs.c_str (), fabs (x));
       }
 
-      case NUMBER_LONGITUDE:
+      case Label::LONGITUDE:
       {
          Lat_Long ll (0, x);
          ll.standardize ();
@@ -1330,13 +1343,13 @@ Label::Label (const string& text,
    set_offset (justify_h, justify_v, padding);
 }
 
-Label::Label (const Real number,
-              const Number_Type number_type,
+Label::Label (const Real value,
+              const Label::Number number,
               const string& format_str,
               const Point_2D& point_2d,
               const char justify_h,
               const char justify_v)
-   : text (get_string (number, number_type, format_str)),
+   : text (get_string (value, number, format_str)),
      point_2d (point_2d),
      justify_h (justify_h),
      justify_v (justify_v),
@@ -1345,14 +1358,14 @@ Label::Label (const Real number,
 {
 }
 
-Label::Label (const Real number,
-              const Number_Type number_type,
+Label::Label (const Real value,
+              const Label::Number number,
               const string& format_str,
               const Point_2D& point_2d,
               const char justify_h,
               const char justify_v,
               const Real padding)
-   : text (get_string (number, number_type, format_str)),
+   : text (get_string (value, number, format_str)),
      point_2d (point_2d),
      justify_h (justify_h),
      justify_v (justify_v),
@@ -1361,15 +1374,15 @@ Label::Label (const Real number,
    set_offset (justify_h, justify_v, padding);
 }
 
-Label::Label (const Real number,
-              const Number_Type number_type,
+Label::Label (const Real value,
+              const Label::Number number,
               const string& format_str,
               const Real multiplier,
               const Real offset,
               const Point_2D& point_2d,
               const char justify_h,
               const char justify_v)
-   : text (get_string (number, number_type, format_str, multiplier, offset)),
+   : text (get_string (value, number, format_str, multiplier, offset)),
      point_2d (point_2d),
      justify_h (justify_h),
      justify_v (justify_v),
@@ -1378,8 +1391,8 @@ Label::Label (const Real number,
 {
 }
 
-Label::Label (const Real number,
-              const Number_Type number_type,
+Label::Label (const Real value,
+              const Label::Number number,
               const string& format_str,
               const Real multiplier,
               const Real offset,
@@ -1387,7 +1400,7 @@ Label::Label (const Real number,
               const char justify_h,
               const char justify_v,
               const Real padding)
-   : text (get_string (number, number_type, format_str, multiplier, offset)),
+   : text (get_string (value, number, format_str, multiplier, offset)),
      point_2d (point_2d),
      justify_h (justify_h),
      justify_v (justify_v),
@@ -1737,7 +1750,7 @@ Simple_Mesh_2D::render_label_x (const RefPtr<Context>& cr,
                                 const Domain_1D& domain_1d,
                                 const Real position,
                                 const string& format_str,
-                                const Number_Type number_type,
+                                const Label::Number label_number,
                                 const char justify_h,
                                 const char justify_v,
                                 const Real padding) const
@@ -1755,17 +1768,22 @@ Simple_Mesh_2D::render_label_x (const RefPtr<Context>& cr,
    const Real m_x = (non_regular ? 1 : multiplier_x);
    const Real o_x = (non_regular ? 1 : offset_x);
 
+   cr->save ();
+   color.cairo (cr);
+
    for (Tuple::const_iterator iterator = tuple.begin ();
         iterator != tuple.end (); iterator++)
    {
 
       point.x = *(iterator);
 
-      Label label (point.x, number_type, format_str, m_x,
+      Label label (point.x, label_number, format_str, m_x,
          o_x, point, justify_h, justify_v, padding);
       label.cairo (cr, transform);
 
    }
+
+   cr->restore ();
 
 }
 
@@ -1775,7 +1793,7 @@ Simple_Mesh_2D::render_label_y (const RefPtr<Context>& cr,
                                 const Domain_1D& domain_1d,
                                 const Real position,
                                 const string& format_str,
-                                const Number_Type number_type,
+                                const Label::Number label_number,
                                 const char justify_h,
                                 const char justify_v,
                                 const Real padding) const
@@ -1793,17 +1811,22 @@ Simple_Mesh_2D::render_label_y (const RefPtr<Context>& cr,
    const Real m_y = (non_regular ? 1 : multiplier_y);
    const Real o_y = (non_regular ? 1 : offset_y);
 
+   cr->save ();
+   color.cairo (cr);
+
    for (Tuple::const_iterator iterator = tuple.begin ();
         iterator != tuple.end (); iterator++)
    {
 
       point.y = *(iterator);
 
-      Label label (point.y, number_type, format_str, m_y,
+      Label label (point.y, label_number, format_str, m_y,
          o_y, point, justify_h, justify_v, padding);
       label.cairo (cr, transform);
 
    }
+
+   cr->restore ();
 
 }
 
@@ -1819,11 +1842,11 @@ Simple_Mesh_2D::render_label_lat_long (const RefPtr<Context>& cr,
 {
 
    render_label_x (cr, transform, domain_2d.domain_x,
-      lat_long.longitude, format_str, NUMBER_LATITUDE, justify_h,
+      lat_long.longitude, format_str, Label::LATITUDE, justify_h,
       justify_v, padding);
 
    render_label_y (cr, transform, domain_2d.domain_y,
-      lat_long.latitude, format_str, NUMBER_LONGITUDE, justify_h,
+      lat_long.latitude, format_str, Label::LONGITUDE, justify_h,
       justify_v, padding);
 
 }
@@ -2041,7 +2064,7 @@ Mesh_2D::render_label_x (const RefPtr<Context>& cr,
                          const Integer index,
                          const Real position_y,
                          const string& format_str,
-                         const Number_Type number_type,
+                         const Label::Number label_number,
                          const char justify_h,
                          const char justify_v,
                          const Real padding) const
@@ -2049,7 +2072,7 @@ Mesh_2D::render_label_x (const RefPtr<Context>& cr,
    if (index >= size ()) { return; }
    const Simple_Mesh_2D& simple_mesh_2d = at (index);
    simple_mesh_2d.render_label_x (cr, transform, domain_2d.domain_x,
-      position_y, format_str, number_type, justify_h, justify_v, padding);
+      position_y, format_str, label_number, justify_h, justify_v, padding);
 }
 
 void
@@ -2058,7 +2081,7 @@ Mesh_2D::render_label_y (const RefPtr<Context>& cr,
                          const Integer index,
                          const Real position_x,
                          const string& format_str,
-                         const Number_Type number_type,
+                         const Label::Number label_number,
                          const char justify_h,
                          const char justify_v,
                          const Real padding) const
@@ -2066,7 +2089,7 @@ Mesh_2D::render_label_y (const RefPtr<Context>& cr,
    if (index >= size ()) { return; }
    const Simple_Mesh_2D& simple_mesh_2d = at (index);
    simple_mesh_2d.render_label_y (cr, transform, domain_2d.domain_y,
-      position_x, format_str, number_type, justify_h, justify_v, padding);
+      position_x, format_str, label_number, justify_h, justify_v, padding);
 }
 
 void
@@ -2080,9 +2103,9 @@ Mesh_2D::render_label_lat_long (const RefPtr<Context>& cr,
                                 const Real padding) const
 {
    render_label_x (cr, transform, index, lat_long.longitude,
-      format_str, NUMBER_LATITUDE, justify_h, justify_v, padding);
+      format_str, Label::LATITUDE, justify_h, justify_v, padding);
    render_label_y (cr, transform, index, lat_long.latitude,
-      format_str, NUMBER_LONGITUDE, justify_h, justify_v, padding);
+      format_str, Label::LONGITUDE, justify_h, justify_v, padding);
 }
 
 Raster::Raster (const Size_2D& size_2d)

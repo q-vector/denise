@@ -170,7 +170,7 @@ namespace denise
    Scalar;
 
    typedef complex<Real>
-   Complex;
+   Cmplx;
 
    /// Represents a 2D index
    ///
@@ -435,6 +435,8 @@ namespace denise
          Point_2D (const complex<Real>& c);
 
          Point_2D (const Index_2D& index_2d);
+
+         Point_2D (const string& str);
 
          complex<Real>
          get_complex () const;

@@ -153,7 +153,7 @@ Gshhs::Header::read (FILE* file)
 }
 
 void
-Gshhs::Header::reset (Polygon_Vertex* handle_ptr)
+Gshhs::Header::reset (Polygon::Vertex* handle_ptr)
 {
 
    Real start_latitude  = GSL_POSINF;
@@ -162,7 +162,7 @@ Gshhs::Header::reset (Polygon_Vertex* handle_ptr)
    Real end_longitude   = GSL_NEGINF;
 
    Integer n = handle_ptr->n;
-   Polygon_Vertex* current_ptr = (Polygon_Vertex*)handle_ptr;
+   Polygon::Vertex* current_ptr = (Polygon::Vertex*)handle_ptr;
 
    for (Integer i = 0; i < n; i++)
    {
@@ -324,12 +324,12 @@ Gshhs::add_polygon (FILE* file,
 
 void
 Gshhs::write_simple_polygon (FILE* file,
-                             const Polygon_Vertex* handle_ptr) const
+                             const Polygon::Vertex* handle_ptr) const
 {
 
    Point point;
    Integer n = handle_ptr->n;
-   Polygon_Vertex* current_ptr = (Polygon_Vertex*)handle_ptr;
+   Polygon::Vertex* current_ptr = (Polygon::Vertex*)handle_ptr;
 
    for (Integer i = 0; i < n; i++)
    {
@@ -399,8 +399,8 @@ Gshhs::save (const string& file_path) const
 
    FILE* file = get_output_file (file_path);
 
-   const Polygon_Vertex* first_handle_ptr = this->get_first_handle_ptr ();
-   Polygon_Vertex* current_handle_ptr = (Polygon_Vertex*)(first_handle_ptr);
+   const Polygon::Vertex* first_handle_ptr = this->get_first_handle_ptr ();
+   Polygon::Vertex* current_handle_ptr = (Polygon::Vertex*)(first_handle_ptr);
 
    do
    {

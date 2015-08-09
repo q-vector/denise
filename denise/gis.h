@@ -135,7 +135,7 @@ namespace denise
                read (FILE* file);
 
                void
-               reset (Polygon_Vertex* handle_ptr);
+               reset (Polygon::Vertex* handle_ptr);
 
                const int32_t&
                get_int32_t (const Integer position) const;
@@ -180,7 +180,7 @@ namespace denise
 
          void
          write_simple_polygon (FILE* file,
-                               const Polygon_Vertex* vertex_ptr) const;
+                               const Polygon::Vertex* vertex_ptr) const;
 
       public:
 

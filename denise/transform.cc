@@ -112,14 +112,14 @@ Transform_2D::cr (const Cairo::RefPtr<Cairo::Context>& cr,
 
    if (polygon.size () <= 1) { return; }
 
-   const Polygon_Vertex* first_handle_ptr = polygon.get_first_handle_ptr ();
-   Polygon_Vertex* current_handle_ptr = (Polygon_Vertex*)first_handle_ptr;
+   const Polygon::Vertex* first_handle_ptr = polygon.get_first_handle_ptr ();
+   Polygon::Vertex* current_handle_ptr = (Polygon::Vertex*)first_handle_ptr;
 
    do
    {
 
       const Integer n = current_handle_ptr->n;
-      Polygon_Vertex* current_ptr = (Polygon_Vertex*)current_handle_ptr;
+      Polygon::Vertex* current_ptr = (Polygon::Vertex*)current_handle_ptr;
 
       for (Integer i = 0; i < n; i++)
       {

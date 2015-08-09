@@ -36,7 +36,7 @@ using namespace std;
 namespace denise
 {
 
-   enum Nwp_Element
+   enum Met_Element
    {
       PRESSURE = 0,          P = 0,
       TEMPERATURE = 1,       T = 1,
@@ -122,86 +122,6 @@ namespace denise
       NUMBER_OF_TC_CATEGORIES = 5
    };
 
-   enum Octa_Type
-   {
-      OCTA_ZERO,
-      OCTA_ONE,
-      OCTA_TWO,
-      OCTA_THREE,
-      OCTA_FOUR,
-      OCTA_FIVE,
-      OCTA_SIX,
-      OCTA_SEVEN,
-      OCTA_EIGHT,
-      OCTA_OBSCURED,
-      OCTA_GARBLED
-   };
-
-   /// \var Tc_Category::TROPICAL_DEPRESSION
-   /// Tropical Depression
-
-   /// \var Tc_Category::TROPICAL_STORM
-   /// Tropical Storm
-
-   /// \var Tc_Category::SEVERE_TROPICAL_STORM
-   /// Severe Tropical Storm
-
-   /// \var Tc_Category::TYPHOON
-   /// Typhoon
-
-   /// Wind Category
-   enum Wind_Category
-   {
-      CALM,
-      LIGHT,
-      MODERATE,
-      FRESH,
-      STRONG,
-      GALE,
-      STORM,
-      HURRICANE,
-      NUMBER_OF_WIND_CATEGORIES = 8
-   };
-
-   /// \var Tc_Category::CALM
-   /// Calm winds
-
-   /// \var Tc_Category::LIGHT
-   /// Light winds
-
-   /// \var Tc_Category::MODERATE
-   /// Moderate winds
-
-   /// \var Tc_Category::FRESH
-   /// Fresh winds
-
-   /// \var Tc_Category::STRONG
-   /// Strong winds
-
-   /// \var Tc_Category::GALE
-   /// Gale winds
-
-   /// \var Tc_Category::STORM
-   /// Storm winds
-
-   /// \var Tc_Category::HURRICANE
-   /// Hurricane winds
-
-   enum Level_Type
-   {
-      PRESSURE_LEVEL,
-      HEIGHT_LEVEL,
-      THETA_LEVEL,
-      SIGMA_LEVEL,
-      SCREEN_LEVEL,
-      FIFTY_METRE_LEVEL,
-      TEN_METRE_LEVEL,
-      MEAN_SEA_LEVEL,
-      NIL_LEVEL,
-      SURFACE_LEVEL,
-      NOT_A_LEVEL
-   };
-
    /// Returns TC_Category given wind speed
    ///
    /// \param max_wind Wind speed
@@ -226,23 +146,11 @@ namespace denise
    Real
    get_minimal_intensity (const Tc_Category tc_category);
 
-   /// Returns Wind_Category given wind speed
-   ///
-   /// \param speed Wind speed
-   Wind_Category
-   get_wind_category (const Real speed);
-
    /// Returns a string representation of a Tc_Category
    ///
    /// \param tc_category TC Category
    string
    get_tc_category_string (const Tc_Category tc_category);
-
-   /// Returns a string representation of a Wind_Category
-   ///
-   /// \param wind_category Wind Category
-   string
-   get_wind_category_string (const Wind_Category wind_category);
 
    class Tc_Symbol : public Symbol
    {
@@ -296,7 +204,22 @@ namespace denise
 
       public:
 
-         Octa (const Octa_Type octa_type,
+         enum Number
+         {
+            OCTA_ZERO,
+            OCTA_ONE,
+            OCTA_TWO,
+            OCTA_THREE,
+            OCTA_FOUR,
+            OCTA_FIVE,
+            OCTA_SIX,
+            OCTA_SEVEN,
+            OCTA_EIGHT,
+            OCTA_OBSCURED,
+            OCTA_GARBLED
+         };
+
+         Octa (const Octa::Number octa_number,
                const Real size,
                const Real width = 1);
 
@@ -307,6 +230,19 @@ namespace denise
    {
 
       public:
+
+         /// Wind Category
+         enum Category
+         {
+            CALM,
+            LIGHT,
+            MODERATE,
+            FRESH,
+            STRONG,
+            GALE,
+            STORM,
+            HURRICANE
+         };
 
          /// u-component
          Real
@@ -374,6 +310,12 @@ namespace denise
          string
          get_string (const Real speed_multiplier = 3.6/1.852,
                      const string& format = "%03.0f/%02.0f") const;
+
+         static Category
+         get_category (const Real speed);
+
+         static string
+         get_category_string (const Category category);
 
          Wind
          operator + (const Wind& wind) const;
@@ -1103,7 +1045,22 @@ namespace denise
 
       public:
 
-         Level_Type
+         enum Type
+         {
+            PRESSURE,
+            HEIGHT,
+            THETA,
+            SIGMA,
+            SCREEN,
+            FIFTY_METRE,
+            TEN_METRE,
+            MEAN_SEA,
+            NIL,
+            SURFACE,
+            NAL
+         };
+
+         Level::Type
          type;
 
          Real
@@ -1118,10 +1075,10 @@ namespace denise
 
          Level (const string& str);
 
-         Level (const Level_Type type,
+         Level (const Level::Type type,
                 const Real value = GSL_NAN);
 
-         Level (const Level_Type type,
+         Level (const Level::Type type,
                 const Real value_0,
                 const Real value_1);
 
@@ -1219,7 +1176,7 @@ namespace denise
 
       public:
 
-         Layer (const Level_Type type,
+         Layer (const Level::Type type,
                 const Real value_0,
                 const Real value_1);
 

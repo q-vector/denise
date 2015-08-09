@@ -37,12 +37,12 @@ namespace denise
 
       public:
 
-         const Level_Type
+         const Level::Type
          type;
 
          //Level_Tuple ();
 
-         Level_Tuple (const Level_Type type,
+         Level_Tuple (const Level::Type type,
                       const string& str,
                       const string& delimiter = ":");
 
@@ -67,11 +67,11 @@ namespace denise
          Level
          level;
 
-         Nwp_Element
-         nwp_element;
+         Met_Element
+         met_element;
 
          Level_Element (const Level& level,
-                        const Nwp_Element nwp_element);
+                        const Met_Element met_element);
 
    };
 
@@ -123,28 +123,28 @@ namespace denise
 
          };
 
-         class Element_Vector : public vector<Nwp_Element>
+         class Element_Vector : public vector<Met_Element>
          {
 
              private:
 
-                map<Nwp_Element, Integer>
+                map<Met_Element, Integer>
                 reverse_map;
 
              public:
 
-                Element_Vector (const vector<Nwp_Element>& nwp_element_vector);
+                Element_Vector (const vector<Met_Element>& met_element_vector);
 
                 Integer
-                get_index (const Nwp_Element nwp_element) const;
+                get_index (const Met_Element met_element) const;
 
-                Nwp_Element
-                get_nwp_element (const Integer element_index) const;
+                Met_Element
+                get_met_element (const Integer element_index) const;
 
          };
 
          // Assumes vertical coordinate is p
-         class Data_3D : public map<Nwp_Element, Geodetic_Vector_Data_3D*>
+         class Data_3D : public map<Met_Element, Geodetic_Vector_Data_3D*>
          {
 
             private:
@@ -152,15 +152,15 @@ namespace denise
                bool
                available;
 
-               const vector<Nwp_Element>
-               nwp_element_vector;
+               const vector<Met_Element>
+               met_element_vector;
 
             public:
 
                const Key
                key;
 
-               Data_3D (const vector<Nwp_Element>& nwp_element_vector,
+               Data_3D (const vector<Met_Element>& met_element_vector,
                         const Key& key);
 
                ~Data_3D ();
@@ -177,27 +177,27 @@ namespace denise
                unload ();
 
                void
-               unload (const Nwp_Element nwp_element);
+               unload (const Met_Element met_element);
 
                void
-               set_gvd_3d_ptr (const Nwp_Element nwp_element,
+               set_gvd_3d_ptr (const Met_Element met_element,
                                Geodetic_Vector_Data_3D* gvd_3d_ptr);
 
                const Geodetic_Vector_Data_3D&
-               get_gvd_3d (const Nwp_Element nwp_element) const;
+               get_gvd_3d (const Met_Element met_element) const;
 
                Geodetic_Vector_Data_3D&
-               get_gvd_3d (const Nwp_Element nwp_element);
+               get_gvd_3d (const Met_Element met_element);
 
                virtual const Tuple&
-               get_tuple_p (const Nwp_Element nwp_element) const;
+               get_tuple_p (const Met_Element met_element) const;
 
                Real
-               get_p (const Nwp_Element nwp_element,
+               get_p (const Met_Element met_element,
                       const Integer k) const;
 
                Lat_Long
-               get_lat_long (const Nwp_Element nwp_element,
+               get_lat_long (const Met_Element met_element,
                              const Integer i,
                              const Integer j) const;
 
@@ -211,20 +211,20 @@ namespace denise
                initialize (const Real datum);
 
                virtual Real
-               get_p_from_element (const Nwp_Element nwp_element,
+               get_p_from_element (const Met_Element met_element,
                                    const Real latitude,
                                    const Real longitude,
                                    const Real element_value) const;
 
                virtual Real
-               evaluate (const Nwp_Element element,
+               evaluate (const Met_Element element,
                          const Real p,
                          const Real latitude,
                          const Real longitude,
                          const Evaluate_Op evaluate_op = VALUE) const;
 
                virtual Real
-               evaluate (const Nwp_Element element,
+               evaluate (const Met_Element element,
                          const Real p,
                          const Lat_Long& lat_long,
                          const Evaluate_Op evaluate_op = VALUE) const;
@@ -244,7 +244,7 @@ namespace denise
 
          };
 
-         class Time_Cross : public map<Nwp_Element, Scalar_Data_2D*>
+         class Time_Cross : public map<Met_Element, Scalar_Data_2D*>
          {
 
             private:
@@ -266,7 +266,7 @@ namespace denise
                                  Scalar_Data_1D* rainfall_profile_ptr);
 
                void
-               insert_nwp_element_if_needed (const Nwp_Element nwp_element,
+               insert_met_element_if_needed (const Met_Element met_element,
                                              const Tuple& tuple_t,
                                              const Tuple& tuple_p);
 
@@ -277,17 +277,17 @@ namespace denise
                get_rainfall_profile () const;
 
                const Scalar_Data_2D&
-               get_sd_2d (const Nwp_Element nwp_element) const;
+               get_sd_2d (const Met_Element met_element) const;
 
                Scalar_Data_2D&
-               get_sd_2d (const Nwp_Element nwp_element);
+               get_sd_2d (const Met_Element met_element);
 
                virtual const Tuple&
-               get_tuple_p (const Nwp_Element nwp_element) const;
+               get_tuple_p (const Met_Element met_element) const;
 
          };
 
-         class Cross_Section : public map<Nwp_Element, Scalar_Data_2D*>
+         class Cross_Section : public map<Met_Element, Scalar_Data_2D*>
          {
 
             private:
@@ -309,7 +309,7 @@ namespace denise
                                  Scalar_Data_1D* rainfall_profile_ptr);
 
                void
-               insert_nwp_element_if_needed (const Nwp_Element nwp_element,
+               insert_met_element_if_needed (const Met_Element met_element,
                                              const Tuple& tuple_x,
                                              const Tuple& tuple_p);
 
@@ -320,13 +320,13 @@ namespace denise
                get_rainfall_profile () const;
 
                const Scalar_Data_2D&
-               get_sd_2d (const Nwp_Element nwp_element) const;
+               get_sd_2d (const Met_Element met_element) const;
 
                Scalar_Data_2D&
-               get_sd_2d (const Nwp_Element nwp_element);
+               get_sd_2d (const Met_Element met_element);
 
                virtual const Tuple&
-               get_tuple_p (const Nwp_Element nwp_element) const;
+               get_tuple_p (const Met_Element met_element) const;
 
          };
 
@@ -375,8 +375,8 @@ namespace denise
          typedef map<Key, Data_3D*>
          Data_3d_Ptr_Map;
 
-         vector<Nwp_Element>
-         nwp_element_vector;
+         vector<Met_Element>
+         met_element_vector;
 
          Tuple
          tuple_p;
@@ -415,7 +415,7 @@ namespace denise
          fill_rain_data (Geodetic_Vector_Data_2D& gvd_2d,
                          const Integer vector_index,
                          const Key& key,
-                         const Nwp_Element nwp_element);
+                         const Met_Element met_element);
 
          virtual void
          fill_rain_data (Geodetic_Vector_Data_2D& gvd_2d,
@@ -548,7 +548,7 @@ namespace denise
                         const Integer vector_index,
                         const Key& key,
                         const Level& level,
-                        const Nwp_Element nwp_element);
+                        const Met_Element met_element);
 
          virtual void
          fill_continuous_haines_data (Geodetic_Vector_Data_2D& gvd_2d,
@@ -590,78 +590,78 @@ namespace denise
                                  const Integer vector_index,
                                  const Key& key,
                                  const Level& level,
-                                 const Nwp_Element nwp_element);
+                                 const Met_Element met_element);
 
          virtual void
          fill_cloud_data (Geodetic_Vector_Data_2D& gvd_2d,
                           const Integer vector_index,
                           const Key& key,
-                          const Nwp_Element nwp_element);
+                          const Met_Element met_element);
 
          virtual void
          fill_pressure_level_data (Geodetic_Vector_Data_2D& gvd_2d,
                                    const Integer vector_index,
                                    const Key& key,
                                    const Real p,
-                                   const Nwp_Element nwp_element);
+                                   const Met_Element met_element);
 
          virtual void
          fill_theta_level_data (Geodetic_Vector_Data_2D& gvd_2d,
                                 const Integer vector_index,
                                 const Key& key,
                                 const Real theta,
-                                const Nwp_Element nwp_element);
+                                const Met_Element met_element);
 
          virtual void
          fill_sigma_level_data (Geodetic_Vector_Data_2D& gvd_2d,
                                 const Integer vector_index,
                                 const Key& key,
                                 const Real sigma,
-                                const Nwp_Element nwp_element,
+                                const Met_Element met_element,
                                 const Geodetic_Vector_Data_2D& surface_p_data);
 
          virtual void
          fill_screen_level_data (Geodetic_Vector_Data_2D& gvd_2d,
                                  const Integer vector_index,
                                  const Key& key,
-                                 const Nwp_Element nwp_element);
+                                 const Met_Element met_element);
 
          virtual void
          fill_50m_level_data (Geodetic_Vector_Data_2D& gvd_2d,
                               const Integer vector_index,
                               const Key& key,
-                              const Nwp_Element nwp_element);
+                              const Met_Element met_element);
 
          virtual void
          fill_10m_level_data (Geodetic_Vector_Data_2D& gvd_2d,
                               const Integer vector_index,
                               const Key& key,
-                              const Nwp_Element nwp_element);
+                              const Met_Element met_element);
 
          virtual void
          fill_msl_data (Geodetic_Vector_Data_2D& gvd_2d,
                         const Integer vector_index,
                         const Key& key,
-                        const Nwp_Element nwp_element);
+                        const Met_Element met_element);
 
          virtual void
          fill_nil_level_data (Geodetic_Vector_Data_2D& gvd_2d,
                               const Integer vector_index,
                               const Key& key,
-                              const Nwp_Element nwp_element);
+                              const Met_Element met_element);
 
          virtual void
          fill_surface_level_data (Geodetic_Vector_Data_2D& gvd_2d,
                                   const Integer vector_index,
                                   const Key& key,
-                                  const Nwp_Element nwp_element);
+                                  const Met_Element met_element);
 
          virtual void
          fill_data (Geodetic_Vector_Data_2D& gvd_2d,
                     const Integer vector_index,
                     const Key& key,
                     const Level& level,
-                    const Nwp_Element nwp_element);
+                    const Met_Element met_element);
 
       public:
 
@@ -866,28 +866,28 @@ namespace denise
          virtual Geodetic_Vector_Data_2D*
          get_theta_level_data_ptr (const Key& key,
                                    const Real theta,
-                                   const vector<Nwp_Element> element_vector,
+                                   const vector<Met_Element> element_vector,
                                    const bool with_pv);
 
          virtual Geodetic_Vector_Data_2D*
          get_sigma_level_data_ptr (const Key& key,
                                    const Real sigma,
-                                   const vector<Nwp_Element> element_vector);
+                                   const vector<Met_Element> element_vector);
 
          virtual Geodetic_Vector_Data_2D*
          get_pressure_level_data_ptr (const Key& key,
                                       const Real p,
-                                      const vector<Nwp_Element> element_vector);
+                                      const vector<Met_Element> element_vector);
 
          virtual Geodetic_Vector_Data_2D*
          get_data_ptr (const Key& key,
                        const Level& level,
-                       const Nwp_Element nwp_element);
+                       const Met_Element met_element);
 
          virtual Geodetic_Vector_Data_2D*
          get_data_ptr (const Key& key,
                        const Level& level,
-                       const vector<Nwp_Element>& nwp_element_vector);
+                       const vector<Met_Element>& met_element_vector);
 
          virtual Scalar_Data_1D*
          get_terrain_profile_ptr (const Key& key,
@@ -900,13 +900,13 @@ namespace denise
          virtual Cross_Section*
          get_cross_section_ptr (const Key& key,
                                 const Journey& journey,
-                                const Nwp_Element nwp_element,
+                                const Met_Element met_element,
                                 const bool with_wind);
 
          virtual Cross_Section*
          get_cross_section_ptr (const Key& key,
                                 const Journey& journey,
-                                const vector<Nwp_Element>& element_vector,
+                                const vector<Met_Element>& element_vector,
                                 const bool with_wind);
 
          virtual Nwp::Sounding*
@@ -936,7 +936,7 @@ namespace denise
                                   const Dtime& base_time,
                                   const Dtime& start_time,
                                   const Dtime& end_time,
-                                  const vector<Nwp_Element>& element_vector);
+                                  const vector<Met_Element>& element_vector);
 
    };
 

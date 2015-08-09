@@ -47,42 +47,11 @@ namespace denise
    class Polygon;
    class Transform_2D;
 
-//   enum Path_Ob_Genre
-//   {
-//      MOVE_TO,
-//      LINE_TO,
-//      CURVE_TO,
-//      ARC_TO,
-//      CLOSE_PATH
-//   };
-
    enum Boolean_Op
    {
       DIFFERENCE,
       INTERSECTION,
       UNION
-   };
-
-   enum Polygon_Intersection
-   {
-      INTERSECTION_NOT,
-      INTERSECTION_ENTRY,
-      INTERSECTION_EXIT,
-      INTERSECTION_SELF
-   };
-
-   enum Polygon_Relation
-   {
-      A_ENTIRELY_IN_B,
-      B_ENTIRELY_IN_A,
-      DISJOINT
-   };
-
-   enum Polygon_Action
-   {
-      NOT_DECIDED,
-      APPEND,
-      DO_NOT_APPEND
    };
 
    class Geometry_Exception : public Exception
@@ -629,56 +598,80 @@ namespace denise
 
    };
 
-   class Polygon_Vertex : public Point_2D
-   {
-
-      public:
-
-         Polygon_Action
-         action;
-
-         Integer
-         n;
-
-         Real
-         alpha;
-
-         Integer
-         intersections;
-
-         Polygon_Vertex*
-         next_ptr;
-
-         Polygon_Vertex*
-         prev_ptr;
-
-         Polygon_Vertex*
-         neighbor_ptr;
-
-         Polygon_Vertex*
-         handle_ptr;
-
-         Polygon_Vertex*
-         next_handle_ptr;
-
-         Polygon_Vertex*
-         prev_handle_ptr;
-
-         Polygon_Intersection
-         intersection;
-
-         Polygon_Vertex (const Point_2D& point);
-
-   };
-
    /// a list of point_2d's that closes
    class Polygon : public Area,
                    public Cairoable
    {
 
+      public:
+
+         enum Intersection
+         {
+            INTERSECTION_NOT,
+            INTERSECTION_ENTRY,
+            INTERSECTION_EXIT,
+            INTERSECTION_SELF
+         };
+
+         enum Action
+         {
+            NOT_DECIDED,
+            APPEND,
+            DO_NOT_APPEND
+         };
+
+         class Vertex : public Point_2D
+         {
+
+            public:
+
+               Action
+               action;
+
+               Integer
+               n;
+
+               Real
+               alpha;
+
+               Integer
+               intersections;
+
+               Vertex*
+               next_ptr;
+
+               Vertex*
+               prev_ptr;
+
+               Vertex*
+               neighbor_ptr;
+
+               Vertex*
+               handle_ptr;
+
+               Vertex*
+               next_handle_ptr;
+
+               Vertex*
+               prev_handle_ptr;
+
+               Intersection
+               intersection;
+
+               Vertex (const Point_2D& point);
+
+         };
+
       private:
 
-         Polygon_Vertex*
+         enum Relation
+         {
+            A_ENTIRELY_IN_B,
+            B_ENTIRELY_IN_A,
+            DISJOINT
+         };
+
+         Vertex*
          first_handle_ptr;
 
          Real
@@ -712,22 +705,22 @@ namespace denise
 
          static void
          iterate_winding_number (Integer& w,
-                                 const Polygon_Vertex* handle_ptr,
+                                 const Vertex* handle_ptr,
                                  const Point_2D& point);
 
          static Integer
-         get_winding_number (const Polygon_Vertex* handle_ptr,
+         get_winding_number (const Vertex* handle_ptr,
                              const Point_2D& point);
 
          static bool
-         contains (const Polygon_Vertex* handle_ptr,
+         contains (const Vertex* handle_ptr,
                    const Point_2D& point,
                    bool border_included = false);
 
          static void
-         toggle_intersection (Polygon_Intersection& intersection);
+         toggle_intersection (Intersection& intersection);
 
-         Polygon_Vertex*
+         Vertex*
          get_intersection_ptr () const;
 
          static Point_2D
@@ -769,16 +762,16 @@ namespace denise
          static void
          simplify_phase_b (Polygon& polygon);
 
-         static Polygon_Relation
-         get_polygon_relation (const Polygon_Vertex* handle_a_ptr,
-                               const Polygon_Vertex* handle_b_ptr);
+         static Relation
+         get_relation (const Vertex* handle_a_ptr,
+                       const Vertex* handle_b_ptr);
 
          static bool
-         entirely_within (const Polygon_Vertex* handle_a_ptr,
-                          const Polygon_Vertex* handle_b_ptr);
+         entirely_within (const Vertex* handle_a_ptr,
+                          const Vertex* handle_b_ptr);
 
          bool
-         append (Polygon_Vertex* handle_ptr);
+         append (Vertex* handle_ptr);
 
       public:
 
@@ -835,7 +828,7 @@ namespace denise
          translate (const Point_2D& point);
 
          static void
-         remove (Polygon_Vertex* vertex_ptr);
+         remove (Vertex* vertex_ptr);
 
          Integer
          size () const;
@@ -843,10 +836,10 @@ namespace denise
          Integer
          get_number_of_single_polygons () const;
 
-         const Polygon_Vertex*
+         const Vertex*
          get_first_handle_ptr () const;
 
-         const Polygon_Vertex*
+         const Vertex*
          get_last_handle_ptr () const;
 
          const Domain_1D&
@@ -856,7 +849,7 @@ namespace denise
          get_domain_y () const;
 
          static Real
-         get_simple_polygon_area (const Polygon_Vertex* pv_ptr);
+         get_simple_polygon_area (const Vertex* pv_ptr);
 
          Real
          get_area () const;
@@ -907,7 +900,7 @@ namespace denise
 
          static void
          cairo (const RefPtr<Context>& cr,
-                const Polygon_Vertex* polygon_vertex_ptr);
+                const Vertex* polygon_vertex_ptr);
 
          void
          debug_print (const string& prefix = "",

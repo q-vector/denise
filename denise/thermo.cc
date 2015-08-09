@@ -1505,8 +1505,8 @@ Thermo_Polygon::render (const Cairo::RefPtr<Cairo::Context>& cr,
 
    cr->save ();
 
-   const Polygon_Vertex* first_handle_ptr = get_first_handle_ptr ();
-   Polygon_Vertex* current_handle_ptr = (Polygon_Vertex*)first_handle_ptr;
+   const Polygon::Vertex* first_handle_ptr = get_first_handle_ptr ();
+   Polygon::Vertex* current_handle_ptr = (Polygon::Vertex*)first_handle_ptr;
 
    do
    {

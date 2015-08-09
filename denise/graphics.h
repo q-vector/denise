@@ -35,39 +35,6 @@ namespace denise
 
    class Lat_Long;
 
-   enum Color_Mode
-   {
-      ALPHA,
-      HUE,
-      SATURATION,
-      BRIGHTNESS
-   };
-
-   enum Color_Gradient_Type
-   {
-      LINEAR,
-      RADIAL
-   };
-
-   enum Dash_Mode
-   {
-      SOLID,
-      DOTTED,
-      DOT_DASHED,
-      SHORT_DASHED,
-      LONG_DASHED,
-      DOT_DOT_DASHED,
-      DOT_DOT_DOT_DASHED
-   };
-
-   enum Number_Type
-   {
-      NUMBER_REAL,
-      NUMBER_TIME,
-      NUMBER_LATITUDE,
-      NUMBER_LONGITUDE
-   };
-
    Real
    get_hue (const Integer i,
             const Integer n);
@@ -275,7 +242,13 @@ namespace denise
 
       public:
 
-         Color_Gradient_Type
+         enum Type
+         {
+            LINEAR,
+            RADIAL
+         };
+
+         Type
          type;
 
          Color
@@ -590,8 +563,16 @@ namespace denise
 
       private:
 
-         Color_Mode
-         color_mode;
+         enum Mode
+         {
+            ALPHA,
+            HUE,
+            SATURATION,
+            BRIGHTNESS
+         };
+
+         Mode
+         mode;
 
          Real
          alpha;
@@ -627,7 +608,7 @@ namespace denise
 
          Mono_Color_Chooser (const Real end_value,
                              const Real start_value = 0,
-                             const Color_Mode color_mode = SATURATION,
+                             const Mode mode = SATURATION,
                              const Real alpha = 1,
                              const Real hue = 0,
                              const Real saturation = 1,
@@ -638,7 +619,7 @@ namespace denise
                              const Real start_value,
                              const Real end_extent,
                              const Real start_extent,
-                             const Color_Mode color_mode = SATURATION,
+                             const Mode mode = SATURATION,
                              const Real alpha = 1,
                              const Real hue = 0,
                              const Real saturation = 1,
@@ -814,6 +795,16 @@ namespace denise
    class Label : public Rect
    {
 
+      public:
+
+         enum Number
+         {
+            REAL,
+            TIME,
+            LATITUDE,
+            LONGITUDE
+         };
+
       private:
 
          string
@@ -843,8 +834,8 @@ namespace denise
                      const bool outline) const;
 
          static string
-         get_string (const Real number,
-                     const Number_Type number_type,
+         get_string (const Real value,
+                     const Number number,
                      const string& format_str,
                      const Real multiplier = 1,
                      const Real offset = 0);
@@ -867,23 +858,23 @@ namespace denise
                 const char justify_v,
                 const Real padding);
 
-         Label (const Real number,
-                const Number_Type number_type,
+         Label (const Real value,
+                const Number number,
                 const string& format_str,
                 const Point_2D& point_2d,
                 const char justify_h,
                 const char justify_v);
 
-         Label (const Real number,
-                const Number_Type number_type,
+         Label (const Real value,
+                const Number number,
                 const string& format_str,
                 const Point_2D& point_2d,
                 const char justify_h,
                 const char justify_v,
                 const Real padding);
 
-         Label (const Real number,
-                const Number_Type number_type,
+         Label (const Real value,
+                const Number number,
                 const string& format_str,
                 const Real multiplier,
                 const Real offset,
@@ -891,8 +882,8 @@ namespace denise
                 const char justify_h,
                 const char justify_v);
 
-         Label (const Real number,
-                const Number_Type number_type,
+         Label (const Real value,
+                const Number number,
                 const string& format_str,
                 const Real multiplier,
                 const Real offset,
@@ -1046,7 +1037,7 @@ namespace denise
                          const Domain_1D& domain_1d,
                          const Real position_y,
                          const string& format_str,
-                         const Number_Type number_type = NUMBER_REAL,
+                         const Label::Number number = Label::REAL,
                          const char justify_h = 'c',
                          const char justify_v = 'c',
                          const Real padding = 0) const;
@@ -1057,7 +1048,7 @@ namespace denise
                          const Domain_1D& domain_1d,
                          const Real position_x,
                          const string& format_str,
-                         const Number_Type number_type = NUMBER_REAL,
+                         const Label::Number number = Label::REAL,
                          const char justify_h = 'c',
                          const char justify_v = 'c',
                          const Real padding = 0) const;
@@ -1198,7 +1189,7 @@ namespace denise
                          const Integer index,
                          const Real position_y,
                          const string& format_str,
-                         const Number_Type number_type = NUMBER_REAL,
+                         const Label::Number number = Label::REAL,
                          const char justify_h = 'c',
                          const char justify_v = 'c',
                          const Real padding = 0) const;
@@ -1209,7 +1200,7 @@ namespace denise
                          const Integer index,
                          const Real position_x,
                          const string& format_str,
-                         const Number_Type number_type = NUMBER_REAL,
+                         const Label::Number number = Label::REAL,
                          const char justify_h = 'c',
                          const char justify_v = 'c',
                          const Real padding = 0) const;

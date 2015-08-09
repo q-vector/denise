@@ -105,7 +105,7 @@ Fft_Real_1D::set_array_t (const double* array_t)
 
 void
 Fft_Real_1D::set_coefficient (const Integer k,
-                              const Complex& coefficient)
+                              const Cmplx& coefficient)
 {
    fftw_complex& fftwc = array_f[abs (k)];
    fftwc[0] = coefficient.real ();
@@ -119,7 +119,7 @@ Fft_Real_1D::set_amplitude_phase (const Integer wavenumber,
 {
    const Real r = amplitude * cos (phase) / 2;
    const Real i = amplitude * sin (phase) / -2;
-   set_coefficient (wavenumber, Complex (r, i));
+   set_coefficient (wavenumber, Cmplx (r, i));
 }
 
 void
@@ -129,7 +129,7 @@ Fft_Real_1D::set_trig_coefficients (const Integer wavenumber,
 {
    const Real r = cosine_coefficient / 2;
    const Real i = sine_coefficient / -2;
-   set_coefficient (wavenumber, Complex (r, i));
+   set_coefficient (wavenumber, Cmplx (r, i));
 }
 
 void
@@ -139,11 +139,11 @@ Fft_Real_1D::transform ()
    scale ();
 }
 
-Complex
+Cmplx
 Fft_Real_1D::get_coefficient (const Integer k) const
 {
    const fftw_complex& fftwc = array_f[abs (k)];
-   return Complex (fftwc[0], (k < 0 ? -1 : 1) * fftwc[1]);
+   return Cmplx (fftwc[0], (k < 0 ? -1 : 1) * fftwc[1]);
 }
 
 void
@@ -151,7 +151,7 @@ Fft_Real_1D::acquire_amplitude_phase (const Integer wavenumber,
                                       Real& amplitude,
                                       Real& phase) const
 {
-   const Complex z = get_coefficient (-imodulo (wavenumber, n/2+1));
+   const Cmplx z = get_coefficient (-imodulo (wavenumber, n/2+1));
    const Real real = z.real ();
    const Real imag = z.imag ();
    amplitude = 2 * sqrt (real*real + imag*imag);
@@ -163,7 +163,7 @@ Fft_Real_1D::acquire_trig_coefficients (const Integer wavenumber,
                                         Real& cosine_coefficient,
                                         Real& sine_coefficient) const
 {
-   const Complex z = get_coefficient (imodulo (wavenumber, n/2+1));
+   const Cmplx z = get_coefficient (imodulo (wavenumber, n/2+1));
    cosine_coefficient = 2 * z.real ();
    sine_coefficient = -2 * z.imag ();
 }

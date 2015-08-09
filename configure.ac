@@ -41,6 +41,9 @@ then
    DENISE_REQUIRES="$DENISE_REQUIRES cairomm-1.0"
    DENISE_CFLAGS="$CAIROMM_1_0_CFLAGS $DENISE_CFLAGS"
    DENISE_LIBS="$CAIROMM_1_0_LIBS $DENISE_LIBS"
+   AC_CHECK_HEADERS(X11/Xlib.h)
+   AC_CHECK_LIB(X11, main, [DENISE_LIBS="-lX11 $DENISE_LIBS"],
+      AC_MSG_ERROR(X11 not found), )
 fi
 
 if test x"$enable_gtkmm" = xyes
