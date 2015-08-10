@@ -26,30 +26,30 @@ using namespace std;
 using namespace denise;
 
 void
-Dtime::init (const string& time_string,
+Dtime::init (const wstring& time_string,
              bool is_local)
 {
 
-   if (time_string == "big_bang") { this->t = GSL_NEGINF; return; }
-   if (time_string == "big_crunch") { this->t = GSL_POSINF; return; }
-   if (time_string == "nat") { this->t = GSL_NAN; return; }
+   if (time_string == L"big_bang") { this->t = GSL_NEGINF; return; }
+   if (time_string == L"big_crunch") { this->t = GSL_POSINF; return; }
+   if (time_string == L"nat") { this->t = GSL_NAN; return; }
 
-   Integer year  = atoi (time_string.substr (0, 4).c_str ());
-   Integer month = atoi (time_string.substr (4, 2).c_str ());
-   Integer day   = atoi (time_string.substr (6, 2).c_str ());
+   Integer year  = stoi (time_string.substr (0, 4));
+   Integer month = stoi (time_string.substr (4, 2));
+   Integer day   = stoi (time_string.substr (6, 2));
 
    Integer n = time_string.size ();
    Integer hour = 0, minute = 0, second = 0;
 
    if (n >= 10)
    {
-      hour = atoi (time_string.substr (8, 2).c_str ());
+      hour = stoi (time_string.substr (8, 2));
       if (n >= 12)
       {
-         minute = atoi (time_string.substr (10, 2).c_str ());
+         minute = stoi (time_string.substr (10, 2));
          if (n >= 14)
          {
-            second = atoi (time_string.substr (12, 2).c_str ());
+            second = stoi (time_string.substr (12, 2));
          }
       }
    }
@@ -59,14 +59,14 @@ Dtime::init (const string& time_string,
 }
 
 void
-Dtime::init (const string& time_string,
-             const string& format,
+Dtime::init (const wstring& time_string,
+             const wstring& format,
              bool is_local)
 {
 
-   if (time_string == "big_bang") { this->t = GSL_NEGINF; return; }
-   if (time_string == "big_crunch") { this->t = GSL_POSINF; return; }
-   if (time_string == "nat") { this->t = GSL_NAN; return; }
+   if (time_string == L"big_bang") { this->t = GSL_NEGINF; return; }
+   if (time_string == L"big_crunch") { this->t = GSL_POSINF; return; }
+   if (time_string == L"nat") { this->t = GSL_NAN; return; }
 
    struct tm ts;
    ts.tm_min = 0; ts.tm_sec = 0; ts.tm_sec = 0;
@@ -74,7 +74,9 @@ Dtime::init (const string& time_string,
    ts.tm_mon = 0; ts.tm_year = 0; ts.tm_wday = 0;
    ts.tm_yday = 0; ts.tm_isdst = 0;
 
-   strptime (time_string.c_str (), format.c_str (), &ts);
+   const string s_time_str (time_string.begin (), time_string.end ());
+   const string fmt (format.begin (), format.end ());
+   strptime (s_time_str.c_str (), fmt.c_str (), &ts);
 
    if (ts.tm_min < 0 || ts.tm_min > 59) { ts.tm_min = 0; }
    if (ts.tm_sec < 0 || ts.tm_sec > 61) { ts.tm_sec = 0; }
@@ -226,14 +228,14 @@ Dtime::Dtime (const Dtime& time)
 {
 }
 
-Dtime::Dtime (const string& time_string,
+Dtime::Dtime (const wstring& time_string,
               const bool is_local)
 {
    init (time_string, is_local);
 }
 
-Dtime::Dtime (const string& time_string,
-              const string& format,
+Dtime::Dtime (const wstring& time_string,
+              const wstring& format,
               const bool is_local)
 {
    if (format.empty ()) { init (time_string, is_local); }
@@ -284,8 +286,8 @@ Dtime::hours_later (const double hours)
    return Dtime (Dtime::now ().t + hours);
 }
 
-string
-Dtime::get_string (const string& format,
+wstring
+Dtime::get_string (const wstring& format,
                    const bool is_local) const
 {
 
@@ -293,26 +295,28 @@ Dtime::get_string (const string& format,
 
    if (gsl_isnan (t))
    {
-      return string ("nat");
+      return wstring (L"nat");
    }
    else
    if ((inf = gsl_isinf (t)) != 0)
    {
       const bool future = (inf > 0);
-      return string (future ? "big_crunch" : "big_bang");
+      return wstring (future ? L"big_crunch" : L"big_bang");
    }
    else
    {
 
       struct tm time_struct = get_time_struct (is_local);
+      const string fmt (format.begin (), format.end ());
 
-      Integer n = strlen (format.c_str ()) * 4;
+      Integer n = format.size () * 5;
       char* c_time_string = new char[n];
-      strftime (c_time_string, n, format.c_str (), &time_struct);
+      strftime (c_time_string, n, fmt.c_str (), &time_struct);
 
-      string str (c_time_string);
+      const string str (c_time_string);
+      const wstring w_str (str.begin (), str.end ());
       delete[] c_time_string;
-      return str;
+      return w_str;
 
    }
 
@@ -321,55 +325,55 @@ Dtime::get_string (const string& format,
 Integer
 Dtime::get_year () const
 {
-   return atoi (get_string ("%Y").c_str ());
+   return stoi (get_string (L"%Y"));
 }
 
 Integer
 Dtime::get_month () const
 {
-   return atoi (get_string ("%m").c_str ());
+   return stoi (get_string (L"%m"));
 }
 
 Integer
 Dtime::get_day () const
 {
-   return atoi (get_string ("%d").c_str ());
+   return stoi (get_string (L"%d"));
 }
 
 Integer 
 Dtime::get_hour () const
 {
-   return atoi (get_string ("%H").c_str ());
+   return stoi (get_string (L"%H"));
 }
          
 Integer
 Dtime::get_minute () const
 {
-   return atoi (get_string ("%M").c_str ());
+   return stoi (get_string (L"%M"));
 }
          
 Integer
 Dtime::get_second () const
 {
-   return atoi (get_string ("%S").c_str ());
+   return stoi (get_string (L"%S"));
 }
          
 Integer
 Dtime::get_day_of_year () const
 {
-   return atoi (get_string ("%j").c_str ());
+   return stoi (get_string (L"%j"));
 }
 
 Dtime
 Dtime::get_start_of_year () const
 {
-   return Dtime (get_string ("%Y") + "010100");
+   return Dtime (get_string (L"%Y") + L"010100");
 }
 
 Dtime
 Dtime::get_start_of_month () const
 {
-   return Dtime (get_string ("%Y%m") + "0100");
+   return Dtime (get_string (L"%Y%m") + L"0100");
 }
 
 bool
@@ -409,8 +413,8 @@ Dtime::get_julian_day (Integer year,
 }
 
 Tuple
-Dtime::get_time_tuple (const string& time_string,
-                       const string& delimiter)
+Dtime::get_time_tuple (const wstring& time_string,
+                       const wstring& delimiter)
 {
 
    Tuple tuple;
@@ -419,7 +423,7 @@ Dtime::get_time_tuple (const string& time_string,
    for (Tokens::const_iterator iterator = tokens.begin ();
         iterator != tokens.end (); iterator++)
    {
-      const string& token = *(iterator);
+      const wstring& token = *(iterator);
       const Dtime dtime (token);
       tuple.push_back (dtime.t);
    }
@@ -541,11 +545,11 @@ Dtime::Span::Span ()
    this->end_t = GSL_POSINF;
 }
 
-Dtime::Span::Span (const string& str)
+Dtime::Span::Span (const wstring& str)
    : start_t (GSL_NEGINF),
      end_t (GSL_POSINF)
 {
-   const Tokens tokens (str, "-");
+   const Tokens tokens (str, L"-");
    if (tokens.size () == 1)
    {
       const Real t = Dtime (tokens[0]).t;
@@ -626,14 +630,14 @@ Dtime::Set::match (const Dtime& dtime) const
    return false;
 }
 
-Dtime::Set::Set (const string& str)
+Dtime::Set::Set (const wstring& str)
 {
 
-   const Tokens tokens (str, ":");
+   const Tokens tokens (str, L":");
 
    for (auto iterator = tokens.begin (); iterator != tokens.end (); iterator++)
    {
-      const string& token = *(iterator);
+      const wstring& token = *(iterator);
       insert (Dtime::Span (token));
    }
 
@@ -648,16 +652,16 @@ Dtime::Set::Set (const Dtime& start,
 namespace denise
 {
 
-   ostream&
-   operator << (ostream &out,
+   wostream&
+   operator << (wostream &out,
                 const Dtime& time)
    {
       out << time.get_string ();
       return out;
    }
 
-   ostream&
-   operator << (ostream &out,
+   wostream&
+   operator << (wostream &out,
                 const Dtime::Span& span)
    {
       const Dtime& start = span.get_start ();
@@ -667,8 +671,8 @@ namespace denise
       return out;
    }
 
-   ostream&
-   operator << (ostream &out,
+   wostream&
+   operator << (wostream &out,
                 const Dtime::Set& set)
    {
       for (auto iterator = set.begin (); iterator != set.end (); iterator++)

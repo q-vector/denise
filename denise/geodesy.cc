@@ -279,37 +279,37 @@ Geodesy::vincenty_direct (Lat_Long& destination,
 
 }
 
-Geodesy::Geodesy (const string& str)
+Geodesy::Geodesy (const wstring& str)
 {
 
    Geodesy::Model model = SPHERE;
-   const string& s = get_upper_case (str);
+   const wstring& s = get_upper_case (str);
 
-        if (s == "AIRY_1930")             { model = AIRY_1930; }
-   else if (s == "MODIFIED_AIRY")         { model = MODIFIED_AIRY; }
-   else if (s == "AUSTRALIAN_NATIONAL")   { model = AUSTRALIAN_NATIONAL; }
-   else if (s == "BESSEL_1841")           { model = BESSEL_1841; }
-   else if (s == "BESSEL_NAMIBIA_1841")   { model = BESSEL_NAMIBIA_1841; }
-   else if (s == "CLARKE_1866")           { model = CLARKE_1866; }
-   else if (s == "CLARKE_1880")           { model = CLARKE_1880; }
-   else if (s == "EVEREST_INDIA_1830")    { model = EVEREST_INDIA_1830; }
-   else if (s == "EVEREST_INDIA_1956")    { model = EVEREST_INDIA_1956; }
-   else if (s == "EVEREST_SABAH")         { model = EVEREST_SABAH; }
-   else if (s == "EVEREST_MALAYSIA_1948") { model = EVEREST_MALAYSIA_1948; }
-   else if (s == "EVEREST_MALAYSIA_1969") { model = EVEREST_MALAYSIA_1969; }
-   else if (s == "MODIFIED_FISCHER_1960") { model = MODIFIED_FISCHER_1960; }
-   else if (s == "GRS_1967")              { model = GRS_1967; }
-   else if (s == "GRS_1980")              { model = GRS_1980; }
-   else if (s == "HELMERT_1906")          { model = HELMERT_1906; }
-   else if (s == "HOUGH_1960")            { model = HOUGH_1960; }
-   else if (s == "INDONESIAN_1974")       { model = INDONESIAN_1974; }
-   else if (s == "INTERNATIONAL_1924")    { model = INTERNATIONAL_1924; }
-   else if (s == "KRASSOVSKY_1940")       { model = KRASSOVSKY_1940; }
-   else if (s == "SOUTH_AMERICAN_1969")   { model = SOUTH_AMERICAN_1969; }
-   else if (s == "WGS60")                 { model = WGS60; }
-   else if (s == "WGS66")                 { model = WGS66; }
-   else if (s == "WGS72")                 { model = WGS72; }
-   else if (s == "WGS84")                 { model = WGS84; }
+        if (s == L"AIRY_1930")             { model = AIRY_1930; }
+   else if (s == L"MODIFIED_AIRY")         { model = MODIFIED_AIRY; }
+   else if (s == L"AUSTRALIAN_NATIONAL")   { model = AUSTRALIAN_NATIONAL; }
+   else if (s == L"BESSEL_1841")           { model = BESSEL_1841; }
+   else if (s == L"BESSEL_NAMIBIA_1841")   { model = BESSEL_NAMIBIA_1841; }
+   else if (s == L"CLARKE_1866")           { model = CLARKE_1866; }
+   else if (s == L"CLARKE_1880")           { model = CLARKE_1880; }
+   else if (s == L"EVEREST_INDIA_1830")    { model = EVEREST_INDIA_1830; }
+   else if (s == L"EVEREST_INDIA_1956")    { model = EVEREST_INDIA_1956; }
+   else if (s == L"EVEREST_SABAH")         { model = EVEREST_SABAH; }
+   else if (s == L"EVEREST_MALAYSIA_1948") { model = EVEREST_MALAYSIA_1948; }
+   else if (s == L"EVEREST_MALAYSIA_1969") { model = EVEREST_MALAYSIA_1969; }
+   else if (s == L"MODIFIED_FISCHER_1960") { model = MODIFIED_FISCHER_1960; }
+   else if (s == L"GRS_1967")              { model = GRS_1967; }
+   else if (s == L"GRS_1980")              { model = GRS_1980; }
+   else if (s == L"HELMERT_1906")          { model = HELMERT_1906; }
+   else if (s == L"HOUGH_1960")            { model = HOUGH_1960; }
+   else if (s == L"INDONESIAN_1974")       { model = INDONESIAN_1974; }
+   else if (s == L"INTERNATIONAL_1924")    { model = INTERNATIONAL_1924; }
+   else if (s == L"KRASSOVSKY_1940")       { model = KRASSOVSKY_1940; }
+   else if (s == L"SOUTH_AMERICAN_1969")   { model = SOUTH_AMERICAN_1969; }
+   else if (s == L"WGS60")                 { model = WGS60; }
+   else if (s == L"WGS66")                 { model = WGS66; }
+   else if (s == L"WGS72")                 { model = WGS72; }
+   else if (s == L"WGS84")                 { model = WGS84; }
 
    set (model, epsilon_v);
 
@@ -534,35 +534,33 @@ Lat_Long::Lat_Long (const Real latitude,
    this->longitude = longitude;
 }
 
-Lat_Long::Lat_Long (const string& lat_long_string)
+Lat_Long::Lat_Long (const wstring& lat_long_string)
 {
 
-   char* end;
-   const Reg_Exp south ("[Ss]$");
-   const Reg_Exp west ("[Ww]$");
+   const Reg_Exp south (L"[Ss]$");
+   const Reg_Exp west (L"[Ww]$");
 
-   const Tokens tokens (lat_long_string, ",");
-   const string& latitude_string = tokens[0];
-   const string& longitude_string = tokens[1];
+   const Tokens tokens (lat_long_string, L",");
+   const wstring& latitude_string = tokens[0];
+   const wstring& longitude_string = tokens[1];
 
-   this->latitude = strtod (latitude_string.c_str (), &end);
-   this->longitude = strtod (longitude_string.c_str (), &end);
+   this->latitude = stof (latitude_string);
+   this->longitude = stof (longitude_string);
 
    if (south.match (latitude_string)) { latitude *= -1; }
    if (west.match (longitude_string)) { longitude *= -1; }
 
 }
 
-Lat_Long::Lat_Long (const string& latitude_string,
-                    const string& longitude_string)
+Lat_Long::Lat_Long (const wstring& latitude_string,
+                    const wstring& longitude_string)
 {
 
-   char* end;
-   const Reg_Exp south ("[Ss]$");
-   const Reg_Exp west ("[Ww]$");
+   const Reg_Exp south (L"[Ss]$");
+   const Reg_Exp west (L"[Ww]$");
 
-   this->latitude = strtod (latitude_string.c_str (), &end);
-   this->longitude = strtod (longitude_string.c_str (), &end);
+   this->latitude = stof (latitude_string);
+   this->longitude = stof (longitude_string);
 
    if (south.match (latitude_string)) { latitude *= -1; }
    if (west.match (longitude_string)) { longitude *= -1; }
@@ -633,53 +631,54 @@ Lat_Long::standardize (const Real standard_longitude)
    Lat_Long::standardize (latitude, longitude, standard_longitude);
 }
 
-string
+wstring
 Lat_Long::get_string (const Integer decimal_places,
                       const bool nsew,
                       const bool with_symbol,
                       const bool with_parenthesis) const
 {
    const Integer dp = decimal_places;
-   const string prefix (nsew ? "" : "-");
-   const string suffix (with_symbol ? "\u00b0" : "");
-   const string& number_format = prefix + string_render ("%%.%df", dp) + suffix;
+   const wstring prefix (nsew ? L"" : L"-");
+   const wstring suffix (with_symbol ? L"\u00b0" : L"");
+   const wstring& number_format =
+      prefix + string_render ("%%.%df", dp) + suffix;
    return get_string (with_parenthesis, number_format);
 }
 
-string
+wstring
 Lat_Long::get_string (const bool with_parenthesis,
-                      const string& number_format) const
+                      const wstring& number_format) const
 {
 
-   if (is_nall ()) { return ""; }
+   if (is_nall ()) { return L""; }
 
    Lat_Long ll = *(this);
    ll.standardize (LAT_LONG_STANDARD);
    const Real latitude = ll.latitude;
    const Real longitude = ll.longitude;
-   const bool nsew = (number_format.substr (0, 1) != "-");
+   const bool nsew = (number_format.substr (0, 1) != L"-");
 
-   const string& latitude_string = nsew ?
+   const wstring& latitude_string = nsew ?
       ((latitude >= 0) ?
-         string_render ((number_format + "N").c_str (), latitude) :
-         string_render ((number_format + "S").c_str (), -latitude)) :
+         string_render ((number_format + L"N"), latitude) :
+         string_render ((number_format + L"S"), -latitude)) :
       string_render ((number_format.substr (1)).c_str (), latitude);
 
-   const string& longitude_string = nsew ?
+   const wstring& longitude_string = nsew ?
       ((longitude >= 0) ?
-         string_render ((number_format + "E").c_str (), longitude) :
-         string_render ((number_format + "W").c_str (), -longitude)) :
+         string_render ((number_format + L"E").c_str (), longitude) :
+         string_render ((number_format + L"W").c_str (), -longitude)) :
       string_render ((number_format.substr (1)).c_str (), longitude);
 
    if (with_parenthesis)
    {
-      return "(" + latitude_string + ", " + longitude_string + ")";
+      return L"(" + latitude_string + L", " + longitude_string + L")";
    }
    else
    {
       return nsew ?
          latitude_string + longitude_string :
-         latitude_string + "," + longitude_string;
+         latitude_string + L"," + longitude_string;
    }
 
 }
@@ -1965,38 +1964,39 @@ Geodetic_Transform::Data::Data (const string& str)
 {
 
    const Tokens tokens (str, ":");
+   const string& g = get_upper_case (tokens[0]);
 
-   if (tokens[0] == "MERCATOR")
+   if (g == "MERCATOR")
    {
       genre = MERCATOR;
    }
    else
-   if (tokens[0] == "LAMBERT_CONIC_NORTH")
+   if (g == "LAMBERT_CONIC_NORTH")
    {
       genre = LAMBERT_CONIC_NORTH;
    }
    else
-   if (tokens[0] == "LAMBERT_CONIC_SOUTH")
+   if (g == "LAMBERT_CONIC_SOUTH")
    {
       genre = LAMBERT_CONIC_SOUTH;
    }
    else
-   if (tokens[0] == "POLAR_STEREOGRAPHIC_NORTH")
+   if (g == "POLAR_STEREOGRAPHIC_NORTH")
    {
       genre = POLAR_STEREOGRAPHIC_NORTH;
    }
    else
-   if (tokens[0] == "POLAR_STEREOGRAPHIC_SOUTH")
+   if (g == "POLAR_STEREOGRAPHIC_SOUTH")
    {
       genre = POLAR_STEREOGRAPHIC_SOUTH;
    }
    else
-   if (tokens[0] == "GEOS")
+   if (g == "GEOS")
    {
       genre = GEOS;
    }
    else
-   if (tokens[0] == "MOLLWEIDE")
+   if (g == "MOLLWEIDE")
    {
       genre = MOLLWEIDE;
    }
@@ -2005,9 +2005,8 @@ Geodetic_Transform::Data::Data (const string& str)
       genre = MERCATOR;
    }
 
-   scale = atof (tokens[1].c_str ());
-   lat_long.latitude = atof (tokens[2].c_str ());
-   lat_long.longitude = atof (tokens[3].c_str ());
+   scale = stof (tokens[1]);
+   lat_long = Lat_Long (tokens[2]);
 
 }
 

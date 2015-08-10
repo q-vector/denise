@@ -18,6 +18,7 @@
 // You should have received a copy of the GNU General Public License
 // along with libdenise.  If not, see <http://www.gnu.org/licenses/>.
 
+#include <cstdio>
 #include <readline/readline.h>
 #include <readline/history.h>
 #include "andrea.h"
@@ -254,15 +255,31 @@ Andrea::loop ()
       line = readline (prompt.c_str ());
       if (!line) { break; }
 
-      const string& input_line = get_trimmed (string (line));
+      string input_line = get_trimmed (string (line));
       if (input_line[0] == '#') { continue; }
 
       try
       {
 
-         const Tokens tokens (line);
+         // This has to come first before assign_tokens
+         //    to allow for recursive variable declarations
+         apply_variables (input_line);
+
+         // This has to come second after apply_variables
+         //    to allow for recursive variable declarations
+         const Tokens assign_tokens (input_line, "= ");
+         if (assign_tokens.size () == 2)
+         {
+            const string& variable = get_trimmed (assign_tokens[0]);
+            const string& value = get_trimmed (assign_tokens[1]);
+            assign_dictionary.insert (make_pair (variable, value));
+            continue;
+         }
+
+         const Tokens tokens (input_line);
          if (tokens.size () == 0) { continue; }
 
+cout << tokens << endl;
          parse (tokens);
 
       }

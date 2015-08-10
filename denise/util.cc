@@ -204,53 +204,6 @@ namespace denise
 
    }
 
-   Tokens
-   read_config_file (const string& file_path)
-   {
-
-      Tokens file_content;
-
-      string input_string;
-      ifstream file (file_path);
-
-      size_t found;
-      map<string, string> dictionary;
-
-      while (getline (file, input_string))
-      {
-
-         if (input_string.size () == 0) { continue; }
-         if (input_string.c_str ()[0] == '#') { continue; }
-
-         const Tokens variable_tokens (input_string, "=");
-         if (variable_tokens.size () == 2)
-         {
-            const string& variable = get_trimmed (variable_tokens[0]);
-            const string& value = get_trimmed (variable_tokens[1]);
-            dictionary.insert (make_pair (variable, value));
-            continue;
-         }
-
-         for (auto iterator = dictionary.begin ();
-              iterator != dictionary.end (); iterator++)
-         {
-            const string variable ("$" + iterator->first);
-            while ((found = input_string.find (variable)) != string::npos)
-            {
-               const size_t var_length = variable.length ();
-               input_string.replace (found, var_length, iterator->second);
-            }
-         }
-
-         file_content.push_back (input_string);
-
-      }
-
-      file.close ();
-      return file_content;
-
-   }
-
    string
    read_line (FILE* file,
               int max_length,
@@ -430,23 +383,13 @@ namespace denise
 
 }
 
-void
-Config_File::apply_variables ()
-{
-   for (auto iterator = begin (); iterator != end (); iterator++)
-   {
-      auto& line = *(iterator);
-      while (apply_variables_to_a_line (line));
-   }
-}
-
 bool
-Config_File::apply_variables_to_a_line (string& line)
+Assignable::apply_variables (string& line) const
 {
 
    size_t found;
-   for (auto iterator = dictionary.begin ();
-        iterator != dictionary.end (); iterator++)
+   for (auto iterator = assign_dictionary.begin ();
+        iterator != assign_dictionary.end (); iterator++)
    {
       const string variable ("$" + iterator->first);
       while ((found = line.find (variable)) != string::npos)
@@ -458,6 +401,16 @@ Config_File::apply_variables_to_a_line (string& line)
 
    return (line.find ("$") != string::npos);
 
+}
+
+void
+Config_File::apply_variables ()
+{
+   for (auto iterator = begin (); iterator != end (); iterator++)
+   {
+      auto& line = *(iterator);
+      while (Assignable::apply_variables (line));
+   }
 }
 
 Config_File::Config_File (const string& file_path)
@@ -482,7 +435,7 @@ Config_File::ingest (const string& file_path)
       {
          const string& variable = get_trimmed (variable_tokens[0]);
          const string& value = get_trimmed (variable_tokens[1]);
-         dictionary.insert (make_pair (variable, value));
+         assign_dictionary.insert (make_pair (variable, value));
          continue;
       }
 

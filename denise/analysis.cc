@@ -962,9 +962,10 @@ Vector_Data_1D::evaluate (const Integer vector_element,
       default:
       {
          const string function_str ("Vector_Data_1D::evaluate (): ");
-         const string code_str = string_render ("%d %f %d",
+         const wstring function_wstr (function_str.begin (), function_str.end ());
+         const wstring code_wstr = string_render ("%d %f %d",
             vector_element, coordinate, evaluate_op);
-         throw Exception (function_str + code_str);
+         throw Exception (function_wstr + code_wstr);
       }
 
    }

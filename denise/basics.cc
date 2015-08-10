@@ -113,14 +113,14 @@ Index_2D::Index_2D (const Index_1D i,
 {
 }
 
-Index_2D::Index_2D (const string& str)
+Index_2D::Index_2D (const wstring& str)
 {
-   const Tokens tokens (str, "x");
-   this->i = atoi (tokens[0].c_str ());
-   this->j = (tokens.size () > 1 ? atoi (tokens[1].c_str ()) : 0); 
+   const Tokens tokens (str, wstring (L"x"));
+   this->i = stof (tokens[0]);
+   this->j = (tokens.size () > 1 ? stoi (tokens[1]) : 0); 
 }
 
-string
+wstring
 Index_2D::get_string () const
 {
    return string_render ("(%d, %d)", i, j);
@@ -488,9 +488,9 @@ Point_2D::Point_2D (const Index_2D& index)
 {
 }
 
-Point_2D::Point_2D (const string& str)
+Point_2D::Point_2D (const wstring& str)
 {
-   const Tokens tokens (str, ",");
+   const Tokens tokens (str, wstring (L","));
    this->x = stof (tokens[0]);
    this->y = stof (tokens[1]);
 }
@@ -694,8 +694,8 @@ Tuple::Tuple (const set<Real>::const_iterator begin,
    add_content (begin, end);
 }
 
-Tuple::Tuple (const string& tuple_string,
-              const string& delimiter)
+Tuple::Tuple (const wstring& tuple_string,
+              const wstring& delimiter)
 {
    add_content (tuple_string, delimiter);
 }
@@ -738,19 +738,19 @@ Tuple::add_content (const set<Real>::const_iterator begin,
 }
 
 void
-Tuple::add_content (const string& tuple_string,
-                    const string& delimiter,
+Tuple::add_content (const wstring& tuple_string,
+                    const wstring& delimiter,
                     const bool clear_first)
 {
 
    if (clear_first) { clear (); }
-   const vector<string>& token_vector = tokenize (tuple_string, delimiter);
+   const Tokens tokens (tuple_string, delimiter);
 
-   for (vector<string>::const_iterator iterator = token_vector.begin ();
-        iterator != token_vector.end (); iterator++)
+   for (auto iterator = tokens.begin ();
+        iterator != tokens.end (); iterator++)
    {
-      const string& token = *(iterator);
-      push_back (atof (token.c_str ()));
+      const wstring& token = *(iterator);
+      push_back (stof (token));
    }
 
 }
@@ -831,8 +831,8 @@ Ituple::Ituple (const set<Integer>::const_iterator begin,
    add_content (begin, end);
 }
 
-Ituple::Ituple (const string& ituple_string,
-                const string& delimiter)
+Ituple::Ituple (const wstring& ituple_string,
+                const wstring& delimiter)
 {
    add_content (ituple_string, delimiter);
 }
@@ -875,19 +875,19 @@ Ituple::add_content (const set<Integer>::const_iterator begin,
 }
 
 void
-Ituple::add_content (const string& ituple_string,
-                     const string& delimiter,
+Ituple::add_content (const wstring& ituple_string,
+                     const wstring& delimiter,
                      const bool clear_first)
 {
 
    if (clear_first) { clear (); }
-   vector<string> token_vector = tokenize (ituple_string, delimiter);
+   const Tokens tokens (ituple_string, delimiter);
 
-   for (vector<string>::const_iterator iterator = token_vector.begin ();
-        iterator != token_vector.end (); iterator++)
+   for (auto iterator = tokens.begin ();
+        iterator != tokens.end (); iterator++)
    {
-      const string& token = *(iterator);
-      push_back (atoi (token.c_str ()));
+      const wstring& token = *(iterator);
+      push_back (stoi (token));
    }
 
 }
@@ -1024,9 +1024,9 @@ Domain_1D::normalize (const Real x,
    return pow (f, gamma);
 }
 
-Domain_2D::Domain_2D (const string& str)
+Domain_2D::Domain_2D (const wstring& str)
 {
-   const Tokens tokens (str, ":");
+   const Tokens tokens (str, wstring (L":"));
    domain_x.start = stof (tokens[0]);
    domain_x.end = stof (tokens[1]);
    domain_y.start = stof (tokens[2]);

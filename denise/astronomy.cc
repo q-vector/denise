@@ -337,12 +337,12 @@ Cosmos::get_rise_or_set (const Lat_Long& lat_long,
    const Dtime dtm ((dtime_0.t + dtime_1.t) / 2);
    const Real time_span = (dtime_1.t - dtime_0.t);
 
-const string format ("%Y.%m.%d %H:%M:%S");
-const string& str_0 = dtime_0.get_string (format, true);
-const string& str_1 = dtime_1.get_string (format, true);
-const string& str_m = dtm.get_string (format, true);
+const wstring format (L"%Y.%m.%d %H:%M:%S");
+const wstring& str_0 = dtime_0.get_string (format, true);
+const wstring& str_1 = dtime_1.get_string (format, true);
+const wstring& str_m = dtm.get_string (format, true);
 
-cout << endl;
+wcout << endl;
    if (time_span < epsilon) { return dtm; }
    else
    {
@@ -355,9 +355,9 @@ cout << endl;
       const Real b_1 = (zenith_1 - zenith_angle);
       const Real b_m = (zenith_m - zenith_angle);
 
-cout << str_0 << " " << zenith_0 << " " << b_0 << endl;
-cout << str_m << " " << zenith_m << " " << b_m << endl;
-cout << str_1 << " " << zenith_1 << " " << b_1 << endl;
+wcout << str_0 << " " << zenith_0 << " " << b_0 << endl;
+wcout << str_m << " " << zenith_m << " " << b_m << endl;
+wcout << str_1 << " " << zenith_1 << " " << b_1 << endl;
 
       if ((b_0 * b_m) < 0)
       {
@@ -384,7 +384,7 @@ Cosmos::get_next_rise (const Dtime& dtime,
    const Dtime dtime_noon_approx (modulo (dtime.t, 24) + h);
 
    const Real earth_tilt = 23.439291111;
-   const Real t_0 = Dtime ("197003210056").t;
+   const Real t_0 = Dtime (L"197003210056").t;
    const Real& t = dtime.t;
    const Real over_head_latitude = earth_tilt * sin ((t - t_0) / 8765.812776);
    

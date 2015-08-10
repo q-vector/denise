@@ -23,14 +23,14 @@
 using namespace std;
 using namespace denise;
 
-Exception::Exception (const string& description) throw ()
-   : identifier ("Exception"),
+Exception::Exception (const wstring& description) throw ()
+   : identifier (L"Exception"),
      description (description)
 {
 }
 
-Exception::Exception (const string& identifier,
-                      const string& description) throw ()
+Exception::Exception (const wstring& identifier,
+                      const wstring& description) throw ()
    : identifier (identifier),
      description (description)
 {
@@ -49,21 +49,22 @@ Exception::~Exception () throw ()
 const char*
 Exception::what () const throw ()
 {
-   return (identifier + ": " + description).c_str ();
+   wstring w_str (identifier + wstring (L": ") + description);
+   return string (w_str.begin (), w_str.end ()).c_str ();
 }
 
-IO_Exception::IO_Exception (const string& description) throw ()
-   : Exception ("IO_Exception", description)
+IO_Exception::IO_Exception (const wstring& description) throw ()
+   : Exception (wstring (L"IO_Exception"), description)
 {
 }
 
-No_Match_Exception::No_Match_Exception (const string& description) throw ()
-   : Exception ("No_Match_Exception", description)
+No_Match_Exception::No_Match_Exception (const wstring& description) throw ()
+   : Exception (wstring (L"No_Match_Exception"), description)
 {
 }
 
-Out_Of_Bounds_Exception::Out_Of_Bounds_Exception (const string& description) throw ()
-   : Exception ("Out_Of_Bounds_Exception", description)
+Out_Of_Bounds_Exception::Out_Of_Bounds_Exception (const wstring& description) throw ()
+   : Exception (wstring (L"Out_Of_Bounds_Exception"), description)
 {
 }
 

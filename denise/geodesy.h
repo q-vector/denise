@@ -146,7 +146,7 @@ namespace denise
              SPHERE
           };
 
-          Geodesy (const string& str);          
+          Geodesy (const wstring& str);          
 
           Geodesy (const Model model,
                    const Real epsilon_v = 5e-12);
@@ -252,10 +252,10 @@ namespace denise
          Lat_Long (const Real latitude = 0.0,
                    const Real longitude = 0.0);
 
-         Lat_Long (const string& lat_long_string);
+         Lat_Long (const wstring& lat_long_string);
          
-         Lat_Long (const string& latitude_string,
-                   const string& longitude_string);
+         Lat_Long (const wstring& latitude_string,
+                   const wstring& longitude_string);
          
          Lat_Long (const Point_2D& point);
 
@@ -275,15 +275,15 @@ namespace denise
          void
          standardize (const Real standard_longitude);
 
-         string
+         wstring
          get_string (const Integer decimal_places,
                      const bool nsew = false,
                      const bool with_symbol = false,
                      const bool with_parenthesis = false) const;
 
-         string
+         wstring
          get_string (const bool with_parenthesis = false,
-                     const string& number_format = "-%f") const;
+                     const wstring& number_format = L"-%f") const;
 
          bool
          operator == (const Lat_Long& lat_long) const;

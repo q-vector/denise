@@ -141,9 +141,6 @@ namespace denise
                     const bool prepend_dir_path = false)
              throw (IO_Exception);
 
-   Tokens
-   read_config_file (const string& file_path);
-
    string
    read_line (FILE* file,
               int max_length = 2048,
@@ -215,19 +212,27 @@ namespace denise
    void
    print_mem_usage (const Integer indent = 0);
 
-   class Config_File : public Tokens
+   class Assignable
+   {
+
+      protected:
+
+         map<string, string>
+         assign_dictionary;
+
+         bool
+         apply_variables (string& line) const;
+
+   };
+
+   class Config_File : public Tokens,
+                       public Assignable
    {
 
       private:
 
-         map<string, string>
-         dictionary;         
-
          void
          apply_variables ();
-
-         bool
-         apply_variables_to_a_line (string& line);
 
       public:
 

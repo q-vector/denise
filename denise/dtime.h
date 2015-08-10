@@ -43,12 +43,12 @@ namespace denise
       private:
 
          void
-         init (const string& time_string,
+         init (const wstring& time_string,
                bool is_local);
 
          void
-         init (const string& time_string,
-               const string& format,
+         init (const wstring& time_string,
+               const wstring& format,
                bool is_local);
 
          void
@@ -82,13 +82,13 @@ namespace denise
 
          /// Constructor that accepts a string representation of time
          /// of the format %Y%m%d%H or %Y%m%d%H%M or %Y%m%d%H%M%S.
-         Dtime (const string& time_string,
+         Dtime (const wstring& time_string,
                 const bool is_local = false);
 
          /// Constructor that accepts a string representation of time
          /// of the given format %Y%m%d%H or %Y%m%d%H%M or %Y%m%d%H%M%S.
-         Dtime (const string& time_string,
-                const string& format,
+         Dtime (const wstring& time_string,
+                const wstring& format,
                 const bool is_local = false);
 
          /// Constructor that accepts integral values of year
@@ -118,8 +118,8 @@ namespace denise
 
          /// Returns a string representation of the time with
          /// the given format.
-         string
-         get_string (const string& format = string ("%Y%m%d%H"),
+         wstring
+         get_string (const wstring& format = wstring (L"%Y%m%d%H"),
                      const bool is_local = false) const;
 
          /// Returns the integral value of year.
@@ -175,8 +175,8 @@ namespace denise
                          Integer day);
 
          static Tuple
-         get_time_tuple (const string& time_str,
-                         const string& delimiter = string (":"));
+         get_time_tuple (const wstring& time_str,
+                         const wstring& delimiter = wstring (L":"));
 
          static Tuple
          get_yearly_time_tuple (const Dtime& start_time,
@@ -223,7 +223,7 @@ namespace denise
 
                Span ();
 
-               Span (const string& str);
+               Span (const wstring& str);
 
                Span (const Dtime& start,
                      const Dtime& end);
@@ -256,7 +256,7 @@ namespace denise
 
             public: 
 
-               Set (const string& str);
+               Set (const wstring& str);
 
                Set (const Dtime& start,
                     const Dtime& end);
@@ -268,16 +268,16 @@ namespace denise
 
    };
 
-   ostream&
-   operator << (ostream& out,
+   wostream&
+   operator << (wostream& out,
                 const Dtime& time);
 
-   ostream&
-   operator << (ostream& out,
+   wostream&
+   operator << (wostream& out,
                 const Dtime::Span& span);
 
-   ostream&
-   operator << (ostream& out,
+   wostream&
+   operator << (wostream& out,
                 const Dtime::Set& set);
 
 }

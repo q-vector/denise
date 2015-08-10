@@ -54,7 +54,7 @@ namespace denise
 
       public:
 
-         Reg_Exp (const string& reg_exp_str,
+         Reg_Exp (const wstring& reg_exp_str,
                   const bool match_info = false,
                   const bool posix_extend = true,
                   const bool case_sensitive = true);
@@ -62,30 +62,30 @@ namespace denise
          ~Reg_Exp ();
 
          bool
-         match (const string& str) const;
+         match (const wstring& str) const;
 
          Iduple
-         get_match (const string& str,
+         get_match (const wstring& str,
                     const bool ignore_no_match = true) const;
 
          void
-         replace (string& str,
-                  const string& with,
+         replace (wstring& str,
+                  const wstring& with,
                   const bool ignore_no_match = true) const;
 
          Iduple_Vector
-         get_match_sub (const string& str,
+         get_match_sub (const wstring& str,
                         const bool ignore_no_match = true) const;
 
          static bool
-         match (const string& str,
-                const string& reg_exp_str,
+         match (const wstring& str,
+                const wstring& reg_exp_str,
                 const bool posix_extend = true,
                 const bool case_sensitive = true);
 
    };
 
-   class Tokens : public vector<string>
+   class Tokens : public vector<wstring>
    {
 
       public:
@@ -93,10 +93,12 @@ namespace denise
          Tokens ();
 
          Tokens (const Tuple& tuple,
-                 const string& fmt);
+                 const wstring& fmt);
 
-         Tokens (const string& str,
-                 const string& delimiters = string (" \f\n\t"));
+         Tokens (const wstring& str);
+
+         Tokens (const wstring& str,
+                 const wstring& delimiters);
 
          Tokens
          subtokens (const Integer i,
@@ -109,90 +111,83 @@ namespace denise
          integer (const Integer index) const;
 
          void
-         add (const string& str,
-              const string& delimiters = string (" \f\n\t"));
+         add (const wstring& str);
 
          void
-         add_prefix (const string& prefix);
+         add (const wstring& str,
+              const wstring& delimiters);
 
          void
-         add_suffix (const string& suffix);
+         add_prefix (const wstring& prefix);
+
+         void
+         add_suffix (const wstring& suffix);
 
    };
 
-   /// Returns a tokenized vector of string
-   vector<string>
-   tokenize (const string& s,
-             const string& delimiters = string (" \f\n\t"));
-
-   /// Returns a tokenized vector of string with seperate delimiters
-   vector<string>
-   tokenize_s (const string& s,
-               const string& delimiters = string (" \f\n\t"));
-
    /// Converts the given string into lower case.
    void
-   to_lower_case (string& s);
+   to_lower_case (wstring& s);
 
-   string
-   get_lower_case (const string& s);
+   wstring
+   get_lower_case (const wstring& s);
 
    /// Converts the given string into upper case.
    void
-   to_upper_case (string& s);
+   to_upper_case (wstring& s);
 
-   string
-   get_upper_case (const string& s);
+   wstring
+   get_upper_case (const wstring& s);
 
    /// Converts the given string into capital case.
    void
-   to_capital_case (string& s);
+   to_capital_case (wstring& s);
 
-   string
-   get_captial_case (const string& s);
+   wstring
+   get_captial_case (const wstring& s);
 
    /// Chops the last character off the string.
    void
-   chop (string& s);
+   chop (wstring& s);
 
    /// Trims white spaces
    void
-   trim (string& s,
-         const string& white_string = string (" \f\n\t"));
+   trim (wstring& s,
+         const wstring& white_string = wstring (L" \f\n\t"));
 
    /// Trims left white spaces
    void
-   left_trim (string& s,
-              const string& white_string = string (" \f\n\t"));
+   left_trim (wstring& s,
+              const wstring& white_string = wstring (L" \f\n\t"));
 
    /// Trims right white spaces
    void
-   right_trim (string& s,
-               const string& white_string = string (" \f\n\t"));
+   right_trim (wstring& s,
+               const wstring& white_string = wstring (L" \f\n\t"));
 
-   string
-   get_trimmed (const string s,
-                const string& white_string = string (" \f\n\t"));
+   wstring
+   get_trimmed (const wstring s,
+                const wstring& white_string = wstring (L" \f\n\t"));
 
-   string
-   get_left_trimmed (const string s, 
-                     const string& white_string = string (" \f\n\t"));
+   wstring
+   get_left_trimmed (const wstring s, 
+                     const wstring& white_string = wstring (L" \f\n\t"));
 
-   string
-   get_right_trimmed (const string s,
-                      const string& white_string = string (" \f\n\t"));
+   wstring
+   get_right_trimmed (const wstring s,
+                      const wstring& white_string = wstring (L" \f\n\t"));
 
    /// Returns file extension
-   string
-   get_file_extension (const string& file_path);
+   wstring
+   get_file_extension (const wstring& file_path);
 
    /// Returns a rendered std::string similar to output of printf
-   string
+   wstring
    string_render (const char* format,
                   ...);
 
-   ostream&
-   operator << (ostream &out_file,
+   wostream&
+   operator << (wostream &out_file,
                 const Tokens& tokens);
 
 }

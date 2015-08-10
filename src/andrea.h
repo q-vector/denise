@@ -50,7 +50,8 @@ namespace andrea
 
    };
 
-   class Andrea : public Geodesy_Package,
+   class Andrea : public Assignable,
+                  public Geodesy_Package,
                   public Geodetic_Mesh_Package,
                   public Geodetic_Transform_Package,
                   public Gshhs_Package,
