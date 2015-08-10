@@ -1170,7 +1170,7 @@ Widget_Panel::cairo (const RefPtr<Context>& cr)
 }
 
 Progress::Progress (const Real fraction,
-                    const string& description)
+                    const Dstring& description)
    : fraction (fraction),
      description (description)
 {
@@ -1244,7 +1244,7 @@ Dcanvas::Dcanvas (Gtk::Window& gtk_window)
    : Dcontainer (*this),
      gtk_window (gtk_window),
      title (*this),
-     easter_egg ("")
+     easter_egg (L"")
 {
    Glib::Mutex::Lock lock (mutex);
 }
@@ -1284,18 +1284,19 @@ Dcanvas::initialize ()
 }
 
 void
-Dcanvas::save_image (const string& file_path)
+Dcanvas::save_image (const Dstring& file_path)
 {
 
    const Size_2D& size_2d = get_size_2d ();
    RefPtr<Surface> surface = denise::get_surface (size_2d);
    const RefPtr<Context> cr = denise::get_cr (surface);
+   const string fp (file_path.begin (), file_path.end ());
 
    cr->set_source (image_surface, 0, 0);
    cr->paint ();
 
    cairo (cr);
-   surface->write_to_png (file_path);
+   surface->write_to_png (fp);
 
 }
 
@@ -1308,7 +1309,7 @@ Dcanvas::on_key_pressed (const Dkey_Event& event)
 
       case GDK_KEY_space:
       {
-         easter_egg += ' ';
+         easter_egg += L' ';
          break;
       }
 
@@ -1323,7 +1324,7 @@ Dcanvas::on_key_pressed (const Dkey_Event& event)
       case GDK_KEY_8:
       case GDK_KEY_9:
       {
-         easter_egg += '0' + (event.value - GDK_KEY_0);
+         easter_egg += L'0' + (event.value - GDK_KEY_0);
          break;
       }
 
@@ -1354,7 +1355,7 @@ Dcanvas::on_key_pressed (const Dkey_Event& event)
       case GDK_KEY_y:
       case GDK_KEY_z:
       {
-         easter_egg += 'a' + (event.value - GDK_KEY_a);
+         easter_egg += L'a' + (event.value - GDK_KEY_a);
          break;
       }
 
@@ -1385,7 +1386,7 @@ Dcanvas::on_key_pressed (const Dkey_Event& event)
       case GDK_KEY_Y:
       case GDK_KEY_Z:
       {
-         easter_egg += 'A' + (event.value - GDK_KEY_A);
+         easter_egg += L'A' + (event.value - GDK_KEY_A);
          break;
       }
 
@@ -1718,7 +1719,7 @@ Dbutton::render_context (const RefPtr<Context>& cr) const
 
    for (Integer i = 0; i < tokens.size (); i++)
    {
-      const string& token = tokens[i];
+      const Dstring& token = tokens[i];
       const Real dy = (i - n_2 + (odd ? 0 : 0.5)) * row_height;
       const Point_2D p (center.x, center.y + dy);
       Label label (token, p, 'c', 'c');
@@ -1747,9 +1748,9 @@ Dbutton::render_led (const RefPtr<Context>& cr) const
 }
 
 Dbutton::Dbutton (const Dcanvas& canvas,
-                  const string& str,
+                  const Dstring& str,
                   const Real font_size,
-                  const string& separator)
+                  const Dstring& separator)
    : Dwidget (canvas),
      str (str),
      state (BUTTON_OFF),
@@ -1769,11 +1770,11 @@ Dbutton::Dbutton (const Dcanvas& canvas,
      disabled (false),
      band_color (Color (GSL_NAN, GSL_NAN, GSL_NAN)),
      led_color (Color (GSL_NAN, GSL_NAN, GSL_NAN)),
-     separator ("\t\n")
+     separator (L"\t\n")
 {
 }
 
-string
+Dstring
 Dbutton::get_str () const
 {
    return str;
@@ -1868,7 +1869,7 @@ Dbutton::on_mouse_exit (const Dmouse_Crossing_Event& event)
 void
 Dbutton::clicked (const Dmouse_Button_Event& event)
 {
-   const string& str = get_str ();
+   const Dstring& str = get_str ();
    signal.emit ();
    str_signal.emit (str);
    full_signal.emit (event);
@@ -2003,25 +2004,25 @@ Spin_Button::clicked (const Dmouse_Button_Event& event)
 Spin_Button::Spin_Button (const Dcanvas& canvas,
                           const bool instant_update,
                           const Real font_size,
-                          const string& separator)
-   : Dbutton (canvas, "", font_size, separator),
+                          const Dstring& separator)
+   : Dbutton (canvas, L"", font_size, separator),
      instant_update (instant_update)
 {
    official_iterator = end ();
    iterator = official_iterator;
 }
 
-string
+Dstring
 Spin_Button::get_official_str () const
 {
-   if (official_iterator == end ()) { return ""; }
+   if (official_iterator == end ()) { return L""; }
    return *(official_iterator);
 }
 
-string
+Dstring
 Spin_Button::get_str () const
 {
-   if (iterator == end ()) { return ""; }
+   if (iterator == end ()) { return L""; }
    return *(iterator);
 }
 
@@ -2062,8 +2063,8 @@ Spin_Button::set (const Tokens& tokens,
                   const bool try_preserve)
 {
 
-   const string& str = get_str ();
-   const string& official_str = get_official_str ();
+   const Dstring& str = get_str ();
+   const Dstring& official_str = get_official_str ();
 
    add_tokens (tokens, true);
 
@@ -2081,7 +2082,7 @@ Spin_Button::set (const Tokens& tokens,
 }
 
 void
-Spin_Button::add_token (const string& token,
+Spin_Button::add_token (const Dstring& token,
                         const bool clear_first)
 {
    const Tokens tokens (token);
@@ -2095,15 +2096,15 @@ Spin_Button::add_tokens (const Tokens& tokens,
 
    if (clear_first) { clear (); }
 
-   string default_str = "";
+   Dstring default_str = L"";
 
    for (Tokens::const_iterator i = tokens.begin (); i != tokens.end (); i++)
    {
 
-      const string& token = *(i);
-      const bool is_default = (token[0] == '*');
+      const Dstring& token = *(i);
+      const bool is_default = (token[0] == L'*');
 
-      const string& str = token.substr ((is_default ? 1 : 0));
+      const Dstring& str = token.substr ((is_default ? 1 : 0));
       Tokens::insert (end (), str);
       if (is_default) { default_str = str; }
 
@@ -2111,7 +2112,7 @@ Spin_Button::add_tokens (const Tokens& tokens,
 
    this->official_iterator = begin ();
 
-   if (default_str != "")
+   if (default_str != L"")
    {
       Tokens::iterator i = std::find (begin (), end (), default_str);
       if (i != end ()) { this->official_iterator = i; }
@@ -2168,7 +2169,7 @@ Spin_Button::updated (const Devent& event)
 }
 
 Dtoggle_Button::Dtoggle_Button (const Dcanvas& canvas,
-                                const string& str,
+                                const Dstring& str,
                                 const Real font_size,
                                 const bool switched_on)
    : Dbutton (canvas, str, font_size)
@@ -2340,7 +2341,7 @@ Radio_Button::Group::set_active (const Integer index)
 }
 
 Radio_Button::Radio_Button (const Dcanvas& canvas,
-                            const string& str,
+                            const Dstring& str,
                             const Real font_size)
    : Dtoggle_Button (canvas, str, font_size, false),
      group (*this),
@@ -2418,7 +2419,7 @@ Drawer::clear ()
 Drawer::Drawer (Dcanvas& dcanvas,
                 Dcontainer& dcontainer,
                 const bool open_upwards,
-                const string& str,
+                const Dstring& str,
                 const Real font_size)
    : Dtoggle_Button (dcanvas, str, font_size),
      dcanvas (dcanvas),
@@ -2562,13 +2563,13 @@ Drawer_Panel::Drawer_Ptr_Map::iterator
 Drawer_Panel::add_drawer_ptr (Drawer* drawer_ptr,
                               const bool back)
 {
-   const string& drawer_str = drawer_ptr->get_str ();
+   const Dstring& drawer_str = drawer_ptr->get_str ();
    if (back) { pack_back (*drawer_ptr); } else { pack_front (*drawer_ptr); }
    return (drawer_ptr_map.insert (make_pair (drawer_str, drawer_ptr))).first;
 }
 
 Drawer_Panel::Drawer_Ptr_Map::iterator
-Drawer_Panel::add_drawer (const string& str,
+Drawer_Panel::add_drawer (const Dstring& str,
                           const bool back)
 {
 
@@ -2582,7 +2583,7 @@ Drawer_Panel::add_drawer (const string& str,
 }
 
 void
-Drawer_Panel::add_widget (const string& drawer_str,
+Drawer_Panel::add_widget (const Dstring& drawer_str,
                           Dwidget& widget)
 {
 
@@ -2596,7 +2597,7 @@ Drawer_Panel::add_widget (const string& drawer_str,
 }
 
 void
-Drawer_Panel::add_widget_ptr (const string& drawer_str,
+Drawer_Panel::add_widget_ptr (const Dstring& drawer_str,
                               Dwidget* widget_ptr)
 {
 
@@ -2610,7 +2611,7 @@ Drawer_Panel::add_widget_ptr (const string& drawer_str,
 }
 
 void
-Drawer_Panel::add_button (const string& str,
+Drawer_Panel::add_button (const Dstring& str,
                           const bool back)
 {
    Dbutton* button_ptr = new Dbutton (dcanvas, str, font_size);
@@ -2619,7 +2620,7 @@ Drawer_Panel::add_button (const string& str,
 }
 
 void
-Drawer_Panel::add_toggle_button (const string& str,
+Drawer_Panel::add_toggle_button (const Dstring& str,
                                  const bool switched_on,
                                  const bool back)
 {
@@ -2630,75 +2631,75 @@ Drawer_Panel::add_toggle_button (const string& str,
 }
 
 const Drawer&
-Drawer_Panel::get_drawer (const string& str) const
+Drawer_Panel::get_drawer (const Dstring& str) const
 {
    Drawer_Ptr_Map::const_iterator iterator = drawer_ptr_map.find (str);
    const bool cannot_find = (iterator == drawer_ptr_map.end ());
-   if (cannot_find) { throw Exception ("No Such Drawer"); }
+   if (cannot_find) { throw Exception (L"No Such Drawer"); }
    return *(iterator->second);
 }
 
 Drawer&
-Drawer_Panel::get_drawer (const string& str)
+Drawer_Panel::get_drawer (const Dstring& str)
 {
    Drawer_Ptr_Map::iterator iterator = drawer_ptr_map.find (str);
    const bool cannot_find = (iterator == drawer_ptr_map.end ());
-   if (cannot_find) { throw Exception ("No Such Drawer"); }
+   if (cannot_find) { throw Exception (L"No Such Drawer"); }
    return *(iterator->second);
 }
 
 const Dbutton&
-Drawer_Panel::get_button (const string& str) const
+Drawer_Panel::get_button (const Dstring& str) const
 {
    Button_Ptr_Map::const_iterator iterator = button_ptr_map.find (str);
    const bool cannot_find = (iterator == button_ptr_map.end ());
-   if (cannot_find) { throw Exception ("No Such Button"); }
+   if (cannot_find) { throw Exception (L"No Such Button"); }
    return *(iterator->second);
 }
 
 Dbutton&
-Drawer_Panel::get_button (const string& str)
+Drawer_Panel::get_button (const Dstring& str)
 {
    Button_Ptr_Map::iterator iterator = button_ptr_map.find (str);
    const bool cannot_find = (iterator == button_ptr_map.end ());
-   if (cannot_find) { throw Exception ("No Such Button"); }
+   if (cannot_find) { throw Exception (L"No Such Button"); }
    return *(iterator->second);
 }
 
 const Dtoggle_Button&
-Drawer_Panel::get_toggle_button (const string& str) const
+Drawer_Panel::get_toggle_button (const Dstring& str) const
 {
    Toggle_Button_Ptr_Map::const_iterator iterator = toggle_button_ptr_map.find (str);
    const bool cannot_find = (iterator == toggle_button_ptr_map.end ());
-   if (cannot_find) { throw Exception ("No Such Toggle_Button"); }
+   if (cannot_find) { throw Exception (L"No Such Toggle_Button"); }
    return *(iterator->second);
 }
 
 Dtoggle_Button&
-Drawer_Panel::get_toggle_button (const string& str)
+Drawer_Panel::get_toggle_button (const Dstring& str)
 {
    Toggle_Button_Ptr_Map::iterator iterator = toggle_button_ptr_map.find (str);
    const bool cannot_find = (iterator == toggle_button_ptr_map.end ());
-   if (cannot_find) { throw Exception ("No Such Toggle_Button"); }
+   if (cannot_find) { throw Exception (L"No Such Toggle_Button"); }
    return *(iterator->second);
 }
 
 bool
-Drawer_Panel::is_switched_on (const string& str) const
+Drawer_Panel::is_switched_on (const Dstring& str) const
 {
    const Dtoggle_Button& toggle_button = get_toggle_button (str);
    return toggle_button.is_switched_on ();
 }
 
 void
-Drawer_Panel::toggle (const string& str)
+Drawer_Panel::toggle (const Dstring& str)
 {
    Dtoggle_Button& toggle_button = get_toggle_button (str);
    toggle_button.toggle ();
 }
 
 void
-Drawer_Panel::set_toggle (const string& str,
+Drawer_Panel::set_toggle (const Dstring& str,
                           const bool switched_on)
 {
    Dtoggle_Button& toggle_button = get_toggle_button (str);
@@ -2749,9 +2750,9 @@ Dtitle::Dtitle (const Dcanvas& canvas,
 
 Dtitle::Dtitle (const Dcanvas& canvas,
                 const Real font_size,
-                const string& str_l,
-                const string& str_c,
-                const string& str_r)
+                const Dstring& str_l,
+                const Dstring& str_c,
+                const Dstring& str_r)
    : Dwidget (canvas),
      margin (font_size / 2),
      string_l (string_l),
@@ -2762,19 +2763,19 @@ Dtitle::Dtitle (const Dcanvas& canvas,
 }
 
 void
-Dtitle::set_string_l (const string& string_l)
+Dtitle::set_string_l (const Dstring& string_l)
 {
    this->string_l = string_l;
 }
 
 void
-Dtitle::set_string_c (const string& string_c)
+Dtitle::set_string_c (const Dstring& string_c)
 {
    this->string_c = string_c;
 }
 
 void
-Dtitle::set_string_r (const string& string_r)
+Dtitle::set_string_r (const Dstring& string_r)
 {
    this->string_r = string_r;
 }
@@ -2866,7 +2867,7 @@ Popup::cairo (const RefPtr<Context>& cr,
 {
 
    const Real fe_h = fe.height;
-   const string& str = tokens[index];
+   const Dstring& str = tokens[index];
    const Real dy = (index + 0.5) * fe_h;
 
    switch (orientation)
@@ -2935,7 +2936,7 @@ Popup::clear ()
 }
 
 void
-Popup::append (const string& str)
+Popup::append (const Dstring& str)
 {
    tokens.push_back (str);
 }
@@ -2947,7 +2948,7 @@ Popup::set_tokens (const Tokens& tokens)
    for (Tokens::const_iterator iterator = tokens.begin ();
         iterator != tokens.end (); iterator++)
    {
-      const string& str = *(iterator);
+      const Dstring& str = *(iterator);
       this->tokens.push_back (str);
    }
 }
@@ -3051,7 +3052,7 @@ Popup::cairo (const RefPtr<Context>& cr)
 }
 
 void
-Popup_Menu::emit_signal (const string& str) const
+Popup_Menu::emit_signal (const Dstring& str) const
 {
    signal_map.at (str).emit ();
    str_signal_map.at (str).emit (tokens[index]);
@@ -3084,7 +3085,7 @@ Popup_Menu::clear ()
 }
 
 void
-Popup_Menu::append (const string& str)
+Popup_Menu::append (const Dstring& str)
 {
    Popup::append (str);
    Popup_Menu::Signal signal;
@@ -3094,13 +3095,13 @@ Popup_Menu::append (const string& str)
 }
 
 Popup_Menu::Signal&
-Popup_Menu::get_signal (const string& str)
+Popup_Menu::get_signal (const Dstring& str)
 {
    return signal_map.at (str);
 }
 
 Popup_Menu::Str_Signal&
-Popup_Menu::get_str_signal (const string& str)
+Popup_Menu::get_str_signal (const Dstring& str)
 {
    return str_signal_map.at (str);
 }
@@ -3213,7 +3214,7 @@ Time_Chooser::Shape::const_iterator
 Time_Chooser::Shape::get_iterator (const Dtime& dtime) const
 {
 
-   if (size () == 0) { throw Exception ("Time_Chooser::Data empty"); }
+   if (size () == 0) { throw Exception (L"Time_Chooser::Data empty"); }
 
    Real smallest_fabs_dt = GSL_POSINF;
    Shape::const_iterator iterator = end ();
@@ -3283,25 +3284,25 @@ Time_Chooser::Shape::operator== (const Time_Chooser::Shape& shape) const
 }
 
 void
-Time_Chooser::Data::init (const string& str)
+Time_Chooser::Data::init (const Dstring& str)
 {
    const Tokens& tokens (str);
    if (tokens.size () > 0) { dtime = Dtime (tokens[0]); }
 }
 
 void
-Time_Chooser::Data::rectify (string& str)
+Time_Chooser::Data::rectify (Dstring& str)
 {
-   const Tokens tokens (str, ":");
+   const Tokens tokens (str, L":");
    const bool b = (tokens.size () > 1 && tokens[0] > tokens[1]);
-   if (b) { str = tokens[1] + ":" + tokens[0]; } }
+   if (b) { str = tokens[1] + L":" + tokens[0]; } }
 
 bool
-Time_Chooser::Data::contains (const string& str,
+Time_Chooser::Data::contains (const Dstring& str,
                               const Dtime& dtime)
 {
 
-   const Tokens tokens (str, ":");
+   const Tokens tokens (str, L":");
    if (tokens.size () == 0) { return false; }
    if (tokens.size () == 1) { return dtime == Dtime (tokens[0]); }
 
@@ -3335,14 +3336,14 @@ Time_Chooser::Data::Data (const Tokens& tokens)
 }
 
 Time_Chooser::Data::Data (const Dtime& dtime)
-   : Tokens (dtime.get_string ("%Y%m%d%H%M")),
+   : Tokens (dtime.get_string (L"%Y%m%d%H%M")),
      dtime (GSL_NAN),
      candidate_time (GSL_NAN)
 {
-   init (dtime.get_string ("%Y%m%d%H%M"));
+   init (dtime.get_string (L"%Y%m%d%H%M"));
 }
 
-Time_Chooser::Data::Data (const string& str)
+Time_Chooser::Data::Data (const Dstring& str)
    : Tokens (str),
      dtime (GSL_NAN),
      candidate_time (GSL_NAN)
@@ -3365,10 +3366,10 @@ Time_Chooser::Data::set_time (const Dtime& dtime,
                               const bool is_leap)
 {
 
-   const string fmt ("%Y%m%d%H%M");
+   const Dstring fmt (L"%Y%m%d%H%M");
 
-   const string& old_time_str = this->dtime.get_string (fmt.c_str ());
-   const string& new_time_str = dtime.get_string (fmt.c_str ());
+   const Dstring& old_time_str = this->dtime.get_string (fmt);
+   const Dstring& new_time_str = dtime.get_string (fmt);
 
    if (clear_first) { clear (); }
 
@@ -3383,14 +3384,14 @@ Time_Chooser::Data::set_time (const Dtime& dtime,
       for (Data::iterator iterator = begin ();
            iterator != end (); iterator++)
       {
-         string& str = *(iterator);
-         const Tokens tokens (str, ":");
+         Dstring& str = *(iterator);
+         const Tokens tokens (str, L":");
          const bool singleton = (tokens.size () == 1);
          if (singleton)
          {
             if (str == old_time_str)
             {
-               str = old_time_str + ":" + new_time_str;
+               str = old_time_str + L":" + new_time_str;
                rectify (str);
                break;
             }
@@ -3398,9 +3399,9 @@ Time_Chooser::Data::set_time (const Dtime& dtime,
          else
          {
             if (!contains (str, this->dtime)) { continue; }
-            const string& str_a = std::min (tokens[0], new_time_str);
-            const string& str_b = std::max (tokens[1], new_time_str);
-            str = str_a + ":" + str_b;
+            const Dstring& str_a = std::min (tokens[0], new_time_str);
+            const Dstring& str_b = std::max (tokens[1], new_time_str);
+            str = str_a + L":" + str_b;
             rectify (str);
             break;
          }
@@ -3460,7 +3461,7 @@ Time_Chooser::Data::contains (const Dtime& dtime) const
    for (Data::const_iterator iterator = begin ();
         iterator != end (); iterator++)
    {
-      const string& str = *(iterator);
+      const Dstring& str = *(iterator);
       if (contains (str, dtime)) { return true; }
    }
    return false;
@@ -3471,19 +3472,19 @@ Time_Chooser::Data::conform_to (const Shape& shape)
 {
 
    Tokens new_tokens;
-   const string fmt ("%Y%m%d%H%M");
+   const Dstring fmt (L"%Y%m%d%H%M");
 
    for (Data::const_iterator iterator = begin ();
         iterator != end (); iterator++)
    {
 
-      const Tokens tokens (*(iterator), ":");
+      const Tokens tokens (*(iterator), L":");
       const bool singleton = (tokens.size () == 1);
 
       if (singleton)
       {
          const Dtime& new_time = shape.get_nearest_time (tokens[0]);
-         new_tokens.push_back (new_time.get_string (fmt.c_str ()));
+         new_tokens.push_back (new_time.get_string (fmt));
       }
       else
       {
@@ -3492,9 +3493,9 @@ Time_Chooser::Data::conform_to (const Shape& shape)
          const Dtime& st = shape.start_time;
          const Dtime& et = shape.end_time;
          if (st > e || et < s) { return; }
-         const string& str_s = std::max (s, st).get_string (fmt.c_str ());
-         const string& str_e = std::min (e, et).get_string (fmt.c_str ());
-         new_tokens.push_back (str_s + ":" + str_e);
+         const Dstring& str_s = std::max (s, st).get_string (fmt);
+         const Dstring& str_e = std::min (e, et).get_string (fmt);
+         new_tokens.push_back (str_s + L":" + str_e);
       }
 
    }
@@ -3517,13 +3518,13 @@ Time_Chooser::Data::conform_to (const Shape& shape)
 void
 Time_Chooser::Data::dump () const
 {
-   cout << "===" << endl;
+   wcout << L"===" << endl;
    for (Data::const_iterator iterator = begin ();
         iterator != end (); iterator++)
    {
-      cout << *(iterator) << endl;
+      wcout << *(iterator) << endl;
    }
-   cout << "===" << endl;
+   wcout << L"===" << endl;
 }
 
 Real
@@ -3612,7 +3613,7 @@ Time_Chooser::render_background_months (const RefPtr<Context>& cr)
       for (Integer month = 1; month <= 12; month++)
       {
          color.cairo (cr);
-         render_month_lines (cr, year, month, "%d");
+         render_month_lines (cr, year, month, L"%d");
          fg_color.cairo (cr);
          render_month (cr, year, month);
       }
@@ -3646,8 +3647,8 @@ Time_Chooser::render_month (const RefPtr<Context>& cr,
    const Point_2D& p_b = (v ? P (w - 5.0 * m, y) : P (x, h - 3.0 * m));
    const Point_2D& p_c = (v ? P (w - 4.5 * m, y) : P (x, h - 3.5 * m));
    const Point_2D& p_d = (v ? P (w - 7.0 * m, y) : P (x, h - 1.0 * m));
-   const string& str_a = dtime.get_string (v ? "%b" : "%B");
-   const string& str_b = dtime.get_string ("%Y");
+   const Dstring& str_a = dtime.get_string (v ? L"%b" : L"%B");
+   const Dstring& str_b = dtime.get_string (L"%Y");
 
    cr->set_line_width (1);
    cr->move_to (p_c.x, p_c.y);
@@ -3677,10 +3678,10 @@ void
 Time_Chooser::render_month_lines (const RefPtr<Context>& cr,
                                   const Integer year,
                                   const Integer month,
-                                  const string& format) const
+                                  const Dstring& format) const
 {
 
-   if (format == "") { return; }
+   if (format == L"") { return; }
 
    for (Integer day = 1; day <= 21; day += 10)
    {
@@ -3692,7 +3693,7 @@ Time_Chooser::render_month_lines (const RefPtr<Context>& cr,
       if (vertical) { point.x = width - 2.0 * margin; }
       else          { point.y = 1.5 * margin; }
 
-      const string str = dtime.get_string (format);
+      const Dstring str = dtime.get_string (format);
       Label label (str, point, 'r', 'c');
       if (!vertical) { label.set_text_angle (M_PI_2 * 3); }
       label.cairo (cr);
@@ -3719,7 +3720,7 @@ Time_Chooser::render_background_days (const RefPtr<Context>& cr)
 
    cr->set_line_width (1);
    Color (0.5, 0.5, 0.5).cairo (cr);
-   render_lines (cr, line_interval, "%HZ");
+   render_lines (cr, line_interval, L"%HZ");
 
    cr->set_line_width (1);
    Color (0, 0, 0).cairo (cr);
@@ -3735,7 +3736,7 @@ Time_Chooser::render_dates (const RefPtr<Context>& cr) const
 
    const Integer hours = 24;
    const Dtime st (shape.start_time.t - fmod (shape.start_time.t, hours));
-   const string time_format_str ("%b %d");
+   const Dstring time_format_str (L"%b %d");
 
    typedef Point_2D P;
    const Real w = width;
@@ -3759,8 +3760,8 @@ Time_Chooser::render_dates (const RefPtr<Context>& cr) const
       const Point_2D p_c = (v ? P (w - 4.5 * margin, y) : P (x, h - 3.5 * m));
       const Point_2D p_d = (v ? P (w - 7.0 * margin, y) : P (x, h - 1.0 * m));
 
-      const string str_a = dtime.get_string ("%b %d");
-      const string str_b = dtime.get_string ("(%a)");
+      const Dstring str_a = dtime.get_string (L"%b %d");
+      const Dstring str_b = dtime.get_string (L"(%a)");
 
       cr->set_line_width (1);
       cr->move_to (p_c.x, p_c.y);
@@ -3791,10 +3792,10 @@ Time_Chooser::render_dates (const RefPtr<Context>& cr) const
 void
 Time_Chooser::render_lines (const RefPtr<Context>& cr,
                             const Real hours,
-                            const string& format) const
+                            const Dstring& format) const
 {
 
-   if (format == "") { return; }
+   if (format == L"") { return; }
    const Dtime& start_time = shape.start_time;
    const Dtime& end_time = shape.end_time;
    const Dtime st (start_time.t - fmod (start_time.t, double (hours)));
@@ -3815,7 +3816,7 @@ Time_Chooser::render_lines (const RefPtr<Context>& cr,
          cr->stroke ();
       }
 
-      const string& str = dtime.get_string (format);
+      const Dstring& str = dtime.get_string (format);
       Label label (str, point, 'r', 'c');
       if (!vertical) { label.set_text_angle (M_PI_2 * 3); }
       label.cairo (cr);
@@ -3926,7 +3927,7 @@ Time_Chooser::render_now (const RefPtr<Context>& cr) const
       const Arrow arrow (0, 2*margin);
       arrow.cairo (cr, point);
       cr->stroke ();
-      Label ("NOW", point + Point_2D (-1.5 * margin, 0), 'r', 'c').cairo (cr);
+      Label (L"NOW", point + Point_2D (-1.5 * margin, 0), 'r', 'c').cairo (cr);
    }
    else
    {
@@ -3934,7 +3935,7 @@ Time_Chooser::render_now (const RefPtr<Context>& cr) const
       const Arrow arrow (-M_PI/2, 2*margin);
       arrow.cairo (cr, point);
       cr->stroke ();
-      Label ("NOW", point + Point_2D (0, 1.5 * margin), 'c', 't').cairo (cr);
+      Label (L"NOW", point + Point_2D (0, 1.5 * margin), 'c', 't').cairo (cr);
    }
 
    cr->restore ();
@@ -3978,9 +3979,9 @@ Time_Chooser::Time_Chooser (const Dcanvas& canvas,
                             const bool vertical,
                             const Real line_interval)
    : Dcontainer (canvas),
-     anim_button (canvas, "ANIM", font_size, false),
-     prev_button (canvas, "PREV", font_size),
-     next_button (canvas, "NEXT", font_size),
+     anim_button (canvas, L"ANIM", font_size, false),
+     prev_button (canvas, L"PREV", font_size),
+     next_button (canvas, L"NEXT", font_size),
      margin (font_size),
      thread_ptr (NULL),
      dwell (400000),
@@ -4635,7 +4636,7 @@ Level_Panel::get_level_tuple () const
       case Level::THETA:    return level_tuple_theta;
    }
 
-   throw Nwp_Exception ("Level_Tuple::get_level_tuple confused");
+   throw Nwp_Exception (L"Level_Tuple::get_level_tuple confused");
 
 }
 
@@ -4850,7 +4851,7 @@ Level_Panel::get_y (const Level& level) const
    for (Integer i = 0; i < extra_level_vector.size (); i++)
    {
       const Level& l = extra_level_vector[i];
-      const string& str = l.get_string ();
+      const Dstring& str = l.get_string ();
 
       if (str == level.get_string ())
       {
@@ -5000,7 +5001,7 @@ Level_Panel::render_background (const RefPtr<Context> cr) const
       {
          const Level l (level_type, *(iterator), GSL_NAN);
          const Real y = get_y (l);
-         const string& str = l.get_string ();
+         const Dstring& str = l.get_string ();
          Label label (str, Point_2D (width / 2, y), 'c', 'c');
          label.cairo (cr);
       }
@@ -5010,7 +5011,7 @@ Level_Panel::render_background (const RefPtr<Context> cr) const
    for (Integer i = 0; i < extra_level_vector.size (); i++)
    {
       const Level& l = extra_level_vector[i];
-      const string& str = l.get_string ();
+      const Dstring& str = l.get_string ();
       const Real y = height - (2 * i + 1.5) * font_size;
       Label label (str, Point_2D (width / 2, y), 'c', 'c');
       label.cairo (cr);
@@ -5028,7 +5029,7 @@ Level_Panel::render_level (const RefPtr<Context> cr,
 
    const Real ns = 7;
    const Real y = get_y (level);
-   const string& str = level.get_string ();
+   const Dstring& str = level.get_string ();
 
    cr->set_font_size (font_size);
    Color (0, 0, 0, 0.8).cairo (cr);
@@ -5058,8 +5059,8 @@ Level_Panel::render_layer (const RefPtr<Context> cr,
    const Level& level_1 = level.get_level_1 ();
    const Real y_0 = get_y (level_0);
    const Real y_1 = get_y (level_1);
-   const string& str_0 = level_0.get_string ();
-   const string& str_1 = level_1.get_string ();
+   const Dstring& str_0 = level_0.get_string ();
+   const Dstring& str_1 = level_1.get_string ();
 
    const Color color_0 (0.6, 0.6, 0, 0.2);
    const Color color_1 (0.0, 0.0, 0, 0.2);
@@ -5265,10 +5266,10 @@ Level_Panel::Level_Panel (Dcanvas& dcanvas,
                           const Real font_size)
    : Dv_Pack_Box (dcanvas, 0, 6/*margin*/),
      dcanvas (dcanvas),
-     level_tuple_z (Level::HEIGHT, "40000:36000:32000:28000:24000:20000:18000:16000:14000:12000:10000:9000:8000:7000:6000:5000:4500:4000:3500:3000:2500:2000:1800:1600:1400:1200:1000:900:800:700:600:500:400:350:300:250:200:150:100:75:45:20:5:0"),
-     level_tuple_sigma (Level::SIGMA, "0.2:0.25:0.3:0.35:0.4:0.45:0.5:0.55:0.6:0.65:0.7:0.75:0.8:0.85:0.875:0.9:0.925:0.95:0.975:0.9943:0.9975:0.9988"),
-     level_tuple_theta (Level::THETA, "355:350:345:340:335:330:325:320:315:310:305:300:295:290:285:280:275:270"),
-     level_tuple_p (Level::PRESSURE, "200e2:250e2:300e2:350e2:400e2:450e2:500e2:550e2:600e2:650e2:700e2:750e2:800e2:850e2:900e2:925e2:950e2:975e2:995e2:1000e2"),
+     level_tuple_z (Level::HEIGHT, L"40000:36000:32000:28000:24000:20000:18000:16000:14000:12000:10000:9000:8000:7000:6000:5000:4500:4000:3500:3000:2500:2000:1800:1600:1400:1200:1000:900:800:700:600:500:400:350:300:250:200:150:100:75:45:20:5:0"),
+     level_tuple_sigma (Level::SIGMA, L"0.2:0.25:0.3:0.35:0.4:0.45:0.5:0.55:0.6:0.65:0.7:0.75:0.8:0.85:0.875:0.9:0.925:0.95:0.975:0.9943:0.9975:0.9988"),
+     level_tuple_theta (Level::THETA, L"355:350:345:340:335:330:325:320:315:310:305:300:295:290:285:280:275:270"),
+     level_tuple_p (Level::PRESSURE, L"200e2:250e2:300e2:350e2:400e2:450e2:500e2:550e2:600e2:650e2:700e2:750e2:800e2:850e2:900e2:925e2:950e2:975e2:995e2:1000e2"),
      start_margin (50),
      end_margin (90),
 
@@ -5951,7 +5952,7 @@ Console_2D::Zoom_Box::cairo (const RefPtr<Context>& cr)
    cr->save ();
    color.cairo (cr);
 
-   Dashes ("4:2").cairo (cr);
+   Dashes (L"4:2").cairo (cr);
 
    cr->set_line_width (1);
    cr->move_to (centre.x + wa, centre.y + ha);
@@ -5983,7 +5984,7 @@ Console_2D::Zoom_Box::cairo (const RefPtr<Context>& cr)
    Ring (6).cairo (cr, point_2c);
    cr->fill ();
    cr->set_font_size (font_size);
-   Label label ("TOP LEFT", point_2c, 'l', 't', font_size / 2);
+   Label label (L"TOP LEFT", point_2c, 'l', 't', font_size / 2);
    label.set_text_angle (tilt);
    label.cairo (cr);
 
@@ -5992,7 +5993,7 @@ Console_2D::Zoom_Box::cairo (const RefPtr<Context>& cr)
 }
 
 void
-Console_2D::Hud::Popup_Menu::emit_signal (const string& str) const
+Console_2D::Hud::Popup_Menu::emit_signal (const Dstring& str) const
 {
    if (index == 0) { clear_signal.emit (id); }
    str_signal_map.at (str).emit (str);
@@ -6005,7 +6006,7 @@ Console_2D::Hud::Popup_Menu::Popup_Menu (Console_2D& console_2d,
      console_2d (console_2d)
 {
    clear ();
-   append ("Clear");
+   append (L"Clear");
 }
 
 void
@@ -6016,7 +6017,7 @@ Console_2D::Hud::Popup_Menu::clear ()
 }
 
 void
-Console_2D::Hud::Popup_Menu::append (const string& str)
+Console_2D::Hud::Popup_Menu::append (const Dstring& str)
 {
    denise::Popup_Menu::append (str);
    Console_2D::Hud::Popup_Menu::Id_Signal id_signal;
@@ -6024,7 +6025,7 @@ Console_2D::Hud::Popup_Menu::append (const string& str)
 }
 
 Console_2D::Hud::Popup_Menu::Id_Signal&
-Console_2D::Hud::Popup_Menu::get_id_signal (const string& str)
+Console_2D::Hud::Popup_Menu::get_id_signal (const Dstring& str)
 {
    return id_signal_map.at (str);
 }
@@ -6094,7 +6095,7 @@ Console_2D::Marker::Marker (const Integer id,
                             const Real node_size)
    : Hud (id, node_size),
      Point_2D (point),
-     str ("")
+     str (L"")
 {
 }
 
@@ -6104,14 +6105,14 @@ Console_2D::Marker::attract_by (const Attractor& attractor)
    attractor.attract (*this);
 }
 
-const string&
+const Dstring&
 Console_2D::Marker::get_str () const
 {
    return str;
 }
 
 void
-Console_2D::Marker::set_str (const string& str)
+Console_2D::Marker::set_str (const Dstring& str)
 {
    this->str = str;
 }
@@ -6166,7 +6167,7 @@ Console_2D::Marker::cairo (const RefPtr<Context>& cr,
 
    }
 
-   const Real hue = (str == "" ? 0.667 : 0.000);
+   const Real hue = (str == L"" ? 0.667 : 0.000);
    const Color& bg_color = Color::hsb (hue, 0.5, 1, 0.7);
    const Color fg_color (0, 0, 0);
    Ring (node_size).cairo (cr, point);
@@ -6546,7 +6547,7 @@ const Attractor&
 Console_2D::Hud_Store::get_attractor () const
 {
    if (attractor_ptr != NULL) { return *attractor_ptr; }
-   else throw Exception ("attractor_ptr is NULL.");
+   else throw Exception (L"attractor_ptr is NULL.");
 }
 
 void
@@ -6757,7 +6758,7 @@ Console_2D::Marker_Store::try_dragging (Console_2D& console_2d,
    const Point_2D& point = event.point;
 
    transform.reverse (marker.x, marker.y, point.x, point.y);
-   marker.set_str ("");
+   marker.set_str (L"");
 
    if (event.control ())
    {
@@ -7573,7 +7574,7 @@ Console_2D::get_shape_popup_menu ()
    return shape_popup_menu;
 }
 
-string
+Dstring
 Console_2D::get_string (const Marker& marker) const
 {
    return string_render ("%f %f", marker.x, marker.y);
@@ -7832,32 +7833,33 @@ Console_2D::cairo (const RefPtr<Context>& cr)
 }
 
 void
-Console_2D::save_image (const string& file_path)
+Console_2D::save_image (const Dstring& file_path)
 {
 
-   const Tokens tokens (file_path, ".");
-   const string& extension = get_lower_case (tokens.back ());
+   const Tokens tokens (file_path, L".");
+   const Dstring& extension = get_lower_case (tokens.back ());
 
-   if (extension == "png") { save_png (file_path); return; }
-   if (extension == "svg") { save_svg (file_path); return; }
+   if (extension == L"png") { save_png (file_path); return; }
+   if (extension == L"svg") { save_svg (file_path); return; }
 
-   cerr << "Unrecognized file format" << endl;
+   cerr << L"Unrecognized file format" << endl;
 
 }
 
 void
-Console_2D::save_png (const string& file_path)
+Console_2D::save_png (const Dstring& file_path)
 {
    Dcanvas::save_image (file_path);
 }
 
 void
-Console_2D::save_svg (const string& file_path)
+Console_2D::save_svg (const Dstring& file_path)
 {
 
    const Size_2D& size_2d = get_size_2d ();
+   const string fp (file_path.begin (), file_path.end ());
    Cairo::RefPtr<Cairo::SvgSurface> surface =
-       Cairo::SvgSurface::create (file_path, size_2d.i, size_2d.j);
+       Cairo::SvgSurface::create (fp, size_2d.i, size_2d.j);
    Cairo::RefPtr<Cairo::Context> cr = denise::get_cr (surface);
 
    render_background_buffer (cr);
@@ -8086,7 +8088,7 @@ Map_Console::Overlay_Store::~Overlay_Store ()
 }
 
 const Map_Console::Overlay&
-Map_Console::Overlay_Store::get_overlay (const string& identifier) const
+Map_Console::Overlay_Store::get_overlay (const Dstring& identifier) const
 {
    Overlay_Ptr_Map::const_iterator iterator = overlay_ptr_map.find (identifier);
    const Overlay* overlay_ptr = iterator->second;
@@ -8094,42 +8096,42 @@ Map_Console::Overlay_Store::get_overlay (const string& identifier) const
 }
 
 void
-Map_Console::Overlay_Store::add (const string& overlay_string,
+Map_Console::Overlay_Store::add (const Dstring& overlay_string,
                                  const bool heavy)
 {
 
-   const Tokens tokens (overlay_string, ":");
+   const Tokens tokens (overlay_string, L":");
    if (tokens.size () < 7) { return; }
 
-   const string& genre = tokens[0];
-   const string& identifier = tokens[1];
-   const Real& line_width = atof (tokens[2].c_str ());
-   const Real& r = atof (tokens[3].c_str ());
-   const Real& g = atof (tokens[4].c_str ());
-   const Real& b = atof (tokens[5].c_str ());
-   const Real& a = atof (tokens[6].c_str ());
+   const Dstring& genre = tokens[0];
+   const Dstring& identifier = tokens[1];
+   const Real& line_width = stof (tokens[2]);
+   const Real& r = stof (tokens[3]);
+   const Real& g = stof (tokens[4]);
+   const Real& b = stof (tokens[5]);
+   const Real& a = stof (tokens[6]);
    const Color color (r, g, b, a);
 
-   if (genre == "GSHHS")
+   if (genre == L"GSHHS")
    {
-      const bool filled = (tokens[7] == "filled");
-      const string& file_path = tokens[8];
+      const bool filled = (tokens[7] == L"filled");
+      const Dstring& file_path = tokens[8];
       Gshhs* gshhs_ptr = new Gshhs (file_path);
       add (identifier, gshhs_ptr, filled, line_width, color, heavy);
       return;
    }
 
-   if (genre == "OUTL")
+   if (genre == L"OUTL")
    {
-      const string& file_path = tokens[7];
+      const Dstring& file_path = tokens[7];
       Outl* outl_ptr = new Outl (file_path);
       add (identifier, outl_ptr, false, line_width, color, heavy);
       return;
    }
 
-   if (genre == "KIDNEY")
+   if (genre == L"KIDNEY")
    {
-      const string& file_path = tokens[7];
+      const Dstring& file_path = tokens[7];
       Kidney* kidney_ptr = new Kidney (file_path);
       add (identifier, kidney_ptr, false, line_width, color, heavy);
       return;
@@ -8138,7 +8140,7 @@ Map_Console::Overlay_Store::add (const string& overlay_string,
 }
 
 void
-Map_Console::Overlay_Store::add (const string& identifier,
+Map_Console::Overlay_Store::add (const Dstring& identifier,
                                  Geodetic_Cairoable* gc_ptr,
                                  const bool filled, 
                                  const Real line_width,
@@ -8152,25 +8154,25 @@ Map_Console::Overlay_Store::add (const string& identifier,
 }
 
 bool
-Map_Console::Overlay_Store::is_on (const string& identifier) const
+Map_Console::Overlay_Store::is_on (const Dstring& identifier) const
 {
    On_Off_Map::const_iterator iterator = on_off_map.find (identifier);
    if (iterator == on_off_map.end ())
    {
-      throw Exception ("Invalid overlay identifier");
+      throw Exception (L"Invalid overlay identifier");
    }
    return iterator->second;
 }
 
 void
-Map_Console::Overlay_Store::set_on_off (const string& identifier,
+Map_Console::Overlay_Store::set_on_off (const Dstring& identifier,
                                         const bool on_off)
 {
    on_off_map[identifier] = on_off;
 }
 
 void
-Map_Console::Overlay_Store::toggle_on_off (const string& identifier)
+Map_Console::Overlay_Store::toggle_on_off (const Dstring& identifier)
 {
    const bool b = on_off_map[identifier];
    on_off_map[identifier] = !b;
@@ -8189,7 +8191,7 @@ Map_Console::Overlay_Store::cairo (const RefPtr<Context>& cr,
         iterator != end (); iterator++)
    {
 
-      const string& identifier = *(iterator);
+      const Dstring& identifier = *(iterator);
       On_Off_Map::const_iterator i = on_off_map.find (identifier);
       if (i == on_off_map.end ()) { cout << "cont a " << endl; continue; }
 
@@ -8207,7 +8209,7 @@ Map_Console::Overlay_Store::cairo (const RefPtr<Context>& cr,
 }
 
 Map_Console::Option_Panel::Zoom_Drawer::Zoom_Drawer (Option_Panel& option_panel)
-   : Drawer (option_panel.map_console, option_panel, false, "Zoom", 12) 
+   : Drawer (option_panel.map_console, option_panel, false, L"Zoom", 12) 
 {
 }
 
@@ -8224,7 +8226,7 @@ Map_Console::Option_Panel::Zoom_Drawer::switch_off_zoom_button ()
       try
       {
          Dtoggle_Button& tb = dynamic_cast<Dtoggle_Button&>(widget);
-         if (tb.get_str () != "Custom") { continue; }
+         if (tb.get_str () != L"Custom") { continue; }
          tb.set (false);
          break;
       }
@@ -8237,12 +8239,12 @@ Map_Console::Option_Panel::Zoom_Drawer::switch_off_zoom_button ()
 }
 
 Map_Console::Option_Panel::Overlay_Drawer::Overlay_Drawer (Option_Panel& option_panel)
-   : Drawer (option_panel.map_console, option_panel, false, "Overlay", 12) 
+   : Drawer (option_panel.map_console, option_panel, false, L"Overlay", 12) 
 {
 }
 
 void
-Map_Console::Option_Panel::Overlay_Drawer::add_toggle_button_ptr (const string& str,
+Map_Console::Option_Panel::Overlay_Drawer::add_toggle_button_ptr (const Dstring& str,
                                                                   Dtoggle_Button* toggle_button_ptr)
 {
    add_widget_ptr (toggle_button_ptr);
@@ -8250,7 +8252,7 @@ Map_Console::Option_Panel::Overlay_Drawer::add_toggle_button_ptr (const string& 
 }
 
 bool
-Map_Console::Option_Panel::Overlay_Drawer::is_on (const string& str) const
+Map_Console::Option_Panel::Overlay_Drawer::is_on (const Dstring& str) const
 {
 
    for (auto iterator = widget_ptr_map.begin ();
@@ -8276,11 +8278,11 @@ Map_Console::Option_Panel::Overlay_Drawer::is_on (const string& str) const
 }
 
 void
-Map_Console::Option_Panel::Overlay_Drawer::set_on_off (const string& str,
+Map_Console::Option_Panel::Overlay_Drawer::set_on_off (const Dstring& str,
                                                        const bool on_off)
 {
    
-   std::map<string, Integer>::iterator iterator = index_map.find (str);
+   std::map<Dstring, Integer>::iterator iterator = index_map.find (str);
    if (iterator == index_map.end ()) { return ; }
    
    const Integer index = iterator->second;
@@ -8303,7 +8305,7 @@ Map_Console::Option_Panel::setup_zoom (const Tokens& config_file_content)
    add_drawer_ptr (drawer_ptr, true);
 
    // Make Custom Zoom Button
-   Dbutton* button_ptr = new Dbutton (map_console, "Custom", font_size);
+   Dbutton* button_ptr = new Dbutton (map_console, L"Custom", font_size);
    Dbutton::Signal& signal = button_ptr->get_signal ();
    Console_2D::Zoom_Box& zoom_box = map_console.get_zoom_box ();
    signal.connect (sigc::mem_fun (zoom_box, &Console_2D::Zoom_Box::toggle_visible));
@@ -8316,9 +8318,9 @@ Map_Console::Option_Panel::setup_zoom (const Tokens& config_file_content)
 
       const Tokens tokens (*(iterator));
       if (tokens.size () != 3) { continue; }
-      if (tokens[0] != "geodetic_transform") { continue; }
+      if (tokens[0] != L"geodetic_transform") { continue; }
 
-      const string& identifier = tokens[1];
+      const Dstring& identifier = tokens[1];
       const Geodetic_Transform::Data gtd (tokens[2]);
 
       Gtdb* gtdb_ptr = new Gtdb (map_console, gtd, identifier, font_size);
@@ -8359,7 +8361,7 @@ Map_Console::Option_Panel::setup_overlay ()
         iterator != overlay_store.end (); iterator++)
    {
 
-      const string& identifier = *(iterator);
+      const Dstring& identifier = *(iterator);
       const bool on = overlay_store.is_on (identifier);
 
       Tb* tb_ptr = new Tb (map_console, identifier, font_size, on);
@@ -8394,7 +8396,7 @@ Map_Console::Option_Panel::align_overlay_toggles ()
    for (Overlay_Store::const_iterator iterator = overlay_store.begin ();
         iterator != overlay_store.end (); iterator++)
    {
-      const string& identifier = *(iterator);
+      const Dstring& identifier = *(iterator);
       const bool on_off = overlay_store.is_on (identifier);
       overlay_drawer.set_on_off (identifier, on_off);
    }
@@ -8403,7 +8405,7 @@ Map_Console::Option_Panel::align_overlay_toggles ()
 
 
 bool
-Map_Console::Option_Panel::overlay_is_on (const string& overlay_str) const
+Map_Console::Option_Panel::overlay_is_on (const Dstring& overlay_str) const
 {
    const Overlay_Drawer& overlay_drawer = get_overlay_drawer ();
    return overlay_drawer.is_on (overlay_str);
@@ -8412,28 +8414,28 @@ Map_Console::Option_Panel::overlay_is_on (const string& overlay_str) const
 const Map_Console::Option_Panel::Zoom_Drawer&
 Map_Console::Option_Panel::get_zoom_drawer () const
 {
-   const Drawer& drawer = *(drawer_ptr_map.find ("Zoom")->second);
+   const Drawer& drawer = *(drawer_ptr_map.find (L"Zoom")->second);
    return dynamic_cast<const Zoom_Drawer&>(drawer);
 }
 
 Map_Console::Option_Panel::Zoom_Drawer&
 Map_Console::Option_Panel::get_zoom_drawer ()
 {
-   Drawer& drawer = *(drawer_ptr_map.find ("Zoom")->second);
+   Drawer& drawer = *(drawer_ptr_map.find (L"Zoom")->second);
    return dynamic_cast<Zoom_Drawer&>(drawer);
 }
 
 const Map_Console::Option_Panel::Overlay_Drawer&
 Map_Console::Option_Panel::get_overlay_drawer () const
 {
-   const Drawer& drawer = *(drawer_ptr_map.find ("Overlay")->second);
+   const Drawer& drawer = *(drawer_ptr_map.find (L"Overlay")->second);
    return dynamic_cast<const Overlay_Drawer&>(drawer);
 }
 
 Map_Console::Option_Panel::Overlay_Drawer&
 Map_Console::Option_Panel::get_overlay_drawer ()
 {
-   Drawer& drawer = *(drawer_ptr_map.find ("Overlay")->second);
+   Drawer& drawer = *(drawer_ptr_map.find (L"Overlay")->second);
    return dynamic_cast<Overlay_Drawer&>(drawer);
 }
 
@@ -8523,11 +8525,11 @@ Map_Console::Route::get_distance (const Geodesy& geodesy) const
    return journey.get_distance (geodesy);
 }
 
-string
+Dstring
 Map_Console::get_string (const Marker& marker) const
 {
    const Lat_Long lat_long (marker);
-   return lat_long.get_string (false, string ("%.3f\u00b0"));
+   return lat_long.get_string (false, Dstring (L"%.3f\u00b0"));
 }
 
 Map_Console::Map_Console (Gtk::Window& gtk_window,
@@ -8556,9 +8558,9 @@ Map_Console::Map_Console (Gtk::Window& gtk_window,
 
       const Tokens tokens (*(iterator));
       if (tokens.size () != 3) { continue; }
-      if (tokens[0] != "geodetic_transform") { continue; }
+      if (tokens[0] != L"geodetic_transform") { continue; }
 
-      const string& identifier = tokens[1];
+      const Dstring& identifier = tokens[1];
       const Geodetic_Transform::Data gtd (tokens[2]);
       geodetic_transform_ptr = Gt::get_transform_ptr (gtd, centre);
 
@@ -8631,7 +8633,7 @@ Map_Console::set_geodetic_transform_data (const Geodetic_Transform::Data& gtd)
    delete geodetic_transform_ptr;
    geodetic_transform_ptr =
       Gt::get_transform_ptr (gtd.genre, gtd.scale, gtd.lat_long, middle);
-   cout << geodetic_transform_ptr->data.get_string () << endl;
+   wcout << geodetic_transform_ptr->data.get_string () << endl;
 
    zoom_box.reset ();
    set_background_ready (false);
@@ -8667,7 +8669,7 @@ Map_Console::refresh_all ()
 }
 
 void
-Map_Console::toggle_overlay (const string& overlay_identifier)
+Map_Console::toggle_overlay (const Dstring& overlay_identifier)
 {
    Map_Console::Overlay_Store& os = get_overlay_store ();
    os.toggle_on_off (overlay_identifier);
@@ -8847,7 +8849,7 @@ Time_Series_Canvas::render_background_buffer (const RefPtr<Context>& cr)
    Color (1, 1, 1).cairo (cr);
    cr->paint ();
 
-   const string fmt_t ("%HZ");
+   const Dstring fmt_t (L"%HZ");
 
    mesh_2d.render (cr, transform);
 
@@ -8880,8 +8882,8 @@ Time_Series_Canvas::render_background_buffer (const RefPtr<Context>& cr)
       const Point_2D& point = transform.transform (p);
       const Point_2D point_a (point.x, point.y + 15);
       const Point_2D point_b (point.x, point.y + 25);
-      const string str_a = dtime.get_string ("%b %d");
-      const string str_b = dtime.get_string ("(%a)");
+      const Dstring str_a = dtime.get_string (L"%b %d");
+      const Dstring str_b = dtime.get_string (L"(%a)");
 
       const Point_2D point_c (point.x, point.y + 5);
       const Point_2D point_d (point.x, point.y + 40);

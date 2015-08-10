@@ -161,21 +161,21 @@ Transform_2D::Transform_2D ()
 }
 
 Transform_2D*
-Transform_2D::get_transform_ptr (const string& str)
+Transform_2D::get_transform_ptr (const Dstring& str)
 {
 
-   const Tokens tokens (str, ":");
+   const Tokens tokens (str, L":");
 
-   if (tokens[0] == "CARTESIAN")
+   if (tokens[0] == L"CARTESIAN")
    {
-      const Real domain_x_start = atof (tokens[1].c_str ());
-      const Real domain_x_end = atof (tokens[2].c_str ());
-      const Real domain_y_start = atof (tokens[3].c_str ());
-      const Real domain_y_end = atof (tokens[4].c_str ());
-      const Real width = atof (tokens[5].c_str ());
-      const Real height = atof (tokens[6].c_str ());
-      const Real origin_x = atof (tokens[7].c_str ());
-      const Real origin_y = atof (tokens[8].c_str ());
+      const Real domain_x_start = stof (tokens[1]);
+      const Real domain_x_end = stof (tokens[2]);
+      const Real domain_y_start = stof (tokens[3]);
+      const Real domain_y_end = stof (tokens[4]);
+      const Real width = stof (tokens[5]);
+      const Real height = stof (tokens[6]);
+      const Real origin_x = stof (tokens[7]);
+      const Real origin_y = stof (tokens[8]);
       const Domain_1D domain_x (domain_x_start, domain_x_end);
       const Domain_1D domain_y (domain_y_start, domain_y_end);
       const Point_2D origin (origin_x, origin_y);
@@ -183,18 +183,18 @@ Transform_2D::get_transform_ptr (const string& str)
          domain_y, width, height, origin);
    }
    else
-   if (tokens[0] == "LOG")
+   if (tokens[0] == L"LOG")
    {
-      const Real domain_x_start = atof (tokens[1].c_str ());
-      const Real domain_x_end = atof (tokens[2].c_str ());
-      const Real domain_y_start = atof (tokens[3].c_str ());
-      const Real domain_y_end = atof (tokens[4].c_str ());
-      const Real width = atof (tokens[5].c_str ());
-      const Real height = atof (tokens[6].c_str ());
-      const Real origin_x = atof (tokens[7].c_str ());
-      const Real origin_y = atof (tokens[8].c_str ());
-      const bool log_x = (tokens[9] == "y");
-      const bool log_y = (tokens[10] == "y");
+      const Real domain_x_start = stof (tokens[1]);
+      const Real domain_x_end = stof (tokens[2]);
+      const Real domain_y_start = stof (tokens[3]);
+      const Real domain_y_end = stof (tokens[4]);
+      const Real width = stof (tokens[5]);
+      const Real height = stof (tokens[6]);
+      const Real origin_x = stof (tokens[7]);
+      const Real origin_y = stof (tokens[8]);
+      const bool log_x = (tokens[9] == L"y");
+      const bool log_y = (tokens[10] == L"y");
       const Domain_1D domain_x (domain_x_start, domain_x_end);
       const Domain_1D domain_y (domain_y_start, domain_y_end);
       const Point_2D origin (origin_x, origin_y);
@@ -202,34 +202,34 @@ Transform_2D::get_transform_ptr (const string& str)
          width, height, log_x, log_y, origin);
    }
    else
-   if (tokens[0] == "POLAR")
+   if (tokens[0] == L"POLAR")
    {
-      const Real x = atof (tokens[1].c_str ());
-      const Real y = atof (tokens[2].c_str ());
-      const Real scale = atof (tokens[3].c_str ());
+      const Real x = stof (tokens[1]);
+      const Real y = stof (tokens[2]);
+      const Real scale = stof (tokens[3]);
       return new Polar_Transform_2D (Point_2D (x, y), scale);
    }
    else
-   if (tokens[0] == "PARABOLIC")
+   if (tokens[0] == L"PARABOLIC")
    {
-      const Real x = atof (tokens[1].c_str ());
-      const Real y = atof (tokens[2].c_str ());
+      const Real x = stof (tokens[1]);
+      const Real y = stof (tokens[2]);
       return new Parabolic_Transform_2D (Point_2D (x, y));
    }
    else
-   if (tokens[0] == "ELLIPTIC")
+   if (tokens[0] == L"ELLIPTIC")
    {
-      const Real x = atof (tokens[1].c_str ());
-      const Real y = atof (tokens[2].c_str ());
-      const Real scale = atof (tokens[3].c_str ());
+      const Real x = stof (tokens[1]);
+      const Real y = stof (tokens[2]);
+      const Real scale = stof (tokens[3]);
       return new Elliptic_Transform_2D (Point_2D (x, y), scale);
    }
    else
-   if (tokens[0] == "BIPOLAR")
+   if (tokens[0] == L"BIPOLAR")
    {
-      const Real x = atof (tokens[1].c_str ());
-      const Real y = atof (tokens[2].c_str ());
-      const Real scale = atof (tokens[3].c_str ());
+      const Real x = stof (tokens[1]);
+      const Real y = stof (tokens[2]);
+      const Real scale = stof (tokens[3]);
       return new Bipolar_Transform_2D (Point_2D (x, y), scale);
    }
 

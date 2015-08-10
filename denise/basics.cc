@@ -18,9 +18,9 @@
 // You should have received a copy of the GNU General Public License
 // along with libdenise.  If not, see <http://www.gnu.org/licenses/>.
 
-#include "analysis.h"
 #include "basics.h"
 #include "dstring.h"
+#include "util.h"
 
 using namespace denise;
 using namespace Cairo;
@@ -115,7 +115,7 @@ Index_2D::Index_2D (const Index_1D i,
 
 Index_2D::Index_2D (const wstring& str)
 {
-   const Tokens tokens (str, wstring (L"x"));
+   const Tokens tokens (Dstring (str), L"x");
    this->i = stof (tokens[0]);
    this->j = (tokens.size () > 1 ? stoi (tokens[1]) : 0); 
 }
@@ -123,7 +123,7 @@ Index_2D::Index_2D (const wstring& str)
 wstring
 Index_2D::get_string () const
 {
-   return string_render ("(%d, %d)", i, j);
+   return Dstring::render (L"(%d, %d)", i, j);
 }
 
 bool
@@ -490,7 +490,7 @@ Point_2D::Point_2D (const Index_2D& index)
 
 Point_2D::Point_2D (const wstring& str)
 {
-   const Tokens tokens (str, wstring (L","));
+   const Tokens tokens (Dstring (str), L",");
    this->x = stof (tokens[0]);
    this->y = stof (tokens[1]);
 }
@@ -744,7 +744,7 @@ Tuple::add_content (const wstring& tuple_string,
 {
 
    if (clear_first) { clear (); }
-   const Tokens tokens (tuple_string, delimiter);
+   const Tokens tokens (Dstring (tuple_string), delimiter);
 
    for (auto iterator = tokens.begin ();
         iterator != tokens.end (); iterator++)
@@ -881,7 +881,7 @@ Ituple::add_content (const wstring& ituple_string,
 {
 
    if (clear_first) { clear (); }
-   const Tokens tokens (ituple_string, delimiter);
+   const Tokens tokens (Dstring (ituple_string), delimiter);
 
    for (auto iterator = tokens.begin ();
         iterator != tokens.end (); iterator++)
@@ -1026,7 +1026,7 @@ Domain_1D::normalize (const Real x,
 
 Domain_2D::Domain_2D (const wstring& str)
 {
-   const Tokens tokens (str, wstring (L":"));
+   const Tokens tokens (Dstring (str), L":");
    domain_x.start = stof (tokens[0]);
    domain_x.end = stof (tokens[1]);
    domain_y.start = stof (tokens[2]);
@@ -1142,7 +1142,7 @@ Domain_2D::get_random_point () const
    const Real start_y = domain_y.start;
    const Real end_y = domain_y.end;
 
-   return Point_2D (random (start_x, end_x), random (start_y, end_y));
+   return Point_2D (denise::random (start_x, end_x), denise::random (start_y, end_y));
 
 }
 
@@ -1233,12 +1233,12 @@ Domain_3D::translate (const Real delta_z,
 namespace denise
 {
 
-   ostream&
-   operator << (ostream& out_file,
+   wostream&
+   operator << (wostream& out_file,
                 const Index_nD& index_nd)
    {
 
-      out_file << "(";
+      out_file << L"(";
 
       for (Integer i = 0; i < index_nd.n; i++)
       {
@@ -1247,22 +1247,22 @@ namespace denise
 
          if (i != index_nd.n - 1)
          {
-            out_file << ", ";
+            out_file << L", ";
          }
 
       }
 
-      out_file << ")";
+      out_file << L")";
       return out_file;
 
    }
 
-   ostream&
-   operator << (ostream& out_file,
+   wostream&
+   operator << (wostream& out_file,
                 const Point_nD& point_nd)
    {
 
-      out_file << "(";
+      out_file << L"(";
 
       for (Integer i = 0; i < point_nd.n; i++)
       {
@@ -1271,58 +1271,58 @@ namespace denise
 
          if (i != point_nd.n - 1)
          {
-            out_file << ", ";
+            out_file << L", ";
          }
 
       }
 
-      out_file << ")";
+      out_file << L")";
       return out_file;
 
    }
 
-   ostream&
-   operator << (ostream &out_file,
+   wostream&
+   operator << (wostream &out_file,
                 const Index_2D& index)
    {
-      out_file << "(" << index.i << ", " << index.j << ")";
+      out_file << L"(" << index.i << L", " << index.j << L")";
       return out_file;
    }
 
-   ostream&
-   operator << (ostream &out_file,
+   wostream&
+   operator << (wostream &out_file,
                 const Index_3D& index)
    {
-      out_file << "(" << index.k << ", " << index.i << ", " << index.j << ")";
+      out_file << L"(" << index.k << L", " << index.i << L", " << index.j << L")";
       return out_file;
    }
 
-   ostream&
-   operator << (ostream &out_file,
+   wostream&
+   operator << (wostream &out_file,
                 const Box_2D& box_2d)
    {
-      out_file << "(" << box_2d.index_2d << ", " << box_2d.size_2d << ")";
+      out_file << L"(" << box_2d.index_2d << L", " << box_2d.size_2d << L")";
       return out_file;
    }
 
-   ostream&
-   operator << (ostream &out_file,
+   wostream&
+   operator << (wostream &out_file,
                 const Point_2D& point)
    {
-      out_file << "(" << point.x << ", " << point.y << ")";
+      out_file << L"(" << point.x << L", " << point.y << L")";
       return out_file;
    }
 
-   ostream&
-   operator << (ostream &out_file,
+   wostream&
+   operator << (wostream &out_file,
                 const Point_3D& point)
    {
-      out_file << "(" << point.z << ", " << point.x << ", " << point.y << ")";
+      out_file << L"(" << point.z << L", " << point.x << L", " << point.y << L")";
       return out_file;
    }
 
-   ostream&
-   operator << (ostream &out_file,
+   wostream&
+   operator << (wostream &out_file,
                 const Tuple& tuple)
    {
 
@@ -1331,15 +1331,15 @@ namespace denise
       {
          const Real& component = *(iterator);
          if (distance (iterator, tuple.end ()) == 1) { out_file << component; }
-         else { out_file << component << ":"; }
+         else { out_file << component << L":"; }
       }
 
       return out_file;
 
    }
 
-   ostream&
-   operator << (ostream &out_file,
+   wostream&
+   operator << (wostream &out_file,
                 const Ituple& ituple)
    {
 
@@ -1348,18 +1348,18 @@ namespace denise
       {
          const Real& component = *(iterator);
          if (distance (iterator, ituple.end ()) == 1) { out_file << component; }
-         else { out_file << component << ":"; }
+         else { out_file << component << L":"; }
       }
 
       return out_file;
 
    }
 
-   ostream&
-   operator << (ostream &out_file,
+   wostream&
+   operator << (wostream &out_file,
                 const Domain_1D& domain)
    {
-      out_file << "(" << domain.start << " -> " << domain.end << ")";
+      out_file << L"(" << domain.start << L" -> " << domain.end << L")";
       return out_file;
    }
 

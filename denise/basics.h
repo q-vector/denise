@@ -565,7 +565,7 @@ namespace denise
                 const set<Real>::const_iterator end);
 
          Tuple (const wstring& tuple_string,
-                const wstring& delimiter = wstring (L":"));
+                const wstring& delimiter = L":");
 
          Tuple (const Integer number_of_values,
                 const Real value);
@@ -585,7 +585,7 @@ namespace denise
 
          void
          add_content (const wstring& tuple_string,
-                      const wstring& delimiter = wstring (L":"),
+                      const wstring& delimiter = L":",
                       const bool clear_first = false);
 
          void
@@ -629,7 +629,7 @@ namespace denise
                  const set<Integer>::const_iterator end);
 
          Ituple (const wstring& ituple_string,
-                 const wstring& delimiter = wstring (L":"));
+                 const wstring& delimiter = L":");
 
          Ituple (const Integer number_of_values,
                  const Integer value);
@@ -649,7 +649,7 @@ namespace denise
 
          void
          add_content (const wstring& ituple_string,
-                      const wstring& delimiter = wstring (L":"),
+                      const wstring& delimiter = L":",
                       const bool clear_first = false);
 
          void
@@ -854,47 +854,47 @@ namespace denise
 
    };
 
-   ostream&
-   operator << (ostream& out_file,
+   wostream&
+   operator << (wostream& out_file,
                 const Index_nD& index_nd);
 
-   ostream&
-   operator << (ostream& out_file,
+   wostream&
+   operator << (wostream& out_file,
                 const Point_nD& point_nd);
 
-   ostream&
-   operator << (ostream &out_file,
+   wostream&
+   operator << (wostream &out_file,
                 const Index_2D& index);
 
-   ostream&
-   operator << (ostream &out_file,
+   wostream&
+   operator << (wostream &out_file,
                 const Index_3D& index);
  
-   ostream&
-   operator << (ostream &out_file,
+   wostream&
+   operator << (wostream &out_file,
                 const Box_2D& box_2d);
  
-   ostream&
-   operator << (ostream &out_file,
+   wostream&
+   operator << (wostream &out_file,
                 const Point_2D& point);
 
-   ostream&
-   operator << (ostream &out_file,
+   wostream&
+   operator << (wostream &out_file,
                 const Point_3D& point);
 
-   ostream&
-   operator << (ostream &out_file,
+   wostream&
+   operator << (wostream &out_file,
                 const Tuple& tuple);
-   ostream&
-   operator << (ostream &out_file,
+   wostream&
+   operator << (wostream &out_file,
                 const Ituple& ituple);
 
-   ostream&
-   operator << (ostream &out_file,
+   wostream&
+   operator << (wostream &out_file,
                 const Ituple& ituple);
 
-   ostream&
-   operator << (ostream &out_file,
+   wostream&
+   operator << (wostream &out_file,
                 const Domain_1D& domain);
 
 }

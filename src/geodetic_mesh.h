@@ -36,22 +36,22 @@ namespace andrea
 
       protected:
 
-         map<string, Geodetic_Mesh>
+         map<Dstring, Geodetic_Mesh>
          geodetic_mesh_map;
 
          Geodetic_Mesh_Package (Andrea& andrea);
 
          void
-         geodetic_mesh_assign (const string& identifier,
+         geodetic_mesh_assign (const Dstring& identifier,
                                const Size_2D& size_2d,
                                const Domain_2D& domain_2d);
 
          void
-         geodetic_mesh_add (const string& identifier,
+         geodetic_mesh_add (const Dstring& identifier,
                             const Tokens& arguments);
 
          void
-         geodetic_mesh_print (const string& identifier,
+         geodetic_mesh_print (const Dstring& identifier,
                               const Tokens& arguments) const;
 
          void
@@ -59,16 +59,16 @@ namespace andrea
 
       public:
 
-         const map<string, Geodetic_Mesh>&
+         const map<Dstring, Geodetic_Mesh>&
          get_geodetic_mesh_map () const;
 
          const Geodetic_Mesh&
-         get_geodetic_mesh (const string& identifier) const;
+         get_geodetic_mesh (const Dstring& identifier) const;
 
          void
-         surface_geodetic_mesh (const string& surface_identifier,
-                                const string& geodetic_transform_identifier,
-                                const string& geodetic_mesh_identifier);
+         surface_geodetic_mesh (const Dstring& surface_identifier,
+                                const Dstring& geodetic_transform_identifier,
+                                const Dstring& geodetic_mesh_identifier);
 
    };
 

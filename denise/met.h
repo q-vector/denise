@@ -296,9 +296,9 @@ namespace denise
          get_direction () const;
 
          /// Returns string_representation of direction of Wind
-         string
+         wstring
          get_direction_string (const Integer n = 16,
-                               const string& format = "") const;
+                               const wstring& format = L"") const;
 
          /// Returns speed of Wind
          Real
@@ -307,9 +307,9 @@ namespace denise
          bool
          is_naw () const;
 
-         string
+         wstring
          get_string (const Real speed_multiplier = 3.6/1.852,
-                     const string& format = "%03.0f/%02.0f") const;
+                     const wstring& format = L"%03.0f/%02.0f") const;
 
          static Category
          get_category (const Real speed);
@@ -417,11 +417,11 @@ namespace denise
          Real
          value;
 
-         string
+         wstring
          label_str;
 
          Wind_Rose_Threshold (const Real threshold = GSL_NAN,
-                              const string& label_str = string (""));
+                              const wstring& label_str = L"");
 
    };
 
@@ -438,7 +438,7 @@ namespace denise
 
          Wind_Rose_Record (const Real threshold,
                            const Real percentage,
-                           const string& label_str = string (""));
+                           const wstring& label_str = L"");
 
          Wind_Rose_Record (const Wind_Rose_Threshold& threshold,
                            const Real percentage);
@@ -468,7 +468,7 @@ namespace denise
 
       protected:
 
-         string
+         wstring
          unit_string;
 
          Real
@@ -495,27 +495,27 @@ namespace denise
          void
          init (const Integer number_of_directions,
                const vector<Wind_Rose_Threshold>& threshold_vector,
-               const string& unit_string,
+               const wstring& unit_string,
                const Real multiplier);
 
          void
          init (const Integer number_of_directions,
                const Tuple& threshold_tuple,
-               const string& unit_string,
+               const wstring& unit_string,
                const Real multiplier);
 
          void
-         init (const string& unit_string,
+         init (const wstring& unit_string,
                const Real multiplier);
 
          static Real
-         get_multiplier (const string& unit_string);
+         get_multiplier (const wstring& unit_string);
 
       public:
 
          Wind_Rose (const Integer number_of_directions,
                     const vector<Wind_Rose_Threshold>& threshold_vector,
-                    const string& unit_string = "kt",
+                    const wstring& unit_string = L"kt",
                     const Real multiplier = GSL_NAN);
 
          /// Constructor
@@ -524,7 +524,7 @@ namespace denise
          /// \param threshold_vector     vector holding speed thresholds
          Wind_Rose (const Integer number_of_directions,
                     const Tuple& threshold_tuple,
-                    const string& unit_string = "kt",
+                    const wstring& unit_string = L"kt",
                     const Real multiplier = GSL_NAN);
 
          /// Constructor
@@ -532,8 +532,8 @@ namespace denise
          /// \param number_of_directions    number_of_directions of wind_rose
          /// \param threshold_vector_string string representing threshold vector
          Wind_Rose (const Integer number_of_directions,
-                    const string& threshold_vector_string,
-                    const string& unit_string = "kt",
+                    const wstring& threshold_vector_string,
+                    const wstring& unit_string = L"kt",
                     const Real multiplier = GSL_NAN);
 
          ~Wind_Rose ();
@@ -817,7 +817,7 @@ namespace denise
                     const Real scatter_ring_size = 10,
                     const Real calm_radius = 40,
                     const Real label_height = 24,
-                    const string& unit_string = "kt",
+                    const wstring& unit_string = L"kt",
                     const Real multiplier = GSL_NAN);
 
          ~Wind_Disc ();
@@ -1154,7 +1154,7 @@ namespace denise
          Real
          get_value () const;
 
-         string
+         wstring
          get_string () const;
 
          Level

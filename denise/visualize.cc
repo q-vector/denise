@@ -1547,7 +1547,7 @@ Contour::trace_isoline (Isoline& isoline,
 Polygon*
 Contour::render_label (const RefPtr<Context>& cr,
                        const Transform_2D& transform,
-                       const string& label_string,
+                       const wstring& format,
                        const Real label_multiplier,
                        const Real label_offset,
                        const Real label_distance,
@@ -1605,11 +1605,11 @@ Contour::render_label (const RefPtr<Context>& cr,
 
                   if (gsl_isnan (theta)) { continue; }
                 
-                  if (label_string != "")
+                  if (format != L"")
                   {
 
-                     const char* c_str = label_string.c_str ();
-                     const string str = string_render (c_str, cl);
+                     const string fmt (format.begin (), format.end ());
+                     const wstring str = string_render (fmt.c_str (), cl);
                      Label label (str, this_p, 'c', 'c');
                      label.set_text_angle (theta);
                      label.cairo (cr);
@@ -2759,7 +2759,7 @@ void
 Contour::render_isoline (const RefPtr<Context>& cr,
                          const Transform_2D& transform,
                          const Integer level_index,
-                         const string& label_string,
+                         const wstring& format,
                          const Real label_multiplier,
                          const Real label_offset,
                          const Real label_distance,
@@ -2780,7 +2780,7 @@ Contour::render_isoline (const RefPtr<Context>& cr,
          ls = std::min (size_2d.i, size_2d.j) * 3 / 4;
       }
 
-      clip_polygon_ptr = render_label (cr, transform, label_string,
+      clip_polygon_ptr = render_label (cr, transform, format,
          label_multiplier, label_offset, label_distance, ls);
 
    }
@@ -2820,7 +2820,7 @@ Contour::render_isoline (const RefPtr<Context>& cr,
 void
 Contour::render_isolines (const RefPtr<Context>& cr,
                           const Transform_2D& transform,
-                          const string& label_string,
+                          const wstring& format,
                           const Real label_multiplier,
                           const Real label_offset,
                           const Real label_distance,
@@ -2843,7 +2843,7 @@ Contour::render_isolines (const RefPtr<Context>& cr,
          ls = std::min (size_2d.i, size_2d.j) * 3 / 4;
       }
 
-      clip_polygon_ptr = render_label (cr, transform, label_string,
+      clip_polygon_ptr = render_label (cr, transform, format,
          label_multiplier, label_offset, label_distance, ls);
 
    }

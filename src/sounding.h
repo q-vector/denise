@@ -36,7 +36,7 @@ namespace andrea
 
       protected:
 
-         map<string, Sounding>
+         map<Dstring, Sounding>
          sounding_map;
 
          Tephigram
@@ -45,11 +45,11 @@ namespace andrea
          Sounding_Package (Andrea& andrea);
 
          void
-         sounding_load (const string& identifier,
-                        const string& file_path);
+         sounding_load (const Dstring& identifier,
+                        const Dstring& file_path);
 
          void
-         sounding_print (const string& identifier,
+         sounding_print (const Dstring& identifier,
                          const Tokens& arguments) const;
 
          void
@@ -57,11 +57,11 @@ namespace andrea
 
       public:
 
-         const map<string, Sounding>&
+         const map<Dstring, Sounding>&
          get_sounding_map () const;
 
          const Sounding&
-         get_sounding (const string& identifier) const;
+         get_sounding (const Dstring& identifier) const;
 
          void
          surface_sounding (const Tokens& tokens) const;
@@ -77,10 +77,10 @@ namespace andrea
                                  const Transform_2D& transform,
                                  const bool is_p,
                                  const Mesh_2D& mesh_2d,
-                                 const string& fmt_x,
-                                 const string& fmt_y,
-                                 const string& unit_x,
-                                 const string& unit_y,
+                                 const Dstring& fmt_x,
+                                 const Dstring& fmt_y,
+                                 const Dstring& unit_x,
+                                 const Dstring& unit_y,
                                  const Sounding& sounding,
                                  const Real_Profile& real_profile,
                                  const Symbol& symbol,

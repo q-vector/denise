@@ -31,7 +31,7 @@ Geodetic_Mesh_Package::Geodetic_Mesh_Package (Andrea& andrea)
 }
 
 void
-Geodetic_Mesh_Package::geodetic_mesh_assign (const string& identifier,
+Geodetic_Mesh_Package::geodetic_mesh_assign (const Dstring& identifier,
                                              const Size_2D& size_2d,
                                              const Domain_2D& domain_2d)
 {
@@ -40,7 +40,7 @@ Geodetic_Mesh_Package::geodetic_mesh_assign (const string& identifier,
 }
 
 void
-Geodetic_Mesh_Package::geodetic_mesh_add (const string& identifier,
+Geodetic_Mesh_Package::geodetic_mesh_add (const Dstring& identifier,
                                           const Tokens& arguments)
 {
 
@@ -72,14 +72,14 @@ Geodetic_Mesh_Package::geodetic_mesh_add (const string& identifier,
 }
 
 void
-Geodetic_Mesh_Package::geodetic_mesh_print (const string& identifier,
+Geodetic_Mesh_Package::geodetic_mesh_print (const Dstring& identifier,
                                             const Tokens& arguments) const
 {
    auto iterator = geodetic_mesh_map.find (identifier);
    const bool is_present = (iterator != geodetic_mesh_map.end ());
    if (is_present)
    {
-      cout << "geodetic_mesh " << identifier << " is present" << endl;
+      wcout << L"geodetic_mesh " << identifier << L" is present" << endl;
    }
 }
 
@@ -89,46 +89,46 @@ Geodetic_Mesh_Package::geodetic_mesh_parse (const Tokens& tokens)
 
    const Integer n = tokens.size ();
 
-   if (tokens[0] == "assign")
+   if (tokens[0] == L"assign")
    {
-      const string& identifier = tokens[1];
+      const Dstring& identifier = tokens[1];
       const Size_2D size_2d (tokens[2]);
       const Domain_2D domain_2d (tokens[3]);
       geodetic_mesh_assign (identifier, size_2d, domain_2d);
    }
    else
-   if (tokens[0] == "add")
+   if (tokens[0] == L"add")
    {
-      const string& identifier = tokens[1];
+      const Dstring& identifier = tokens[1];
       geodetic_mesh_add (identifier, tokens.subtokens (2));
    }
    else
-   if (tokens[0] == "print")
+   if (tokens[0] == L"print")
    {
-      const string& identifier = tokens[1];
+      const Dstring& identifier = tokens[1];
       geodetic_mesh_print (identifier, tokens.subtokens (2));
    }
 
 }
 
-const map<string, Geodetic_Mesh>&
+const map<Dstring, Geodetic_Mesh>&
 Geodetic_Mesh_Package::get_geodetic_mesh_map () const
 {
    return geodetic_mesh_map;
 }
 
 const Geodetic_Mesh&
-Geodetic_Mesh_Package::get_geodetic_mesh (const string& identifier) const
+Geodetic_Mesh_Package::get_geodetic_mesh (const Dstring& identifier) const
 {
-   Exception e ("geodetic_mesh not found: " + identifier);
+   Exception e (L"geodetic_mesh not found: " + identifier);
    try { return geodetic_mesh_map.at (identifier); }
    catch (const std::out_of_range& oor) { throw e; }
 }
 
 void
-Geodetic_Mesh_Package::surface_geodetic_mesh (const string& surface_identifier,
-                                              const string& geodetic_transform_identifier,
-                                              const string& geodetic_mesh_identifier)
+Geodetic_Mesh_Package::surface_geodetic_mesh (const Dstring& surface_identifier,
+                                              const Dstring& geodetic_transform_identifier,
+                                              const Dstring& geodetic_mesh_identifier)
 {
 
    const RefPtr<Surface>& surface = andrea.get_surface (surface_identifier);

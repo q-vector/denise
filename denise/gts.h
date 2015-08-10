@@ -38,7 +38,7 @@ namespace denise
          const Dtime
          time_hint;
 
-         string
+         Dstring
          yygg;
 
          Integer
@@ -46,27 +46,27 @@ namespace denise
 
       public:
 
-         Gts (const string& message,
+         Gts (const Dstring& message,
               const Dtime& time_hint = Dtime::now ());
 
-         string
+         Dstring
          get_yygg () const;
 
-         string
+         Dstring
          get_time_string () const;
 
-         const string& 
+         const Dstring& 
          get_wmo_id () const;
 
-         string
+         Dstring
          get_key () const;
 
          static Tokens*
-         parse_file (const string& file_path);
+         parse_file (const Dstring& file_path);
 
    };
 
-   class Gts_Ptr_Store : public map<string, Gts*>
+   class Gts_Ptr_Store : public map<Dstring, Gts*>
    {
 
       public:
@@ -74,43 +74,43 @@ namespace denise
          ~Gts_Ptr_Store ();
 
          void
-         ingest (const string& message,
+         ingest (const Dstring& message,
                  const Dtime& time_hint);
 
          const Gts&
-         get_gts (const string& gts_key) const;
+         get_gts (const Dstring& gts_key) const;
 
    };
 
-   class Gts_Ptr_Grandstore : public map<string, Gts_Ptr_Store>
+   class Gts_Ptr_Grandstore : public map<Dstring, Gts_Ptr_Store>
    {
 
       private:
 
          void
-         ingest (const string& genre,
-                 const string& message,
+         ingest (const Dstring& genre,
+                 const Dstring& message,
                  const Dtime& time_hint);
 
       public:
 
          void
-         ingest (const string& message,
+         ingest (const Dstring& message,
                  const Dtime& time_hint);
 
          void
-         ingest_file (const string& file_path);
+         ingest_file (const Dstring& file_path);
 
          void
-         ingest_dir (const string& dir_path,
+         ingest_dir (const Dstring& dir_path,
                      const Reg_Exp& file_reg_exp);
 
          const Gts_Ptr_Store&
-         get_gts_ptr_store (const string& genre) const;
+         get_gts_ptr_store (const Dstring& genre) const;
 
          const Gts&
-         get_gts (const string& genre,
-                  const string& gts_key) const;
+         get_gts (const Dstring& genre,
+                  const Dstring& gts_key) const;
 
    };
 
@@ -120,17 +120,17 @@ namespace denise
       protected:
 
          pair<Real, Real>
-         parse_tttdd (const string& tttdd) const;
+         parse_tttdd (const Dstring& tttdd) const;
 
          Wind
-         parse_ddfff (const string& ddfff) const;
+         parse_ddfff (const Dstring& ddfff) const;
 
          bool
          use_knots () const;
 
       public:
 
-         Temp (const string& message,
+         Temp (const Dstring& message,
                const Dtime& time_hint);
 
          virtual void
@@ -143,7 +143,7 @@ namespace denise
 
       protected:
 
-         const char
+         const wchar_t
          get_highest_wind_code () const;
 
          Integer
@@ -155,7 +155,7 @@ namespace denise
                                 Integer& index) const;
 
          pair<Real, Real>
-         parse_pphhh (const string& pphhh) const;
+         parse_pphhh (const Dstring& pphhh) const;
 
          virtual void
          interpret_p_z (const Integer pp,
@@ -167,7 +167,7 @@ namespace denise
 
       public:
 
-         Ttac (const string& message,
+         Ttac (const Dstring& message,
                const Dtime& time_hint);
 
    };
@@ -178,7 +178,7 @@ namespace denise
       protected:
 
          virtual Real
-         parse_nnppp (const string& nnppp) const = 0;
+         parse_nnppp (const Dstring& nnppp) const = 0;
 
          bool
          parse_significant_temperature_levels (Sounding& sounding,
@@ -190,7 +190,7 @@ namespace denise
 
       public:
 
-         Ttbd (const string& message,
+         Ttbd (const Dstring& message,
                const Dtime& time_hint);
 
    };
@@ -210,7 +210,7 @@ namespace denise
 
       public:
 
-         Ttaa (const string& message,
+         Ttaa (const Dstring& message,
                const Dtime& time_hint);
 
          void
@@ -224,11 +224,11 @@ namespace denise
       protected:
 
          Real
-         parse_nnppp (const string& nnppp) const;
+         parse_nnppp (const Dstring& nnppp) const;
 
       public:
 
-         Ttbb (const string& message,
+         Ttbb (const Dstring& message,
                const Dtime& time_hint);
 
          void
@@ -251,7 +251,7 @@ namespace denise
 
       public:
 
-         Ttcc (const string& message,
+         Ttcc (const Dstring& message,
                const Dtime& time_hint);
 
          void
@@ -265,11 +265,11 @@ namespace denise
       protected:
 
          Real
-         parse_nnppp (const string& nnppp) const;
+         parse_nnppp (const Dstring& nnppp) const;
 
       public:
 
-         Ttdd (const string& message,
+         Ttdd (const Dstring& message,
                const Dtime& time_hint);
 
          void
@@ -281,7 +281,7 @@ namespace denise
    {
    };
 
-   class Temp_Sounding_Store : public map<string, Temp_Sounding>
+   class Temp_Sounding_Store : public map<Dstring, Temp_Sounding>
    {
    };
 

@@ -274,8 +274,8 @@ namespace denise
 
                Key (const Key& key);
 
-               ostream&
-               operator << (ostream& out);
+               wostream&
+               operator << (wostream& out);
 
          };
 
@@ -320,7 +320,7 @@ namespace denise
 
       private:
 
-         const string
+         const Dstring
          file_path;
 
          map<Grib::Key, Grib::Header*>
@@ -328,7 +328,7 @@ namespace denise
 
       public:
 
-         Grib (const string& file_path);
+         Grib (const Dstring& file_path);
 
          ~Grib ();
 
@@ -751,7 +751,7 @@ namespace denise
 
       private:
 
-         const string
+         const Dstring
          file_path;
 
          map<Grib2::Key, Grib2::Header*>
@@ -765,7 +765,7 @@ namespace denise
 
       public:
 
-         Grib2 (const string& file_path);
+         Grib2 (const Dstring& file_path);
 
          ~Grib2 ();
 
@@ -785,12 +785,12 @@ namespace denise
 
    };
 
-   ostream&
-   operator << (ostream &out_file,
+   wostream&
+   operator << (wostream &out_file,
                 const Grib::Key& key);
 
-   ostream&
-   operator << (ostream &out_file,
+   wostream&
+   operator << (wostream &out_file,
                 const Grib2::Key& key);
 
    class Access : public Nwp,
@@ -823,10 +823,10 @@ namespace denise
          const bool
          omega_as_w;
 
-         const string
+         const Dstring
          data_path;
 
-         const string
+         const Dstring
          search_string;
 
          Size_2D
@@ -920,9 +920,9 @@ namespace denise
 
       public:
 
-         Access (const string& description,
-                 const string& data_path,
-                 const string& search_string,
+         Access (const Dstring& description,
+                 const Dstring& data_path,
+                 const Dstring& search_string,
                  const bool omega_as_w = false);
 
          ~Access ();
@@ -965,10 +965,10 @@ namespace denise
          const bool
          omega_as_w;
 
-         const string
+         const Dstring
          data_path;
 
-         const string
+         const Dstring
          search_string;
 
          map<Real, Size_2D>
@@ -1062,9 +1062,9 @@ namespace denise
 
       public:
 
-         Ecmwf (const string& description,
-                const string& data_path,
-                const string& search_string,
+         Ecmwf (const Dstring& description,
+                const Dstring& data_path,
+                const Dstring& search_string,
                 const bool omega_as_w = false);
 
          ~Ecmwf ();
@@ -1101,7 +1101,7 @@ namespace denise
 
          };
 
-         const string
+         const Dstring
          data_path;
 
          Size_2D
@@ -1219,7 +1219,7 @@ namespace denise
 
       public:
 
-         Gfs3 (const string& data_path);
+         Gfs3 (const Dstring& data_path);
 
          ~Gfs3 ();
 
@@ -1269,7 +1269,7 @@ namespace denise
 
          };
 
-         const string
+         const Dstring
          data_path;
 
          Size_2D
@@ -1394,7 +1394,7 @@ namespace denise
 
       public:
 
-         Gfs4 (const string& data_path);
+         Gfs4 (const Dstring& data_path);
 
          ~Gfs4 ();
 
@@ -1444,7 +1444,7 @@ namespace denise
 
          };
 
-         const string
+         const Dstring
          data_path;
 
          Size_2D
@@ -1569,7 +1569,7 @@ namespace denise
 
       public:
 
-         Gfs (const string& data_path);
+         Gfs (const Dstring& data_path);
 
          ~Gfs ();
 

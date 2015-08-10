@@ -41,8 +41,8 @@ Gshhs_Package::~Gshhs_Package ()
 }
 
 void
-Gshhs_Package::gshhs_load (const string& identifier,
-                           const string& file_path)
+Gshhs_Package::gshhs_load (const Dstring& identifier,
+                           const Dstring& file_path)
 {
 
    auto iterator = gshhs_ptr_map.find (identifier);
@@ -55,14 +55,14 @@ Gshhs_Package::gshhs_load (const string& identifier,
 }
 
 void
-Gshhs_Package::gshhs_print (const string& identifier,
+Gshhs_Package::gshhs_print (const Dstring& identifier,
                             const Tokens& arguments) const
 {
    auto iterator = gshhs_ptr_map.find (identifier);
    const bool is_present = (iterator != gshhs_ptr_map.end ());
    if (is_present)
    {
-      cout << "gshhs " << identifier << " is present" << endl;
+      wcout << L"gshhs " << identifier << L" is present" << endl;
    }
 }
 
@@ -72,39 +72,39 @@ Gshhs_Package::gshhs_parse (const Tokens& tokens)
 
    const Integer n = tokens.size ();
 
-   if (tokens[0] == "load")
+   if (tokens[0] == L"load")
    {
-      const string& identifier = tokens[1];
-      const string& file_path = tokens[2];
+      const Dstring& identifier = tokens[1];
+      const Dstring& file_path = tokens[2];
       gshhs_load (identifier, file_path);
    }
    else
-   if (tokens[0] == "print")
+   if (tokens[0] == L"print")
    {
-      const string& identifier = tokens[1];
+      const Dstring& identifier = tokens[1];
       gshhs_print (identifier, tokens.subtokens (2));
    }
 
 }
 
-const map<string, Gshhs*>&
+const map<Dstring, Gshhs*>&
 Gshhs_Package::get_gshhs_ptr_map () const
 {
    return gshhs_ptr_map;
 }
 
 const Gshhs*
-Gshhs_Package::get_gshhs_ptr (const string& identifier) const
+Gshhs_Package::get_gshhs_ptr (const Dstring& identifier) const
 {
-   Exception e ("gshhs not found: " + identifier);
+   Exception e (L"gshhs not found: " + identifier);
    try { return gshhs_ptr_map.at (identifier); }
    catch (const std::out_of_range& oor) { throw e; }
 }
 
 void
-Gshhs_Package::surface_gshhs (const string& surface_identifier,
-                              const string& geodetic_transform_identifier,
-                              const string& gshhs_identifier,
+Gshhs_Package::surface_gshhs (const Dstring& surface_identifier,
+                              const Dstring& geodetic_transform_identifier,
+                              const Dstring& gshhs_identifier,
                               const Tokens& arguments)
 {
 
@@ -123,12 +123,12 @@ Gshhs_Package::surface_gshhs (const string& surface_identifier,
    for (auto iterator = arguments.begin ();
         iterator != arguments.end (); iterator++)
    {
-      const Tokens tokens (get_lower_case (*iterator), "=");
-      const string& option = tokens[0];
-      const string& value = tokens[1];
-      if (option == "fill")
+      const Tokens tokens (iterator->get_lower_case (), L"=");
+      const Dstring& option = tokens[0];
+      const Dstring& value = tokens[1];
+      if (option == L"fill")
       {
-         is_fill = (value == "yes" || value == "y" || value == "true");
+         is_fill = (value == L"yes" || value == L"y" || value == L"true");
       }
    }
 

@@ -36,102 +36,102 @@ namespace andrea
 
       protected:
 
-         map<string, RefPtr<Surface> >
+         map<Dstring, RefPtr<Surface> >
          surface_map;
 
-         map<string, Size_2D>
+         map<Dstring, Size_2D>
          size_2d_map;
 
-         map<string, string>
+         map<Dstring, Dstring>
          extension_map;
 
-         map<string, RefPtr<Context> >
+         map<Dstring, RefPtr<Context> >
          cr_map;
 
          Surface_Package (Andrea& andrea);
 
          void
-         surface_init (const string& identifier,
-                       const string& format,
-                       const string& geometry);
+         surface_init (const Dstring& identifier,
+                       const Dstring& format,
+                       const Dstring& geometry);
 
          void
-         surface_show (const string& identifier) const;
+         surface_show (const Dstring& identifier) const;
 
 
          void
-         surface_finish (const string& identifier);
+         surface_finish (const Dstring& identifier);
 
          void
-         surface_write (const string& identifier,
-                        const string& file_path) const;
+         surface_write (const Dstring& identifier,
+                        const Dstring& file_path) const;
 
          void
-         surface_save (const string& identifier) const;
+         surface_save (const Dstring& identifier) const;
 
          void
-         surface_restore (const string& identifier) const;
+         surface_restore (const Dstring& identifier) const;
 
          void
-         surface_stroke (const string& identifier) const;
+         surface_stroke (const Dstring& identifier) const;
 
          void
-         surface_stroke_preserve (const string& identifier) const;
+         surface_stroke_preserve (const Dstring& identifier) const;
 
          void
-         surface_fill (const string& identifier) const;
+         surface_fill (const Dstring& identifier) const;
 
          void
-         surface_fill_preserve (const string& identifier) const;
+         surface_fill_preserve (const Dstring& identifier) const;
 
          void
-         surface_clip (const string& identifier) const;
+         surface_clip (const Dstring& identifier) const;
 
          void
-         surface_clip_preserve (const string& identifier) const;
+         surface_clip_preserve (const Dstring& identifier) const;
 
          void
-         surface_color (const string& identifier,
+         surface_color (const Dstring& identifier,
                         const Color& color) const;
 
          void
-         surface_line_width (const string& identifier,
+         surface_line_width (const Dstring& identifier,
                              const Real line_width) const;
 
          void
-         surface_font_size (const string& identifier,
+         surface_font_size (const Dstring& identifier,
                             const Real font_size) const;
 
          void
-         surface_font_face (const string& identifier,
-                            const string& font_face) const;
+         surface_font_face (const Dstring& identifier,
+                            const Dstring& font_face) const;
 
          void
-         surface_paint (const string& identifier) const;
+         surface_paint (const Dstring& identifier) const;
 
          void
-         surface_edge (const string& identifier,
+         surface_edge (const Dstring& identifier,
                        const Tokens& arguments) const;
 
          void
-         surface_circle (const string& identifier,
+         surface_circle (const Dstring& identifier,
                          const Tokens& arguments) const;
 
          void
-         surface_ellipse (const string& identifier,
+         surface_ellipse (const Dstring& identifier,
                           const Tokens& arguments) const;
 
          void
-         surface_label (const string& identifier,
+         surface_label (const Dstring& identifier,
                         const Tokens& arguments) const;
 
          void
-         surface_title (const string& identifier,
+         surface_title (const Dstring& identifier,
                         const Tokens& tokens) const;
 
          void
-         surface_range_circle (const string& surface_identifier,
-                               const string& geodetic_transform_identifier,
+         surface_range_circle (const Dstring& surface_identifier,
+                               const Dstring& geodetic_transform_identifier,
                                const Lat_Long& lat_long,
                                const Real distance) const;
 
@@ -140,29 +140,29 @@ namespace andrea
 
       public:
 
-         const map<string, RefPtr<Surface> >&
+         const map<Dstring, RefPtr<Surface> >&
          get_surface_map () const;
 
-         const map<string, Size_2D>&
+         const map<Dstring, Size_2D>&
          get_size_2d_map () const;
 
-         const map<string, string>&
+         const map<Dstring, Dstring>&
          get_extension_map () const;
 
-         const map<string, RefPtr<Context> >&
+         const map<Dstring, RefPtr<Context> >&
          get_cr_map () const;
 
          const RefPtr<Surface>&
-         get_surface (const string& identifier) const;
+         get_surface (const Dstring& identifier) const;
 
          const Size_2D&
-         get_size_2d (const string& identifier) const;
+         get_size_2d (const Dstring& identifier) const;
 
-         const string&
-         get_extension (const string& identifier) const;
+         const Dstring&
+         get_extension (const Dstring& identifier) const;
 
          const RefPtr<Context>&
-         get_cr (const string& identifier) const;
+         get_cr (const Dstring& identifier) const;
 
    };
 

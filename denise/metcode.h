@@ -38,10 +38,10 @@ namespace denise
 
       public:
 
-         string
+         Dstring
          id;
 
-         string
+         Dstring
          name;
 
          Lat_Long
@@ -52,27 +52,27 @@ namespace denise
 
          Location ();
 
-         Location (const string& str,
-                   const string& separator,
+         Location (const Dstring& str,
+                   const Dstring& separator,
                    const Integer id_index,
                    const Integer name_index,
                    const Integer latitude_index,
                    const Integer longitude_index);
 
-         Location (const string& str,
-                   const string& separator,
+         Location (const Dstring& str,
+                   const Dstring& separator,
                    const Integer id_index,
                    const Integer name_index,
                    const Integer latitude_index,
                    const Integer longitude_index,
                    const Integer height_index);
 
-         Location (const string& id,
-                   const string& name,
+         Location (const Dstring& id,
+                   const Dstring& name,
                    const Lat_Long& lat_long);
 
-         Location (const string& id,
-                   const string& name,
+         Location (const Dstring& id,
+                   const Dstring& name,
                    const Lat_Long& lat_long,
                    const Real height);
 
@@ -84,7 +84,7 @@ namespace denise
 
    };
 
-   class Location_Map : public map<string, Location>
+   class Location_Map : public map<Dstring, Location>
    {
 
       public:
@@ -94,7 +94,7 @@ namespace denise
 
    };
 
-   class Location_Multimap : public multimap<string, Location>
+   class Location_Multimap : public multimap<Dstring, Location>
    {
 
       public:
@@ -122,7 +122,7 @@ namespace denise
 
          Metar_Wind ();
 
-         Metar_Wind (const string& metar_wind_string);
+         Metar_Wind (const Dstring& metar_wind_string);
 
          Real
          get_gust () const;
@@ -142,13 +142,13 @@ namespace denise
                Dtime
                time;
 
-               string
+               Dstring
                station_name;
 
                Key ();
 
                Key (const Dtime& time,
-                    const string& station_name);
+                    const Dstring& station_name);
 
                bool
                operator == (const Key& key) const;
@@ -182,10 +182,10 @@ namespace denise
          Real
          visibility;
 
-         string
+         Dstring
          cloud;
 
-         string
+         Dstring
          weather;
 
          Real
@@ -200,29 +200,29 @@ namespace denise
          Real
          visibility_auto;
 
-         string
+         Dstring
          cloud_auto;
 
          void
-         read_t_td (const string& token);
+         read_t_td (const Dstring& token);
 
          void
-         read_qnh (const string& token);
+         read_qnh (const Dstring& token);
 
          void
-         read_rainfall (const string& token);
+         read_rainfall (const Dstring& token);
 
       public:
 
-         Metar (const string& metar_string);
+         Metar (const Dstring& metar_string);
 
-         string
+         Dstring
          get_string () const;
 
          const Dtime&
          get_time () const;
 
-         const string&
+         const Dstring&
          get_station_name () const;
 
          const Real&
@@ -275,19 +275,19 @@ namespace denise
 
       private:
 
-         string
+         Dstring
          dir_path;
 
-         string
+         Dstring
          file_format;
 
-         map<string, Lat_Long>
+         map<Dstring, Lat_Long>
          station_name_lat_long_map;
 
          set<Dtime>
          time_set;
 
-         map<string, Station_Metars*>
+         map<Dstring, Station_Metars*>
          station_metars_ptr_map;
 
          void
@@ -297,24 +297,24 @@ namespace denise
 
          Metars ();
 
-         Metars (const string& dir_path,
-                 const string& file_format);
+         Metars (const Dstring& dir_path,
+                 const Dstring& file_format);
 
-         Metars (const string& dir_path,
-                 const string& file_format,
+         Metars (const Dstring& dir_path,
+                 const Dstring& file_format,
                  const Location_Map& location_map);
 
-         Metars (const string& dir_path,
-                 const string& file_format,
+         Metars (const Dstring& dir_path,
+                 const Dstring& file_format,
                  const Location_Multimap& location_multimap);
 
          ~Metars ();
 
          void
-         setup (const string& dir_path,
-                const string& file_format);
+         setup (const Dstring& dir_path,
+                const Dstring& file_format);
 
-         string
+         Dstring
          get_status () const;
 
          void
@@ -327,41 +327,41 @@ namespace denise
          reload (const Location_Multimap& location_multimap);
 
          void
-         read (const string& dir_path,
-               const string& file_format);
+         read (const Dstring& dir_path,
+               const Dstring& file_format);
 
          void
-         read (const string& dir_path,
-               const string& file_format,
+         read (const Dstring& dir_path,
+               const Dstring& file_format,
                const Location_Map& location_map);
 
          void
-         read (const string& dir_path,
-               const string& file_format,
+         read (const Dstring& dir_path,
+               const Dstring& file_format,
                const Location_Multimap& location_multimap);
 
          void
-         read (const string& file_path);
+         read (const Dstring& file_path);
 
          void
-         read (const string& file_path,
+         read (const Dstring& file_path,
                const Location_Map& location_map);
 
          void
-         read (const string& file_path,
+         read (const Dstring& file_path,
                const Location_Multimap& location_multimap);
 
          void
          construct_station_metars_ptr_map ();
 
-         const map<string, Lat_Long>&
+         const map<Dstring, Lat_Long>&
          get_station_name_lat_long_map () const;
 
          void
          attract (Real& latitude,
                   Real& longitude) const;
 
-         map<string, Lat_Long>::const_iterator
+         map<Dstring, Lat_Long>::const_iterator
          get_nearest_station_name_lat_long (const Lat_Long& lat_long) const;
 
          const Metar&
@@ -369,16 +369,16 @@ namespace denise
                             const Lat_Long& lat_long) const;
 
          const Lat_Long&
-         get_lat_long (const string& station_name) const;
+         get_lat_long (const Dstring& station_name) const;
 
          const set<Dtime>&
          get_time_set () const;
 
          const Station_Metars&
-         get_station_metars (const string& station_name) const;
+         get_station_metars (const Dstring& station_name) const;
 
          Station_Metars&
-         get_station_metars (const string& station_name);
+         get_station_metars (const Dstring& station_name);
 
          const Station_Metars&
          get_station_metars (const Lat_Long& lat_long) const;
@@ -388,12 +388,12 @@ namespace denise
 
          const Metar&
          get_metar (const Dtime& time,
-                    const string& station_name) const;
+                    const Dstring& station_name) const;
 
          vector<const Metar*>
          get_metar_ptr_vector (const Dtime& time) const;
 
-         pair<string, Lat_Long>
+         pair<Dstring, Lat_Long>
          nearest (const Lat_Long& lat_long) const;
 
    };
@@ -403,16 +403,16 @@ namespace denise
 
       private:
 
-         const string
+         const Dstring
          station_name;
 
       public:
 
          Station_Metars (const Metars& metars,
-                         const string& station_name);
+                         const Dstring& station_name);
 
          Station_Metars (const Metars& metars,
-                         const string& station_name,
+                         const Dstring& station_name,
                          const Dtime& start_time,
                          const Dtime& end_time);
 

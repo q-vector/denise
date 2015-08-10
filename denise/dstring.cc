@@ -23,7 +23,184 @@
 using namespace std;
 using namespace denise;
 
-Reg_Exp::Reg_Exp (const wstring& reg_exp_str,
+Dstring::Dstring ()
+{
+}
+
+Dstring::Dstring (const Dstring& dstring)
+   : wstring (dstring)
+{
+}
+
+Dstring::Dstring (const wstring& wstr)
+   : wstring (wstr)
+{
+}
+
+Dstring::Dstring (const wchar_t* buffer)
+   : wstring (buffer)
+{
+}
+
+Dstring::Dstring (const string& str)
+   : wstring (str.begin (), str.end ())
+{
+}
+
+Dstring::Dstring (const char* buffer)
+{
+   const string str (buffer);
+   this->assign (wstring (str.begin (), str.end ()));
+}
+
+string
+Dstring::get_string () const
+{
+   return string (begin (), end ());
+}
+
+void
+Dstring::to_lower_case ()
+{
+   transform (begin (), end (), begin (), ::tolower);
+}
+   
+void
+Dstring::to_upper_case ()
+{
+   transform (begin (), end (), begin (), ::toupper);
+}
+
+void
+Dstring::to_capital_case ()
+{
+
+   bool first_char = true;
+
+   for (auto iterator = begin (); iterator != end (); iterator++)
+   {
+
+      wchar_t& c = *(iterator);
+
+      if (!first_char) { c = ::tolower (c); }
+      else { c = ::toupper (c), first_char = false; }
+
+      if (!isalnum (c)) { first_char = true; }
+
+   }
+
+}
+
+void
+Dstring::chop ()
+{
+   erase (size () - 1);
+}
+
+void
+Dstring::trim (const Dstring& white_string)
+{
+   left_trim (white_string);
+   right_trim (white_string);
+}
+
+void
+Dstring::left_trim (const Dstring& white_string)
+{
+   erase (0, find_first_not_of (white_string));
+}
+
+void
+Dstring::right_trim (const Dstring& white_string)
+{
+   erase (find_last_not_of (white_string) + 1); 
+}
+
+Dstring
+Dstring::get_lower_case () const
+{
+   Dstring str (*this);
+   str.to_lower_case ();
+   return str;
+}
+
+Dstring
+Dstring::get_upper_case () const
+{
+   Dstring str (*this);
+   str.to_upper_case ();
+   return str;
+}
+
+Dstring
+Dstring::get_captial_case () const
+{
+   Dstring str (*this);
+   str.to_capital_case ();
+   return str;
+}
+
+Dstring
+Dstring::get_trimmed (const Dstring& white_string) const
+{
+   Dstring trimmed (*this);
+   trimmed.trim (white_string);
+   return trimmed;
+}
+
+Dstring
+Dstring::get_left_trimmed (const Dstring& white_string) const
+{
+   Dstring trimmed (*this);
+   trimmed.left_trim (white_string);
+   return trimmed;
+}
+
+Dstring
+Dstring::get_right_trimmed (const Dstring& white_string) const
+{
+   Dstring trimmed (*this);
+   trimmed.right_trim (white_string);
+   return trimmed;
+}
+
+Dstring
+Dstring::get_file_extension () const
+{
+
+   Dstring::size_type idx = rfind (L'.');
+
+   if (idx != Dstring::npos)
+   {
+      return substr (idx + 1);
+   } 
+   else
+   {
+      return (*this);
+   }
+
+}
+
+Dstring
+Dstring::render (const Dstring& format, ...)
+{
+
+   va_list ap;
+
+   int n = format.size () * 5;
+   char* c_rendered = new char[n];
+
+   va_start (ap, format);
+   vsnprintf (c_rendered, n, format.get_string ().c_str (), ap);
+   va_end (ap);
+
+   const Dstring str (c_rendered);
+   delete[] c_rendered;
+   return str;
+
+}
+
+Reg_Exp::Reg_Exp (const Dstring& reg_exp_str,
                   const bool match_info,
                   const bool posix_extend,
                   const bool case_sensitive)
@@ -48,14 +225,14 @@ Reg_Exp::~Reg_Exp ()
 }
 
 bool
-Reg_Exp::match (const wstring& str) const
+Reg_Exp::match (const Dstring& str) const
 {
    const string s (str.begin (), str.end ());
    return (regexec (&preg, s.c_str (), nmatch, pmatch, 0) == 0);
 }
 
 Iduple
-Reg_Exp::get_match (const wstring& str,
+Reg_Exp::get_match (const Dstring& str,
                     const bool ignore_no_match) const
 {
 
@@ -87,8 +264,8 @@ Reg_Exp::get_match (const wstring& str,
 }
 
 void
-Reg_Exp::replace (wstring& str,
-                  const wstring& with,
+Reg_Exp::replace (Dstring& str,
+                  const Dstring& with,
                   const bool ignore_no_match) const
 {
    try
@@ -103,7 +280,7 @@ Reg_Exp::replace (wstring& str,
 }
 
 Iduple_Vector
-Reg_Exp::get_match_sub (const wstring& str,
+Reg_Exp::get_match_sub (const Dstring& str,
                         const bool ignore_no_match) const
 {
 
@@ -139,8 +316,8 @@ Reg_Exp::get_match_sub (const wstring& str,
 }
 
 bool
-Reg_Exp::match (const wstring& str,
-                const wstring& reg_exp_str,
+Reg_Exp::match (const Dstring& str,
+                const Dstring& reg_exp_str,
                 const bool posix_extend,
                 const bool case_sensitive)
 {
@@ -153,7 +330,7 @@ Tokens::Tokens ()
 }
 
 Tokens::Tokens (const Tuple& tuple,
-                const wstring& fmt)
+                const Dstring& fmt)
 {
 
    string s_fmt (fmt.begin (), fmt.end ());
@@ -162,18 +339,18 @@ Tokens::Tokens (const Tuple& tuple,
         iterator != tuple.end (); iterator++)
    {
       const Real value = *(iterator);
-      const wstring& token = string_render (s_fmt.c_str (), value);
+      const Dstring& token = string_render (s_fmt.c_str (), value);
       push_back (token);  
    }
 }
 
-Tokens::Tokens (const wstring& str)
+Tokens::Tokens (const Dstring& str)
 {
    add (str);
 }
 
-Tokens::Tokens (const wstring& str,
-                const wstring& delimiters)
+Tokens::Tokens (const Dstring& str,
+                const Dstring& delimiters)
 {
    add (str, delimiters);
 }
@@ -208,10 +385,10 @@ Tokens::integer (const Integer index) const
 }
 
 void
-Tokens::add (const wstring& str)
+Tokens::add (const Dstring& str)
 {
 
-   wstring token;
+   Dstring token;
    bool is_number = false;
    bool is_variable = false;
    bool is_equal = false;
@@ -223,7 +400,6 @@ Tokens::add (const wstring& str)
    {
 
       wchar_t c = str[i];
-//cout << c << endl;
 
       if (is_escaped)
       {
@@ -252,7 +428,6 @@ Tokens::add (const wstring& str)
             is_variable = false;
             is_equal = false;
             push_back (token);
-//cout << "----->CHOP----> " << token << endl;
             token.clear ();
          }
       }
@@ -282,11 +457,9 @@ Tokens::add (const wstring& str)
             is_variable = false;
             is_equal = false;
             push_back (token);
-//cout << "----->CHOP----> " << token << endl;
             token.clear ();
             token += c;
             push_back (token);
-//cout << "----->CHOP----> " << token << endl;
             token.clear ();
          }
       }
@@ -294,13 +467,12 @@ Tokens::add (const wstring& str)
    }
 
    push_back (token);
-//cout << "----->CHOP----> " << token << endl;
 
 }
 
 void
-Tokens::add (const wstring& str,
-             const wstring& delimiters)
+Tokens::add (const Dstring& str,
+             const Dstring& delimiters)
 {
 
    if (delimiters.empty ()) { add (str); }
@@ -308,51 +480,49 @@ Tokens::add (const wstring& str,
    int n = str.size ();
    int nd = delimiters.size ();
 
-   char* c_string = new char[n + 1];      c_string[n] = '\0';
-   char* c_delimiters = new char[nd + 1]; c_delimiters[nd] = '\0';
-   char* buffer = new char[n + 1];        buffer[n] = '\0';
+   char* c_str = new char[n + 1];    c_str[n] = '\0';
+   char* c_delim = new char[nd + 1]; c_delim[nd] = '\0';
+   char* buffer = new char[n + 1];   buffer[n] = '\0';
 
-   for (Integer i = 0; i < n; i++) { c_string[i] = (char)str[i]; }
-   for (Integer i = 0; i < nd; i++) { c_delimiters[i] = (char)delimiters[i]; }
+   for (Integer i = 0; i < n; i++) { c_str[i] = (char)str[i]; }
+   for (Integer i = 0; i < nd; i++) { c_delim[i] = (char)delimiters[i]; }
 
-   char* c_token = strtok_r (c_string, c_delimiters, (char**)buffer);
+   char* c_token = strtok_r (c_str, c_delim, (char**)buffer);
 
    if (c_token != NULL)
    {
 
-      const string str (c_token);
-      push_back (wstring (str.begin (), str.end ()));
+      const Dstring token (c_token);
+      push_back (token);
 
-      while ((c_token = strtok_r (NULL, c_delimiters, (char**)buffer)) != NULL)
+      while ((c_token = strtok_r (NULL, c_delim, (char**)buffer)) != NULL)
       {
-         const string str (c_token);
-         push_back (wstring (str.begin (), str.end ()));
+         const Dstring token (c_token);
+         push_back (token);
       }
 
    }
 
-   delete[] c_string;
-   delete[] c_delimiters;
    delete[] buffer;
 
 }
 
 void
-Tokens::add_prefix (const wstring& prefix)
+Tokens::add_prefix (const Dstring& prefix)
 {
-   for (Tokens::iterator iterator = begin (); iterator != end (); iterator++)
+   for (auto iterator = begin (); iterator != end (); iterator++)
    {
-      wstring& token = *(iterator);
+      Dstring& token = *(iterator);
       token.assign (prefix + token);
    }
 }
 
 void
-Tokens::add_suffix (const wstring& suffix)
+Tokens::add_suffix (const Dstring& suffix)
 {
-   for (Tokens::iterator iterator = begin (); iterator != end (); iterator++)
+   for (auto iterator = begin (); iterator != end (); iterator++)
    {
-      wstring& token = *(iterator);
+      Dstring& token = *(iterator);
       token.assign (token + suffix);
    }
 }
@@ -375,7 +545,7 @@ namespace denise
    }
 
    void
-   to_upper_case (string& s)
+   to_upper_case (wstring& s)
    {
       transform (s.begin (), s.end (), s.begin (), ::toupper);
    }

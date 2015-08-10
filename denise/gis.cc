@@ -128,7 +128,7 @@ Gshhs::Header::read (FILE* file)
 
    if (fread (temp_buffer, old_size, 1, file) == 0)
    {
-      throw IO_Exception ("EOF reached");
+      throw IO_Exception (L"EOF reached");
    }
 
    const bool old = (temp_buffer[10] == 0);
@@ -142,7 +142,7 @@ Gshhs::Header::read (FILE* file)
    {
       if (fread (buffer + old_size, size_difference, 1, file) == 0)
       {
-         throw IO_Exception ("EOF reached");
+         throw IO_Exception (L"EOF reached");
       }
    }
 
@@ -355,7 +355,7 @@ Gshhs::Gshhs ()
 {
 }
 
-Gshhs::Gshhs (const string& file_path,
+Gshhs::Gshhs (const Dstring& file_path,
               const Integer level)
 {
 
@@ -391,7 +391,7 @@ Gshhs::~Gshhs ()
 }
 
 void
-Gshhs::save (const string& file_path) const
+Gshhs::save (const Dstring& file_path) const
 {
 
    Header* header_ptr = get_header_ptr ();
@@ -501,17 +501,17 @@ Gshhs::cairo (const RefPtr<Context> cr,
    delete clipped_gshhs_ptr;
 }
 
-string
+Dstring
 Blue_Marble::get_tile_string (const Blue_Marble_Tile tile)
 {
 
-   string tile_string;
+   Dstring tile_string;
 
    switch (tile)
    {
-      case BLUE_MARBLE_EAST: tile_string += "blue_marble_east"; break;
-      case BLUE_MARBLE_WEST: tile_string += "blue_marble_west"; break;
-      default: throw Blue_Marble_Exception ("Invalid Tile");
+      case BLUE_MARBLE_EAST: tile_string += L"blue_marble_east"; break;
+      case BLUE_MARBLE_WEST: tile_string += L"blue_marble_west"; break;
+      default: throw Blue_Marble_Exception (L"Invalid Tile");
    }
 
    return tile_string;
@@ -553,13 +553,13 @@ Blue_Marble::get_color (const Lat_Long& lat_long,
 }
 
 void
-Blue_Marble::fill_raster (const string& blue_marble_path,
+Blue_Marble::fill_raster (const Dstring& blue_marble_path,
                           const Transform_2D& transform_2d)
 
 {
 
-   const string& east_file_path = blue_marble_path + "/blue_marble_east.bin";
-   const string& west_file_path = blue_marble_path + "/blue_marble_west.bin";
+   const Dstring& east_file_path = blue_marble_path + L"/blue_marble_east.bin";
+   const Dstring& west_file_path = blue_marble_path + L"/blue_marble_west.bin";
 
    FILE** blue_marble_files = new FILE*[NUMBER_OF_BLUE_MARBLE_TILES];
    blue_marble_files[BLUE_MARBLE_EAST] = get_input_file (east_file_path);
@@ -594,7 +594,7 @@ Blue_Marble::fill_raster (const string& blue_marble_path,
 
 }
 
-Blue_Marble::Blue_Marble (const string& blue_marble_path,
+Blue_Marble::Blue_Marble (const Dstring& blue_marble_path,
                           const Transform_2D& transform_2d,
                           const Size_2D& size_2d)
    : Raster (size_2d)
@@ -606,8 +606,8 @@ Blue_Marble::~Blue_Marble ()
 {
 }
 
-Blue_Marble_Exception::Blue_Marble_Exception (const string& description)
-   : Exception ("Blue_Marble_Exception", description)
+Blue_Marble_Exception::Blue_Marble_Exception (const Dstring& description)
+   : Exception (L"Blue_Marble_Exception", description)
 {
 }
 
@@ -634,48 +634,48 @@ Gtopo30::get_tile (const Integer gtopo30_i,
 
 }
 
-string
+Dstring
 Gtopo30::get_tile_string (const Gtopo30_Tile tile)
 {
 
-   string tile_string;
+   Dstring tile_string;
 
    switch (tile)
    {
-      case W180S60: tile_string += "W180S60"; break;
-      case W120S60: tile_string += "W120S60"; break;
-      case W060S60: tile_string += "W060S60"; break;
-      case W000S60: tile_string += "W000S60"; break;
-      case E060S60: tile_string += "E060S60"; break;
-      case E120S60: tile_string += "E120S60"; break;
-      case W180S10: tile_string += "W180S10"; break;
-      case W140S10: tile_string += "W140S10"; break;
-      case W100S10: tile_string += "W100S10"; break;
-      case W060S10: tile_string += "W060S10"; break;
-      case W020S10: tile_string += "W020S10"; break;
-      case E020S10: tile_string += "E020S10"; break;
-      case E060S10: tile_string += "E060S10"; break;
-      case E100S10: tile_string += "E100S10"; break;
-      case E140S10: tile_string += "E140S10"; break;
-      case W180N40: tile_string += "W180N40"; break;
-      case W140N40: tile_string += "W140N40"; break;
-      case W100N40: tile_string += "W100N40"; break;
-      case W060N40: tile_string += "W060N40"; break;
-      case W020N40: tile_string += "W020N40"; break;
-      case E020N40: tile_string += "E020N40"; break;
-      case E060N40: tile_string += "E060N40"; break;
-      case E100N40: tile_string += "E100N40"; break;
-      case E140N40: tile_string += "E140N40"; break;
-      case W180N90: tile_string += "W180N90"; break;
-      case W140N90: tile_string += "W140N90"; break;
-      case W100N90: tile_string += "W100N90"; break;
-      case W060N90: tile_string += "W060N90"; break;
-      case W020N90: tile_string += "W020N90"; break;
-      case E020N90: tile_string += "E020N90"; break;
-      case E060N90: tile_string += "E060N90"; break;
-      case E100N90: tile_string += "E100N90"; break;
-      case E140N90: tile_string += "E140N90"; break;
-      default: throw Gtopo30_Exception ("Invalid Tile");
+      case W180S60: tile_string += L"W180S60"; break;
+      case W120S60: tile_string += L"W120S60"; break;
+      case W060S60: tile_string += L"W060S60"; break;
+      case W000S60: tile_string += L"W000S60"; break;
+      case E060S60: tile_string += L"E060S60"; break;
+      case E120S60: tile_string += L"E120S60"; break;
+      case W180S10: tile_string += L"W180S10"; break;
+      case W140S10: tile_string += L"W140S10"; break;
+      case W100S10: tile_string += L"W100S10"; break;
+      case W060S10: tile_string += L"W060S10"; break;
+      case W020S10: tile_string += L"W020S10"; break;
+      case E020S10: tile_string += L"E020S10"; break;
+      case E060S10: tile_string += L"E060S10"; break;
+      case E100S10: tile_string += L"E100S10"; break;
+      case E140S10: tile_string += L"E140S10"; break;
+      case W180N40: tile_string += L"W180N40"; break;
+      case W140N40: tile_string += L"W140N40"; break;
+      case W100N40: tile_string += L"W100N40"; break;
+      case W060N40: tile_string += L"W060N40"; break;
+      case W020N40: tile_string += L"W020N40"; break;
+      case E020N40: tile_string += L"E020N40"; break;
+      case E060N40: tile_string += L"E060N40"; break;
+      case E100N40: tile_string += L"E100N40"; break;
+      case E140N40: tile_string += L"E140N40"; break;
+      case W180N90: tile_string += L"W180N90"; break;
+      case W140N90: tile_string += L"W140N90"; break;
+      case W100N90: tile_string += L"W100N90"; break;
+      case W060N90: tile_string += L"W060N90"; break;
+      case W020N90: tile_string += L"W020N90"; break;
+      case E020N90: tile_string += L"E020N90"; break;
+      case E060N90: tile_string += L"E060N90"; break;
+      case E100N90: tile_string += L"E100N90"; break;
+      case E140N90: tile_string += L"E140N90"; break;
+      default: throw Gtopo30_Exception (L"Invalid Tile");
    }
 
    return tile_string;
@@ -702,7 +702,7 @@ Gtopo30::get_tile_size (const Gtopo30_Tile tile)
    }
    else
    {
-      throw Gtopo30_Exception ("Invalid Tile");
+      throw Gtopo30_Exception (L"Invalid Tile");
    }
 
    return size_2d;
@@ -729,7 +729,7 @@ Gtopo30::get_tile_index (const Gtopo30_Tile tile)
    }
    else
    {
-      throw Gtopo30_Exception ("Invalid Tile");
+      throw Gtopo30_Exception (L"Invalid Tile");
    }
 
    return index_2d;
@@ -775,7 +775,7 @@ Gtopo30::get_tile_domain_latitude (const Gtopo30_Tile tile)
    }
    else
    {
-      throw Gtopo30_Exception ("Invalid Tile");
+      throw Gtopo30_Exception (L"Invalid Tile");
    }
 
    return domain_1d;
@@ -806,7 +806,7 @@ Gtopo30::get_tile_domain_longitude (const Gtopo30_Tile tile)
    }
    else
    {
-      throw Gtopo30_Exception ("Invalid Tile");
+      throw Gtopo30_Exception (L"Invalid Tile");
    }
 
    return domain_1d;
@@ -857,7 +857,7 @@ Gtopo30::fill_raster (const Real* data,
 
 }
 
-Gtopo30::Gtopo30 (const string& gtopo30_path)
+Gtopo30::Gtopo30 (const Dstring& gtopo30_path)
    : Raster (Size_2D (0, 0)),
      gtopo30_path (gtopo30_path),
      delta (Real (1) / Real (120)),
@@ -876,7 +876,7 @@ Gtopo30::Gtopo30 (const string& gtopo30_path)
 
 }
 
-Gtopo30::Gtopo30 (const string& gtopo30_path,
+Gtopo30::Gtopo30 (const Dstring& gtopo30_path,
                   const Transform_2D& transform_2d,
                   const Size_2D& size_2d,
                   const Color_Chooser& color_chooser,
@@ -960,8 +960,8 @@ Gtopo30::get_datum (const Lat_Long& lat_long) const
    if (file == NULL)
    { 
 
-      string tile_string = get_tile_string (tile);
-      string file_path = gtopo30_path + "/" + tile_string + ".DEM";
+      Dstring tile_string = get_tile_string (tile);
+      Dstring file_path = gtopo30_path + L"/" + tile_string + L".DEM";
       file = get_input_file (file_path);
 
       tile_size = get_tile_size (tile);
@@ -983,8 +983,8 @@ Gtopo30::get_datum (const Lat_Long& lat_long) const
 
 }
 
-Gtopo30_Exception::Gtopo30_Exception (const string& description)
-   : Exception ("Gtopo30_Exception", description)
+Gtopo30_Exception::Gtopo30_Exception (const Dstring& description)
+   : Exception (L"Gtopo30_Exception", description)
 {
 }
 
@@ -1095,7 +1095,7 @@ Land_Mask::Land_Mask (const Gtopo30& gtopo30,
 
 }
  
-Land_Mask::Land_Mask (const string& land_mask_file_path)
+Land_Mask::Land_Mask (const Dstring& land_mask_file_path)
 {
 
 
@@ -1249,7 +1249,7 @@ Land_Mask::populate (const Gtopo30& gtopo30,
 }
 
 void
-Land_Mask::save (const string& land_mask_file_path) const
+Land_Mask::save (const Dstring& land_mask_file_path) const
 {
 
    FILE* file = get_output_file (land_mask_file_path);
@@ -1474,7 +1474,7 @@ Fetch::Fetch (const Land_Mask& land_mask,
    populate (land_mask);
 }
 
-Fetch::Fetch (const string& fetch_file_path)
+Fetch::Fetch (const Dstring& fetch_file_path)
 {
 
    int i = 0;
@@ -1525,7 +1525,7 @@ Fetch::~Fetch ()
 }
 
 void
-Fetch::save (const string& fetch_file_path) const
+Fetch::save (const Dstring& fetch_file_path) const
 {
 
    const uint16_t nii = ni * n;
@@ -1595,20 +1595,20 @@ Fetch::get_fetch (const Real& bearing,
 }
 
 Real
-Nsd::get_lat_long_number (const string& lat_long_string)
+Nsd::get_lat_long_number (const Dstring& lat_long_string)
 {
 
    Real x = 0;
 
-   string str (lat_long_string);
+   Dstring str (lat_long_string);
    chop (str);
 
-   vector<string>token_vector = tokenize (str, "-");
-   Integer n = token_vector.size ();
+   const Tokens tokens (str, L"-");
+   Integer n = tokens.size ();
 
-   x += atof (token_vector[0].c_str ());
-   if (n > 1) { x += atof (token_vector[1].c_str ()) / 60; }
-   if (n > 2) { x += atof (token_vector[2].c_str ()) / 3600; }
+   x += stof (tokens[0]);
+   if (n > 1) { x += stof (tokens[1]) / 60; }
+   if (n > 2) { x += stof (tokens[2]) / 3600; }
 
    char last_char = *(lat_long_string.rbegin ());
    if (last_char == 'S' || last_char == 'W') { x *= -1; }
@@ -1618,62 +1618,65 @@ Nsd::get_lat_long_number (const string& lat_long_string)
 }
 
 void
-Nsd::wmo_init (const string& str)
+Nsd::wmo_init (const Dstring& str)
 {
 
-   vector<string> token_vector = tokenize_s (str, ";");
+   const Tokens tokens (str, L";");
 
-   wmo_id = atoi (token_vector[0].c_str ()) * 1000;
-   wmo_id += atoi (token_vector[1].c_str ());
-   icao_id = token_vector[2];
+   wmo_id = stoi (tokens[0]) * 1000;
+   wmo_id += stoi (tokens[1]);
+   icao_id = tokens[2];
 
-   name = token_vector[3];
-   country = token_vector[5];
+   name = tokens[3];
+   country = tokens[5];
 
-   lat_long.latitude = get_lat_long_number (token_vector[7]);
-   lat_long.longitude = get_lat_long_number (token_vector[8]);
+   lat_long.latitude = get_lat_long_number (tokens[7]);
+   lat_long.longitude = get_lat_long_number (tokens[8]);
 
-   elevation = atof (token_vector[11].c_str ());
+   elevation = stof (tokens[11]);
 
 }
 
 void
-Nsd::icao_init (const string& str)
+Nsd::icao_init (const Dstring& str)
 {
 
-   vector<string> token_vector = tokenize_s (str, ";");
+   const Tokens tokens (str, L";");
 
-   icao_id = token_vector[0];
-   wmo_id = atoi (token_vector[1].c_str ()) * 1000;
-   wmo_id += atoi (token_vector[2].c_str ());
+   icao_id = tokens[0];
+   wmo_id = stoi (tokens[1]) * 1000;
+   wmo_id += stoi (tokens[2]);
 
-   name = token_vector[3];
-   country = token_vector[5];
+   name = tokens[3];
+   country = tokens[5];
 
-   lat_long.latitude = get_lat_long_number (token_vector[7]);
-   lat_long.longitude = get_lat_long_number (token_vector[8]);
+   lat_long.latitude = get_lat_long_number (tokens[7]);
+   lat_long.longitude = get_lat_long_number (tokens[8]);
 
-   elevation = atof (token_vector[11].c_str ());
+   elevation = stof (tokens[11]);
 
 }
 
-Nsd::Nsd (const string& nsd_string,
+Nsd::Nsd (const Dstring& nsd_string,
           const bool icao)
 {
    if (icao) { icao_init (nsd_string); }
    else { wmo_init (nsd_string); }
 }
 
-Nsd_Wmo::Nsd_Wmo (const string& file_path)
+Nsd_Wmo::Nsd_Wmo (const Dstring& file_path)
 {
 
-   string input_line;
-   ifstream file (file_path.c_str ());
+   string il;
+   Dstring input_line;
+   
+   ifstream file (file_path.get_string ());
 
    while (file)
    {
-      std::getline (file, input_line);
-      if (input_line == "") { continue; }
+      std::getline (file, il);
+      if (il == "") { continue; }
+      Dstring input_line (il);
       Nsd nsd (input_line, false);
       insert (make_pair (nsd.wmo_id, nsd));
    }
@@ -1692,22 +1695,24 @@ Nsd_Wmo::get_nsd (const Integer wmo_id) const
    }
    else
    {
-      string str = string_render ("Nsd_Wmo cannot find: %05d", wmo_id);
+      Dstring str = string_render ("Nsd_Wmo cannot find: %05d", wmo_id);
       throw Nsd_Exception (str);
    }
 
 }
 
-Nsd_Icao::Nsd_Icao (const string& file_path)
+Nsd_Icao::Nsd_Icao (const Dstring& file_path)
 {
 
-   string input_line;
-   ifstream file (file_path.c_str ());
+   ifstream file (file_path.get_string ().c_str ());
+
+   string il;
 
    while (file)
    {
-      std::getline (file, input_line);
-      if (input_line == "") { continue; }
+      std::getline (file, il);
+      if (il == "") { continue; }
+      const Dstring input_line (il);
       Nsd nsd (input_line, true);
       insert (make_pair (nsd.icao_id, nsd));
    }
@@ -1715,7 +1720,7 @@ Nsd_Icao::Nsd_Icao (const string& file_path)
 }
 
 const Nsd&
-Nsd_Icao::get_nsd (const string& icao_id) const
+Nsd_Icao::get_nsd (const Dstring& icao_id) const
 {
 
    Nsd_Icao::const_iterator iterator = find (icao_id);
@@ -1726,19 +1731,19 @@ Nsd_Icao::get_nsd (const string& icao_id) const
    }
    else
    {
-      string str = string ("Nsd_Icao cannot find: ") + icao_id;
+      Dstring str = L"Nsd_Icao cannot find: " + icao_id;
       throw Nsd_Exception (str);
    }
 
 }
 
-Nsd_Exception::Nsd_Exception (const string& description)
-   : Exception ("Nsd_Exception", description)
+Nsd_Exception::Nsd_Exception (const Dstring& description)
+   : Exception (L"Nsd_Exception", description)
 {
 }
 
 void
-Outl::read (const string& file_path)
+Outl::read (const Dstring& file_path)
 {
 
    long header_pos;
@@ -1796,7 +1801,7 @@ Outl::read (const string& file_path)
 
 }
 
-Outl::Outl (const string& file_path)
+Outl::Outl (const Dstring& file_path)
 {
    read (file_path);
 }
@@ -1809,16 +1814,17 @@ Outl::cairo (const RefPtr<Context> cr,
 }
 
 void
-Kidney::read (const string& file_path)
+Kidney::read (const Dstring& file_path)
 {
 
-   ifstream file (file_path.c_str ());
-   string input_string;
+   ifstream file (file_path.get_string ());
+   string is;
 
-   for (string input_string; std::getline (file, input_string); )
+   for (string is; std::getline (file, is); )
    {
 
-      const Tokens tokens (input_string, ":");
+      const Dstring input_string (is);
+      const Tokens tokens (input_string, L":");
       const Real level = tokens.real (0);
 
       Polygon* polygon_ptr = new Polygon ();
@@ -1839,7 +1845,7 @@ Kidney::read (const string& file_path)
 
 }
 
-Kidney::Kidney (const string& file_path)
+Kidney::Kidney (const Dstring& file_path)
 {
    read (file_path);
 }

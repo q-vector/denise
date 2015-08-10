@@ -186,13 +186,13 @@ namespace denise
 
          Gshhs ();
 
-         Gshhs (const string& file_path,
+         Gshhs (const Dstring& file_path,
                 const Integer level = 1);
 
          ~Gshhs ();
 
          void
-         save (const string& file_path) const;
+         save (const Dstring& file_path) const;
 
          Gshhs*
          clip (const Polygon& polygon);
@@ -271,7 +271,7 @@ namespace denise
          get_tile (const Integer blue_marble_i,
                    const Integer blue_marble_j);
 
-         static string
+         static Dstring
          get_tile_string (const Blue_Marble_Tile tile);
 
          static Index_2D
@@ -284,12 +284,12 @@ namespace denise
                     FILE** blue_marble_files);
 
          void
-         fill_raster (const string& blue_marble_path,
+         fill_raster (const Dstring& blue_marble_path,
                       const Transform_2D& transform_2d);
 
       public:
 
-         Blue_Marble (const string& blue_marble_path,
+         Blue_Marble (const Dstring& blue_marble_path,
                       const Transform_2D& transform,
                       const Size_2D& size_2d);
 
@@ -302,7 +302,7 @@ namespace denise
 
       public:
 
-         Blue_Marble_Exception (const string& description = string (""));
+         Blue_Marble_Exception (const Dstring& description = L"");
 
    };
 
@@ -320,7 +320,7 @@ namespace denise
          const Real
          start_longitude;
 
-         const string
+         const Dstring
          gtopo30_path;
 
          FILE**
@@ -336,7 +336,7 @@ namespace denise
          get_tile (const Integer gtopo30_i,
                    const Integer gtopo30_j);
 
-         static string
+         static Dstring
          get_tile_string (const Gtopo30_Tile tile);
 
          static Size_2D
@@ -361,9 +361,9 @@ namespace denise
 
       public:
 
-         Gtopo30 (const string& gtopo30_path);
+         Gtopo30 (const Dstring& gtopo30_path);
 
-         Gtopo30 (const string& gtopo30_path,
+         Gtopo30 (const Dstring& gtopo30_path,
                   const Transform_2D& transform,
                   const Size_2D& size_2d,
                   const Color_Chooser& color_chooser,
@@ -381,7 +381,7 @@ namespace denise
 
       public:
 
-         Gtopo30_Exception (const string& description = string (""));
+         Gtopo30_Exception (const Dstring& description = L"");
 
    };
 
@@ -445,7 +445,7 @@ namespace denise
                     const uint16_t ni = 180,
                     const uint16_t nj = 360);
 
-         Land_Mask (const string& land_mask_file_path);
+         Land_Mask (const Dstring& land_mask_file_path);
 
          ~Land_Mask ();
 
@@ -464,7 +464,7 @@ namespace denise
                    const uint16_t nj);
 
          void
-         save (const string& land_mask_file_path) const;
+         save (const Dstring& land_mask_file_path) const;
 
          bool
          is_land (const Lat_Long& lat_long) const;
@@ -538,12 +538,12 @@ namespace denise
                 const uint16_t ni = 180,
                 const uint16_t nj = 360);
 
-         Fetch (const string& fetch_file_path);
+         Fetch (const Dstring& fetch_file_path);
 
          ~Fetch ();
 
          void
-         save (const string& fetch_file_path) const;
+         save (const Dstring& fetch_file_path) const;
 
          Real
          get_fetch (const Real& bearing,
@@ -557,26 +557,26 @@ namespace denise
       private:
 
          static Real
-         get_lat_long_number (const string& lat_long_string);
+         get_lat_long_number (const Dstring& lat_long_string);
 
          void
-         wmo_init (const string& str);
+         wmo_init (const Dstring& str);
 
          void
-         icao_init (const string& str);
+         icao_init (const Dstring& str);
 
       public:
 
          Integer
          wmo_id;
 
-         string
+         Dstring
          icao_id;
 
-         string
+         Dstring
          name;
 
-         string
+         Dstring
          country;
 
          Lat_Long
@@ -585,7 +585,7 @@ namespace denise
          Real
          elevation;
 
-         Nsd (const string& nsd_string,
+         Nsd (const Dstring& nsd_string,
               const bool icao);
 
    };
@@ -595,22 +595,22 @@ namespace denise
 
       public:
 
-         Nsd_Wmo (const string& file_path);
+         Nsd_Wmo (const Dstring& file_path);
 
          const Nsd&
          get_nsd (const Integer wmo_id) const;
 
    };
 
-   class Nsd_Icao : private map<string, Nsd>
+   class Nsd_Icao : private map<Dstring, Nsd>
    {
 
       public:
 
-         Nsd_Icao (const string& file_path);
+         Nsd_Icao (const Dstring& file_path);
 
          const Nsd&
-         get_nsd (const string& icao_id) const;
+         get_nsd (const Dstring& icao_id) const;
 
    };
 
@@ -619,7 +619,7 @@ namespace denise
 
       public:
 
-         Nsd_Exception (const string& description = string (""));
+         Nsd_Exception (const Dstring& description = L"");
 
    };
 
@@ -630,11 +630,11 @@ namespace denise
       private:
 
          void
-         read (const string& file_path);
+         read (const Dstring& file_path);
 
       public:
 
-         Outl (const string& file_path);
+         Outl (const Dstring& file_path);
 
          virtual void
          cairo (const RefPtr<Context> cr,
@@ -649,11 +649,11 @@ namespace denise
       private:
 
          void
-         read (const string& file_path);
+         read (const Dstring& file_path);
 
       public:
 
-         Kidney (const string& file_path);
+         Kidney (const Dstring& file_path);
 
          ~Kidney ();
 

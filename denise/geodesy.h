@@ -146,7 +146,7 @@ namespace denise
              SPHERE
           };
 
-          Geodesy (const wstring& str);          
+          Geodesy (const Dstring& str);          
 
           Geodesy (const Model model,
                    const Real epsilon_v = 5e-12);
@@ -252,10 +252,10 @@ namespace denise
          Lat_Long (const Real latitude = 0.0,
                    const Real longitude = 0.0);
 
-         Lat_Long (const wstring& lat_long_string);
+         Lat_Long (const Dstring& lat_long_string);
          
-         Lat_Long (const wstring& latitude_string,
-                   const wstring& longitude_string);
+         Lat_Long (const Dstring& latitude_string,
+                   const Dstring& longitude_string);
          
          Lat_Long (const Point_2D& point);
 
@@ -275,15 +275,15 @@ namespace denise
          void
          standardize (const Real standard_longitude);
 
-         wstring
+         Dstring
          get_string (const Integer decimal_places,
                      const bool nsew = false,
                      const bool with_symbol = false,
                      const bool with_parenthesis = false) const;
 
-         wstring
+         Dstring
          get_string (const bool with_parenthesis = false,
-                     const wstring& number_format = L"-%f") const;
+                     const Dstring& number_format = L"-%f") const;
 
          bool
          operator == (const Lat_Long& lat_long) const;
@@ -421,7 +421,7 @@ namespace denise
                void
                standardize (const Real standard_longitude);
 
-               static string
+               static Dstring
                get_cardinal_direction (const Real azimuth);
 
                /// Swaps the origin and destination; as well as the
@@ -493,7 +493,7 @@ namespace denise
 
          Journey (const Journey& journey);
 
-         Journey (const string& str);
+         Journey (const Dstring& str);
 
          static Journey
          fine_journey (const Simple& simple_journey,
@@ -720,14 +720,14 @@ namespace denise
                      const Real scale,
                      const Lat_Long& lat_long);
 
-               Data (const string& str);
+               Data (const Dstring& str);
 
                Data (const Data& data);
 
                void
                standardize (Lat_Long& lat_long) const;
 
-               string
+               Dstring
                get_string () const;
 
          };
@@ -739,18 +739,18 @@ namespace denise
                              const Real scale,
                              const Lat_Long& lat_long);
 
-         Geodetic_Transform (const string& str);
+         Geodetic_Transform (const Dstring& str);
 
          Geodetic_Transform (const Geodetic_Transform& geodetic_transform);
 
          static bool
-         is_geodetic (const string& str);
+         is_geodetic (const Dstring& str);
 
          virtual Geodetic_Transform*
          clone () const = 0;
 
          static Geodetic_Transform*
-         get_transform_ptr (const string& str,
+         get_transform_ptr (const Dstring& str,
                             const Point_2D& point);
 
          static Geodetic_Transform*
@@ -1585,8 +1585,8 @@ namespace denise
 
    };
 
-   ostream&
-   operator << (ostream &out_file,
+   wostream&
+   operator << (wostream &out,
                 const Lat_Long& lat_long);
 
 }

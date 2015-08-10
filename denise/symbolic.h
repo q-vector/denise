@@ -43,7 +43,7 @@ namespace denise
             public:
 
                virtual Real
-               evaluate (const string& variable) const = 0;
+               evaluate (const wstring& variable) const = 0;
 
          };
 
@@ -69,7 +69,7 @@ namespace denise
 
             public:
 
-               Constant (const string& token);
+               Constant (const wstring& token);
 
                Real
                evaluate (const Instance& instance) const;
@@ -77,12 +77,12 @@ namespace denise
          };
 
          class Variable : public Node,
-                          public string
+                          public wstring
          {
 
             public:
 
-               Variable (const string& token);
+               Variable (const wstring& token);
 
                Real
                evaluate (const Instance& instance) const;
@@ -102,7 +102,7 @@ namespace denise
                Mono_Op (Node* node_ptr);
 
                static Mono_Op*
-               create (const string& token,
+               create (const wstring& token,
                        Node* node_ptr);
 
          };
@@ -124,7 +124,7 @@ namespace denise
                       Node* right_ptr);
 
                static Bi_Op*
-               create (const string& token,
+               create (const wstring& token,
                        Node* left_ptr,
                        Node* right_ptr);
 
@@ -366,14 +366,14 @@ namespace denise
          std::stack<Node*>
          node_ptr_stack;
 
-         set<string>
+         set<wstring>
          variable_set;
 
          static bool
-         is_constant (const string& token);
+         is_constant (const wstring& token);
 
          static bool
-         is_op (const string& token);
+         is_op (const wstring& token);
 
       public:
 

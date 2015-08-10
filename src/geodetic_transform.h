@@ -36,17 +36,17 @@ namespace andrea
 
       protected:
 
-         map<string, string>
+         map<Dstring, Dstring>
          geodetic_transform_str_map;
 
          Geodetic_Transform_Package (Andrea& andrea);
 
          void
-         geodetic_transform_assign (const string& identifier,
-                                    const string& str);
+         geodetic_transform_assign (const Dstring& identifier,
+                                    const Dstring& str);
 
          void
-         geodetic_transform_print (const string& identifier,
+         geodetic_transform_print (const Dstring& identifier,
                                    const Tokens& arguments) const;
 
          void
@@ -54,11 +54,11 @@ namespace andrea
 
       public:
 
-         const map<string, string>&
+         const map<Dstring, Dstring>&
          get_geodetic_transform_str_map () const;
 
          const Geodetic_Transform*
-         get_geodetic_transform_ptr (const string& identifier,
+         get_geodetic_transform_ptr (const Dstring& identifier,
                                      const Point_2D& point) const;
 
    };

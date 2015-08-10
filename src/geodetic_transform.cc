@@ -30,21 +30,21 @@ Geodetic_Transform_Package::Geodetic_Transform_Package (Andrea& andrea)
 }
 
 void
-Geodetic_Transform_Package::geodetic_transform_assign (const string& identifier,
-                                                       const string& str)
+Geodetic_Transform_Package::geodetic_transform_assign (const Dstring& identifier,
+                                                       const Dstring& str)
 {
    geodetic_transform_str_map[identifier] = str;
 }
 
 void
-Geodetic_Transform_Package::geodetic_transform_print (const string& identifier,
+Geodetic_Transform_Package::geodetic_transform_print (const Dstring& identifier,
                                                       const Tokens& arguments) const
 {
    auto iterator = geodetic_transform_str_map.find (identifier);
    const bool is_present = (iterator != geodetic_transform_str_map.end ());
    if (is_present)
    {
-      cout << "geodetic_transform " << identifier << " is present" << endl;
+      wcout << L"geodetic_transform " << identifier << L" is present" << endl;
    }
 }
 
@@ -54,36 +54,36 @@ Geodetic_Transform_Package::geodetic_transform_parse (const Tokens& tokens)
 
    const Integer n = tokens.size ();
 
-   if (tokens[0] == "assign")
+   if (tokens[0] == L"assign")
    {
-      const string& identifier = tokens[1];
-      const string& str = tokens[2];
+      const Dstring& identifier = tokens[1];
+      const Dstring& str = tokens[2];
       geodetic_transform_assign (identifier, str);
    }
    else
-   if (tokens[0] == "print")
+   if (tokens[0] == L"print")
    {
-      const string& identifier = tokens[1];
+      const Dstring& identifier = tokens[1];
       geodetic_transform_print (identifier, tokens.subtokens (2));
    }
 
 }
 
-const map<string, string>&
+const map<Dstring, Dstring>&
 Geodetic_Transform_Package::get_geodetic_transform_str_map () const
 {
    return geodetic_transform_str_map;
 }
 
 const Geodetic_Transform*
-Geodetic_Transform_Package::get_geodetic_transform_ptr (const string& identifier,
+Geodetic_Transform_Package::get_geodetic_transform_ptr (const Dstring& identifier,
                                                         const Point_2D& point) const
 {
-   Exception e ("geodetic_transform not found: " + identifier);
+   Exception e (L"geodetic_transform not found: " + identifier);
    try
    {
       typedef Geodetic_Transform Gt;
-      const string& str = geodetic_transform_str_map.at (identifier);
+      const Dstring& str = geodetic_transform_str_map.at (identifier);
       return Gt::get_transform_ptr (str, point);
    }
    catch (const std::out_of_range& oor) { throw e; }

@@ -23,6 +23,7 @@
 
 #include <cairomm/context.h>
 #include <denise/basics.h>
+#include <denise/dstring.h>
 
 using namespace std;
 
@@ -112,7 +113,7 @@ namespace denise
          Transform_2D ();
 
          static Transform_2D*
-         get_transform_ptr (const string& str);
+         get_transform_ptr (const Dstring& str);
 
          virtual bool
          out_of_domain (const Real x, 

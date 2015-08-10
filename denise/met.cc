@@ -373,7 +373,7 @@ Octa::Octa (const Octa::Number octa_number,
       }
 
       default:
-         throw Exception ("Bad Octa Type");
+         throw Exception (L"Bad Octa Type");
          break;
 
    }
@@ -462,25 +462,25 @@ Wind::get_direction () const
    return fmod (atan2 (-u, -v) * RADIAN_TO_DEGREE + 360, 360);
 }
 
-string
+wstring
 Wind::get_direction_string (const Integer n,
-                            const string& format) const
+                            const wstring& format) const
 {
 
    const Real d = get_direction ();
    const Real delta_d = 360.0 / n;
    const Integer dd = Integer (floor ((d + delta_d / 2) / delta_d));
 
-   const bool no_format = (format == string (""));
+   const bool no_format = (format == L"");
 
    if (n == 4 && no_format)
    {
       switch (dd)
       {
-         case 0: return "N";
-         case 1: return "E";
-         case 2: return "S";
-         case 3: return "W";
+         case 0: return L"N";
+         case 1: return L"E";
+         case 2: return L"S";
+         case 3: return L"W";
       }
    }
 
@@ -488,14 +488,14 @@ Wind::get_direction_string (const Integer n,
    {
       switch (dd)
       {
-         case 0: return "N";
-         case 1: return "NE";
-         case 2: return "E";
-         case 3: return "SE";
-         case 4: return "S";
-         case 5: return "SW";
-         case 6: return "W";
-         case 7: return "NW";
+         case 0: return L"N";
+         case 1: return L"NE";
+         case 2: return L"E";
+         case 3: return L"SE";
+         case 4: return L"S";
+         case 5: return L"SW";
+         case 6: return L"W";
+         case 7: return L"NW";
       }
    }
 
@@ -503,22 +503,22 @@ Wind::get_direction_string (const Integer n,
    {
       switch (dd)
       {
-         case 0: return "N";
-         case 1: return "NNE";
-         case 2: return "NE";
-         case 3: return "ENE";
-         case 4: return "E";
-         case 5: return "ESE";
-         case 6: return "SE";
-         case 7: return "SSE";
-         case 8: return "S";
-         case 9: return "SSW";
-         case 10: return "SW";
-         case 11: return "WSW";
-         case 12: return "W";
-         case 13: return "WNW";
-         case 14: return "NW";
-         case 15: return "NNW";
+         case 0: return L"N";
+         case 1: return L"NNE";
+         case 2: return L"NE";
+         case 3: return L"ENE";
+         case 4: return L"E";
+         case 5: return L"ESE";
+         case 6: return L"SE";
+         case 7: return L"SSE";
+         case 8: return L"S";
+         case 9: return L"SSW";
+         case 10: return L"SW";
+         case 11: return L"WSW";
+         case 12: return L"W";
+         case 13: return L"WNW";
+         case 14: return L"NW";
+         case 15: return L"NNW";
       }
    }
 
@@ -526,44 +526,45 @@ Wind::get_direction_string (const Integer n,
    {
       switch (dd)
       {
-         case 0: return "N";
-         case 1: return "NbE";
-         case 2: return "NNE";
-         case 3: return "NEbE";
-         case 4: return "NE";
-         case 5: return "NEbN";
-         case 6: return "ENE";
-         case 7: return "EbN";
-         case 8: return "E";
-         case 9: return "EbS";
-         case 10: return "ESE";
-         case 11: return "SEbE";
-         case 12: return "SE";
-         case 13: return "SEbS";
-         case 14: return "SSE";
-         case 15: return "SbE";
-         case 16: return "S";
-         case 17: return "SbW";
-         case 18: return "SSW";
-         case 19: return "SWbS";
-         case 20: return "SW";
-         case 21: return "SWbW";
-         case 22: return "WSW";
-         case 23: return "WbS";
-         case 24: return "W";
-         case 25: return "WbN";
-         case 26: return "WNW";
-         case 27: return "NWbW";
-         case 28: return "NW";
-         case 29: return "NWbN";
-         case 30: return "NNW";
-         case 31: return "NbW";
+         case 0: return L"N";
+         case 1: return L"NbE";
+         case 2: return L"NNE";
+         case 3: return L"NEbE";
+         case 4: return L"NE";
+         case 5: return L"NEbN";
+         case 6: return L"ENE";
+         case 7: return L"EbN";
+         case 8: return L"E";
+         case 9: return L"EbS";
+         case 10: return L"ESE";
+         case 11: return L"SEbE";
+         case 12: return L"SE";
+         case 13: return L"SEbS";
+         case 14: return L"SSE";
+         case 15: return L"SbE";
+         case 16: return L"S";
+         case 17: return L"SbW";
+         case 18: return L"SSW";
+         case 19: return L"SWbS";
+         case 20: return L"SW";
+         case 21: return L"SWbW";
+         case 22: return L"WSW";
+         case 23: return L"WbS";
+         case 24: return L"W";
+         case 25: return L"WbN";
+         case 26: return L"WNW";
+         case 27: return L"NWbW";
+         case 28: return L"NW";
+         case 29: return L"NWbN";
+         case 30: return L"NNW";
+         case 31: return L"NbW";
       }
    }
 
    const Real cardinal_direction = (dd == 0 ? n : dd) * delta_d;
-   const string& f = (no_format ? "%.1f\u00b0" : format);
-   return string_render (f.c_str (), cardinal_direction);
+   const string& fmt = (no_format ? string ("%.1f\u00b0") :
+      string (format.begin (), format.end ()));
+   return string_render (fmt.c_str (), cardinal_direction);
 
 }
 
@@ -579,13 +580,14 @@ Wind::is_naw () const
    return gsl_isnan (u) || gsl_isnan (v);
 }
 
-string
+wstring
 Wind::get_string (const Real speed_multiplier,
-                  const string& format) const
+                  const wstring& format) const
 {
    const Real direction = get_direction ();
    const Real speed = get_speed () * speed_multiplier;
-   return string_render (format.c_str (), direction, speed);
+   const string fmt (format.begin (), format.end ());
+   return string_render (fmt.c_str (), direction, speed);
 }
 
 Wind::Category
@@ -887,24 +889,24 @@ Wind_Transform::reverse (Real& direction,
 }
 
 Wind_Rose_Threshold::Wind_Rose_Threshold (const Real threshold,
-                                          const string& label_str)
-                                 : value (threshold),
-                               label_str (label_str)
+                                          const wstring& label_str)
+   : value (threshold),
+     label_str (label_str)
 {
 }
 
 Wind_Rose_Record::Wind_Rose_Record (const Real threshold_value,
                                     const Real percentage,
-                                    const string& label_str)
-                       : threshold (threshold_value, label_str),
-                        percentage (percentage)
+                                    const wstring& label_str)
+   : threshold (threshold_value, label_str),
+     percentage (percentage)
 {
 }
 
 Wind_Rose_Record::Wind_Rose_Record (const Wind_Rose_Threshold& wrt,
                                     const Real percentage)
-                       : threshold (wrt),
-                        percentage (percentage)
+   : threshold (wrt),
+     percentage (percentage)
 {
 }
 
@@ -999,7 +1001,7 @@ Wind_Rose_Arm::render (const RefPtr<Context> cr,
 void
 Wind_Rose::init (const Integer number_of_directions,
                  const vector<Wind_Rose_Threshold>& threshold_vector,
-                 const string& unit_string,
+                 const wstring& unit_string,
                  const Real multiplier)
 {
 
@@ -1029,7 +1031,7 @@ Wind_Rose::init (const Integer number_of_directions,
 void
 Wind_Rose::init (const Integer number_of_directions,
                  const Tuple& threshold_tuple,
-                 const string& unit_string,
+                 const wstring& unit_string,
                  const Real multiplier)
 {
 
@@ -1044,8 +1046,9 @@ Wind_Rose::init (const Integer number_of_directions,
       //if (i == threshold_tuple.size () - 1) { label_str = ">= " + label_str; }
       //else { label_str += string_render (" - %g", threshold_tuple[i+1]); }
 
-      const string format = string ("%g") + unit_string;
-      const string label_str = string_render (format.c_str (), threshold);
+      const wstring format = L"%g" + unit_string;
+      const string fmt (format.begin (), format.end ());
+      const wstring label_str = string_render (fmt.c_str (), threshold);
 
       threshold_vector.push_back (Wind_Rose_Threshold (threshold, label_str));
 
@@ -1056,7 +1059,7 @@ Wind_Rose::init (const Integer number_of_directions,
 }
 
 void
-Wind_Rose::init (const string& unit_string,
+Wind_Rose::init (const wstring& unit_string,
                  const Real multiplier)
 {
    this->unit_string = unit_string;
@@ -1064,17 +1067,17 @@ Wind_Rose::init (const string& unit_string,
 }
 
 Real
-Wind_Rose::get_multiplier (const string& unit_string)
+Wind_Rose::get_multiplier (const wstring& unit_string)
 {
-   if (unit_string == string ("kt")) { return 0.51444444; }
-   if (unit_string == string ("m/s")) { return 1; }
-   if (unit_string == string ("km/h")) { return 0.277777778; }
+   if (unit_string == L"kt") { return 0.51444444; }
+   if (unit_string == L"m/s") { return 1; }
+   if (unit_string == L"km/h") { return 0.277777778; }
    return GSL_NAN;
 }
 
 Wind_Rose::Wind_Rose (const Integer number_of_directions,
                       const vector<Wind_Rose_Threshold>& threshold_vector,
-                      const string& unit_string,
+                      const wstring& unit_string,
                       const Real multiplier)
 {
    init (number_of_directions, threshold_vector, unit_string, multiplier);
@@ -1082,54 +1085,54 @@ Wind_Rose::Wind_Rose (const Integer number_of_directions,
 
 Wind_Rose::Wind_Rose (const Integer number_of_directions,
                       const Tuple& threshold_tuple,
-                      const string& unit_string,
+                      const wstring& unit_string,
                       const Real multiplier)
 {
    init (number_of_directions, threshold_tuple, unit_string, multiplier);
 }
 
 Wind_Rose::Wind_Rose (const Integer number_of_directions,
-                      const string& threshold_vector_string,
-                      const string& unit_string,
+                      const wstring& threshold_vector_string,
+                      const wstring& unit_string,
                       const Real multiplier)
 {
 
-   if (threshold_vector_string == string ("beaufort"))
+   if (threshold_vector_string == L"beaufort")
    {
 
       vector<Wind_Rose_Threshold> tv;
       const Real multiplier = get_multiplier (unit_string);
 
-      tv.push_back (Wind_Rose_Threshold (0.51 / multiplier, "LT"));
-      tv.push_back (Wind_Rose_Threshold (3.60 / multiplier, "MD"));
-      tv.push_back (Wind_Rose_Threshold (8.75 / multiplier, "FS"));
-      tv.push_back (Wind_Rose_Threshold (11.32 / multiplier, "SG"));
-      tv.push_back (Wind_Rose_Threshold (17.49 / multiplier, "GA"));
-      tv.push_back (Wind_Rose_Threshold (24.69 / multiplier, "SM"));
-      tv.push_back (Wind_Rose_Threshold (32.92 / multiplier, "HC"));
+      tv.push_back (Wind_Rose_Threshold (0.51 / multiplier, L"LT"));
+      tv.push_back (Wind_Rose_Threshold (3.60 / multiplier, L"MD"));
+      tv.push_back (Wind_Rose_Threshold (8.75 / multiplier, L"FS"));
+      tv.push_back (Wind_Rose_Threshold (11.32 / multiplier, L"SG"));
+      tv.push_back (Wind_Rose_Threshold (17.49 / multiplier, L"GA"));
+      tv.push_back (Wind_Rose_Threshold (24.69 / multiplier, L"SM"));
+      tv.push_back (Wind_Rose_Threshold (32.92 / multiplier, L"HC"));
 
       init (number_of_directions, tv, unit_string, multiplier);
 
    }
    else
-   if (threshold_vector_string == string ("full_beaufort"))
+   if (threshold_vector_string == L"full_beaufort")
    {
 
       vector<Wind_Rose_Threshold> tv;
       const Real multiplier = get_multiplier (unit_string);
 
-      tv.push_back (Wind_Rose_Threshold (0.51 / multiplier, "F1"));
-      tv.push_back (Wind_Rose_Threshold (1.54 / multiplier, "F2"));
-      tv.push_back (Wind_Rose_Threshold (3.60 / multiplier, "F3"));
-      tv.push_back (Wind_Rose_Threshold (5.66 / multiplier, "F4"));
-      tv.push_back (Wind_Rose_Threshold (8.75 / multiplier, "F5"));
-      tv.push_back (Wind_Rose_Threshold (11.32 / multiplier, "F6"));
-      tv.push_back (Wind_Rose_Threshold (13.89 / multiplier, "F7"));
-      tv.push_back (Wind_Rose_Threshold (17.49 / multiplier, "F8"));
-      tv.push_back (Wind_Rose_Threshold (21.09 / multiplier, "F9"));
-      tv.push_back (Wind_Rose_Threshold (24.69 / multiplier, "F10"));
-      tv.push_back (Wind_Rose_Threshold (28.81 / multiplier, "F11"));
-      tv.push_back (Wind_Rose_Threshold (32.92 / multiplier, "F12"));
+      tv.push_back (Wind_Rose_Threshold (0.51 / multiplier, L"F1"));
+      tv.push_back (Wind_Rose_Threshold (1.54 / multiplier, L"F2"));
+      tv.push_back (Wind_Rose_Threshold (3.60 / multiplier, L"F3"));
+      tv.push_back (Wind_Rose_Threshold (5.66 / multiplier, L"F4"));
+      tv.push_back (Wind_Rose_Threshold (8.75 / multiplier, L"F5"));
+      tv.push_back (Wind_Rose_Threshold (11.32 / multiplier, L"F6"));
+      tv.push_back (Wind_Rose_Threshold (13.89 / multiplier, L"F7"));
+      tv.push_back (Wind_Rose_Threshold (17.49 / multiplier, L"F8"));
+      tv.push_back (Wind_Rose_Threshold (21.09 / multiplier, L"F9"));
+      tv.push_back (Wind_Rose_Threshold (24.69 / multiplier, L"F10"));
+      tv.push_back (Wind_Rose_Threshold (28.81 / multiplier, L"F11"));
+      tv.push_back (Wind_Rose_Threshold (32.92 / multiplier, L"F12"));
 
       init (number_of_directions, tv, unit_string, multiplier);
 
@@ -1467,7 +1470,7 @@ Wind_Rose::render (const RefPtr<Context>& cr,
          const Real& p = *(iterator);
          if (gsl_isnan (p) || p <= 0) { continue; }
 
-         string label_str = string_render ("%g%%", p);
+         const wstring& label_str = string_render ("%g%%", p);
          Real r = p * percentage_size + calm_ring_size;
          Point_2D label_point (point.x + 0.643*r, point.y - 0.766*r);
 
@@ -1490,7 +1493,8 @@ Wind_Rose::render (const RefPtr<Context>& cr,
    cr->arc (point.x, point.y, calm_ring_size, 0, 2*M_PI);
    cr->stroke ();
 
-   string calm_percentage_str = string_render ("%.1f%%", calm_percentage);
+   const wstring& calm_percentage_str =
+      string_render ("%.1f%%", calm_percentage);
 
    Label label (calm_percentage_str, point, 'c', 'c');
    label.cairo (cr);
@@ -1690,7 +1694,7 @@ Wind_Disc::render_direction_labels (const RefPtr<Context> cr) const
 
       const Point_2D p (d, max_speed);
       const Wind& wind = Wind::direction_speed (d, max_speed);
-      const string& str = wind.get_direction_string (number_of_directions);
+      const wstring& str = wind.get_direction_string (number_of_directions);
 
       Label label (str, p, 'c', 'c');
       label.set_text_angle (theta);
@@ -1818,7 +1822,8 @@ Wind_Disc::render_ring_label (const RefPtr<Context> cr) const
 
    const Integer number_of_labels = 8;
    const Real delta_d_label = 360.0 / number_of_labels;
-   const string format = string ("%.0f") + unit_string;
+   const wstring& format = L"%.0f" + unit_string;
+   const string fmt (format.begin (), format.end ());
 
    for (Integer j = 0; j < number_of_labels; j++)
    {
@@ -1832,7 +1837,7 @@ Wind_Disc::render_ring_label (const RefPtr<Context> cr) const
          const Real speed = speed_label_tuple[i];
          const Point_2D p (direction, speed);
 
-         const string str = string_render (format.c_str (), speed);
+         const wstring& str = string_render (fmt.c_str (), speed);
          Label label (str, p, 'c', 'c');
          label.set_text_angle (theta);
          label.cairo (cr, *transform_ptr);
@@ -1853,7 +1858,7 @@ Wind_Disc::render_ring_label (const RefPtr<Context> cr) const
 
             const Wrt& wind_rose_threshold = threshold_vector[i];
             const Real speed = wind_rose_threshold.value;
-            const string& str = wind_rose_threshold.label_str;
+            const wstring& str = wind_rose_threshold.label_str;
 
             const Point_2D p (direction, speed);
 
@@ -2085,7 +2090,7 @@ Wind_Disc::render_percentage (const RefPtr<Context> cr,
 {
 
    const bool b = gsl_isnan (percentage);
-   const string str = (b ?  "-" : string_render ("%.0f%%", percentage));
+   const wstring& str = (b ? L"-" : string_render ("%.0f%%", percentage));
    Label label (str, point, 'c', 'c');
 
    const Color& color_j = major_color;
@@ -2171,7 +2176,7 @@ Wind_Disc::Wind_Disc (const Integer number_of_directions,
                       const Real scatter_ring_size,
                       const Real calm_radius,
                       const Real label_height,
-                      const string& unit_string,
+                      const wstring& unit_string,
                       const Real multiplier)
    : Wind_Rose (number_of_directions, threshold_tuple, unit_string, multiplier),
      speed_label_tuple (speed_label_tuple),
@@ -2233,7 +2238,7 @@ Wind_Disc::get_wind (const Point_2D& point) const
 
    if (transform_ptr->out_of_domain (point.x, point.y))
    {
-      throw Exception ("Wind_Disc::get_wind out of domain");
+      throw Exception (L"Wind_Disc::get_wind out of domain");
    }
 
    Real direction, speed;
@@ -2788,7 +2793,7 @@ Level::get_value () const
    return value;
 }
 
-string
+wstring
 Level::get_string () const
 {
 
@@ -2806,19 +2811,19 @@ Level::get_string () const
          case HEIGHT:
             return string_render ("%.0fm", round (value));
          case SCREEN:
-            return "Screen";
+            return L"Screen";
          case FIFTY_METRE:
-            return "50m";
+            return L"50m";
          case TEN_METRE:
-            return "10m";
+            return L"10m";
          case MEAN_SEA:
-            return "MSL";
+            return L"MSL";
          case NIL:
-            return "";
+            return L"";
          case SURFACE:
-            return "Surface";
+            return L"Surface";
          case NAL:
-            return "";
+            return L"";
       }
 
    }

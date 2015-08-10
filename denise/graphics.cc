@@ -42,34 +42,35 @@ namespace denise
 
    RefPtr<Surface>
    get_surface (const Size_2D& size_2d,
-                const string& format,
-                const string& file_path)
+                const Dstring& format,
+                const Dstring& file_path)
    {
 
-      const string& f = get_lower_case (format);
+      const Dstring& f = format.get_lower_case ();
+      const string& fp = file_path.get_string ();
       const Integer ww = size_2d.i;
       const Integer hh = size_2d.j;
 
-      if (f == "pdf")
+      if (f == L"pdf")
       {
-         return Cairo::PdfSurface::create (file_path, ww, hh);
+         return Cairo::PdfSurface::create (fp, ww, hh);
       }
       else
-      if (f == "svg")
+      if (f == L"svg")
       {
-         return Cairo::SvgSurface::create (file_path, ww, hh);
+         return Cairo::SvgSurface::create (fp, ww, hh);
       }
       else
-      if (f == "ps")
+      if (f == L"ps")
       {
-         auto surface = Cairo::PsSurface::create (file_path, ww, hh);
+         auto surface = Cairo::PsSurface::create (fp, ww, hh);
          surface->set_eps (false);
          return surface;
       }
       else
-      if (f == "eps")
+      if (f == L"eps")
       {
-         auto surface = Cairo::PsSurface::create (file_path, ww, hh);
+         auto surface = Cairo::PsSurface::create (fp, ww, hh);
          surface->set_eps (true);
          return surface;
       }
@@ -100,8 +101,8 @@ namespace denise
 
 };
 
-Dashes::Dashes (const string& str,
-                const string& delimiter)
+Dashes::Dashes (const Dstring& str,
+                const Dstring& delimiter)
    : Tuple (str, delimiter)
 {
 }
@@ -144,68 +145,68 @@ Color::Color (const Real r,
 {
 }
 
-Color::Color (const string& str)
+Color::Color (const Dstring& str)
 {
 
-   const Tokens tokens (get_lower_case (str), ":");
+   const Tokens tokens (str.get_lower_case (), L":");
    const Integer n = tokens.size ();
 
-   if (tokens[0] == "black")
+   if (tokens[0] == L"black")
    {
       const Real a = (n > 1 ? stof (tokens[1]) : 1.0);
       set (Color::black (a));
    }
    else
-   if (tokens[0] == "white")
+   if (tokens[0] == L"white")
    {
       const Real a = (n > 1 ? stof (tokens[1]) : 1.0);
       set (Color::white (a));
    }
    else
-   if (tokens[0] == "gray")
+   if (tokens[0] == L"gray")
    {
       const Real b = (n > 1 ? stof (tokens[1]) : 0.5);
       const Real a = (n > 2 ? stof (tokens[2]) : 1.0);
       set (Color::gray (b, a));
    }
    else
-   if (tokens[0] == "red")
+   if (tokens[0] == L"red")
    {
       const Real a = (n > 1 ? stof (tokens[1]) : 1.0);
       set (Color::red (a));
    }
    else
-   if (tokens[0] == "green")
+   if (tokens[0] == L"green")
    {
       const Real a = (n > 1 ? stof (tokens[1]) : 1.0);
       set (Color::green (a));
    }
    else
-   if (tokens[0] == "blue")
+   if (tokens[0] == L"blue")
    {
       const Real a = (n > 1 ? stof (tokens[1]) : 1.0);
       set (Color::blue (a));
    }
    else
-   if (tokens[0] == "cyan")
+   if (tokens[0] == L"cyan")
    {
       const Real a = (n > 1 ? stof (tokens[1]) : 1.0);
       set (Color::cyan (a));
    }
    else
-   if (tokens[0] == "yellow")
+   if (tokens[0] == L"yellow")
    {
       const Real a = (n > 1 ? stof (tokens[1]) : 1.0);
       set (Color::yellow (a));
    }
    else
-   if (tokens[0] == "magenta")
+   if (tokens[0] == L"magenta")
    {
       const Real a = (n > 1 ? stof (tokens[1]) : 1.0);
       set (Color::magenta (a));
    }
    else
-   if (tokens[0] == "rgb")
+   if (tokens[0] == L"rgb")
    {
       const Real r = stof (tokens[1]);
       const Real g = stof (tokens[2]);
@@ -214,7 +215,7 @@ Color::Color (const string& str)
       set (r, g, b, a);
    }
    else
-   if (tokens[0] == "hsb")
+   if (tokens[0] == L"hsb")
    {
       const Real h = stof (tokens[1]);
       const Real s = stof (tokens[2]);
@@ -659,11 +660,11 @@ Constant_Color_Chooser::get_color (Real value) const
 }
 
 Rgb_Color_Chooser::Component::Component (const Rgb_Color_Chooser& rcc,
-                                         const string& config_str)
+                                         const Dstring& config_str)
    : rgb_color_chooser (rcc)
 {
 
-   const Tokens tokens (config_str, ":");
+   const Tokens tokens (config_str, L":");
    const Integer n = tokens.size ();
 
    start_fraction = tokens.real (0);
@@ -720,10 +721,10 @@ Rgb_Color_Chooser::color (const Real r,
 
 Rgb_Color_Chooser::Rgb_Color_Chooser (const Real start_value,
                                       const Real end_value,
-                                      const string& str_r,
-                                      const string& str_g,
-                                      const string& str_b,
-                                      const string& str_a,
+                                      const Dstring& str_r,
+                                      const Dstring& str_g,
+                                      const Dstring& str_b,
+                                      const Dstring& str_a,
                                       const Color& invalid_color)
    : Color_Chooser (invalid_color),
      start_value (start_value),
@@ -786,10 +787,10 @@ Hsb_Color_Chooser::color (const Real hue,
 
 Hsb_Color_Chooser::Hsb_Color_Chooser (const Real start_value,
                                       const Real end_value,
-                                      const string& hue_str,
-                                      const string& saturation_str,
-                                      const string& brightness_str,
-                                      const string& alpha_str,
+                                      const Dstring& hue_str,
+                                      const Dstring& saturation_str,
+                                      const Dstring& brightness_str,
+                                      const Dstring& alpha_str,
                                       const Color& invalid_color)
    : Rgb_Color_Chooser (start_value, end_value, hue_str,
         saturation_str, brightness_str, alpha_str, invalid_color)
@@ -798,11 +799,11 @@ Hsb_Color_Chooser::Hsb_Color_Chooser (const Real start_value,
 
 Hue_Color_Chooser::Hue_Color_Chooser (const Real start_value,
                                       const Real end_value,
-                                      const string& hue_str,
+                                      const Dstring& hue_str,
                                       const Real alpha,
                                       const Color& invalid_color)
-   : Hsb_Color_Chooser (start_value, end_value, hue_str, "1",
-        "1", string_render ("%f", alpha), invalid_color)
+   : Hsb_Color_Chooser (start_value, end_value, hue_str, L"1",
+        L"1", string_render ("%f", alpha), invalid_color)
 {
 }
 
@@ -842,10 +843,10 @@ Hue_Color_Chooser::Hue_Color_Chooser (const Real start_value,
 
 Gray_Color_Chooser::Gray_Color_Chooser (const Real start_value,
                                         const Real end_value,
-                                        const string& brightness_str,
+                                        const Dstring& brightness_str,
                                         const Color& invalid_color)
-   : Hsb_Color_Chooser (start_value, end_value, "0", "0",
-        brightness_str, "1", invalid_color)
+   : Hsb_Color_Chooser (start_value, end_value, L"0", L"0",
+        brightness_str, L"1", invalid_color)
 {
 }
 
@@ -853,8 +854,8 @@ Gray_Color_Chooser::Gray_Color_Chooser (const Real start_value,
                                         const Real end_value,
                                         const Real gamma,
                                         const Color& invalid_color)
-   : Hsb_Color_Chooser (start_value, end_value, "0", "0",
-        string_render ("0:1:%f", gamma), "1", invalid_color)
+   : Hsb_Color_Chooser (start_value, end_value, L"0", L"0",
+        string_render ("0:1:%f", gamma), L"1", invalid_color)
 {
 }
 
@@ -1192,11 +1193,13 @@ Label::cairo_text (const RefPtr<Context>& cr,
                    const bool outline) const
 {
 
+   const string txt (text.begin (), text.end ());
+
    Real dx, dy;
    FontExtents fe;
    TextExtents te;
    cr->get_font_extents (fe);
-   cr->get_text_extents (text, te);
+   cr->get_text_extents (txt, te);
 
    const Real text_width = (align ? te.x_advance : te.width);
    const Real text_height = (align ? -te.y_bearing : te.height);
@@ -1230,8 +1233,8 @@ Label::cairo_text (const RefPtr<Context>& cr,
 
    cr->move_to (point.x + offset.x + dx, point.y + offset.y + dy); 
 
-   if (outline) { cr->text_path (text); }
-   else { cr->show_text (text); }
+   if (outline) { cr->text_path (txt); }
+   else { cr->show_text (txt); }
 
    cr->restore ();
 
@@ -1243,10 +1246,10 @@ Label::cairo_text (const RefPtr<Context>& cr,
 
 }
 
-string
+Dstring
 Label::get_string (const Real value,
                    const Number number,
-                   const string& format_str,
+                   const Dstring& format,
                    const Real multiplier,
                    const Real offset)
 {
@@ -1258,21 +1261,23 @@ Label::get_string (const Real value,
 
       case Label::REAL:
       {
-         return string_render (format_str.c_str (), x);
+         const string fmt (format.begin (), format.end ());
+         return string_render (fmt.c_str (), x);
       }
 
       case Label::TIME:
       {
-         return Dtime (x).get_string (format_str);
+         return Dtime (x).get_string (format);
       }
 
       case Label::LATITUDE:
       {
          const bool small = fabs (x) < 0.0001;
          const bool positive = x > 0;
-         const string ns = (small ? "" : (positive ? "N" : "S"));
-         const string& fs = format_str + "\u00b0" + ns;
-         return string_render (fs.c_str (), fabs (x));
+         const Dstring ns = (small ? L"" : (positive ? L"N" : L"S"));
+         const Dstring& format_str = format + L"\u00b0" + ns;
+         const string fmt (format_str.begin (), format_str.end ());
+         return string_render (fmt.c_str (), fabs (x));
       }
 
       case Label::LONGITUDE:
@@ -1283,9 +1288,11 @@ Label::get_string (const Real value,
          const bool small = fabs (longitude) < 0.0001;
          const bool dateline = fabs (longitude - 180) < 0.0001;
          const bool positive = longitude > 0;
-         const string ew = ((small || dateline) ? "" : (positive ? "E" : "W"));
-         const string& fs = format_str + "\u00b0" + ew;
-         return string_render (fs.c_str (), fabs (longitude));
+         const bool no_ew = (small || dateline);
+         const Dstring ew = (no_ew ? L"" : (positive ? L"E" : L"W"));
+         const Dstring& format_str = format + L"\u00b0" + ew;
+         const string fmt (format_str.begin (), format_str.end ());
+         return string_render (fmt.c_str (), fabs (longitude));
       }
 
    }
@@ -1316,7 +1323,7 @@ Label::set_offset (const char justify_h,
 
 }
 
-Label::Label (const string& text,
+Label::Label (const Dstring& text,
               const Point_2D& point_2d,
               const char justify_h,
               const char justify_v)
@@ -1329,7 +1336,7 @@ Label::Label (const string& text,
 {
 }
 
-Label::Label (const string& text,
+Label::Label (const Dstring& text,
               const Point_2D& point_2d,
               const char justify_h,
               const char justify_v,
@@ -1345,11 +1352,11 @@ Label::Label (const string& text,
 
 Label::Label (const Real value,
               const Label::Number number,
-              const string& format_str,
+              const Dstring& format,
               const Point_2D& point_2d,
               const char justify_h,
               const char justify_v)
-   : text (get_string (value, number, format_str)),
+   : text (get_string (value, number, format)),
      point_2d (point_2d),
      justify_h (justify_h),
      justify_v (justify_v),
@@ -1360,12 +1367,12 @@ Label::Label (const Real value,
 
 Label::Label (const Real value,
               const Label::Number number,
-              const string& format_str,
+              const Dstring& format,
               const Point_2D& point_2d,
               const char justify_h,
               const char justify_v,
               const Real padding)
-   : text (get_string (value, number, format_str)),
+   : text (get_string (value, number, format)),
      point_2d (point_2d),
      justify_h (justify_h),
      justify_v (justify_v),
@@ -1376,13 +1383,13 @@ Label::Label (const Real value,
 
 Label::Label (const Real value,
               const Label::Number number,
-              const string& format_str,
+              const Dstring& format,
               const Real multiplier,
               const Real offset,
               const Point_2D& point_2d,
               const char justify_h,
               const char justify_v)
-   : text (get_string (value, number, format_str, multiplier, offset)),
+   : text (get_string (value, number, format, multiplier, offset)),
      point_2d (point_2d),
      justify_h (justify_h),
      justify_v (justify_v),
@@ -1393,14 +1400,14 @@ Label::Label (const Real value,
 
 Label::Label (const Real value,
               const Label::Number number,
-              const string& format_str,
+              const Dstring& format,
               const Real multiplier,
               const Real offset,
               const Point_2D& point_2d,
               const char justify_h,
               const char justify_v,
               const Real padding)
-   : text (get_string (value, number, format_str, multiplier, offset)),
+   : text (get_string (value, number, format, multiplier, offset)),
      point_2d (point_2d),
      justify_h (justify_h),
      justify_v (justify_v),
@@ -1433,7 +1440,7 @@ Label::set_text_angle (const Real text_angle)
    this->text_angle = text_angle;
 }
 
-const string&
+const Dstring&
 Label::get_text () const
 {
    return text;
@@ -1749,7 +1756,7 @@ Simple_Mesh_2D::render_label_x (const RefPtr<Context>& cr,
                                 const Transform_2D& transform,
                                 const Domain_1D& domain_1d,
                                 const Real position,
-                                const string& format_str,
+                                const Dstring& format,
                                 const Label::Number label_number,
                                 const char justify_h,
                                 const char justify_v,
@@ -1777,7 +1784,7 @@ Simple_Mesh_2D::render_label_x (const RefPtr<Context>& cr,
 
       point.x = *(iterator);
 
-      Label label (point.x, label_number, format_str, m_x,
+      Label label (point.x, label_number, format, m_x,
          o_x, point, justify_h, justify_v, padding);
       label.cairo (cr, transform);
 
@@ -1792,7 +1799,7 @@ Simple_Mesh_2D::render_label_y (const RefPtr<Context>& cr,
                                 const Transform_2D& transform,
                                 const Domain_1D& domain_1d,
                                 const Real position,
-                                const string& format_str,
+                                const Dstring& format,
                                 const Label::Number label_number,
                                 const char justify_h,
                                 const char justify_v,
@@ -1820,7 +1827,7 @@ Simple_Mesh_2D::render_label_y (const RefPtr<Context>& cr,
 
       point.y = *(iterator);
 
-      Label label (point.y, label_number, format_str, m_y,
+      Label label (point.y, label_number, format, m_y,
          o_y, point, justify_h, justify_v, padding);
       label.cairo (cr, transform);
 
@@ -1835,18 +1842,18 @@ Simple_Mesh_2D::render_label_lat_long (const RefPtr<Context>& cr,
                                        const Transform_2D& transform,
                                        const Domain_2D& domain_2d,
                                        const Lat_Long& lat_long,
-                                       const string& format_str,
+                                       const Dstring& format,
                                        const char justify_h,
                                        const char justify_v,
                                        const Real padding) const
 {
 
    render_label_x (cr, transform, domain_2d.domain_x,
-      lat_long.longitude, format_str, Label::LATITUDE, justify_h,
+      lat_long.longitude, format, Label::LATITUDE, justify_h,
       justify_v, padding);
 
    render_label_y (cr, transform, domain_2d.domain_y,
-      lat_long.latitude, format_str, Label::LONGITUDE, justify_h,
+      lat_long.latitude, format, Label::LONGITUDE, justify_h,
       justify_v, padding);
 
 }
@@ -2063,7 +2070,7 @@ Mesh_2D::render_label_x (const RefPtr<Context>& cr,
                          const Transform_2D& transform,
                          const Integer index,
                          const Real position_y,
-                         const string& format_str,
+                         const Dstring& format,
                          const Label::Number label_number,
                          const char justify_h,
                          const char justify_v,
@@ -2072,7 +2079,7 @@ Mesh_2D::render_label_x (const RefPtr<Context>& cr,
    if (index >= size ()) { return; }
    const Simple_Mesh_2D& simple_mesh_2d = at (index);
    simple_mesh_2d.render_label_x (cr, transform, domain_2d.domain_x,
-      position_y, format_str, label_number, justify_h, justify_v, padding);
+      position_y, format, label_number, justify_h, justify_v, padding);
 }
 
 void
@@ -2080,7 +2087,7 @@ Mesh_2D::render_label_y (const RefPtr<Context>& cr,
                          const Transform_2D& transform,
                          const Integer index,
                          const Real position_x,
-                         const string& format_str,
+                         const Dstring& format,
                          const Label::Number label_number,
                          const char justify_h,
                          const char justify_v,
@@ -2089,7 +2096,7 @@ Mesh_2D::render_label_y (const RefPtr<Context>& cr,
    if (index >= size ()) { return; }
    const Simple_Mesh_2D& simple_mesh_2d = at (index);
    simple_mesh_2d.render_label_y (cr, transform, domain_2d.domain_y,
-      position_x, format_str, label_number, justify_h, justify_v, padding);
+      position_x, format, label_number, justify_h, justify_v, padding);
 }
 
 void
@@ -2097,15 +2104,15 @@ Mesh_2D::render_label_lat_long (const RefPtr<Context>& cr,
                                 const Transform_2D& transform,
                                 const Integer index,
                                 const Lat_Long& lat_long,
-                                const string& format_str,
+                                const Dstring& format,
                                 const char justify_h,
                                 const char justify_v,
                                 const Real padding) const
 {
    render_label_x (cr, transform, index, lat_long.longitude,
-      format_str, Label::LATITUDE, justify_h, justify_v, padding);
+      format, Label::LATITUDE, justify_h, justify_v, padding);
    render_label_y (cr, transform, index, lat_long.latitude,
-      format_str, Label::LONGITUDE, justify_h, justify_v, padding);
+      format, Label::LONGITUDE, justify_h, justify_v, padding);
 }
 
 Raster::Raster (const Size_2D& size_2d)
@@ -2203,7 +2210,7 @@ Raster::blit (const RefPtr<Context>& cr,
 
 void
 Title::cairo (const RefPtr<Context>& cr,
-              const string& str) const
+              const Dstring& str) const
 {
 
    const Real width = Real (i);
@@ -2232,9 +2239,9 @@ Title::cairo (const RefPtr<Context>& cr,
 
 void
 Title::cairo (const RefPtr<Context>& cr,
-              const string& string_l,
-              const string& string_c,
-              const string& string_r) const
+              const Dstring& string_l,
+              const Dstring& string_c,
+              const Dstring& string_r) const
 {
 
    const Real width = Real (i);
@@ -2273,11 +2280,11 @@ Title::cairo (const RefPtr<Context>& cr,
 
 void
 Title::cairo (const RefPtr<Context>& cr,
-              const string& string_ul,
-              const string& string_ll,
-              const string& string_c,
-              const string& string_ur,
-              const string& string_lr) const
+              const Dstring& string_ul,
+              const Dstring& string_ll,
+              const Dstring& string_c,
+              const Dstring& string_ur,
+              const Dstring& string_lr) const
 {
 
    const Real width = Real (i);
@@ -2367,16 +2374,16 @@ Title::set (const Tokens& tokens)
 }
 
 void
-Title::set (const string& str)
+Title::set (const Dstring& str)
 {
    clear ();
    push_back (str);
 }
 
 void
-Title::set (const string& string_l,
-            const string& string_c,
-            const string& string_r)
+Title::set (const Dstring& string_l,
+            const Dstring& string_c,
+            const Dstring& string_r)
 {
    clear ();
    push_back (string_l);
@@ -2385,11 +2392,11 @@ Title::set (const string& string_l,
 }
 
 void
-Title::set (const string& string_ul,
-            const string& string_ll,
-            const string& string_c,
-            const string& string_ur,
-            const string& string_lr)
+Title::set (const Dstring& string_ul,
+            const Dstring& string_ll,
+            const Dstring& string_c,
+            const Dstring& string_ur,
+            const Dstring& string_lr)
 {
    clear ();
    push_back (string_ul);

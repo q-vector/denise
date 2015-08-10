@@ -31,12 +31,80 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <denise/basics.h>
+#include <denise/dstring.h>
 #include <denise/exception.h>
 
 using namespace std;
 
 namespace denise
 {
+
+   class Dstring : public wstring
+   {
+
+      public:
+
+         Dstring ();
+
+         Dstring (const Dstring& dstring);
+
+         Dstring (const wstring& wstr);
+
+         Dstring (const wchar_t* buffer);
+
+         Dstring (const string& str);
+
+         Dstring (const char* buffer);
+
+         string
+         get_string () const;
+
+         void
+         to_lower_case ();
+
+         void
+         to_upper_case ();
+
+         void
+         to_capital_case ();
+
+         void
+         chop ();
+
+         void
+         trim (const Dstring& white_string = L" \f\n\t");
+
+         void
+         left_trim (const Dstring& white_string = L" \f\n\t");
+
+         void
+         right_trim (const Dstring& white_string = L" \f\n\t");
+
+         Dstring
+         get_lower_case () const;
+
+         Dstring
+         get_upper_case () const;
+
+         Dstring
+         get_captial_case () const;
+
+         Dstring
+         get_trimmed (const Dstring& white_string = L" \f\n\t") const;
+
+         Dstring
+         get_left_trimmed (const Dstring& white_string = L" \f\n\t") const;
+
+         Dstring
+         get_right_trimmed (const Dstring& white_string = L" \f\n\t") const;
+
+         Dstring
+         get_file_extension () const;
+
+         static Dstring
+         render (const Dstring& format, ...);
+
+   };
 
    class Reg_Exp
    {
@@ -54,7 +122,7 @@ namespace denise
 
       public:
 
-         Reg_Exp (const wstring& reg_exp_str,
+         Reg_Exp (const Dstring& reg_exp_str,
                   const bool match_info = false,
                   const bool posix_extend = true,
                   const bool case_sensitive = true);
@@ -62,30 +130,30 @@ namespace denise
          ~Reg_Exp ();
 
          bool
-         match (const wstring& str) const;
+         match (const Dstring& str) const;
 
          Iduple
-         get_match (const wstring& str,
+         get_match (const Dstring& str,
                     const bool ignore_no_match = true) const;
 
          void
-         replace (wstring& str,
-                  const wstring& with,
+         replace (Dstring& str,
+                  const Dstring& with,
                   const bool ignore_no_match = true) const;
 
          Iduple_Vector
-         get_match_sub (const wstring& str,
+         get_match_sub (const Dstring& str,
                         const bool ignore_no_match = true) const;
 
          static bool
-         match (const wstring& str,
-                const wstring& reg_exp_str,
+         match (const Dstring& str,
+                const Dstring& reg_exp_str,
                 const bool posix_extend = true,
                 const bool case_sensitive = true);
 
    };
 
-   class Tokens : public vector<wstring>
+   class Tokens : public vector<Dstring>
    {
 
       public:
@@ -93,12 +161,12 @@ namespace denise
          Tokens ();
 
          Tokens (const Tuple& tuple,
-                 const wstring& fmt);
+                 const Dstring& fmt);
 
-         Tokens (const wstring& str);
+         Tokens (const Dstring& str);
 
-         Tokens (const wstring& str,
-                 const wstring& delimiters);
+         Tokens (const Dstring& str,
+                 const Dstring& delimiters);
 
          Tokens
          subtokens (const Integer i,
@@ -111,17 +179,17 @@ namespace denise
          integer (const Integer index) const;
 
          void
-         add (const wstring& str);
+         add (const Dstring& str);
 
          void
-         add (const wstring& str,
-              const wstring& delimiters);
+         add (const Dstring& str,
+              const Dstring& delimiters);
 
          void
-         add_prefix (const wstring& prefix);
+         add_prefix (const Dstring& prefix);
 
          void
-         add_suffix (const wstring& suffix);
+         add_suffix (const Dstring& suffix);
 
    };
 

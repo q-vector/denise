@@ -25,21 +25,21 @@ using namespace denise;
 using namespace andrea;
 
 void
-Geodesy_Package::geodesy_assign (const string& identifier,
-                                 const string& str)
+Geodesy_Package::geodesy_assign (const Dstring& identifier,
+                                 const Dstring& str)
 {
    geodesy_map[identifier] = Geodesy (str);
 }
 
 void
-Geodesy_Package::geodesy_print (const string& identifier) const
+Geodesy_Package::geodesy_print (const Dstring& identifier) const
 {
 
    auto iterator = geodesy_map.find (identifier);
    const bool is_present = (iterator != geodesy_map.end ());
    if (is_present)
    {
-      cout << "geodesy " << identifier << " is present" << endl;
+      wcout << L"geodesy " << identifier << L" is present" << endl;
    }
 
 }
@@ -49,13 +49,13 @@ Geodesy_Package::geodesy_distance (const Tokens& tokens) const
 {
 
    const Integer n = tokens.size ();
-   if (n != 2) { throw Exception ("geodesy_distance"); }
+   if (n != 2) { throw Exception (L"geodesy_distance"); }
 
    const Lat_Long origin (tokens[0]);
    const Lat_Long destination (tokens[1]);
    const Real distance = Geodesy::get_distance (origin, destination);
 
-   cout << distance << endl;
+   wcout << distance << endl;
 
 }
 
@@ -64,14 +64,14 @@ Geodesy_Package::geodesy_azimuth (const Tokens& tokens) const
 {
 
    const Integer n = tokens.size ();
-   if (n != 2) { throw Exception ("geodesy_azimuth"); }
+   if (n != 2) { throw Exception (L"geodesy_azimuth"); }
 
    const Lat_Long origin (tokens[0]);
    const Lat_Long destination (tokens[1]);
    const Real azimuth_f = Geodesy::get_azimuth_forward (origin, destination);
    const Real azimuth_b = Geodesy::get_azimuth_backward (origin, destination);
 
-   cout << azimuth_f << " " << azimuth_b << endl;
+   wcout << azimuth_f << L" " << azimuth_b << endl;
 
 }
 
@@ -80,7 +80,7 @@ Geodesy_Package::geodesy_destination (const Tokens& tokens) const
 {
 
    const Integer n = tokens.size ();
-   if (n != 3) { throw Exception ("geodesy_destination"); }
+   if (n != 3) { throw Exception (L"geodesy_destination"); }
 
    const Lat_Long origin (tokens[0]);
    const Real distance = stof (tokens[1]);
@@ -88,7 +88,7 @@ Geodesy_Package::geodesy_destination (const Tokens& tokens) const
    const Lat_Long& destination =
       Geodesy::get_destination (origin, distance, azimuth_forward);
 
-   cout << destination.get_string (lat_long_dp) << endl;
+   wcout << destination.get_string (lat_long_dp) << endl;
 
 }
 
@@ -105,49 +105,49 @@ Geodesy_Package::geodesy_parse (const Tokens& tokens)
 
    const Integer n = tokens.size ();
 
-   if (tokens[0] == "assign")
+   if (tokens[0] == L"assign")
    {
-      const string& identifier = tokens[1];
+      const Dstring& identifier = tokens[1];
       geodesy_assign (identifier, tokens[2]);
    }
    else
-   if (tokens[0] == "print")
+   if (tokens[0] == L"print")
    {
-      const string& identifier = tokens[1];
+      const Dstring& identifier = tokens[1];
       geodesy_print (identifier);
    }
    else
-   if (tokens[0] == "distance")
+   if (tokens[0] == L"distance")
    {
       geodesy_distance (tokens.subtokens (1));
    }
    else
-   if (tokens[0] == "azimuth")
+   if (tokens[0] == L"azimuth")
    {
       geodesy_azimuth (tokens.subtokens (1));
    }
    else
-   if (tokens[0] == "destination")
+   if (tokens[0] == L"destination")
    {
       geodesy_destination (tokens.subtokens (1));
    }
    else
    {
-      throw Exception ("geodesy_parse");
+      throw Exception (L"geodesy_parse");
    }
 
 }
 
-const map<string, Geodesy>&
+const map<Dstring, Geodesy>&
 Geodesy_Package::get_geodesy_map () const
 {
    return geodesy_map;
 }
 
 const Geodesy&
-Geodesy_Package::get_geodesy (const string& identifier) const
+Geodesy_Package::get_geodesy (const Dstring& identifier) const
 {
-   Exception e ("geodetsy not found: " + identifier);
+   Exception e (L"geodetsy not found: " + identifier);
    try { return geodesy_map.at (identifier); }
    catch (const std::out_of_range& oor) { throw e; }
 }

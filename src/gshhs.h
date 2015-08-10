@@ -36,7 +36,7 @@ namespace andrea
 
       protected:
 
-         map<string, Gshhs*>
+         map<Dstring, Gshhs*>
          gshhs_ptr_map;
 
          Gshhs_Package (Andrea& andrea);
@@ -44,11 +44,11 @@ namespace andrea
          ~Gshhs_Package ();
 
          void
-         gshhs_load (const string& identifier,
-                     const string& file_path);
+         gshhs_load (const Dstring& identifier,
+                     const Dstring& file_path);
 
          void
-         gshhs_print (const string& identifier,
+         gshhs_print (const Dstring& identifier,
                       const Tokens& arguments) const;
 
          void
@@ -56,16 +56,16 @@ namespace andrea
 
       public:
 
-         const map<string, Gshhs*>&
+         const map<Dstring, Gshhs*>&
          get_gshhs_ptr_map () const;
 
          const Gshhs*
-         get_gshhs_ptr (const string& identifier) const;
+         get_gshhs_ptr (const Dstring& identifier) const;
 
          void
-         surface_gshhs (const string& surface_identifier,
-                        const string& geodetic_transform_identifier,
-                        const string& gshhs_identifier,
+         surface_gshhs (const Dstring& surface_identifier,
+                        const Dstring& geodetic_transform_identifier,
+                        const Dstring& gshhs_identifier,
                         const Tokens& arguments);
 
    };

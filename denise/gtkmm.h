@@ -625,11 +625,11 @@ namespace denise
          Real
          fraction;
 
-         string
+         Dstring
          description;
 
          Progress (const Real fraction,
-                   const string& description);
+                   const Dstring& description);
 
    };
 
@@ -674,7 +674,7 @@ namespace denise
          Gtk::Window&
          gtk_window;
 
-         string
+         Dstring
          easter_egg;
 
          Title
@@ -718,7 +718,7 @@ namespace denise
          initialize ();
 
          virtual void
-         save_image (const string& file_path);
+         save_image (const Dstring& file_path);
 
          virtual bool
          on_key_pressed (const Dkey_Event& event);
@@ -812,13 +812,13 @@ namespace denise
          typedef sigc::signal<void>
          Signal;
 
-         typedef sigc::signal<void, const string&>
+         typedef sigc::signal<void, const Dstring&>
          Str_Signal;
 
          typedef sigc::signal<void, const Dmouse_Button_Event>
          Full_Signal;
 
-         typedef sigc::signal<void, const string&, const Dmouse_Button_Event>
+         typedef sigc::signal<void, const Dstring&, const Dmouse_Button_Event>
          Full_Str_Signal;
 
       protected:
@@ -829,10 +829,10 @@ namespace denise
          Button_State
          state;
 
-         const string
+         const Dstring
          str;
 
-         const string
+         const Dstring
          separator;
 
          const Symbol
@@ -877,14 +877,14 @@ namespace denise
       public:
 
          Dbutton (const Dcanvas& canvas,
-                  const string& str,
+                  const Dstring& str,
                   const Real font_size,
-                  const string& separator = "\t\n");
+                  const Dstring& separator = L"\t\n");
 
          Dbutton (const Dcanvas& canvas,
                   const Symbol& symbol);
 
-         virtual string
+         virtual Dstring
          get_str () const;
 
          Signal&
@@ -958,7 +958,7 @@ namespace denise
 
          Template_Button (const Dcanvas& canvas,
                           const T t,
-                          const string& str,
+                          const Dstring& str,
                           const Real font_size)
             : Dbutton (canvas, str, font_size),
               t (t)
@@ -1009,13 +1009,13 @@ namespace denise
          typedef sigc::signal<void>
          Update_Signal;
 
-         typedef sigc::signal<void, const string&>
+         typedef sigc::signal<void, const Dstring&>
          Update_Str_Signal;
 
          typedef sigc::signal<void, const Devent&>
          Full_Update_Signal;
 
-         typedef sigc::signal<void, const string&, const Devent>
+         typedef sigc::signal<void, const Dstring&, const Devent>
          Full_Update_Str_Signal;
 
       protected:
@@ -1052,12 +1052,12 @@ namespace denise
          Spin_Button (const Dcanvas& canvas,
                       const bool instant_update,
                       const Real font_size,
-                      const string& separator = "\t\n");
+                      const Dstring& separator = L"\t\n");
 
-         string
+         Dstring
          get_official_str () const;
 
-         string
+         Dstring
          get_str () const;
 
          Update_Signal&
@@ -1083,7 +1083,7 @@ namespace denise
               const bool try_preserve = true);
 
          void
-         add_token (const string& token,
+         add_token (const Dstring& token,
                     const bool clear_first = false);
 
          void
@@ -1109,13 +1109,13 @@ namespace denise
          typedef sigc::signal<void>
          Signal;
 
-         typedef sigc::signal<void, const string&>
+         typedef sigc::signal<void, const Dstring&>
          Str_Signal;
 
          typedef sigc::signal<void, const Dmouse_Button_Event>
          Full_Signal;
 
-         typedef sigc::signal<void, const string&, const Dmouse_Button_Event>
+         typedef sigc::signal<void, const Dstring&, const Dmouse_Button_Event>
          Full_Str_Signal;
 
       protected:
@@ -1138,7 +1138,7 @@ namespace denise
       public:
 
          Dtoggle_Button (const Dcanvas& canvas,
-                         const string& str,
+                         const Dstring& str,
                          const Real font_size,
                          const bool switched_on = false);
 
@@ -1219,7 +1219,7 @@ namespace denise
 
          Template_Toggle_Button (const Dcanvas& canvas,
                                  const T t,
-                                 const string& str,
+                                 const Dstring& str,
                                  const Real font_size,
                                  const bool switched_on)
             : Dtoggle_Button (canvas, str, font_size, switched_on),
@@ -1298,7 +1298,7 @@ namespace denise
          group_index;
 
          Radio_Button (const Dcanvas& canvas,
-                       const string& str,
+                       const Dstring& str,
                        const Real font_size);
 
          Group&
@@ -1349,7 +1349,7 @@ namespace denise
          Drawer (Dcanvas& dcanvas,
                  Dcontainer& dcontainer,
                  const bool open_upwards,
-                 const string& str,
+                 const Dstring& str,
                  const Real font_size);
 
          ~Drawer ();
@@ -1393,13 +1393,13 @@ namespace denise
 
       public:
 
-         typedef std::map<string, Drawer*>
+         typedef std::map<Dstring, Drawer*>
          Drawer_Ptr_Map;
 
-         typedef std::map<string, Dbutton*>
+         typedef std::map<Dstring, Dbutton*>
          Button_Ptr_Map;
 
-         typedef std::map<string, Dtoggle_Button*>
+         typedef std::map<Dstring, Dtoggle_Button*>
          Toggle_Button_Ptr_Map;
 
       protected:
@@ -1435,52 +1435,52 @@ namespace denise
                          const bool back = true);
 
          Drawer_Ptr_Map::iterator
-         add_drawer (const string& str,
+         add_drawer (const Dstring& str,
                      const bool back = true);
 
          void
-         add_widget (const string& drawer_str,
+         add_widget (const Dstring& drawer_str,
                      Dwidget& widget);
 
          void
-         add_widget_ptr (const string& drawer_str,
+         add_widget_ptr (const Dstring& drawer_str,
                          Dwidget* widget_ptr);
 
          void
-         add_button (const string& str,
+         add_button (const Dstring& str,
                      const bool back = true);
 
          void
-         add_toggle_button (const string& str,
+         add_toggle_button (const Dstring& str,
                             const bool switched_on,
                             const bool back = true);
 
          const Drawer&
-         get_drawer (const string& str) const;
+         get_drawer (const Dstring& str) const;
 
          Drawer&
-         get_drawer (const string& str);
+         get_drawer (const Dstring& str);
 
          const Dbutton&
-         get_button (const string& str) const;
+         get_button (const Dstring& str) const;
 
          Dbutton&
-         get_button (const string& str);
+         get_button (const Dstring& str);
 
          const Dtoggle_Button&
-         get_toggle_button (const string& str) const;
+         get_toggle_button (const Dstring& str) const;
 
          Dtoggle_Button&
-         get_toggle_button (const string& str);
+         get_toggle_button (const Dstring& str);
 
          bool
-         is_switched_on (const string& str) const;
+         is_switched_on (const Dstring& str) const;
 
          void
-         toggle (const string& str);
+         toggle (const Dstring& str);
 
          void
-         set_toggle (const string& str,
+         set_toggle (const Dstring& str,
                      const bool switched_on);
 
          bool
@@ -1502,13 +1502,13 @@ namespace denise
          const Real
          margin;
 
-         string
+         Dstring
          string_l;
 
-         string
+         Dstring
          string_c;
 
-         string
+         Dstring
          string_r;
 
       public:
@@ -1518,18 +1518,18 @@ namespace denise
 
          Dtitle (const Dcanvas& canvas,
                  const Real font_size,
-                 const string& string_l,
-                 const string& string_c,
-                 const string& string_r);
+                 const Dstring& string_l,
+                 const Dstring& string_c,
+                 const Dstring& string_r);
 
          void
-         set_string_l (const string& string_l);
+         set_string_l (const Dstring& string_l);
 
          void
-         set_string_c (const string& string_c);
+         set_string_c (const Dstring& string_c);
 
          void
-         set_string_r (const string& string_r);
+         set_string_r (const Dstring& string_r);
 
          virtual Real
          get_preferred_width () const;
@@ -1582,7 +1582,7 @@ namespace denise
          clear ();
 
          void
-         append (const string& str);
+         append (const Dstring& str);
 
          void
          set_tokens (const Tokens& tokens);
@@ -1615,7 +1615,7 @@ namespace denise
          typedef sigc::signal<void>
          Signal;
 
-         typedef sigc::signal<void, const string&>
+         typedef sigc::signal<void, const Dstring&>
          Str_Signal;
 
       protected: 
@@ -1623,14 +1623,14 @@ namespace denise
          bool
          fresh;
 
-         map<string, Signal>
+         map<Dstring, Signal>
          signal_map;
 
-         map<string, Str_Signal>
+         map<Dstring, Str_Signal>
          str_signal_map;
 
          virtual void
-         emit_signal (const string& str) const;
+         emit_signal (const Dstring& str) const;
 
       public:
 
@@ -1647,13 +1647,13 @@ namespace denise
          clear ();
 
          virtual void
-         append (const string& str);
+         append (const Dstring& str);
 
          Signal&
-         get_signal (const string& str);
+         get_signal (const Dstring& str);
 
          Str_Signal&
-         get_str_signal (const string& str);
+         get_str_signal (const Dstring& str);
 
          bool
          is_on () const;
@@ -1725,13 +1725,13 @@ namespace denise
             private:
 
                void
-               init (const string& str);
+               init (const Dstring& str);
 
                static void
-               rectify (string& str);
+               rectify (Dstring& str);
 
                static bool
-               contains (const string& str,
+               contains (const Dstring& str,
                          const Dtime& dtime);
 
             public:
@@ -1750,7 +1750,7 @@ namespace denise
 
                Data (const Dtime& dtime);
 
-               Data (const string& str);
+               Data (const Dstring& str);
 
                void
                insert (const Dtime& dtime,
@@ -1864,7 +1864,7 @@ namespace denise
          render_month_lines (const RefPtr<Context>& cr,
                                    const Integer year,
                                    const Integer month,
-                                   const string& format = "") const;
+                                   const Dstring& format = L"") const;
 
          void
          render_background_days (const RefPtr<Context>& cr);
@@ -1875,7 +1875,7 @@ namespace denise
          void
          render_lines (const RefPtr<Context>& cr,
                        const Real hours,
-                       const string& format = "") const;
+                       const Dstring& format = L"") const;
 
          void
          render_nodes (const RefPtr<Context>& cr) const;
@@ -2462,11 +2462,11 @@ namespace denise
                      sigc::signal<void, const Integer>
                      clear_signal;
 
-                     std::map<string, Id_Signal>
+                     std::map<Dstring, Id_Signal>
                      id_signal_map;
 
                      virtual void
-                     emit_signal (const string& str) const;
+                     emit_signal (const Dstring& str) const;
 
                   public:
 
@@ -2477,10 +2477,10 @@ namespace denise
                      clear ();
 
                      virtual void
-                     append (const string& str);
+                     append (const Dstring& str);
 
                      Id_Signal&
-                     get_id_signal (const string& str);
+                     get_id_signal (const Dstring& str);
 
                      virtual void
                      setup (const Hud& hud,
@@ -2521,7 +2521,7 @@ namespace denise
 
             protected:
 
-               string
+               Dstring
                str;
 
             public:
@@ -2544,11 +2544,11 @@ namespace denise
                virtual void
                attract_by (const Attractor& attractor);
 
-               const string&
+               const Dstring&
                get_str () const;
 
                void
-               set_str (const string& str);
+               set_str (const Dstring& str);
 
                bool
                matches (const Transform_2D& transform,
@@ -2972,7 +2972,7 @@ namespace denise
          virtual Shape::Popup_Menu&
          get_shape_popup_menu ();
 
-         virtual string
+         virtual Dstring
          get_string (const Marker& marker) const;
 
          virtual Tokens
@@ -3060,13 +3060,13 @@ namespace denise
          cairo (const RefPtr<Context>& cr);
 
          virtual void
-         save_image (const string& file_path);
+         save_image (const Dstring& file_path);
 
          virtual void
-         save_png (const string& file_path);
+         save_png (const Dstring& file_path);
 
          virtual void
-         save_svg (const string& file_path);
+         save_svg (const Dstring& file_path);
 
    };
 
@@ -3157,11 +3157,11 @@ namespace denise
 
             private:
 
-               class Overlay_Ptr_Map : public std::map<string, Overlay*>
+               class Overlay_Ptr_Map : public std::map<Dstring, Overlay*>
                {
                } overlay_ptr_map;
 
-               class On_Off_Map : public std::map<string, bool>
+               class On_Off_Map : public std::map<Dstring, bool>
                {
                } on_off_map;
 
@@ -3170,14 +3170,14 @@ namespace denise
                ~Overlay_Store ();
 
                const Overlay&
-               get_overlay (const string& identifier) const;
+               get_overlay (const Dstring& identifier) const;
 
                void
-               add (const string& overlay_string,
+               add (const Dstring& overlay_string,
                     const bool heavy);
 
                void
-               add (const string& identifier,
+               add (const Dstring& identifier,
                     Geodetic_Cairoable* gc_ptr,
                     const bool filled,
                     const Real line_width,
@@ -3185,14 +3185,14 @@ namespace denise
                     const bool heavy);
 
                bool
-               is_on (const string& identifier) const;
+               is_on (const Dstring& identifier) const;
 
                void
-               set_on_off (const string& identifier,
+               set_on_off (const Dstring& identifier,
                            const bool on_off);
 
                void
-               toggle_on_off (const string& identifier);
+               toggle_on_off (const Dstring& identifier);
 
                void
                cairo (const RefPtr<Context>& cr,
@@ -3228,7 +3228,7 @@ namespace denise
 
                   private:
 
-                     std::map<string, Integer>
+                     std::map<Dstring, Integer>
                      index_map;
 
                   public:
@@ -3236,14 +3236,14 @@ namespace denise
                      Overlay_Drawer (Option_Panel& option_panel);
 
                      void
-                     add_toggle_button_ptr (const string& str,
+                     add_toggle_button_ptr (const Dstring& str,
                                             Dtoggle_Button* toggle_button_ptr);
 
                      bool
-                     is_on (const string& str) const;
+                     is_on (const Dstring& str) const;
 
                      void
-                     set_on_off (const string& str,
+                     set_on_off (const Dstring& str,
                                  const bool on_off);
 
                };
@@ -3269,7 +3269,7 @@ namespace denise
                align_overlay_toggles ();
 
                bool
-               overlay_is_on (const string& overlay_str) const;
+               overlay_is_on (const Dstring& overlay_str) const;
 
                const Map_Console::Option_Panel::Zoom_Drawer&
                get_zoom_drawer () const;
@@ -3384,7 +3384,7 @@ namespace denise
 
       protected:
 
-         virtual string
+         virtual Dstring
          get_string (const Marker& marker) const;
 
       public:
@@ -3429,7 +3429,7 @@ namespace denise
          refresh_all ();
 
          virtual void
-         toggle_overlay (const string& overlay_identifier);
+         toggle_overlay (const Dstring& overlay_identifier);
 
          virtual void
          translate (const Real dx,
@@ -3512,7 +3512,7 @@ namespace denise
          Mesh_2D
          mesh_2d;
 
-         string
+         Dstring
          fmt_y;
 
          void

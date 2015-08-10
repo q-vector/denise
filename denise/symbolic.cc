@@ -19,8 +19,8 @@
 
 #include "symbolic.h"
 
-Expression::Constant::Constant (const string& token)
-   : value (atof (token.c_str ()))
+Expression::Constant::Constant (const wstring& token)
+   : value (stof (token))
 {
 }
 
@@ -30,8 +30,8 @@ Expression::Constant::evaluate (const Instance& instance) const
    return value;
 }
 
-Expression::Variable::Variable (const string& token)
-   : string (token)
+Expression::Variable::Variable (const wstring& token)
+   : wstring (token)
 {
 }
 
@@ -47,24 +47,24 @@ Expression::Mono_Op::Mono_Op (Node* node_ptr)
 }
 
 Expression::Mono_Op*
-Expression::Mono_Op::create (const string& token,
+Expression::Mono_Op::create (const wstring& token,
                              Node* node_ptr)
 {
-   if (token == "exp") { return new Exp (node_ptr); }
-   if (token == "log") { return new Log (node_ptr); }
-   if (token == "sin") { return new Sin (node_ptr); }
-   if (token == "cos") { return new Cos (node_ptr); }
-   if (token == "tan") { return new Tan (node_ptr); }
-   if (token == "sinh") { return new Sinh (node_ptr); }
-   if (token == "cosh") { return new Cosh (node_ptr); }
-   if (token == "tanh") { return new Tanh (node_ptr); }
-   if (token == "asin") { return new Asin (node_ptr); }
-   if (token == "acos") { return new Acos (node_ptr); }
-   if (token == "atan") { return new Atan (node_ptr); }
-   if (token == "asinh") { return new Asinh (node_ptr); }
-   if (token == "acosh") { return new Acosh (node_ptr); }
-   if (token == "atanh") { return new Atanh (node_ptr); }
-   throw Exception ("Not Mono_Op");
+   if (token == L"exp") { return new Exp (node_ptr); }
+   if (token == L"log") { return new Log (node_ptr); }
+   if (token == L"sin") { return new Sin (node_ptr); }
+   if (token == L"cos") { return new Cos (node_ptr); }
+   if (token == L"tan") { return new Tan (node_ptr); }
+   if (token == L"sinh") { return new Sinh (node_ptr); }
+   if (token == L"cosh") { return new Cosh (node_ptr); }
+   if (token == L"tanh") { return new Tanh (node_ptr); }
+   if (token == L"asin") { return new Asin (node_ptr); }
+   if (token == L"acos") { return new Acos (node_ptr); }
+   if (token == L"atan") { return new Atan (node_ptr); }
+   if (token == L"asinh") { return new Asinh (node_ptr); }
+   if (token == L"acosh") { return new Acosh (node_ptr); }
+   if (token == L"atanh") { return new Atanh (node_ptr); }
+   throw Exception (L"Not Mono_Op");
 }
 
 Expression::Bi_Op::Bi_Op (Node* left_ptr,
@@ -75,16 +75,16 @@ Expression::Bi_Op::Bi_Op (Node* left_ptr,
 }
 
 Expression::Bi_Op*
-Expression::Bi_Op::create (const string& token,
+Expression::Bi_Op::create (const wstring& token,
                            Node* left_ptr,
                            Node* right_ptr)
 {
-   if (token == "+") { return new Plus (left_ptr, right_ptr); }
-   if (token == "-") { return new Minus (left_ptr, right_ptr); }
-   if (token == "*") { return new Multiply (left_ptr, right_ptr); }
-   if (token == "/") { return new Divide (left_ptr, right_ptr); }
-   if (token == "^") { return new Power (left_ptr, right_ptr); }
-   throw Exception ("Not Bi_Op");
+   if (token == L"+") { return new Plus (left_ptr, right_ptr); }
+   if (token == L"-") { return new Minus (left_ptr, right_ptr); }
+   if (token == L"*") { return new Multiply (left_ptr, right_ptr); }
+   if (token == L"/") { return new Divide (left_ptr, right_ptr); }
+   if (token == L"^") { return new Power (left_ptr, right_ptr); }
+   throw Exception (L"Not Bi_Op");
 }
 
 Expression::Exp::Exp (Node* node_ptr)
@@ -302,33 +302,33 @@ Expression::Power::evaluate (const Instance& instance) const
 }
 
 bool
-Expression::is_constant (const string& token)
+Expression::is_constant (const wstring& token)
 {
-   return Reg_Exp ("[0-9]+").match (token);
+   return Reg_Exp (L"[0-9]+").match (token);
 }
 
 bool
-Expression::is_op (const string& token)
+Expression::is_op (const wstring& token)
 {
-   if (token == "+") { return true; }
-   if (token == "-") { return true; }
-   if (token == "*") { return true; }
-   if (token == "/") { return true; }
-   if (token == "^") { return true; }
-   if (token == "exp") { return true; }
-   if (token == "log") { return true; }
-   if (token == "sin") { return true; }
-   if (token == "cos") { return true; }
-   if (token == "tan") { return true; }
-   if (token == "sinh") { return true; }
-   if (token == "cosh") { return true; }
-   if (token == "tanh") { return true; }
-   if (token == "asin") { return true; }
-   if (token == "acos") { return true; }
-   if (token == "atan") { return true; }
-   if (token == "asinh") { return true; }
-   if (token == "acosh") { return true; }
-   if (token == "atanh") { return true; }
+   if (token == L"+") { return true; }
+   if (token == L"-") { return true; }
+   if (token == L"*") { return true; }
+   if (token == L"/") { return true; }
+   if (token == L"^") { return true; }
+   if (token == L"exp") { return true; }
+   if (token == L"log") { return true; }
+   if (token == L"sin") { return true; }
+   if (token == L"cos") { return true; }
+   if (token == L"tan") { return true; }
+   if (token == L"sinh") { return true; }
+   if (token == L"cosh") { return true; }
+   if (token == L"tanh") { return true; }
+   if (token == L"asin") { return true; }
+   if (token == L"acos") { return true; }
+   if (token == L"atan") { return true; }
+   if (token == L"asinh") { return true; }
+   if (token == L"acosh") { return true; }
+   if (token == L"atanh") { return true; }
    return false;
 }
 
@@ -339,14 +339,14 @@ Expression::Expression (const Tokens& postfix_tokens)
         iterator != postfix_tokens.end (); iterator++)
    {
 
-      const string& token = *(iterator);
+      const wstring& token = *(iterator);
 
       if (is_op (token))
       {
 
          const Integer n = node_ptr_stack.size ();
 
-         if (node_ptr_stack.size () < 1) { throw Exception ("Empty Stack"); }
+         if (node_ptr_stack.size () < 1) { throw Exception (L"Empty Stack"); }
          Node* node_ptr = node_ptr_stack.top ();
          node_ptr_stack.pop ();
 
@@ -359,11 +359,11 @@ Expression::Expression (const Tokens& postfix_tokens)
          }
          else
          {
-            if (node_ptr_stack.size () < 1) { throw Exception ("Empty Stack"); }
+            if (node_ptr_stack.size () < 1) { throw Exception (L"Empty Stack"); }
             Node* left_ptr = node_ptr_stack.top ();
             node_ptr_stack.pop ();
             Node* new_node_ptr = Bi_Op::create (token, left_ptr, node_ptr);
-            if (new_node_ptr == NULL) { throw Exception ("Unrecognized Op"); }
+            if (new_node_ptr == NULL) { throw Exception (L"Unrecognized Op"); }
             node_ptr_stack.push (new_node_ptr);
          }
 

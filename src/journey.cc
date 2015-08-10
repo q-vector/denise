@@ -31,7 +31,7 @@ Journey_Package::Journey_Package (Andrea& andrea)
 }
 
 void
-Journey_Package::journey_assign (const string& identifier,
+Journey_Package::journey_assign (const Dstring& identifier,
                                  const Tokens& arguments)
 {
 
@@ -49,13 +49,13 @@ Journey_Package::journey_assign (const string& identifier,
 }
 
 void
-Journey_Package::journey_print (const string& identifier) const
+Journey_Package::journey_print (const Dstring& identifier) const
 {
    auto iterator = journey_map.find (identifier);
    const bool is_present = (iterator != journey_map.end ());
    if (is_present)
    {
-      cout << "journey " << identifier << " is present" << endl;
+      wcout << L"journey " << identifier << L" is present" << endl;
    }
 }
 
@@ -65,38 +65,38 @@ Journey_Package::journey_parse (const Tokens& tokens)
 
    const Integer n = tokens.size ();
 
-   if (tokens[0] == "assign")
+   if (tokens[0] == L"assign")
    {
-      const string& identifier = tokens[1];
+      const Dstring& identifier = tokens[1];
       journey_assign (identifier, tokens.subtokens (2));
    }
    else
-   if (tokens[0] == "print")
+   if (tokens[0] == L"print")
    {
-      const string& identifier = tokens[1];
+      const Dstring& identifier = tokens[1];
       journey_print (identifier);
    }
 
 }
 
-const map<string, Journey>&
+const map<Dstring, Journey>&
 Journey_Package::get_journey_map () const
 {
    return journey_map;
 }
 
 const Journey&
-Journey_Package::get_journey (const string& identifier) const
+Journey_Package::get_journey (const Dstring& identifier) const
 {
-   Exception e ("journey not found: " + identifier);
+   Exception e (L"journey not found: " + identifier);
    try { return journey_map.at (identifier); }
    catch (const std::out_of_range& oor) { throw e; }
 }
 
 void
-Journey_Package::surface_journey (const string& surface_identifier,
-                                  const string& geodetic_transform_identifier,
-                                  const string& journey_identifier)
+Journey_Package::surface_journey (const Dstring& surface_identifier,
+                                  const Dstring& geodetic_transform_identifier,
+                                  const Dstring& journey_identifier)
 {
 
    const RefPtr<Surface>& surface = andrea.get_surface (surface_identifier);

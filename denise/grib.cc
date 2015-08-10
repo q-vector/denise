@@ -519,8 +519,8 @@ Grib::Key::Key (const Key& key)
 {
 }
 
-ostream&
-Grib::Key::operator << (ostream& out)
+wostream&
+Grib::Key::operator << (wostream& out)
 {
    for (Integer i = 0; i < 16; i++)
    {
@@ -575,7 +575,7 @@ Grib::Header::get_gds () const
    return *gds_ptr;
 }
 
-Grib::Grib (const string& file_path)
+Grib::Grib (const Dstring& file_path)
    : file_path (file_path)
 {
 
@@ -679,7 +679,7 @@ Grib::fill_data (Geodetic_Vector_Data_3D& gvd_3d,
 
    if (iterator == header_ptr_map.end ())
    {
-      throw Nwp_Exception ("Grib::fill_data 3d Data Not Available");
+      throw Nwp_Exception (L"Grib::fill_data 3d Data Not Available");
    }
 
    const Header& header = *(iterator->second);
@@ -788,7 +788,7 @@ Grib::fill_data (Geodetic_Vector_Data_2D& gvd_2d,
 
    if (iterator == header_ptr_map.end ())
    {
-      throw Nwp_Exception ("Grib::fill_data 2d Data Not Available");
+      throw Nwp_Exception (L"Grib::fill_data 2d Data Not Available");
    }
 
    const Header& header = *(iterator->second);
@@ -1299,7 +1299,7 @@ Grib2::Block_3::get_size_2d () const
       }
 
       default:
-         throw Exception ("Not implemented yet");
+         throw Exception (L"Not implemented yet");
    }
 
 }
@@ -1312,7 +1312,7 @@ Grib2::Block_3::get_scan_flag () const
 
    switch (template_number)
    {
-      default: throw Exception ("Not implemented yet");
+      default: throw Exception (L"Not implemented yet");
       case 0: return ((buffer[71] & 0xf0) >> 4);
       case 10: return ((buffer[59] & 0xf0) >> 4);
       case 20: return ((buffer[64] & 0xf0) >> 4);
@@ -1461,7 +1461,7 @@ Grib2::Block_5::get_reference_value () const
    switch (template_number)
    {
       default:
-         throw Exception ("Not implemented");
+         throw Exception (L"Not implemented");
       case 0:
       case 1:
       case 2:
@@ -1491,7 +1491,7 @@ Grib2::Block_5::get_binary_scale_factor () const
    switch (template_number)
    {
       default:
-         throw Exception ("Not implemented");
+         throw Exception (L"Not implemented");
       case 0:
       case 1:
       case 2:
@@ -1514,7 +1514,7 @@ Grib2::Block_5::get_decimal_scale_factor () const
    switch (template_number)
    {
       default:
-         throw Exception ("Not implemented");
+         throw Exception (L"Not implemented");
       case 0:
       case 1:
       case 2:
@@ -1537,7 +1537,7 @@ Grib2::Block_5::get_bits_per_datum () const
    switch (template_number)
    {
       default:
-         throw Exception ("Not implemented");
+         throw Exception (L"Not implemented");
       case 0:
       case 1:
       case 2:
@@ -1639,10 +1639,10 @@ Grib2::Data::jpeg2000 (const Block_5& block_5,
 
    char* opts = 0;
    jas_image_t* image = jpc_decode (stream, opts);
-   if (image == 0) { throw Exception ("JPEG2000 decode error"); }
+   if (image == 0) { throw Exception (L"JPEG2000 decode error"); }
    const int number_of_components = image->numcmpts_;
    const bool grayscale = (number_of_components == 1);
-   if (!grayscale) { throw Exception ("JPEG2000 Color image"); }
+   if (!grayscale) { throw Exception (L"JPEG2000 Color image"); }
 
    const Integer image_height = jas_image_height (image);
    const Integer image_width = jas_image_width (image);
@@ -1729,7 +1729,7 @@ Grib2::get_header (const Key& key) const
 
    if (iterator == header_ptr_map.end ())
    {
-      throw Nwp_Exception ("Data Not Available");
+      throw Nwp_Exception (L"Data Not Available");
    }
 
    const Header& header = *(iterator->second);
@@ -1737,7 +1737,7 @@ Grib2::get_header (const Key& key) const
 
 }
 
-Grib2::Grib2 (const string& file_path)
+Grib2::Grib2 (const Dstring& file_path)
    : file_path (file_path)
 {
 
@@ -1796,10 +1796,10 @@ const bool bit_0 = scan_flag & 0x80;
 const bool bit_1 = scan_flag & 0x40;
 const bool bit_2 = scan_flag & 0x20;
 const bool bit_3 = scan_flag & 0x10;
-const string b0 (bit_0 ? "yes" : "no");
-const string b1 (bit_1 ? "yes" : "no");
-const string b2 (bit_2 ? "yes" : "no");
-const string b3 (bit_3 ? "yes" : "no");
+const Dstring b0 (bit_0 ? L"yes" : L"no");
+const Dstring b1 (bit_1 ? L"yes" : L"no");
+const Dstring b2 (bit_2 ? L"yes" : L"no");
+const Dstring b3 (bit_3 ? L"yes" : L"no");
       while (offset - this_offset + 4 < grib_size)
       {
 
@@ -1813,7 +1813,7 @@ const string b3 (bit_3 ? "yes" : "no");
          //    presence of block {n}, implies presese of block_{n+1}
          switch (block_number)
          {
-            default: throw Exception ("Grib2 Coding Error");
+            default: throw Exception (L"Grib2 Coding Error");
             case 2: offset += Block::get_uint (file, offset, 4);
             case 3: b_3_ptr = new Block_3 (file, offset);
             case 4: b_4_ptr = new Block_4 (file, offset);
@@ -1906,7 +1906,7 @@ Grib2::fill_data (Geodetic_Vector_Data_3D& gvd_3d,
    Data data (n);
    switch (block_5.get_template_number ())
    {
-      default: throw Exception ("Packing Type not supported.");
+      default: throw Exception (L"Packing Type not supported.");
       case 0:  data.simple (block_5, block_7); break;
       case 40: data.jpeg2000 (block_5, block_7); break;
    }
@@ -1999,7 +1999,7 @@ Grib2::fill_data (Geodetic_Vector_Data_2D& gvd_2d,
    Data data (n);
    switch (block_5.get_template_number ())
    {
-      default: throw Exception ("Packing Type not supported.");
+      default: throw Exception (L"Packing Type not supported.");
       case 0:  data.simple (block_5, block_7); break;
       case 40: data.jpeg2000 (block_5, block_7); break;
    }
@@ -2073,28 +2073,28 @@ Grib2::fill_data (Geodetic_Vector_Data_2D& gvd_2d,
 namespace denise
 {
 
-   ostream&
-   operator << (ostream &out_file,
+   wostream&
+   operator << (wostream &out,
                 const Grib::Key& key)
    {
       for (Integer i = 0; i < 16; i++)
       {
-         out_file << Integer (key.buffer[i]) << " ";
+         out << Integer (key.buffer[i]) << L" ";
       }
-      return out_file;
+      return out;
    }
 
-   ostream&
-   operator << (ostream &out_file,
+   wostream&
+   operator << (wostream &out,
                 const Grib2::Key& key)
    {
       for (Integer i = 0; i < 26; i++)
       {
-         string sep (" ");
-         if (i == 6 || i == 11 || i == 13) { sep = " : "; }
-         out_file << Integer (key.buffer[i]) << sep;
+         Dstring sep (L" ");
+         if (i == 6 || i == 11 || i == 13) { sep = L" : "; }
+         out << Integer (key.buffer[i]) << sep;
       }
-      return out_file;
+      return out;
    }
 
 };
@@ -2554,10 +2554,10 @@ Access::get_gvd_3d_ptr (const Met_Element met_element,
       Access::const_iterator iterator = find (grib_key);
       if (iterator == end ())
       {
-         cout << key.base_time << " " << key.forecast_hour << " " <<
-                 met_element << " " << level.get_string () <<
-                 " throw exception " << endl;
-         throw Nwp_Exception ("Access::gvd_3d_ptr Not Available");
+         wcout << key.base_time << L" " << key.forecast_hour << L" " <<
+                 met_element << L" " << level.get_string () <<
+                 L" throw exception " << endl;
+         throw Nwp_Exception (L"Access::gvd_3d_ptr Not Available");
       }
       const Grib& grib = *(iterator->second);
 
@@ -2617,7 +2617,7 @@ Access::fill_grib_data (Geodetic_Vector_Data_2D& gvd_2d,
 {
 
    const Grib::Key& grib_key = get_grib_key (key, met_element, level);
-   const Nwp_Exception exception ("Access::fill_grib_data Not Available");
+   const Nwp_Exception exception (L"Access::fill_grib_data Not Available");
 
    Access::const_iterator iterator = find (grib_key);
    if (iterator == end ()) { throw exception; }
@@ -2645,9 +2645,9 @@ Access::fill_grib_data (Geodetic_Vector_Data_2D& gvd_2d,
 
 }
 
-Access::Access (const string& description,
-                const string& data_path,
-                const string& search_string,
+Access::Access (const Dstring& description,
+                const Dstring& data_path,
+                const Dstring& search_string,
                 const bool omega_as_w)
    : Nwp (description, data_path),
      data_path (data_path),
@@ -2655,7 +2655,7 @@ Access::Access (const string& description,
      omega_as_w (omega_as_w)
 {
 
-   this->status = "Unloaded";
+   this->status = L"Unloaded";
 
    met_element_vector.push_back (denise::TEMPERATURE);
    met_element_vector.push_back (denise::RELATIVE_HUMIDITY);
@@ -2677,15 +2677,15 @@ Access::survey ()
 
    typedef map<Grib::Key, Grib::Header*> Header_Ptr_Map;
 
-   const vector<string>& dir_listing = get_dir_listing (path, search_string);
-   for (vector<string>::const_iterator iterator = dir_listing.begin ();
+   const vector<Dstring>& dir_listing = get_dir_listing (path, search_string);
+   for (vector<Dstring>::const_iterator iterator = dir_listing.begin ();
         iterator != dir_listing.end (); iterator++)
    {
 
-      const string& file_name = *(iterator);
-      const string& file_path = path + "/" + file_name;
+      const Dstring& file_name = *(iterator);
+      const Dstring& file_path = path + L"/" + file_name;
 
-cout << "Grib file_path " << file_path << endl;
+wcout << L"Grib file_path " << file_path << endl;
       Grib* grib_ptr = new Grib (file_path);
       const Header_Ptr_Map& header_ptr_map = grib_ptr->get_header_ptr_map ();
 
@@ -2757,13 +2757,13 @@ cout << "Grib file_path " << file_path << endl;
 
    }
 
-   status = "";
+   status = L"";
    const set<Dtime>& base_time_set = key_multimap.get_base_time_set ();
    for (set<Dtime>::const_iterator iterator = base_time_set.begin ();
         iterator != base_time_set.end (); iterator++)
    {
       const Dtime& base_time = *(iterator);
-      status += base_time.get_string () + " ";
+      status += base_time.get_string () + L" ";
    }
 
    for (Key_Multimap::const_iterator iterator = key_multimap.begin ();
@@ -3248,7 +3248,7 @@ Ecmwf::get_gvd_3d_ptr (const Met_Element met_element,
 {
 
    const Size_2D& size_2d = size_2d_map.at (1000);
-cout << "GVD 3D " << size_2d << " " << tuple_p << " " << met_element << endl;
+wcout << L"GVD 3D " << size_2d << L" " << tuple_p << L" " << met_element << endl;
    Geodetic_Vector_Data_3D* gvd_3d_ptr =
       new Geodetic_Vector_Data_3D (1, tuple_p, size_2d, domain_2d);
    Geodetic_Vector_Data_3D& gvd_3d = *gvd_3d_ptr;
@@ -3268,10 +3268,10 @@ cout << "GVD 3D " << size_2d << " " << tuple_p << " " << met_element << endl;
       Ecmwf::const_iterator iterator = find (grib_key);
       if (iterator == end ())
       {
-         //cout << key.base_time << " " << key.forecast_hour << " " <<
-         //        met_element << " " << level.get_string () <<
-         //        " throw exception " << endl;
-         throw Nwp_Exception ("Ecmwf::gvd_3d_ptr Not Available");
+         //cout << key.base_time << L" " << key.forecast_hour << L" " <<
+         //        met_element << L" " << level.get_string () <<
+         //        L" throw exception " << endl;
+         throw Nwp_Exception (L"Ecmwf::gvd_3d_ptr Not Available");
       }
       const Grib& grib = *(iterator->second);
 
@@ -3341,7 +3341,7 @@ Ecmwf::fill_grib_data (Geodetic_Vector_Data_2D& gvd_2d,
 {
 
    const Grib::Key& grib_key = get_grib_key (key, met_element, level);
-   const Nwp_Exception exception ("Ecmwf::fill_grib_data Not Available");
+   const Nwp_Exception exception (L"Ecmwf::fill_grib_data Not Available");
 
    Ecmwf::const_iterator iterator = find (grib_key);
    if (iterator == end ()) { throw exception; }
@@ -3372,9 +3372,9 @@ Ecmwf::fill_grib_data (Geodetic_Vector_Data_2D& gvd_2d,
 
 }
 
-Ecmwf::Ecmwf (const string& description,
-              const string& data_path,
-              const string& search_string,
+Ecmwf::Ecmwf (const Dstring& description,
+              const Dstring& data_path,
+              const Dstring& search_string,
               const bool omega_as_w)
    : Nwp (description, data_path),
      data_path (data_path),
@@ -3382,7 +3382,7 @@ Ecmwf::Ecmwf (const string& description,
      omega_as_w (omega_as_w)
 {
 
-   this->status = "Unloaded";
+   this->status = L"Unloaded";
 
    met_element_vector.push_back (denise::TEMPERATURE);
    met_element_vector.push_back (denise::MIXING_RATIO);
@@ -3404,13 +3404,13 @@ Ecmwf::survey ()
 
    typedef map<Grib::Key, Grib::Header*> Header_Ptr_Map;
 
-   const vector<string>& dir_listing = get_dir_listing (path, search_string);
-   for (vector<string>::const_iterator iterator = dir_listing.begin ();
+   const vector<Dstring>& dir_listing = get_dir_listing (path, search_string);
+   for (vector<Dstring>::const_iterator iterator = dir_listing.begin ();
         iterator != dir_listing.end (); iterator++)
    {
 
-      const string& file_name = *(iterator);
-      const string& file_path = path + "/" + file_name;
+      const Dstring& file_name = *(iterator);
+      const Dstring& file_path = path + L"/" + file_name;
 
       Grib* grib_ptr = new Grib (file_path);
       const Header_Ptr_Map& header_ptr_map = grib_ptr->get_header_ptr_map ();
@@ -3485,13 +3485,13 @@ Ecmwf::survey ()
 
    }
 
-   status = "";
+   status = L"";
    const set<Dtime>& base_time_set = key_multimap.get_base_time_set ();
    for (set<Dtime>::const_iterator iterator = base_time_set.begin ();
         iterator != base_time_set.end (); iterator++)
    {
       const Dtime& base_time = *(iterator);
-      status += base_time.get_string () + " ";
+      status += base_time.get_string () + L" ";
    }
 
    for (Key_Multimap::const_iterator iterator = key_multimap.begin ();
@@ -3948,7 +3948,7 @@ Gfs3::initialize_3d_data (const Key& key)
    typedef Gfs3::Data_3D G3d_3d;
    G3d_3d* g3d_3d_ptr = new G3d_3d (met_element_vector, key);
    data_3d_ptr_map.insert (make_pair (key, g3d_3d_ptr));
-cout << "data_3d_ptr_map.size () = " << &data_3d_ptr_map << ": " << data_3d_ptr_map.size () << "  key = " << key.base_time.get_string () << " " << key.forecast_hour << endl;
+wcout << L"data_3d_ptr_map.size () = " << &data_3d_ptr_map << L": " << data_3d_ptr_map.size () << L"  key = " << key.base_time.get_string () << L" " << key.forecast_hour << endl;
 }
 
 void          
@@ -4018,7 +4018,7 @@ Gfs3::fill_cumulative_rain_data (Geodetic_Vector_Data_2D& gvd_2d,
 
    if (forecast_hour < 0)
    {
-      throw Nwp_Exception ("Forecast Hour < 0");
+      throw Nwp_Exception (L"Forecast Hour < 0");
       return;
    }
 
@@ -4300,7 +4300,7 @@ Gfs3::fill_grib_data (Geodetic_Vector_Data_3D& gvd_3d,
 {
 
    Gfs3::const_iterator iterator = find (key);
-   if (iterator == end ()) { throw Nwp_Exception ("Not Available"); }
+   if (iterator == end ()) { throw Nwp_Exception (L"Not Available"); }
    const Grib& grib = *(iterator->second);
 
    for (Integer k = 0; k < tuple_p.size (); k++)
@@ -4331,7 +4331,7 @@ Gfs3::get_gvd_3d_ptr (const Met_Element met_element,
       const Grib::Key& grib_key = get_grib_key (key, met_element, level);
 
       Gfs3::const_iterator iterator = find (key);
-      if (iterator == end ()) { throw Nwp_Exception ("Not Available"); }
+      if (iterator == end ()) { throw Nwp_Exception (L"Not Available"); }
       const Grib& grib = *(iterator->second);
 
       Geodetic_Vector_Data_2D* grib_data_ptr =
@@ -4388,7 +4388,7 @@ Gfs3::fill_grib_data (Geodetic_Vector_Data_2D& gvd_2d,
 {
 
    Gfs3::const_iterator iterator = find (key);
-   if (iterator == end ()) { throw Nwp_Exception ("Not Available"); }
+   if (iterator == end ()) { throw Nwp_Exception (L"Not Available"); }
    const Grib& grib = *(iterator->second);
 
    const Grib::Key& grib_key = get_grib_key (key, met_element, level);
@@ -4412,14 +4412,14 @@ Gfs3::fill_grib_data (Geodetic_Vector_Data_2D& gvd_2d,
 
 }
 
-Gfs3::Gfs3 (const string& data_path)
-   : Nwp ("Gfs3", data_path),
+Gfs3::Gfs3 (const Dstring& data_path)
+   : Nwp (L"Gfs3", data_path),
      data_path (data_path),
      size_2d (181, 361),
      domain_2d (Domain_1D (-90, 90), Domain_1D (0, 360))
 {
 
-   this->status = "Unloaded";
+   this->status = L"Unloaded";
 
    met_element_vector.push_back (denise::TEMPERATURE);
    met_element_vector.push_back (denise::RELATIVE_HUMIDITY);
@@ -4439,41 +4439,41 @@ void
 Gfs3::survey ()
 {
 
-   const string re_ym ("[0-9].....");
-   const string re_ymd ("[0-9].......");
-   const string fmt ("gfs_3_[0-9]......._[0-9]..._[0-9]..\\.grb");
+   const Dstring re_ym (L"[0-9].....");
+   const Dstring re_ymd (L"[0-9].......");
+   const Dstring fmt (L"gfs_3_[0-9]......._[0-9]..._[0-9]..\\.grb");
 
    typedef map<Grib::Key, Grib::Header*> Header_Ptr_Map;
 
-   const vector<string>& dir_ym = get_dir_listing (path, re_ym);
-   for (vector<string>::const_iterator i = dir_ym.begin ();
+   const vector<Dstring>& dir_ym = get_dir_listing (path, re_ym);
+   for (vector<Dstring>::const_iterator i = dir_ym.begin ();
         i != dir_ym.end (); i++)
    {
 
-      const string& ym = *(i);
-      const string& ym_path = path + "/" + ym;
+      const Dstring& ym = *(i);
+      const Dstring& ym_path = path + L"/" + ym;
 
-      const vector<string>& dir_ymd = get_dir_listing (ym_path, re_ymd);
-      for (vector<string>::const_iterator j = dir_ymd.begin ();
+      const vector<Dstring>& dir_ymd = get_dir_listing (ym_path, re_ymd);
+      for (vector<Dstring>::const_iterator j = dir_ymd.begin ();
            j != dir_ymd.end (); j++)
       {
 
-         const string& ymd = *(j);
-         const string& ymd_path = ym_path + "/" + ymd;
+         const Dstring& ymd = *(j);
+         const Dstring& ymd_path = ym_path + L"/" + ymd;
 
-         const vector<string>& dir_listing = get_dir_listing (ymd_path, fmt);
-         for (vector<string>::const_iterator iterator = dir_listing.begin ();
+         const vector<Dstring>& dir_listing = get_dir_listing (ymd_path, fmt);
+         for (vector<Dstring>::const_iterator iterator = dir_listing.begin ();
               iterator != dir_listing.end (); iterator++)
          {
 
             // fn = filename
-            const string& fn = *(iterator);
-            const string& file_path = ymd_path + "/" + fn;
-            const string& bt_str = fn.substr (6, 8) + fn.substr (15, 2);
-            const string& fh_str = fn.substr (20, 3);
+            const Dstring& fn = *(iterator);
+            const Dstring& file_path = ymd_path + L"/" + fn;
+            const Dstring& bt_str = fn.substr (6, 8) + fn.substr (15, 2);
+            const Dstring& fh_str = fn.substr (20, 3);
 
-            const Dtime base_time (bt_str, string ("%Y%m%d%H"));
-            const Integer forecast_hour = atoi (fh_str.c_str ());
+            const Dtime base_time (bt_str, Dstring (L"%Y%m%d%H"));
+            const Integer forecast_hour = stoi (fh_str);
             const Key key (base_time, forecast_hour);
 
             key_multimap.add (key);
@@ -4519,13 +4519,13 @@ Gfs3::survey ()
 
    }
 
-   status = "";
+   status = L"";
    const set<Dtime>& base_time_set = key_multimap.get_base_time_set ();
    for (set<Dtime>::const_iterator iterator = base_time_set.begin ();
         iterator != base_time_set.end (); iterator++)
    {
       const Dtime& base_time = *(iterator);
-      status += base_time.get_string () + " ";
+      status += base_time.get_string () + L" ";
    }
 
    for (Key_Multimap::const_iterator iterator = key_multimap.begin ();
@@ -4608,7 +4608,7 @@ Gfs3::get_key (const Dtime& dtime) const
 
    if (base_time_vector.size () == 0)
    {
-      throw Nwp_Exception ("timestep not available");
+      throw Nwp_Exception (L"timestep not available");
    }
 
    sort (base_time_vector.begin (), base_time_vector.end ());
@@ -4646,7 +4646,7 @@ Gfs3::acquire_base_time_forecast_hour (Dtime& base_time,
 
    if (base_time_vector.size () == 0)
    {
-      throw Nwp_Exception ("timestep not available");
+      throw Nwp_Exception (L"timestep not available");
    }
 
    sort (base_time_vector.begin (), base_time_vector.end ());
@@ -4783,7 +4783,7 @@ Gfs4::set_grib_key (Grib2::Key& grib_key,
 
       case PPT3:
       {
-         throw Nwp_Exception ("Not Available");
+         throw Nwp_Exception (L"Not Available");
          buffer[7] = uint8_t (forecast_hour - 3);
          buffer[8] = uint8_t (forecast_hour);
          buffer[9] = 4;
@@ -4792,7 +4792,7 @@ Gfs4::set_grib_key (Grib2::Key& grib_key,
 
       case PPT6:
       {
-         throw Nwp_Exception ("Not Available");
+         throw Nwp_Exception (L"Not Available");
          buffer[7] = uint8_t (forecast_hour - 6);
          buffer[8] = uint8_t (forecast_hour);
          buffer[9] = 4;
@@ -4801,7 +4801,7 @@ Gfs4::set_grib_key (Grib2::Key& grib_key,
 
       case PPTN:
       {
-         throw Nwp_Exception ("Not Available");
+         throw Nwp_Exception (L"Not Available");
          buffer[7] = 0;
          buffer[8] = uint8_t (forecast_hour);
          buffer[9] = 4;
@@ -4810,7 +4810,7 @@ Gfs4::set_grib_key (Grib2::Key& grib_key,
 
       case TOTAL_CLOUD:
       {
-         throw Nwp_Exception ("Not Available");
+         throw Nwp_Exception (L"Not Available");
          buffer[7] = uint8_t (forecast_hour - 6);
          buffer[8] = uint8_t (forecast_hour);
          buffer[9] = 3;
@@ -4819,7 +4819,7 @@ Gfs4::set_grib_key (Grib2::Key& grib_key,
 
       case HIGH_CLOUD:
       {
-         throw Nwp_Exception ("Not Available");
+         throw Nwp_Exception (L"Not Available");
          buffer[7] = uint8_t (forecast_hour - 6);
          buffer[8] = uint8_t (forecast_hour);
          buffer[9] = 3;
@@ -4828,7 +4828,7 @@ Gfs4::set_grib_key (Grib2::Key& grib_key,
 
       case MIDDLE_CLOUD:
       {
-         throw Nwp_Exception ("Not Available");
+         throw Nwp_Exception (L"Not Available");
          buffer[7] = uint8_t (forecast_hour - 6);
          buffer[8] = uint8_t (forecast_hour);
          buffer[9] = 3;
@@ -4837,7 +4837,7 @@ Gfs4::set_grib_key (Grib2::Key& grib_key,
 
       case LOW_CLOUD:
       {
-         throw Nwp_Exception ("Not Available");
+         throw Nwp_Exception (L"Not Available");
          buffer[7] = uint8_t (forecast_hour - 6);
          buffer[8] = uint8_t (forecast_hour);
          buffer[9] = 3;
@@ -5319,7 +5319,7 @@ Gfs4::fill_cumulative_rain_data (Geodetic_Vector_Data_2D& gvd_2d,
 
    if (forecast_hour < 0)
    {
-      throw Nwp_Exception ("Forecast Hour < 0");
+      throw Nwp_Exception (L"Forecast Hour < 0");
       return;
    }
 
@@ -5605,7 +5605,7 @@ Gfs4::fill_grib_data (Geodetic_Vector_Data_3D& gvd_3d,
    const Key key (key);
 
    Gfs4::const_iterator iterator = find (key);
-   if (iterator == end ()) { throw Nwp_Exception ("Not Available"); }
+   if (iterator == end ()) { throw Nwp_Exception (L"Not Available"); }
    const Grib2& grib = *(iterator->second);
 
    for (Integer k = 0; k < tuple_p.size (); k++)
@@ -5636,7 +5636,7 @@ Gfs4::get_gvd_3d_ptr (const Met_Element met_element,
       const Grib2::Key& grib_key = get_grib_key (key, met_element, level);
 
       Gfs4::const_iterator iterator = find (key);
-      if (iterator == end ()) { throw Nwp_Exception ("Not Available"); }
+      if (iterator == end ()) { throw Nwp_Exception (L"Not Available"); }
       const Grib2& grib = *(iterator->second);
 
       Geodetic_Vector_Data_2D* grib_data_ptr =
@@ -5693,7 +5693,7 @@ Gfs4::fill_grib_data (Geodetic_Vector_Data_2D& gvd_2d,
 {
 
    Gfs4::const_iterator iterator = find (key);
-   if (iterator == end ()) { throw Nwp_Exception ("Not Available"); }
+   if (iterator == end ()) { throw Nwp_Exception (L"Not Available"); }
    const Grib2& grib = *(iterator->second);
 
    const Grib2::Key& grib_key = get_grib_key (key, met_element, level);
@@ -5717,8 +5717,8 @@ Gfs4::fill_grib_data (Geodetic_Vector_Data_2D& gvd_2d,
 
 }
 
-Gfs4::Gfs4 (const string& data_path)
-   : Nwp ("Gfs4", data_path),
+Gfs4::Gfs4 (const Dstring& data_path)
+   : Nwp (L"Gfs4", data_path),
      data_path (data_path),
      grib_size_2d (361, 720),
      grib_domain_2d (Domain_1D (-90, 90), Domain_1D (0, 360)),
@@ -5726,7 +5726,7 @@ Gfs4::Gfs4 (const string& data_path)
      domain_2d (Domain_1D (-60, 0), Domain_1D (80, 160))
 {
 
-   this->status = "Unloaded";
+   this->status = L"Unloaded";
 
    met_element_vector.push_back (denise::TEMPERATURE);
    met_element_vector.push_back (denise::RELATIVE_HUMIDITY);
@@ -5746,41 +5746,41 @@ void
 Gfs4::survey ()
 {
 
-   const string re_ym ("[0-9].....");
-   const string re_ymd ("[0-9].......");
-   const string fmt ("gfs_4_[0-9]......._[0-9]..._[0-9]..\\.grb");
+   const Dstring re_ym (L"[0-9].....");
+   const Dstring re_ymd (L"[0-9].......");
+   const Dstring fmt (L"gfs_4_[0-9]......._[0-9]..._[0-9]..\\.grb");
 
    typedef map<Grib2::Key, Grib2::Header*> Header_Ptr_Map;
 
-   const vector<string>& dir_ym = get_dir_listing (path, re_ym);
-   for (vector<string>::const_iterator i = dir_ym.begin ();
+   const vector<Dstring>& dir_ym = get_dir_listing (path, re_ym);
+   for (vector<Dstring>::const_iterator i = dir_ym.begin ();
         i != dir_ym.end (); i++)
    {
 
-      const string& ym = *(i);
-      const string& ym_path = path + "/" + ym;
+      const Dstring& ym = *(i);
+      const Dstring& ym_path = path + L"/" + ym;
 
-      const vector<string>& dir_ymd = get_dir_listing (ym_path, re_ymd);
-      for (vector<string>::const_iterator j = dir_ymd.begin ();
+      const vector<Dstring>& dir_ymd = get_dir_listing (ym_path, re_ymd);
+      for (vector<Dstring>::const_iterator j = dir_ymd.begin ();
            j != dir_ymd.end (); j++)
       {
 
-         const string& ymd = *(j);
-         const string& ymd_path = ym_path + "/" + ymd;
+         const Dstring& ymd = *(j);
+         const Dstring& ymd_path = ym_path + L"/" + ymd;
 
-         const vector<string>& dir_listing = get_dir_listing (ymd_path, fmt);
-         for (vector<string>::const_iterator iterator = dir_listing.begin ();
+         const vector<Dstring>& dir_listing = get_dir_listing (ymd_path, fmt);
+         for (vector<Dstring>::const_iterator iterator = dir_listing.begin ();
               iterator != dir_listing.end (); iterator++)
          {
 
             // fn = filename
-            const string& fn = *(iterator);
-            const string& file_path = ymd_path + "/" + fn;
-            const string& bt_str = fn.substr (6, 8) + fn.substr (15, 2);
-            const string& fh_str = fn.substr (20, 3);
+            const Dstring& fn = *(iterator);
+            const Dstring& file_path = ymd_path + L"/" + fn;
+            const Dstring& bt_str = fn.substr (6, 8) + fn.substr (15, 2);
+            const Dstring& fh_str = fn.substr (20, 3);
 
-            const Dtime base_time (bt_str, string ("%Y%m%d%H"));
-            const Integer forecast_hour = atoi (fh_str.c_str ());
+            const Dtime base_time (bt_str, L"%Y%m%d%H");
+            const Integer forecast_hour = stoi (fh_str);
 
             const Key key (base_time, forecast_hour);
             key_multimap.add (key);
@@ -5828,13 +5828,13 @@ Gfs4::survey ()
 
    }
 
-   status = "";
+   status = L"";
    const set<Dtime>& base_time_set = key_multimap.get_base_time_set ();
    for (set<Dtime>::const_iterator iterator = base_time_set.begin ();
         iterator != base_time_set.end (); iterator++)
    {
       const Dtime& base_time = *(iterator);
-      status += base_time.get_string () + " ";
+      status += base_time.get_string () + L" ";
    }
 
 }
@@ -5923,7 +5923,7 @@ Gfs4::get_key (const Dtime& dtime) const
 
    if (base_time_vector.size () == 0)
    {
-      throw Nwp_Exception ("timestep not available");
+      throw Nwp_Exception (L"timestep not available");
    }
 
    sort (base_time_vector.begin (), base_time_vector.end ());
@@ -5961,7 +5961,7 @@ Gfs4::acquire_base_time_forecast_hour (Dtime& base_time,
 
    if (base_time_vector.size () == 0)
    {
-      throw Nwp_Exception ("timestep not available");
+      throw Nwp_Exception (L"timestep not available");
    }
 
    sort (base_time_vector.begin (), base_time_vector.end ());
@@ -6098,7 +6098,7 @@ Gfs::set_grib_key (Grib2::Key& grib_key,
 
       case PPT3:
       {
-         throw Nwp_Exception ("Not Available");
+         throw Nwp_Exception (L"Not Available");
          buffer[7] = uint8_t (forecast_hour - 3);
          buffer[8] = uint8_t (forecast_hour);
          buffer[9] = 4;
@@ -6107,7 +6107,7 @@ Gfs::set_grib_key (Grib2::Key& grib_key,
 
       case PPT6:
       {
-         throw Nwp_Exception ("Not Available");
+         throw Nwp_Exception (L"Not Available");
          buffer[7] = uint8_t (forecast_hour - 6);
          buffer[8] = uint8_t (forecast_hour);
          buffer[9] = 4;
@@ -6116,7 +6116,7 @@ Gfs::set_grib_key (Grib2::Key& grib_key,
 
       case PPTN:
       {
-         throw Nwp_Exception ("Not Available");
+         throw Nwp_Exception (L"Not Available");
          buffer[7] = 0;
          buffer[8] = uint8_t (forecast_hour);
          buffer[9] = 4;
@@ -6125,7 +6125,7 @@ Gfs::set_grib_key (Grib2::Key& grib_key,
 
       case TOTAL_CLOUD:
       {
-         throw Nwp_Exception ("Not Available");
+         throw Nwp_Exception (L"Not Available");
          buffer[7] = uint8_t (forecast_hour - 6);
          buffer[8] = uint8_t (forecast_hour);
          buffer[9] = 3;
@@ -6134,7 +6134,7 @@ Gfs::set_grib_key (Grib2::Key& grib_key,
 
       case HIGH_CLOUD:
       {
-         throw Nwp_Exception ("Not Available");
+         throw Nwp_Exception (L"Not Available");
          buffer[7] = uint8_t (forecast_hour - 6);
          buffer[8] = uint8_t (forecast_hour);
          buffer[9] = 3;
@@ -6143,7 +6143,7 @@ Gfs::set_grib_key (Grib2::Key& grib_key,
 
       case MIDDLE_CLOUD:
       {
-         throw Nwp_Exception ("Not Available");
+         throw Nwp_Exception (L"Not Available");
          buffer[7] = uint8_t (forecast_hour - 6);
          buffer[8] = uint8_t (forecast_hour);
          buffer[9] = 3;
@@ -6152,7 +6152,7 @@ Gfs::set_grib_key (Grib2::Key& grib_key,
 
       case LOW_CLOUD:
       {
-         throw Nwp_Exception ("Not Available");
+         throw Nwp_Exception (L"Not Available");
          buffer[7] = uint8_t (forecast_hour - 6);
          buffer[8] = uint8_t (forecast_hour);
          buffer[9] = 3;
@@ -6634,7 +6634,7 @@ Gfs::fill_cumulative_rain_data (Geodetic_Vector_Data_2D& gvd_2d,
 
    if (forecast_hour < 0)
    {
-      throw Nwp_Exception ("Forecast Hour < 0");
+      throw Nwp_Exception (L"Forecast Hour < 0");
       return;
    }
 
@@ -6920,7 +6920,7 @@ Gfs::fill_grib_data (Geodetic_Vector_Data_3D& gvd_3d,
    const Key key (key);
 
    Gfs::const_iterator iterator = find (key);
-   if (iterator == end ()) { throw Nwp_Exception ("Not Available"); }
+   if (iterator == end ()) { throw Nwp_Exception (L"Not Available"); }
    const Grib2& grib = *(iterator->second);
 
    for (Integer k = 0; k < tuple_p.size (); k++)
@@ -6951,7 +6951,7 @@ Gfs::get_gvd_3d_ptr (const Met_Element met_element,
       const Grib2::Key& grib_key = get_grib_key (key, met_element, level);
 
       Gfs::const_iterator iterator = find (key);
-      if (iterator == end ()) { throw Nwp_Exception ("Not Available"); }
+      if (iterator == end ()) { throw Nwp_Exception (L"Not Available"); }
       const Grib2& grib = *(iterator->second);
 
       Geodetic_Vector_Data_2D* grib_data_ptr =
@@ -7008,7 +7008,7 @@ Gfs::fill_grib_data (Geodetic_Vector_Data_2D& gvd_2d,
 {
 
    Gfs::const_iterator iterator = find (key);
-   if (iterator == end ()) { throw Nwp_Exception ("Not Available"); }
+   if (iterator == end ()) { throw Nwp_Exception (L"Not Available"); }
    const Grib2& grib = *(iterator->second);
 
    const Grib2::Key& grib_key = get_grib_key (key, met_element, level);
@@ -7032,8 +7032,8 @@ Gfs::fill_grib_data (Geodetic_Vector_Data_2D& gvd_2d,
 
 }
 
-Gfs::Gfs (const string& data_path)
-   : Nwp ("Gfs", data_path),
+Gfs::Gfs (const Dstring& data_path)
+   : Nwp (L"Gfs", data_path),
      data_path (data_path),
      grib_size_2d (361, 720),
      grib_domain_2d (Domain_1D (-90, 90), Domain_1D (0, 360)),
@@ -7041,7 +7041,7 @@ Gfs::Gfs (const string& data_path)
      domain_2d (Domain_1D (-60, 0), Domain_1D (80, 160))
 {
 
-   this->status = "Unloaded";
+   this->status = L"Unloaded";
 
    met_element_vector.push_back (denise::TEMPERATURE);
    met_element_vector.push_back (denise::RELATIVE_HUMIDITY);
@@ -7061,41 +7061,41 @@ void
 Gfs::survey ()
 {
 
-   const string re_ym ("[0-9].....");
-   const string re_ymd ("[0-9].......");
-   const string fmt ("gfs_4_[0-9]......._[0-9]..._[0-9]..\\.grb");
+   const Dstring re_ym (L"[0-9].....");
+   const Dstring re_ymd (L"[0-9].......");
+   const Dstring fmt (L"gfs_4_[0-9]......._[0-9]..._[0-9]..\\.grb");
 
    typedef map<Grib2::Key, Grib2::Header*> Header_Ptr_Map;
 
-   const vector<string>& dir_ym = get_dir_listing (path, re_ym);
-   for (vector<string>::const_iterator i = dir_ym.begin ();
+   const vector<Dstring>& dir_ym = get_dir_listing (path, re_ym);
+   for (vector<Dstring>::const_iterator i = dir_ym.begin ();
         i != dir_ym.end (); i++)
    {
 
-      const string& ym = *(i);
-      const string& ym_path = path + "/" + ym;
+      const Dstring& ym = *(i);
+      const Dstring& ym_path = path + L"/" + ym;
 
-      const vector<string>& dir_ymd = get_dir_listing (ym_path, re_ymd);
-      for (vector<string>::const_iterator j = dir_ymd.begin ();
+      const vector<Dstring>& dir_ymd = get_dir_listing (ym_path, re_ymd);
+      for (vector<Dstring>::const_iterator j = dir_ymd.begin ();
            j != dir_ymd.end (); j++)
       {
 
-         const string& ymd = *(j);
-         const string& ymd_path = ym_path + "/" + ymd;
+         const Dstring& ymd = *(j);
+         const Dstring& ymd_path = ym_path + L"/" + ymd;
 
-         const vector<string>& dir_listing = get_dir_listing (ymd_path, fmt);
-         for (vector<string>::const_iterator iterator = dir_listing.begin ();
+         const vector<Dstring>& dir_listing = get_dir_listing (ymd_path, fmt);
+         for (vector<Dstring>::const_iterator iterator = dir_listing.begin ();
               iterator != dir_listing.end (); iterator++)
          {
 
             // fn = filename
-            const string& fn = *(iterator);
-            const string& file_path = ymd_path + "/" + fn;
-            const string& bt_str = fn.substr (6, 8) + fn.substr (15, 2);
-            const string& fh_str = fn.substr (20, 3);
+            const Dstring& fn = *(iterator);
+            const Dstring& file_path = ymd_path + L"/" + fn;
+            const Dstring& bt_str = fn.substr (6, 8) + fn.substr (15, 2);
+            const Dstring& fh_str = fn.substr (20, 3);
 
-            const Dtime base_time (bt_str, string ("%Y%m%d%H"));
-            const Integer forecast_hour = atoi (fh_str.c_str ());
+            const Dtime base_time (bt_str, Dstring (L"%Y%m%d%H"));
+            const Integer forecast_hour = stoi (fh_str);
 
             const Key key (base_time, forecast_hour);
             key_multimap.add (key);
@@ -7143,13 +7143,13 @@ Gfs::survey ()
 
    }
 
-   status = "";
+   status = L"";
    const set<Dtime>& base_time_set = key_multimap.get_base_time_set ();
    for (set<Dtime>::const_iterator iterator = base_time_set.begin ();
         iterator != base_time_set.end (); iterator++)
    {
       const Dtime& base_time = *(iterator);
-      status += base_time.get_string () + " ";
+      status += base_time.get_string () + L" ";
    }
 
 }
@@ -7238,7 +7238,7 @@ Gfs::get_key (const Dtime& dtime) const
 
    if (base_time_vector.size () == 0)
    {
-      throw Nwp_Exception ("timestep not available");
+      throw Nwp_Exception (L"timestep not available");
    }
 
    sort (base_time_vector.begin (), base_time_vector.end ());
@@ -7276,7 +7276,7 @@ Gfs::acquire_base_time_forecast_hour (Dtime& base_time,
 
    if (base_time_vector.size () == 0)
    {
-      throw Nwp_Exception ("timestep not available");
+      throw Nwp_Exception (L"timestep not available");
    }
 
    sort (base_time_vector.begin (), base_time_vector.end ());

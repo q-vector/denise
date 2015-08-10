@@ -36,33 +36,33 @@ namespace andrea
 
       protected:
 
-         map<string, Journey>
+         map<Dstring, Journey>
          journey_map;
 
          Journey_Package (Andrea& andrea);
 
          void
-         journey_assign (const string& identifier,
+         journey_assign (const Dstring& identifier,
                          const Tokens& arguments);
 
          void
-         journey_print (const string& identifier) const;
+         journey_print (const Dstring& identifier) const;
 
          void
          journey_parse (const Tokens& tokens);
 
       public: 
 
-         const map<string, Journey>&
+         const map<Dstring, Journey>&
          get_journey_map () const;
 
          const Journey&
-         get_journey (const string& identifier) const;
+         get_journey (const Dstring& identifier) const;
 
          void
-         surface_journey (const string& surface_identifier,
-                          const string& geodetic_transform_identifier,
-                          const string& journey_identifier);
+         surface_journey (const Dstring& surface_identifier,
+                          const Dstring& geodetic_transform_identifier,
+                          const Dstring& journey_identifier);
 
    };
 

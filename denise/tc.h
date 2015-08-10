@@ -41,10 +41,10 @@ namespace denise
       private:
 
          static Real
-         get_pressure (const string& pressure_string);
+         get_pressure (const Dstring& pressure_string);
 
          static Real
-         get_max_wind (const string& max_wind_string);
+         get_max_wind (const Dstring& max_wind_string);
 
       public:
 
@@ -64,8 +64,8 @@ namespace denise
                    const Real max_wind);
 
          Forecast (const Lat_Long& lat_long,
-                   const string& pressure_string,
-                   const string& max_wind_string);
+                   const Dstring& pressure_string,
+                   const Dstring& max_wind_string);
 
    };
 
@@ -78,38 +78,38 @@ namespace denise
          track;
 
          Dtime
-         get_time (const string& time_string,
+         get_time (const Dstring& time_string,
                    const Dtime& time_stamp) const;
 
       public:
 
-         string
+         Dstring
          forecast_centre;
 
-         string
+         Dstring
          icon_string;
 
-         string
+         Dstring
          tc_name;
 
-         string
+         Dstring
          tc_id;
 
          Dtime
          initial_time;
 
-         string
+         Dstring
          initial_time_string;
 
-         Advisory (const string& forecast_centre);
+         Advisory (const Dstring& forecast_centre);
 
-         Advisory (const string& forecast_centre,
-                   const string& icon_string);
+         Advisory (const Dstring& forecast_centre,
+                   const Dstring& icon_string);
 
          void
          make_track ();
 
-         string
+         Dstring
          get_key () const;
 
          bool
@@ -129,8 +129,8 @@ namespace denise
                 const Geodetic_Transform& transform,
                 const Real intensity = 1.0) const;
 
-         ostream&
-         operator << (ostream& out_file) const;
+         wostream&
+         operator << (wostream& out_file) const;
 
    };
 
@@ -190,10 +190,10 @@ namespace denise
       private:
 
          static Real
-         get_real (const string& digit_string);
+         get_real (const Dstring& digit_string);
 
          static Lat_Long
-         get_lat_long (const string& lat_long_string);
+         get_lat_long (const Dstring& lat_long_string);
 
          static Real
          get_central_pressure (const Tokens& tokens);
@@ -238,7 +238,7 @@ namespace denise
 
    };
 
-   class Advisory_Store : public map<string, Advisory>
+   class Advisory_Store : public map<Dstring, Advisory>
    {
 
       public:
@@ -272,7 +272,7 @@ namespace denise
                set<Integer>
                get_cluster_index_set () const;
 
-               string
+               Dstring
                get_tc_name (const Integer cluster_index) const;
 
                Lat_Long
@@ -294,11 +294,11 @@ namespace denise
          Advisory_Store ();
 
          void
-         ingest_dir (const string& dir_path,
+         ingest_dir (const Dstring& dir_path,
                      const Reg_Exp& file_reg_exp);
 
          void
-         ingest_file (const string& file_path);
+         ingest_file (const Dstring& file_path);
 
          set<Dtime>
          get_initial_time_set (const Area* area_ptr = NULL,
@@ -309,11 +309,11 @@ namespace denise
          get_key_tokens (const Area* area_ptr = NULL) const;
 
          Tokens
-         get_key_tokens (const string& initial_time_string,
+         get_key_tokens (const Dstring& initial_time_string,
                          const Area* area_ptr = NULL) const;
 
          Tokens
-         get_key_tokens (const set<string>& initial_time_string_set,
+         get_key_tokens (const set<Dstring>& initial_time_string_set,
                          const Area* area_ptr = NULL) const;
 
          Tokens

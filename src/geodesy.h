@@ -39,17 +39,17 @@ namespace andrea
          Integer
          lat_long_dp;
 
-         map<string, Geodesy>
+         map<Dstring, Geodesy>
          geodesy_map;
 
          Geodesy_Package (Andrea& andrea);
 
          void
-         geodesy_assign (const string& identifier,
-                         const string& str);
+         geodesy_assign (const Dstring& identifier,
+                         const Dstring& str);
 
          void
-         geodesy_print (const string& identifier) const;
+         geodesy_print (const Dstring& identifier) const;
 
          void
          geodesy_distance (const Tokens& tokens) const;
@@ -65,11 +65,11 @@ namespace andrea
 
       public: 
 
-         const map<string, Geodesy>&
+         const map<Dstring, Geodesy>&
          get_geodesy_map () const;
 
          const Geodesy&
-         get_geodesy (const string& idenfifier) const;
+         get_geodesy (const Dstring& idenfifier) const;
 
    };
 

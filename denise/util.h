@@ -127,28 +127,28 @@ namespace denise
    }
 
    FILE*
-   get_input_file (const string& file_path)
+   get_input_file (const Dstring& file_path)
             throw (IO_Exception);
 
    FILE*
-   get_output_file (const string& file_path,
+   get_output_file (const Dstring& file_path,
                     const char* mode = "w")
              throw (IO_Exception);
 
    Tokens
-   get_dir_listing (const string& dir_path,
+   get_dir_listing (const Dstring& dir_path,
                     const Reg_Exp& reg_exp,
                     const bool prepend_dir_path = false)
              throw (IO_Exception);
 
-   string
+   Dstring
    read_line (FILE* file,
               int max_length = 2048,
               bool chop = true)
        throw (IO_Exception);
 
    gzFile
-   get_gzfile (const string& file_path)
+   get_gzfile (const Dstring& file_path)
         throw (IO_Exception);
 
    char*
@@ -171,11 +171,11 @@ namespace denise
               double end_value);
 
    unsigned long
-   get_file_size (const string& file_path)
+   get_file_size (const Dstring& file_path)
       throw (IO_Exception);
 
    Dtime
-   get_file_last_modify_time (const string& file_path)
+   get_file_last_modify_time (const Dstring& file_path)
       throw (IO_Exception);
 
    template <class T> void
@@ -217,11 +217,11 @@ namespace denise
 
       protected:
 
-         map<string, string>
+         map<Dstring, Dstring>
          assign_dictionary;
 
          bool
-         apply_variables (string& line) const;
+         apply_variables (Dstring& line) const;
 
    };
 
@@ -236,10 +236,10 @@ namespace denise
 
       public:
 
-         Config_File (const string& file_path);
+         Config_File (const Dstring& file_path);
 
          void
-         ingest (const string& file_path);
+         ingest (const Dstring& file_path);
 
    };
 

@@ -29,8 +29,8 @@ using namespace denise;
 //}
 
 Level_Tuple::Level_Tuple (const Level::Type type,
-                          const string& str,
-                          const string& delimiter)
+                          const wstring& str,
+                          const wstring& delimiter)
    : Tuple (str, delimiter),
      type (type)
 {
@@ -38,8 +38,8 @@ Level_Tuple::Level_Tuple (const Level::Type type,
 }
 
 void
-Level_Tuple::add (const string& str,
-                  const string& delimiter,
+Level_Tuple::add (const wstring& str,
+                  const wstring& delimiter,
                   const bool clear_first)
 {
    if (clear_first) { clear (); }
@@ -70,7 +70,7 @@ Level_Tuple::get_next_up (const Real value) const
 
    }
 
-   throw Nwp_Exception ("Level_Vector::get_next_up confused");
+   throw Nwp_Exception (L"Level_Vector::get_next_up confused");
 
 }
 
@@ -99,7 +99,7 @@ Level_Tuple::get_next_down (const Real value) const
 
    }
 
-   throw Nwp_Exception ("Level_Vector::get_next_up confused");
+   throw Nwp_Exception (L"Level_Vector::get_next_up confused");
 
 }
 
@@ -186,7 +186,7 @@ Nwp::Element_Vector::get_index (const Met_Element met_element) const
       if (at (i) == met_element) { return i; }
    }
 
-   throw Nwp_Exception ("met_element not available.");
+   throw Nwp_Exception (L"met_element not available.");
 
 }
 
@@ -289,13 +289,13 @@ Nwp::Data_3D::get_gvd_3d (const Met_Element met_element) const
       const Geodetic_Vector_Data_3D* gvd_3d_ptr = at (met_element);
       if (gvd_3d_ptr == NULL)
       {
-         throw Nwp_Exception ("Nwp::Data_3D gvd_3d_ptr is NULL");
+         throw Nwp_Exception (L"Nwp::Data_3D gvd_3d_ptr is NULL");
       }
       return *gvd_3d_ptr;
    }
    catch (const std::exception& se)
    {
-      throw Nwp_Exception ("Nwp::Data_3D has no such met_element");
+      throw Nwp_Exception (L"Nwp::Data_3D has no such met_element");
    }
 }
 
@@ -308,13 +308,13 @@ Nwp::Data_3D::get_gvd_3d (const Met_Element met_element)
       Geodetic_Vector_Data_3D* gvd_3d_ptr = at (met_element);
       if (gvd_3d_ptr == NULL)
       {
-         throw Nwp_Exception ("Nwp::Data_3D gvd_3d_ptr is NULL");
+         throw Nwp_Exception (L"Nwp::Data_3D gvd_3d_ptr is NULL");
       }
       return *gvd_3d_ptr;
    }
    catch (const std::exception& se)
    {
-      throw Nwp_Exception ("Nwp::Data_3D has no such met_element");
+      throw Nwp_Exception (L"Nwp::Data_3D has no such met_element");
    }
 }
 
@@ -847,7 +847,7 @@ Nwp::Key_Multimap::get_previous_key (const Key& key) const
       }
    }
 
-   throw Nwp_Exception ("There is no previous key");
+   throw Nwp_Exception (L"There is no previous key");
 
 }
 
@@ -912,7 +912,7 @@ Nwp::Key_Multimap::get_key (const Dtime& dtime,
                             const Dtime& base_time) const
 {
 
-   if (size () == 0) { throw Nwp_Exception ("Nwp is empty."); }
+   if (size () == 0) { throw Nwp_Exception (L"Nwp is empty."); }
 
    if (!base_time.is_nat ())
    {
@@ -932,7 +932,7 @@ Nwp::Key_Multimap::get_key (const Dtime& dtime,
 
    // Return the key with latest base_time, except when it's fh = 0
    const Integer n = key_set.size ();
-   if (n == 0) { throw Nwp_Exception ("No Match Key"); }
+   if (n == 0) { throw Nwp_Exception (L"No Match Key"); }
    else
    {
       const Nwp::Key& last_key = *(key_set.rbegin ());
@@ -1021,7 +1021,7 @@ Nwp::fill_rain_data (Geodetic_Vector_Data_2D& gvd_2d,
    catch (const Nwp_Exception& ne)
    {
       delete data_ptr;
-      throw Nwp_Exception ("Time Span Not Valid");
+      throw Nwp_Exception (L"Time Span Not Valid");
    }
 
    delete data_ptr;
@@ -1079,7 +1079,7 @@ Nwp::fill_rain_data (Geodetic_Vector_Data_2D& gvd_2d,
 
    }
 
-   throw Nwp_Exception ("Nwp::fill_rain_data N/A");
+   throw Nwp_Exception (L"Nwp::fill_rain_data N/A");
 
 }
 
@@ -1161,7 +1161,7 @@ Nwp::fill_potential_vorticity_data (Geodetic_Vector_Data_2D& gvd_2d,
 
    }
 
-   throw Nwp_Exception ("Nwp::fill_potential_vorticity_data N/A");
+   throw Nwp_Exception (L"Nwp::fill_potential_vorticity_data N/A");
 
 }
 
@@ -1244,7 +1244,7 @@ Nwp::fill_temperature_advection_data (Geodetic_Vector_Data_2D& gvd_2d,
 
    }
 
-   throw Nwp_Exception ("Nwp::fill_potential_vorticity_data N/A");
+   throw Nwp_Exception (L"Nwp::fill_potential_vorticity_data N/A");
 
 }
 
@@ -1328,7 +1328,7 @@ Nwp::fill_adiabatic_heating_data (Geodetic_Vector_Data_2D& gvd_2d,
 
    }
 
-   throw Nwp_Exception ("Nwp::fill_adiabatic_heating_data N/A");
+   throw Nwp_Exception (L"Nwp::fill_adiabatic_heating_data N/A");
 
 }
 
@@ -1419,7 +1419,7 @@ Nwp::fill_latent_heating_data (Geodetic_Vector_Data_2D& gvd_2d,
    {
    }
 
-   throw Nwp_Exception ("Nwp::latent_heating_data N/A");
+   throw Nwp_Exception (L"Nwp::latent_heating_data N/A");
 
 }
 
@@ -1709,7 +1709,7 @@ Nwp::fill_fdi_data (Geodetic_Vector_Data_2D& gvd_2d,
 
    if (met_element != FFDI && met_element != GFDI)
    {
-      throw Nwp_Exception ("Nwp::fill_fdi_data N/A");
+      throw Nwp_Exception (L"Nwp::fill_fdi_data N/A");
    }
 
    typedef Geodetic_Vector_Data_2D Gvd_2d;
@@ -1997,8 +1997,8 @@ Nwp::fill_li_thunder_data (Geodetic_Vector_Data_2D& gvd_2d,
                break;
  
             default:
-               string error_str = "Nwp::fill_thunder_li_data ";
-               error_str += level.get_string () + " invalid";
+               wstring error_str = L"Nwp::fill_thunder_li_data ";
+               error_str += level.get_string () + L" invalid";
                throw Nwp_Exception (error_str);
                break;
 
@@ -2078,7 +2078,7 @@ Nwp::fill_ts_diagnosis_data (Geodetic_Vector_Data_2D& gvd_2d,
 
    }
 
-   throw Nwp_Exception ("Nwp::fill_ts_diagnosis_data N/A");
+   throw Nwp_Exception (L"Nwp::fill_ts_diagnosis_data N/A");
 
 }
 
@@ -2088,7 +2088,7 @@ Nwp::fill_cloud_data (Geodetic_Vector_Data_2D& gvd_2d,
                       const Key& key,
                       const Met_Element met_element)
 {
-   throw Nwp_Exception ("Nwp::fill_cloud_data N/A");
+   throw Nwp_Exception (L"Nwp::fill_cloud_data N/A");
 }
 
 void
@@ -2125,8 +2125,8 @@ Nwp::fill_pressure_level_data (Geodetic_Vector_Data_2D& gvd_2d,
 
    //if ((p - tuple_p.front ()) * (p - tuple_p.back ()) > 0)
    //{
-   //   string error_str = "Nwp::fill_pressure_level_data_ptr ";
-   //   error_str += string_render (" %f", p);
+   //   wstring error_str = L"Nwp::fill_pressure_level_data_ptr ";
+   //   error_str += string_render (L" %f", p);
    //   throw Nwp_Exception (error_str);
    //}
 
@@ -2174,7 +2174,7 @@ Nwp::fill_theta_level_data (Geodetic_Vector_Data_2D& gvd_2d,
 
    }
 
-   throw Nwp_Exception ("Nwp::fill_theta_level_data N/A");
+   throw Nwp_Exception (L"Nwp::fill_theta_level_data N/A");
 
 }
 
@@ -2331,7 +2331,7 @@ Nwp::fill_screen_level_data (Geodetic_Vector_Data_2D& gvd_2d,
 
    }
 
-   throw Nwp_Exception ("Nwp::fill_screen_data N/A");
+   throw Nwp_Exception (L"Nwp::fill_screen_data N/A");
 
 }
 
@@ -2341,7 +2341,7 @@ Nwp::fill_50m_level_data (Geodetic_Vector_Data_2D& gvd_2d,
                           const Key& key,
                           const Met_Element met_element)
 {  
-   throw Nwp_Exception ("Nwp::fill_50m_level_data N/A");
+   throw Nwp_Exception (L"Nwp::fill_50m_level_data N/A");
 }
 
 void
@@ -2350,7 +2350,7 @@ Nwp::fill_10m_level_data (Geodetic_Vector_Data_2D& gvd_2d,
                           const Key& key,
                           const Met_Element met_element)
 {  
-   throw Nwp_Exception ("Nwp::fill_10m_level_data N/A");
+   throw Nwp_Exception (L"Nwp::fill_10m_level_data N/A");
 }
 
 void
@@ -2359,7 +2359,7 @@ Nwp::fill_msl_data (Geodetic_Vector_Data_2D& gvd_2d,
                     const Key& key,
                     const Met_Element met_element)
 {
-   throw Nwp_Exception ("Nwp::fill_msl_data N/A");
+   throw Nwp_Exception (L"Nwp::fill_msl_data N/A");
 }
 
 void
@@ -2437,7 +2437,7 @@ Nwp::fill_nil_level_data (Geodetic_Vector_Data_2D& gvd_2d,
 
    }
 
-   throw Nwp_Exception ("Nwp::fill_nil_data N/A");
+   throw Nwp_Exception (L"Nwp::fill_nil_data N/A");
 
 }
 
@@ -2447,7 +2447,7 @@ Nwp::fill_surface_level_data (Geodetic_Vector_Data_2D& gvd_2d,
                               const Key& key,
                               const Met_Element met_element)
 {
-   throw Nwp_Exception ("Nwp::fill_surface_data N/A");
+   throw Nwp_Exception (L"Nwp::fill_surface_data N/A");
 }
 
 void
@@ -2647,12 +2647,12 @@ Nwp::fill_data (Geodetic_Vector_Data_2D& gvd_2d,
 
    }
 
-   throw Nwp_Exception ("Nwp::fill_data N/A");
+   throw Nwp_Exception (L"Nwp::fill_data N/A");
 
 }
 
-Nwp::Nwp (const string& description,
-          const string& path)
+Nwp::Nwp (const wstring& description,
+          const wstring& path)
    : description (description),
      path (path)
 {
@@ -2685,13 +2685,13 @@ Nwp::set_domain_2d (const Domain_2D& domain_2d)
 {
 }
 
-const string&
+const wstring&
 Nwp::get_description () const
 {
    return description;
 }
 
-const string&
+const wstring&
 Nwp::get_status () const
 {
    return status;
@@ -2761,7 +2761,7 @@ Nwp::get_3d_data (const Key& key)
 
    if (iterator == data_3d_ptr_map.end ())
    {
-      string error_str = "Nwp::get_3d_data get_3d_data failed  ";
+      wstring error_str = L"Nwp::get_3d_data get_3d_data failed  ";
       const Dtime& base_time = key.base_time;
       const Integer forecast_hour = key.forecast_hour;
       error_str += base_time.get_string ();
@@ -2789,7 +2789,7 @@ Nwp::get_steering_data_ptr (const Key& key,
 
    if (level.type != Level::PRESSURE)
    {
-      throw Nwp_Exception ("Can't do non-P Level");
+      throw Nwp_Exception (L"Can't do non-P Level");
    }
 
    const Met_Element& U = ZONAL_WIND;
@@ -3176,7 +3176,7 @@ Nwp::get_p_data_ptr (const Key& key,
       }
    }
 
-   throw Exception ("Not Available for this level type");
+   throw Exception (L"Not Available for this level type");
 
 }
 
@@ -3234,7 +3234,7 @@ Nwp::get_cloud_base_data_ptr (const Key& key,
                               const Level& level)
 {
 
-   if (level.type != Level::PRESSURE) { throw Exception ("Only for P Levels"); }
+   if (level.type != Level::PRESSURE) { throw Exception (L"Only for P Levels"); }
 
    const Met_Element T = TEMPERATURE;
    const Met_Element Z = GEOPOTENTIAL_HEIGHT;
@@ -3472,7 +3472,7 @@ Nwp::get_ageostrophic_wind_data_ptr (const Key& key,
 
    }
 
-   throw Nwp_Exception ("Ageostrophic Wind N/A for this level");
+   throw Nwp_Exception (L"Ageostrophic Wind N/A for this level");
 
 }
 
@@ -3586,7 +3586,7 @@ Nwp::get_geostrophic_wind_data_ptr (const Key& key,
 
    }
 
-   throw Nwp_Exception ("Geostrophic Wind N/A for this level");
+   throw Nwp_Exception (L"Geostrophic Wind N/A for this level");
 
 }
 
@@ -3633,7 +3633,7 @@ Nwp::get_wind_data_ptr (const Key& key,
 
    }
 
-   throw Nwp_Exception ("Wind N/A for this level");
+   throw Nwp_Exception (L"Wind N/A for this level");
 
 }
 
@@ -3711,7 +3711,7 @@ Nwp::get_omega_data_ptr (const Key& key,
 
    }
 
-   throw Nwp_Exception ("Omega N/A for this level");
+   throw Nwp_Exception (L"Omega N/A for this level");
 
 }
 
@@ -3916,7 +3916,7 @@ Nwp::get_temperature_data_ptr (const Key& key,
 
    }
 
-   throw Nwp_Exception ("Temperature N/A for this level");
+   throw Nwp_Exception (L"Temperature N/A for this level");
 
 }
 
@@ -3983,7 +3983,7 @@ Nwp::get_dew_point_data_ptr (const Key& key,
 
    }
 
-   throw Nwp_Exception ("Dew Point N/A for this level");
+   throw Nwp_Exception (L"Dew Point N/A for this level");
 
 }
 
@@ -4050,7 +4050,7 @@ Nwp::get_rh_data_ptr (const Key& key,
 
    }
 
-   throw Nwp_Exception ("Relative Humidity N/A for this level");
+   throw Nwp_Exception (L"Relative Humidity N/A for this level");
 
 }
 
@@ -4117,7 +4117,7 @@ Nwp::get_dew_point_depression_data_ptr (const Key& key,
 
    }
 
-   throw Nwp_Exception ("Dew Point Depression N/A for this level");
+   throw Nwp_Exception (L"Dew Point Depression N/A for this level");
 
 }
 
@@ -4184,7 +4184,7 @@ Nwp::get_theta_e_data_ptr (const Key& key,
 
    }
 
-   throw Nwp_Exception ("Theta_e N/A for this level");
+   throw Nwp_Exception (L"Theta_e N/A for this level");
 
 }
 
@@ -4251,7 +4251,7 @@ Nwp::get_theta_w_data_ptr (const Key& key,
 
    }
 
-   throw Nwp_Exception ("Theta_w N/A for this level");
+   throw Nwp_Exception (L"Theta_w N/A for this level");
 
 }
 
@@ -4262,7 +4262,7 @@ Nwp::get_q_vector_data_ptr (const Key& key,
 
    if (level.type != Level::PRESSURE)
    {
-      throw Nwp_Exception ("Q Vector only available for pressure levels");
+      throw Nwp_Exception (L"Q Vector only available for pressure levels");
    }
 
    const Real p = level.value;
@@ -4703,9 +4703,9 @@ Nwp::get_terrain_profile_ptr (const Key& key,
    const Real distance = tuple_x.back ();
    const Level& surface = Level::surface_level ();
 
-   if (tuple_x.size () < 2) { throw Nwp_Exception ("Invalid journey"); }
-   if (gsl_isnan (distance)) { throw Nwp_Exception ("Invalid journey"); }
-   if (distance < 1) { throw Nwp_Exception ("journey too short"); }
+   if (tuple_x.size () < 2) { throw Nwp_Exception (L"Invalid journey"); }
+   if (gsl_isnan (distance)) { throw Nwp_Exception (L"Invalid journey"); }
+   if (distance < 1) { throw Nwp_Exception (L"journey too short"); }
 
    Geodetic_Vector_Data_2D* temp_data_ptr = get_initialized_vd_2d (1);
    fill_data (*temp_data_ptr, 0, key, surface, PRESSURE);
@@ -4741,9 +4741,9 @@ Nwp::get_rainfall_profile_ptr (const Key& key,
    const Tuple& tuple_x = journey.get_tuple_x (geodesy);
    const Real distance = tuple_x.back ();
 
-   if (tuple_x.size () < 2) { throw Nwp_Exception ("Invalid journey"); }
-   if (gsl_isnan (distance)) { throw Nwp_Exception ("Invalid journey"); }
-   if (distance < 1) { throw Nwp_Exception ("journey too short"); }
+   if (tuple_x.size () < 2) { throw Nwp_Exception (L"Invalid journey"); }
+   if (gsl_isnan (distance)) { throw Nwp_Exception (L"Invalid journey"); }
+   if (distance < 1) { throw Nwp_Exception (L"journey too short"); }
 
    const Level& nil = Level::nil_level ();
    Geodetic_Vector_Data_2D* temp_data_ptr = get_initialized_vd_2d (1);
@@ -4794,9 +4794,9 @@ Nwp::get_cross_section_ptr (const Key& key,
    const Tuple& tuple_x = journey.get_tuple_x (geodesy);
    const Real distance = tuple_x.back ();
 
-   if (tuple_x.size () < 2) { throw Nwp_Exception ("Invalid journey"); }
-   if (gsl_isnan (distance)) { throw Nwp_Exception ("Invalid journey"); }
-   if (distance < 1) { throw Nwp_Exception ("journey too short"); }
+   if (tuple_x.size () < 2) { throw Nwp_Exception (L"Invalid journey"); }
+   if (gsl_isnan (distance)) { throw Nwp_Exception (L"Invalid journey"); }
+   if (distance < 1) { throw Nwp_Exception (L"journey too short"); }
 
    const Data_3D& data_3d = get_3d_data (key);
 
@@ -4972,7 +4972,7 @@ Nwp::get_sounding_ptr (const Lat_Long& lat_long,
    }
    catch (const Nwp_Exception& be)
    {
-      cerr << "Nwp::get_sounding_ptr " << be << endl;
+      cerr << L"Nwp::get_sounding_ptr " << be << endl;
    }
 
    delete data_ptr;
@@ -5216,8 +5216,8 @@ Nwp::get_time_cross_data_ptr (const Lat_Long& lat_long,
 
 }
 
-Nwp_Exception::Nwp_Exception (const string& str)
-   : Exception ("Nwp_Exception", str)
+Nwp_Exception::Nwp_Exception (const wstring& str)
+   : Exception (L"Nwp_Exception", str)
 {
 }
 

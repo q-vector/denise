@@ -140,16 +140,16 @@ namespace denise
    }
 
    FILE*
-   get_input_file (const string& file_path)
+   get_input_file (const Dstring& file_path)
             throw (IO_Exception)
    {
-      FILE* file = fopen (file_path.c_str (), "r");
+      FILE* file = fopen (file_path.get_string ().c_str (), "r");
       if (file == NULL) { throw IO_Exception (file_path); }
       return file;
    }
 
    FILE*
-   get_output_file (const string& file_path,
+   get_output_file (const Dstring& file_path,
                     const char* mode)
              throw (IO_Exception)
    {
@@ -157,10 +157,10 @@ namespace denise
       FILE* file = NULL;
 
            if (file_path.empty ()) { file = NULL; }
-      else if (file_path == "-") { file = stdout; }
+      else if (file_path == L"-") { file = stdout; }
       else
       {
-         file = fopen (file_path.c_str (), mode);
+         file = fopen (file_path.get_string ().c_str (), mode);
          if (file == NULL) { throw IO_Exception (file_path); }
       }
 
@@ -169,7 +169,7 @@ namespace denise
    }
 
    Tokens
-   get_dir_listing (const string& dir_path,
+   get_dir_listing (const Dstring& dir_path,
                     const Reg_Exp& reg_exp,
                     const bool prepend_dir_path)
              throw (IO_Exception)
@@ -179,17 +179,17 @@ namespace denise
       struct dirent* dirp;
 
       Tokens dir_listing;
-      dp = opendir (dir_path.c_str ());
+      dp = opendir (string (dir_path.begin (), dir_path.end ()).c_str ());
       if (dp == NULL) { throw IO_Exception (dir_path); }
 
       while ((dirp = readdir (dp)) != NULL)
       {
-         string file_name (dirp->d_name);
+         Dstring file_name (dirp->d_name);
          if (reg_exp.match (file_name))
          {
             if (prepend_dir_path)
             {
-               dir_listing.push_back (dir_path + "/" + file_name);
+               dir_listing.push_back (dir_path + L"/" + file_name);
             }
             else
             {
@@ -204,7 +204,7 @@ namespace denise
 
    }
 
-   string
+   Dstring
    read_line (FILE* file,
               int max_length,
               bool chop)
@@ -212,10 +212,10 @@ namespace denise
    {
 
       char* input_line = new char[max_length];
-      char* s = fgets (input_line, max_length, file);
+      char* ss = fgets (input_line, max_length, file);
 
-      if (s == 0) { throw IO_Exception ("fgets error or eof"); }
-      string str (input_line);
+      if (ss == 0) { throw IO_Exception (L"fgets error or eof"); }
+      Dstring str (input_line);
       if (chop) { denise::chop (str); }
 
       delete[] input_line;
@@ -224,21 +224,23 @@ namespace denise
    }
 
    gzFile
-   get_gzfile (const string& file_path)
+   get_gzfile (const Dstring& file_path)
         throw (IO_Exception)
    {
 
-      gzFile file = gzopen (file_path.c_str (), "rb");
+      gzFile file = gzopen (file_path.get_string ().c_str (), "rb");
 
       if (file == NULL)
       {
 
-         file = gzopen ((file_path + ".gz").c_str (), "rb");
+         const Dstring& file_path_gz = file_path + L".gz";
+         file = gzopen (file_path_gz.get_string ().c_str (), "rb");
 
          if (file == NULL)
          {
 
-            file = gzopen ((file_path + ".Z").c_str (), "rb");
+            const Dstring& file_path_Z = file_path + L".Z";
+            file = gzopen (file_path_Z.get_string ().c_str (), "rb");
 
             if (file == NULL)
             {
@@ -340,13 +342,13 @@ namespace denise
    }
 
    unsigned long
-   get_file_size (const string& file_path)
+   get_file_size (const Dstring& file_path)
            throw (IO_Exception)
    {
 
       struct stat buffer;
 
-      if (stat (file_path.c_str (), &buffer) != 0)
+      if (stat (file_path.get_string ().c_str (), &buffer) != 0)
       {
          throw IO_Exception (file_path);
       }
@@ -356,13 +358,13 @@ namespace denise
    }
 
    Dtime
-   get_file_last_modify_time (const string& file_path)
+   get_file_last_modify_time (const Dstring& file_path)
            throw (IO_Exception)
    {
 
       struct stat buffer;
 
-      if (stat (file_path.c_str (), &buffer) != 0)
+      if (stat (file_path.get_string ().c_str (), &buffer) != 0)
       {
          throw IO_Exception (file_path);
       }
@@ -376,22 +378,22 @@ namespace denise
    {
       pid_t pid = getpid ();
       string s; for (Integer i = 0; i < indent; i++) { s += " "; }
-      const string& str = string_render (
+      const Dstring& str = Dstring::render (
          "echo -n \"%s\"; pmap -x %i | tail -1", s.c_str (), pid);
-      system (str.c_str ());
+      system (str.get_string ().c_str ());
    }
 
 }
 
 bool
-Assignable::apply_variables (string& line) const
+Assignable::apply_variables (Dstring& line) const
 {
 
    size_t found;
    for (auto iterator = assign_dictionary.begin ();
         iterator != assign_dictionary.end (); iterator++)
    {
-      const string variable ("$" + iterator->first);
+      const Dstring variable (L"$" + iterator->first);
       while ((found = line.find (variable)) != string::npos)
       {
          const size_t var_length = variable.length ();
@@ -399,7 +401,7 @@ Assignable::apply_variables (string& line) const
       }
    }
 
-   return (line.find ("$") != string::npos);
+   return (line.find (L"$") != Dstring::npos);
 
 }
 
@@ -413,28 +415,29 @@ Config_File::apply_variables ()
    }
 }
 
-Config_File::Config_File (const string& file_path)
+Config_File::Config_File (const Dstring& file_path)
 {
    ingest (file_path);
 }
 
 void
-Config_File::ingest (const string& file_path)
+Config_File::ingest (const Dstring& file_path)
 {
 
-   ifstream file (file_path);
+   ifstream file (file_path.get_string ());
 
-   for (string input_string; getline (file, input_string); )
+   for (string is; getline (file, is); )
    {
 
-      if (input_string.size () == 0) { continue; }
-      if (input_string.c_str ()[0] == '#') { continue; }
+      if (is.size () == 0) { continue; }
+      if (is.c_str ()[0] == '#') { continue; }
 
-      const Tokens variable_tokens (input_string, "=");
+      const Dstring input_string (is);
+      const Tokens variable_tokens (input_string, L"=");
       if (variable_tokens.size () == 2)
       {
-         const string& variable = get_trimmed (variable_tokens[0]);
-         const string& value = get_trimmed (variable_tokens[1]);
+         const Dstring& variable = get_trimmed (variable_tokens[0]);
+         const Dstring& value = get_trimmed (variable_tokens[1]);
          assign_dictionary.insert (make_pair (variable, value));
          continue;
       }

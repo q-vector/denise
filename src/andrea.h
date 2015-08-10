@@ -38,12 +38,12 @@ using namespace denise;
 namespace andrea
 {
 
-   class Entity : public string
+   class Entity : public Dstring
    {
 
       public:
 
-         Entity (const string& str);
+         Entity (const Dstring& str);
 
          Real
          value () const;
@@ -62,7 +62,7 @@ namespace andrea
 
       private:
 
-         string
+         Dstring
          prompt;
 
          void
@@ -73,7 +73,7 @@ namespace andrea
 
       public:
 
-         Andrea (const string& prompt);
+         Andrea (const Dstring& prompt);
 
          virtual void
          parse (const Tokens& tokens);

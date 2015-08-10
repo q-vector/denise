@@ -26,7 +26,7 @@ using namespace std;
 using namespace denise;
 
 void
-Dtime::init (const wstring& time_string,
+Dtime::init (const Dstring& time_string,
              bool is_local)
 {
 
@@ -59,8 +59,8 @@ Dtime::init (const wstring& time_string,
 }
 
 void
-Dtime::init (const wstring& time_string,
-             const wstring& format,
+Dtime::init (const Dstring& time_string,
+             const Dstring& format,
              bool is_local)
 {
 
@@ -68,20 +68,20 @@ Dtime::init (const wstring& time_string,
    if (time_string == L"big_crunch") { this->t = GSL_POSINF; return; }
    if (time_string == L"nat") { this->t = GSL_NAN; return; }
 
-   struct tm ts;
-   ts.tm_min = 0; ts.tm_sec = 0; ts.tm_sec = 0;
-   ts.tm_min = 0; ts.tm_hour = 0; ts.tm_mday = 0;
-   ts.tm_mon = 0; ts.tm_year = 0; ts.tm_wday = 0;
-   ts.tm_yday = 0; ts.tm_isdst = 0;
+   struct tm tm_struct;
+   tm_struct.tm_min = 0; tm_struct.tm_sec = 0; tm_struct.tm_sec = 0;
+   tm_struct.tm_min = 0; tm_struct.tm_hour = 0; tm_struct.tm_mday = 0;
+   tm_struct.tm_mon = 0; tm_struct.tm_year = 0; tm_struct.tm_wday = 0;
+   tm_struct.tm_yday = 0; tm_struct.tm_isdst = 0;
 
-   const string s_time_str (time_string.begin (), time_string.end ());
-   const string fmt (format.begin (), format.end ());
-   strptime (s_time_str.c_str (), fmt.c_str (), &ts);
+   const string& ts = time_string.get_string ();
+   const string& fmt = format.get_string ();
+   strptime (ts.c_str (), fmt.c_str (), &tm_struct);
 
-   if (ts.tm_min < 0 || ts.tm_min > 59) { ts.tm_min = 0; }
-   if (ts.tm_sec < 0 || ts.tm_sec > 61) { ts.tm_sec = 0; }
+   if (tm_struct.tm_min < 0 || tm_struct.tm_min > 59) { tm_struct.tm_min = 0; }
+   if (tm_struct.tm_sec < 0 || tm_struct.tm_sec > 61) { tm_struct.tm_sec = 0; }
 
-   init (&ts, is_local);
+   init (&tm_struct, is_local);
 
 }
 
@@ -228,14 +228,14 @@ Dtime::Dtime (const Dtime& time)
 {
 }
 
-Dtime::Dtime (const wstring& time_string,
+Dtime::Dtime (const Dstring& time_string,
               const bool is_local)
 {
    init (time_string, is_local);
 }
 
-Dtime::Dtime (const wstring& time_string,
-              const wstring& format,
+Dtime::Dtime (const Dstring& time_string,
+              const Dstring& format,
               const bool is_local)
 {
    if (format.empty ()) { init (time_string, is_local); }
@@ -286,8 +286,8 @@ Dtime::hours_later (const double hours)
    return Dtime (Dtime::now ().t + hours);
 }
 
-wstring
-Dtime::get_string (const wstring& format,
+Dstring
+Dtime::get_string (const Dstring& format,
                    const bool is_local) const
 {
 
@@ -295,13 +295,13 @@ Dtime::get_string (const wstring& format,
 
    if (gsl_isnan (t))
    {
-      return wstring (L"nat");
+      return Dstring (L"nat");
    }
    else
    if ((inf = gsl_isinf (t)) != 0)
    {
       const bool future = (inf > 0);
-      return wstring (future ? L"big_crunch" : L"big_bang");
+      return Dstring (future ? L"big_crunch" : L"big_bang");
    }
    else
    {
@@ -313,10 +313,9 @@ Dtime::get_string (const wstring& format,
       char* c_time_string = new char[n];
       strftime (c_time_string, n, fmt.c_str (), &time_struct);
 
-      const string str (c_time_string);
-      const wstring w_str (str.begin (), str.end ());
+      const Dstring str (c_time_string);
       delete[] c_time_string;
-      return w_str;
+      return str;
 
    }
 
@@ -413,8 +412,8 @@ Dtime::get_julian_day (Integer year,
 }
 
 Tuple
-Dtime::get_time_tuple (const wstring& time_string,
-                       const wstring& delimiter)
+Dtime::get_time_tuple (const Dstring& time_string,
+                       const Dstring& delimiter)
 {
 
    Tuple tuple;
@@ -423,7 +422,7 @@ Dtime::get_time_tuple (const wstring& time_string,
    for (Tokens::const_iterator iterator = tokens.begin ();
         iterator != tokens.end (); iterator++)
    {
-      const wstring& token = *(iterator);
+      const Dstring& token = *(iterator);
       const Dtime dtime (token);
       tuple.push_back (dtime.t);
    }
@@ -545,7 +544,7 @@ Dtime::Span::Span ()
    this->end_t = GSL_POSINF;
 }
 
-Dtime::Span::Span (const wstring& str)
+Dtime::Span::Span (const Dstring& str)
    : start_t (GSL_NEGINF),
      end_t (GSL_POSINF)
 {
@@ -630,14 +629,14 @@ Dtime::Set::match (const Dtime& dtime) const
    return false;
 }
 
-Dtime::Set::Set (const wstring& str)
+Dtime::Set::Set (const Dstring& str)
 {
 
    const Tokens tokens (str, L":");
 
    for (auto iterator = tokens.begin (); iterator != tokens.end (); iterator++)
    {
-      const wstring& token = *(iterator);
+      const Dstring& token = *(iterator);
       insert (Dtime::Span (token));
    }
 

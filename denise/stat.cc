@@ -1320,13 +1320,13 @@ Regression_2D::get_estimate_distribution (const Real x0,
 namespace denise
 {
 
-   ostream&
-   operator << (ostream &out_file,
+   wostream&
+   operator << (wostream &out_file,
                 Bgd& bgd)
    {
-      out_file << "(" << bgd.get_mean () << ", " << bgd.get_variance_x ()
-               << ", " << bgd.get_variance_y () << ", "
-               << bgd.get_covariance () << ")";
+      out_file << L"(" << bgd.get_mean () << L", " << bgd.get_variance_x ()
+               << L", " << bgd.get_variance_y () << L", "
+               << bgd.get_covariance () << L")";
       return out_file;
    }
 

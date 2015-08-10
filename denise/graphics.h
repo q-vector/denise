@@ -41,8 +41,8 @@ namespace denise
 
    RefPtr<Surface>
    get_surface (const Size_2D& size_2d,
-                const string& format = "png",
-                const string& file_path = "/dev/null");
+                const Dstring& format = L"png",
+                const Dstring& file_path = L"/dev/null");
 
    RefPtr<ImageSurface>
    get_image_surface (const Size_2D& size_2d);
@@ -55,8 +55,8 @@ namespace denise
 
       public:
 
-         Dashes (const string& str,
-                 const string& delimiter = string (":"));
+         Dashes (const Dstring& str,
+                 const Dstring& delimiter = L":");
 
          Dashes (const Tuple& tuple);
 
@@ -111,7 +111,7 @@ namespace denise
                 const Real b = 0,
                 const Real a = 1.0);
 
-         Color (const string& str);
+         Color (const Dstring& str);
 
          Color (const RefPtr<Context>& cr);
 
@@ -415,7 +415,7 @@ namespace denise
             public:
 
                Component (const Rgb_Color_Chooser& rcc,
-                          const string& config_str);
+                          const Dstring& config_str);
 
                Real
                get_fraction (const Real value) const;
@@ -455,10 +455,10 @@ namespace denise
 
          Rgb_Color_Chooser (const Real start_value,
                             const Real end_value,
-                            const string& str_r,
-                            const string& str_g,
-                            const string& str_b,
-                            const string& str_a = "1",
+                            const Dstring& str_r,
+                            const Dstring& str_g,
+                            const Dstring& str_b,
+                            const Dstring& str_a = L"1",
                             const Color& invalid_color = transparent);
 
          Color
@@ -494,10 +494,10 @@ namespace denise
 
          Hsb_Color_Chooser (const Real start_value,
                             const Real end_value,
-                            const string& hue_str = "0",
-                            const string& saturation_str = "1",
-                            const string& brightness_str = "1",
-                            const string& alpha_str = "1",
+                            const Dstring& hue_str = L"0",
+                            const Dstring& saturation_str = L"1",
+                            const Dstring& brightness_str = L"1",
+                            const Dstring& alpha_str = L"1",
                             const Color& invalid_color = transparent);
 
    };
@@ -509,7 +509,7 @@ namespace denise
 
          Hue_Color_Chooser (const Real start_value,
                             const Real end_value,
-                            const string& hue_str,
+                            const Dstring& hue_str,
                             const Real alpha = 1,
                             const Color& invalid_color = transparent);
 
@@ -545,7 +545,7 @@ namespace denise
 
          Gray_Color_Chooser (const Real start_value,
                              const Real end_value,
-                             const string& brightness_str,
+                             const Dstring& brightness_str,
                              const Color& invalid_color = transparent);
 
    };
@@ -807,7 +807,7 @@ namespace denise
 
       private:
 
-         string
+         Dstring
          text;
 
          Point_2D
@@ -833,10 +833,10 @@ namespace denise
                      const Real margin_y,
                      const bool outline) const;
 
-         static string
+         static Dstring
          get_string (const Real value,
                      const Number number,
-                     const string& format_str,
+                     const Dstring& format,
                      const Real multiplier = 1,
                      const Real offset = 0);
                      
@@ -847,12 +847,12 @@ namespace denise
 
       public:
 
-         Label (const string& text,
+         Label (const Dstring& text,
                 const Point_2D& point_2d,
                 const char justify_h,
                 const char justify_v);
 
-         Label (const string& text,
+         Label (const Dstring& text,
                 const Point_2D& point_2d,
                 const char justify_h,
                 const char justify_v,
@@ -860,14 +860,14 @@ namespace denise
 
          Label (const Real value,
                 const Number number,
-                const string& format_str,
+                const Dstring& format,
                 const Point_2D& point_2d,
                 const char justify_h,
                 const char justify_v);
 
          Label (const Real value,
                 const Number number,
-                const string& format_str,
+                const Dstring& format,
                 const Point_2D& point_2d,
                 const char justify_h,
                 const char justify_v,
@@ -875,7 +875,7 @@ namespace denise
 
          Label (const Real value,
                 const Number number,
-                const string& format_str,
+                const Dstring& format,
                 const Real multiplier,
                 const Real offset,
                 const Point_2D& point_2d,
@@ -884,7 +884,7 @@ namespace denise
 
          Label (const Real value,
                 const Number number,
-                const string& format_str,
+                const Dstring& format,
                 const Real multiplier,
                 const Real offset,
                 const Point_2D& point_2d,
@@ -900,7 +900,7 @@ namespace denise
          void
          set_text_angle (const Real text_angle);
 
-         const string&
+         const Dstring&
          get_text () const;
 
          const Point_2D&
@@ -1036,7 +1036,7 @@ namespace denise
                          const Transform_2D& transform,
                          const Domain_1D& domain_1d,
                          const Real position_y,
-                         const string& format_str,
+                         const Dstring& format,
                          const Label::Number number = Label::REAL,
                          const char justify_h = 'c',
                          const char justify_v = 'c',
@@ -1047,7 +1047,7 @@ namespace denise
                          const Transform_2D& transform,
                          const Domain_1D& domain_1d,
                          const Real position_x,
-                         const string& format_str,
+                         const Dstring& format,
                          const Label::Number number = Label::REAL,
                          const char justify_h = 'c',
                          const char justify_v = 'c',
@@ -1058,7 +1058,7 @@ namespace denise
                                 const Transform_2D& transform,
                                 const Domain_2D& domain_2d,
                                 const Lat_Long& lat_long,
-                                const string& format_str,
+                                const Dstring& format,
                                 const char justify_h = 'c',
                                 const char justify_v = 'c',
                                 const Real padding = 0) const;
@@ -1188,7 +1188,7 @@ namespace denise
                          const Transform_2D& transform,
                          const Integer index,
                          const Real position_y,
-                         const string& format_str,
+                         const Dstring& format,
                          const Label::Number number = Label::REAL,
                          const char justify_h = 'c',
                          const char justify_v = 'c',
@@ -1199,7 +1199,7 @@ namespace denise
                          const Transform_2D& transform,
                          const Integer index,
                          const Real position_x,
-                         const string& format_str,
+                         const Dstring& format,
                          const Label::Number number = Label::REAL,
                          const char justify_h = 'c',
                          const char justify_v = 'c',
@@ -1210,7 +1210,7 @@ namespace denise
                                 const Transform_2D& transform,
                                 const Integer index,
                                 const Lat_Long& lat_long,
-                                const string& format_str,
+                                const Dstring& format,
                                 const char justify_h = 'c',
                                 const char justify_v = 'c',
                                 const Real padding = 0) const;
@@ -1276,21 +1276,21 @@ namespace denise
 
          virtual void
          cairo (const RefPtr<Context>& cr,
-                const string& str) const;
+                const Dstring& str) const;
 
          virtual void
          cairo (const RefPtr<Context>& cr,
-                const string& string_l,
-                const string& string_c,
-                const string& string_r) const;
+                const Dstring& string_l,
+                const Dstring& string_c,
+                const Dstring& string_r) const;
 
          virtual void
          cairo (const RefPtr<Context>& cr,
-                const string& string_ul,
-                const string& string_ll,
-                const string& string_c,
-                const string& string_ur,
-                const string& string_lr) const;
+                const Dstring& string_ul,
+                const Dstring& string_ll,
+                const Dstring& string_c,
+                const Dstring& string_ur,
+                const Dstring& string_lr) const;
 
       public:
 
@@ -1309,19 +1309,19 @@ namespace denise
          set (const Tokens& tokens);
 
          void
-         set (const string& str);
+         set (const Dstring& str);
 
          void
-         set (const string& string_l,
-              const string& string_c,
-              const string& string_r);
+         set (const Dstring& string_l,
+              const Dstring& string_c,
+              const Dstring& string_r);
 
          void
-         set (const string& string_ul,
-              const string& string_ll,
-              const string& string_c,
-              const string& string_ur,
-              const string& string_lr);
+         set (const Dstring& string_ul,
+              const Dstring& string_ll,
+              const Dstring& string_c,
+              const Dstring& string_ur,
+              const Dstring& string_lr);
 
          void
          cairo (const RefPtr<Context>& cr);

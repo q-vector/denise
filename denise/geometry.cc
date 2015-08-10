@@ -25,8 +25,8 @@
 using namespace denise;
 using namespace Cairo;
 
-Geometry_Exception::Geometry_Exception (const string& description)
-   : Exception ("Geometry_Exception", description)
+Geometry_Exception::Geometry_Exception (const wstring& description)
+   : Exception (L"Geometry_Exception", description)
 {
 }
 
@@ -1065,7 +1065,7 @@ Simple_Polyline::get_edge (Simple_Polyline::iterator iterator) const
    if (is_last (iterator))
    {
       if (closed) { return Edge (*(iterator), *(begin ())); }
-      else { throw Exception ("Last Node in Simple_Polyline"); }
+      else { throw Exception (L"Last Node in Simple_Polyline"); }
    }
    else
    {
@@ -1080,7 +1080,7 @@ Simple_Polyline::get_edge (Simple_Polyline::const_iterator iterator) const
    if (is_last (iterator))
    {
       if (closed) { return Edge (*(iterator), *(begin ())); }
-      else { throw Exception ("Last Node in Simple_Polyline"); }
+      else { throw Exception (L"Last Node in Simple_Polyline"); }
    }
    else
    {
@@ -1568,8 +1568,8 @@ Polygon::iterate_winding_number (Integer& w,
                                  const Point_2D& point)
 {
 
-   const Geometry_Exception gev ("point is vertex");
-   const Geometry_Exception gee ("point on edge");
+   const Geometry_Exception gev (L"point is vertex");
+   const Geometry_Exception gee (L"point on edge");
 
    const Integer n = handle_ptr->n;
    Polygon::Vertex* current_ptr = (Polygon::Vertex*)handle_ptr;
@@ -3293,8 +3293,8 @@ Polygon::cairo (const RefPtr<Context>& cr,
 }
 
 void
-Polygon::debug_print (const string& prefix,
-                      ostream& out_stream) const
+Polygon::debug_print (const wstring& prefix,
+                      wostream& out_stream) const
 {
 
    const Polygon::Vertex* handle_ptr = first_handle_ptr;
@@ -3310,19 +3310,19 @@ Polygon::debug_print (const string& prefix,
       do
       {
          const Point_2D& point = (const Point_2D&)(*current_ptr);
-         string str ("");
+         wstring str (L"");
          switch (current_ptr->intersection)
          {
-            case INTERSECTION_NOT: str = "NOT_INTERSECTION"; break;
-            case INTERSECTION_ENTRY: str = "ENTRY"; break;
-            case INTERSECTION_EXIT: str = "EXIT"; break;
+            case INTERSECTION_NOT: str = L"NOT_INTERSECTION"; break;
+            case INTERSECTION_ENTRY: str = L"ENTRY"; break;
+            case INTERSECTION_EXIT: str = L"EXIT"; break;
          }
-         if (current_ptr->neighbor_ptr != NULL) { str += " HAS_NEIGHBOR"; }
+         if (current_ptr->neighbor_ptr != NULL) { str += L" HAS_NEIGHBOR"; }
 
          out_stream << prefix << current_ptr << " " << point << " " << str;
-         out_stream << " | prev_ptr = " << current_ptr->prev_ptr;
-         out_stream << " | next_ptr = " << current_ptr->next_ptr;
-         out_stream << " | neighbor = " << current_ptr->neighbor_ptr << endl;
+         out_stream << L" | prev_ptr = " << current_ptr->prev_ptr;
+         out_stream << L" | next_ptr = " << current_ptr->next_ptr;
+         out_stream << L" | neighbor = " << current_ptr->neighbor_ptr << endl;
 
          current_ptr = current_ptr->next_ptr;
 
@@ -3334,7 +3334,7 @@ Polygon::debug_print (const string& prefix,
    }
    while (current_handle_ptr != first_handle_ptr);
 
-   out_stream << prefix << "end polygon" << endl;
+   out_stream << prefix << L"end polygon" << endl;
 
 }
 
@@ -4626,8 +4626,8 @@ namespace denise
 {
 
 /*
-   ostream&
-   operator << (ostream& out_file,
+   wostream&
+   operator << (wostream& out_file,
                 const Path_Ob& path_ob)
    {
 
@@ -4663,32 +4663,32 @@ namespace denise
    }
 */
 
-   ostream&
-   operator << (ostream& out_file,
+   wostream&
+   operator << (wostream& out_file,
                 const Ellipse& ellipse)
    {
       Point_2D center = ellipse.get_center ();
-      out_file << "(" << center << ", " << ellipse.get_a () << ", "
-               << ellipse.get_b () << ", " << ellipse.get_tilt () << ")";
+      out_file << L"(" << center << L", " << ellipse.get_a () << L", "
+               << ellipse.get_b () << L", " << ellipse.get_tilt () << L")";
       return out_file;
    }
 
-   ostream&
-   operator << (ostream& out_file,
+   wostream&
+   operator << (wostream& out_file,
                 const Simple_Polyline& simple_polyline)
    {
       for (Simple_Polyline::const_iterator iterator = simple_polyline.begin ();
            iterator != simple_polyline.end (); iterator++)
       {
          const Point_2D& point = *(iterator);
-         if (iterator != simple_polyline.begin ()) { out_file << " "; }
+         if (iterator != simple_polyline.begin ()) { out_file << L" "; }
          out_file << point;
       }
       return out_file;
    }
 
-   ostream&
-   operator << (ostream& out_file,
+   wostream&
+   operator << (wostream& out_file,
                 const Polygon& polygon)
    {
 
@@ -4706,8 +4706,8 @@ namespace denise
          for (Integer i = 0; i < n; i++)
          {
             const Point_2D& point = (const Point_2D&)(*current_ptr);
-            if (i == 0) { out_file << "N "; }
-            out_file << point << " ";
+            if (i == 0) { out_file << L"N "; }
+            out_file << point << L" ";
             current_ptr = current_ptr->next_ptr;
          }
 
