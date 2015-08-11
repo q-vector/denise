@@ -366,6 +366,50 @@ Surface_Package::surface_domain (const Dstring& surface_identifier,
 }
 
 void
+Surface_Package::surface_gtopo30 (const Dstring& surface_identifier,
+                                  const Dstring& geodetic_transform_identifier) const
+{
+
+   const RefPtr<Surface>& surface = andrea.get_surface (surface_identifier);
+   const RefPtr<Context> cr = andrea.get_cr (surface_identifier);
+   const Size_2D& size_2d = andrea.get_size_2d (surface_identifier);
+   const Point_2D centre (Real (size_2d.i) / 2, Real (size_2d.j) / 2);
+
+   const Geodetic_Transform* geodetic_transform_ptr =
+      andrea.get_geodetic_transform_ptr (geodetic_transform_identifier, centre);
+   const Geodetic_Transform& geodetic_transform = *geodetic_transform_ptr;
+
+   const Dstring gtopo30_path ("/data/research/gtopo30");
+   Gtopo30 gtopo30 (gtopo30_path, geodetic_transform, size_2d, 1e-3);
+   gtopo30.blit (cr);
+
+   delete geodetic_transform_ptr;
+
+}
+
+void
+Surface_Package::surface_blue_marble (const Dstring& surface_identifier,
+                                      const Dstring& geodetic_transform_identifier) const
+{
+
+   const RefPtr<Surface>& surface = andrea.get_surface (surface_identifier);
+   const RefPtr<Context> cr = andrea.get_cr (surface_identifier);
+   const Size_2D& size_2d = andrea.get_size_2d (surface_identifier);
+   const Point_2D centre (Real (size_2d.i) / 2, Real (size_2d.j) / 2);
+
+   const Geodetic_Transform* geodetic_transform_ptr =
+      andrea.get_geodetic_transform_ptr (geodetic_transform_identifier, centre);
+   const Geodetic_Transform& geodetic_transform = *geodetic_transform_ptr;
+
+   const Dstring blue_marble_path ("/data/research/blue_marble");
+   Blue_Marble blue_marble (blue_marble_path, geodetic_transform, size_2d);
+   blue_marble.blit (cr);
+
+   delete geodetic_transform_ptr;
+
+}
+
+void
 Surface_Package::surface_parse (const Tokens& tokens)
 {
 
@@ -566,6 +610,22 @@ Surface_Package::surface_parse (const Tokens& tokens)
       andrea.surface_gshhs (surface_identifier,
          geodetic_transform_identifier, gshhs_identifier,
          tokens.subtokens (4));
+   }
+   else
+   if (tokens[0] == "gtopo30")
+   {
+      const Dstring& surface_identifier = tokens[1];
+      const Dstring& geodetic_transform_identifier = tokens[2];
+      andrea.surface_gtopo30 (surface_identifier,
+         geodetic_transform_identifier);
+   }
+   else
+   if (tokens[0] == "blue_marble")
+   {
+      const Dstring& surface_identifier = tokens[1];
+      const Dstring& geodetic_transform_identifier = tokens[2];
+      andrea.surface_blue_marble (surface_identifier,
+         geodetic_transform_identifier);
    }
 
 }

@@ -33,51 +33,6 @@ using namespace Cairo;
 namespace denise
 {
 
-   enum Blue_Marble_Tile
-   {
-      BLUE_MARBLE_WEST = 0,
-      BLUE_MARBLE_EAST = 1,
-      NUMBER_OF_BLUE_MARBLE_TILES = 2
-   };
-
-   enum Gtopo30_Tile
-   {
-      W180S60 = 0,
-      W120S60 = 1,
-      W060S60 = 2,
-      W000S60 = 3,
-      E060S60 = 4,
-      E120S60 = 5,
-      W180S10 = 6,
-      W140S10 = 7,
-      W100S10 = 8,
-      W060S10 = 9,
-      W020S10 = 10,
-      E020S10 = 11,
-      E060S10 = 12,
-      E100S10 = 13,
-      E140S10 = 14,
-      W180N40 = 15,
-      W140N40 = 16,
-      W100N40 = 17,
-      W060N40 = 18,
-      W020N40 = 19,
-      E020N40 = 20,
-      E060N40 = 21,
-      E100N40 = 22,
-      E140N40 = 23,
-      W180N90 = 24,
-      W140N90 = 25,
-      W100N90 = 26,
-      W060N90 = 27,
-      W020N90 = 28,
-      E020N90 = 29,
-      E060N90 = 30,
-      E100N90 = 31,
-      E140N90 = 32,
-      NUMBER_OF_GTOPO30_TILES = 33
-   };
-
    class Gshhs : public Polygon,
                  public Geodetic_Cairoable
    {
@@ -267,15 +222,21 @@ namespace denise
 
       private:
 
-         static Blue_Marble_Tile
+         enum Tile
+         {
+            WEST,
+            EAST,
+         };
+
+         static Tile
          get_tile (const Integer blue_marble_i,
                    const Integer blue_marble_j);
 
          static Dstring
-         get_tile_string (const Blue_Marble_Tile tile);
+         get_tile_string (const Tile tile);
 
          static Index_2D
-         get_tile_index (const Blue_Marble_Tile tile);
+         get_tile_index (const Tile tile);
 
          static Color
          get_color (const Lat_Long& lat_long,
@@ -289,6 +250,15 @@ namespace denise
 
       public:
 
+         class Exception : public denise::Exception
+         {
+
+            public:
+
+               Exception (const Dstring& description = "");
+
+         };
+
          Blue_Marble (const Dstring& blue_marble_path,
                       const Transform_2D& transform,
                       const Size_2D& size_2d);
@@ -297,19 +267,47 @@ namespace denise
 
    };
 
-   class Blue_Marble_Exception : public Exception
-   {
-
-      public:
-
-         Blue_Marble_Exception (const Dstring& description = "");
-
-   };
-
    class Gtopo30 : public Raster
    {
 
       private:
+
+         enum Tile
+         {
+            W180S60 = 0,
+            W120S60 = 1,
+            W060S60 = 2,
+            W000S60 = 3,
+            E060S60 = 4,
+            E120S60 = 5,
+            W180S10 = 6,
+            W140S10 = 7,
+            W100S10 = 8,
+            W060S10 = 9,
+            W020S10 = 10,
+            E020S10 = 11,
+            E060S10 = 12,
+            E100S10 = 13,
+            E140S10 = 14,
+            W180N40 = 15,
+            W140N40 = 16,
+            W100N40 = 17,
+            W060N40 = 18,
+            W020N40 = 19,
+            E020N40 = 20,
+            E060N40 = 21,
+            E100N40 = 22,
+            E140N40 = 23,
+            W180N90 = 24,
+            W140N90 = 25,
+            W100N90 = 26,
+            W060N90 = 27,
+            W020N90 = 28,
+            E020N90 = 29,
+            E060N90 = 30,
+            E100N90 = 31,
+            E140N90 = 32
+         };
 
          const Real
          delta;
@@ -332,56 +330,55 @@ namespace denise
          Index_2D*
          tile_index_array;
 
-         static Gtopo30_Tile
+         static Tile
          get_tile (const Integer gtopo30_i,
                    const Integer gtopo30_j);
 
          static Dstring
-         get_tile_string (const Gtopo30_Tile tile);
+         get_tile_string (const Tile tile);
 
          static Size_2D
-         get_tile_size (const Gtopo30_Tile tile);
+         get_tile_size (const Tile tile);
 
          static Index_2D
-         get_tile_index (const Gtopo30_Tile tile);
+         get_tile_index (const Tile tile);
 
          static Domain_2D
-         get_tile_domain (const Gtopo30_Tile tile);
+         get_tile_domain (const Tile tile);
 
          static Domain_1D
-         get_tile_domain_latitude (const Gtopo30_Tile tile);
+         get_tile_domain_latitude (const Tile tile);
 
          static Domain_1D
-         get_tile_domain_longitude (const Gtopo30_Tile tile);
+         get_tile_domain_longitude (const Tile tile);
+
+         Real*
+         get_data (const Transform_2D& transform);
 
          void
          fill_raster (const Real* data,
-                      const Color_Chooser& color_chooser,
                       const Real shade_constant);
 
       public:
 
-         Gtopo30 (const Dstring& gtopo30_path);
+         class Exception : public denise::Exception
+         {
+
+            public:
+
+               Exception (const Dstring& description = "");
+
+         };
 
          Gtopo30 (const Dstring& gtopo30_path,
                   const Transform_2D& transform,
                   const Size_2D& size_2d,
-                  const Color_Chooser& color_chooser,
-                  const Real shade_constance = 4e-4);
+                  const Real shade_constance = 0.1);
 
          ~Gtopo30 ();
 
          Real
          get_datum (const Lat_Long& lat_long) const;
-
-   };
-
-   class Gtopo30_Exception : public Exception
-   {
-
-      public:
-
-         Gtopo30_Exception (const Dstring& description = "");
 
    };
 

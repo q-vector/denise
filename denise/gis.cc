@@ -502,16 +502,16 @@ Gshhs::cairo (const RefPtr<Context> cr,
 }
 
 Dstring
-Blue_Marble::get_tile_string (const Blue_Marble_Tile tile)
+Blue_Marble::get_tile_string (const Blue_Marble::Tile tile)
 {
 
    Dstring tile_string;
 
    switch (tile)
    {
-      case BLUE_MARBLE_EAST: tile_string += "blue_marble_east"; break;
-      case BLUE_MARBLE_WEST: tile_string += "blue_marble_west"; break;
-      default: throw Blue_Marble_Exception ("Invalid Tile");
+      case EAST: tile_string += "blue_marble_east"; break;
+      case WEST: tile_string += "blue_marble_west"; break;
+      default: throw Blue_Marble::Exception ("Invalid Tile");
    }
 
    return tile_string;
@@ -535,11 +535,10 @@ Blue_Marble::get_color (const Lat_Long& lat_long,
    const Integer gi = Integer (rint ((longitude - start_longitude) * 120));
    const Integer gj = Integer (rint ((latitude - start_latitude) * 120));
 
-   const Blue_Marble_Tile tile = 
-      (gi >= 21600 ? BLUE_MARBLE_EAST : BLUE_MARBLE_WEST);
+   const Blue_Marble::Tile tile = (gi >= 21600 ? EAST : WEST);
    FILE* file = blue_marble_files[tile];
 
-   const Integer tile_i = gi - (tile == BLUE_MARBLE_EAST ? 21600 : 0);
+   const Integer tile_i = gi - (tile == EAST ? 21600 : 0);
    const Integer tile_j = 21600 - gj - 1;
 
    const long position = (tile_j * 21600 + tile_i) * pixel_size;
@@ -561,9 +560,9 @@ Blue_Marble::fill_raster (const Dstring& blue_marble_path,
    const Dstring& east_file_path = blue_marble_path + "/blue_marble_east.bin";
    const Dstring& west_file_path = blue_marble_path + "/blue_marble_west.bin";
 
-   FILE** blue_marble_files = new FILE*[NUMBER_OF_BLUE_MARBLE_TILES];
-   blue_marble_files[BLUE_MARBLE_EAST] = get_input_file (east_file_path);
-   blue_marble_files[BLUE_MARBLE_WEST] = get_input_file (west_file_path);
+   FILE** blue_marble_files = new FILE*[2];
+   blue_marble_files[EAST] = get_input_file (east_file_path);
+   blue_marble_files[WEST] = get_input_file (west_file_path);
 
    const Real delta_2 = Real (1) / Real (240);
    const Real start_latitude = -90 + delta_2;
@@ -589,8 +588,8 @@ Blue_Marble::fill_raster (const Dstring& blue_marble_path,
 
    }
 
-   fclose (blue_marble_files[BLUE_MARBLE_EAST]);
-   fclose (blue_marble_files[BLUE_MARBLE_WEST]);
+   fclose (blue_marble_files[EAST]);
+   fclose (blue_marble_files[WEST]);
 
 }
 
@@ -606,12 +605,12 @@ Blue_Marble::~Blue_Marble ()
 {
 }
 
-Blue_Marble_Exception::Blue_Marble_Exception (const Dstring& description)
-   : Exception ("Blue_Marble_Exception", description)
+Blue_Marble::Exception::Exception (const Dstring& description)
+   : denise::Exception ("Blue_Marble::Exception", description)
 {
 }
 
-Gtopo30_Tile
+Gtopo30::Tile
 Gtopo30::get_tile (const Integer gtopo30_i,
                    const Integer gtopo30_j)
 {
@@ -630,12 +629,12 @@ Gtopo30::get_tile (const Integer gtopo30_i,
       tile_index = i / 7200;
    }
 
-   return Gtopo30_Tile (tile_index);
+   return Gtopo30::Tile (tile_index);
 
 }
 
 Dstring
-Gtopo30::get_tile_string (const Gtopo30_Tile tile)
+Gtopo30::get_tile_string (const Gtopo30::Tile tile)
 {
 
    Dstring tile_string;
@@ -675,7 +674,7 @@ Gtopo30::get_tile_string (const Gtopo30_Tile tile)
       case E060N90: tile_string += "E060N90"; break;
       case E100N90: tile_string += "E100N90"; break;
       case E140N90: tile_string += "E140N90"; break;
-      default: throw Gtopo30_Exception ("Invalid Tile");
+      default: throw Gtopo30::Exception ("Invalid Tile");
    }
 
    return tile_string;
@@ -683,7 +682,7 @@ Gtopo30::get_tile_string (const Gtopo30_Tile tile)
 }
 
 Size_2D
-Gtopo30::get_tile_size (const Gtopo30_Tile tile)
+Gtopo30::get_tile_size (const Gtopo30::Tile tile)
 {
 
    Size_2D size_2d;
@@ -702,7 +701,7 @@ Gtopo30::get_tile_size (const Gtopo30_Tile tile)
    }
    else
    {
-      throw Gtopo30_Exception ("Invalid Tile");
+      throw Gtopo30::Exception ("Invalid Tile");
    }
 
    return size_2d;
@@ -710,7 +709,7 @@ Gtopo30::get_tile_size (const Gtopo30_Tile tile)
 }
 
 Index_2D
-Gtopo30::get_tile_index (const Gtopo30_Tile tile)
+Gtopo30::get_tile_index (const Gtopo30::Tile tile)
 {
 
    Index_2D index_2d;
@@ -729,7 +728,7 @@ Gtopo30::get_tile_index (const Gtopo30_Tile tile)
    }
    else
    {
-      throw Gtopo30_Exception ("Invalid Tile");
+      throw Gtopo30::Exception ("Invalid Tile");
    }
 
    return index_2d;
@@ -737,7 +736,7 @@ Gtopo30::get_tile_index (const Gtopo30_Tile tile)
 }
 
 Domain_2D
-Gtopo30::get_tile_domain (const Gtopo30_Tile tile)
+Gtopo30::get_tile_domain (const Gtopo30::Tile tile)
 {
 
    Domain_1D domain_latitude = get_tile_domain_latitude (tile);
@@ -748,7 +747,7 @@ Gtopo30::get_tile_domain (const Gtopo30_Tile tile)
 }
 
 Domain_1D
-Gtopo30::get_tile_domain_latitude (const Gtopo30_Tile tile)
+Gtopo30::get_tile_domain_latitude (const Gtopo30::Tile tile)
 {
 
    Domain_1D domain_1d;
@@ -775,7 +774,7 @@ Gtopo30::get_tile_domain_latitude (const Gtopo30_Tile tile)
    }
    else
    {
-      throw Gtopo30_Exception ("Invalid Tile");
+      throw Gtopo30::Exception ("Invalid Tile");
    }
 
    return domain_1d;
@@ -783,7 +782,7 @@ Gtopo30::get_tile_domain_latitude (const Gtopo30_Tile tile)
 }
 
 Domain_1D
-Gtopo30::get_tile_domain_longitude (const Gtopo30_Tile tile)
+Gtopo30::get_tile_domain_longitude (const Gtopo30::Tile tile)
 {
 
    Domain_1D domain_1d;
@@ -806,18 +805,60 @@ Gtopo30::get_tile_domain_longitude (const Gtopo30_Tile tile)
    }
    else
    {
-      throw Gtopo30_Exception ("Invalid Tile");
+      throw Gtopo30::Exception ("Invalid Tile");
    }
 
    return domain_1d;
 
 }
 
+Real*
+Gtopo30::get_data (const Transform_2D& transform)
+{
+
+   file_array = new FILE*[33];
+   tile_size_array = new Size_2D[33];
+   tile_index_array = new Index_2D[33];
+
+   for (Integer tile = 0; tile < 33; tile++)
+   {  
+      file_array[tile] = NULL;
+   }   
+
+   Lat_Long lat_long;
+   Real& latitude = lat_long.latitude;
+   Real& longitude = lat_long.longitude;
+
+   Real* data = new Real[size_2d.i * size_2d.j];
+
+   for (Integer i = 0; i < size_2d.i; i++)
+   {
+
+      const Real x = Real (i);
+
+      for (Integer j = 0; j < size_2d.j; j++)
+      {
+         const Real y = Real (j);
+
+         transform.reverse (latitude, longitude, x, y);
+         const Real& datum = get_datum (lat_long);
+         data[i*size_2d.j + j] = datum;
+
+      }
+
+   }
+
+   return data;
+
+}
+
 void
 Gtopo30::fill_raster (const Real* data,
-                      const Color_Chooser& color_chooser,
                       const Real shade_constant)
 {
+
+   const Color& land = Color::hsb (0.5, 0.27, 0.3);
+   const Color& sea = Color::hsb (0.67, 0.67, 0.3);
 
    for (Integer i = 0; i < size_2d.i; i++)
    {
@@ -826,7 +867,8 @@ Gtopo30::fill_raster (const Real* data,
       {
 
          const Real datum = data[i * size_2d.j + j];
-         Color color = color_chooser.get_color (datum);
+         Color color = (datum > 0 ? land : sea);
+         //Color color = color_chooser.get_color (datum);
 
          if (gsl_finite (shade_constant))
          {
@@ -857,29 +899,9 @@ Gtopo30::fill_raster (const Real* data,
 
 }
 
-Gtopo30::Gtopo30 (const Dstring& gtopo30_path)
-   : Raster (Size_2D (0, 0)),
-     gtopo30_path (gtopo30_path),
-     delta (Real (1) / Real (120)),
-     start_latitude (-90 + delta/2),
-     start_longitude (-180 + delta/2)
-{
-
-   file_array = new FILE*[NUMBER_OF_GTOPO30_TILES];
-   tile_size_array = new Size_2D[NUMBER_OF_GTOPO30_TILES];
-   tile_index_array = new Index_2D[NUMBER_OF_GTOPO30_TILES];
-
-   for (Integer tile = 0; tile < NUMBER_OF_GTOPO30_TILES; tile++)
-   {  
-      file_array[tile] = NULL;
-   }   
-
-}
-
 Gtopo30::Gtopo30 (const Dstring& gtopo30_path,
                   const Transform_2D& transform_2d,
                   const Size_2D& size_2d,
-                  const Color_Chooser& color_chooser,
                   const Real shade_constant)
    : Raster (size_2d),
      gtopo30_path (gtopo30_path),
@@ -887,48 +909,15 @@ Gtopo30::Gtopo30 (const Dstring& gtopo30_path,
      start_latitude (-90 + delta/2),
      start_longitude (-180 + delta/2)
 {
-
-   file_array = new FILE*[NUMBER_OF_GTOPO30_TILES];
-   tile_size_array = new Size_2D[NUMBER_OF_GTOPO30_TILES];
-   tile_index_array = new Index_2D[NUMBER_OF_GTOPO30_TILES];
-
-   for (Integer tile = 0; tile < NUMBER_OF_GTOPO30_TILES; tile++)
-   {  
-      file_array[tile] = NULL;
-   }   
-
-   Lat_Long lat_long;
-   Real& latitude = lat_long.latitude;
-   Real& longitude = lat_long.longitude;
-
-   Real* data = new Real[size_2d.i * size_2d.j];
-
-   for (Integer i = 0; i < size_2d.i; i++)
-   {
-
-      const Real x = Real (i);
-
-      for (Integer j = 0; j < size_2d.j; j++)
-      {
-         const Real y = Real (j);
-
-         transform_2d.reverse (latitude, longitude, x, y);
-         const Real& datum = get_datum (lat_long);
-         data[i*size_2d.j + j] = datum;
-
-      }
-
-   }
-
-   fill_raster (data, color_chooser, shade_constant);
+   Real* data = get_data (transform_2d);
+   fill_raster (data, shade_constant);
    delete[] data;
-
 }
 
 Gtopo30::~Gtopo30 ()
 {
 
-   for (Integer tile = 0; tile < NUMBER_OF_GTOPO30_TILES; tile++)
+   for (Integer tile = 0; tile < 33; tile++)
    {
       FILE*& file = file_array[tile];
       if (file != NULL) { fclose (file); }
@@ -952,7 +941,7 @@ Gtopo30::get_datum (const Lat_Long& lat_long) const
    Integer gi = Integer (rint ((longitude - start_longitude) / delta));
    Integer gj = Integer (rint ((latitude - start_latitude) / delta));
 
-   Gtopo30_Tile tile = get_tile (gi, gj);
+   Gtopo30::Tile tile = get_tile (gi, gj);
    FILE*& file = file_array[tile];
    Size_2D& tile_size = tile_size_array[tile];
    Index_2D& tile_index = tile_index_array[tile];
@@ -983,8 +972,8 @@ Gtopo30::get_datum (const Lat_Long& lat_long) const
 
 }
 
-Gtopo30_Exception::Gtopo30_Exception (const Dstring& description)
-   : Exception ("Gtopo30_Exception", description)
+Gtopo30::Exception::Exception (const Dstring& description)
+   : denise::Exception ("Gtopo30::Exception", description)
 {
 }
 
