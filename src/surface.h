@@ -136,6 +136,11 @@ namespace andrea
                                const Real distance) const;
 
          void
+         surface_domain (const Dstring& surface_identifier,
+                         const Dstring& geodetic_transform_identifier,
+                         const Domain_2D& domain) const;
+
+         void
          surface_parse (const Tokens& tokens);
 
       public:

@@ -252,7 +252,7 @@ Andrea::loop ()
    for (bool done = false ; !done; )
    {
 
-      line = readline (prompt.get_string ().c_str ());
+      line = readline (prompt.c_str ());
       if (!line) { break; }
 
       Dstring input_line = Dstring (line).get_trimmed ();
@@ -276,7 +276,7 @@ Andrea::loop ()
             continue;
          }
 
-         const Tokens tokens (input_line);
+         const Tokens tokens (input_line, " \f\n\t");
          if (tokens.size () == 0) { continue; }
 
          parse (tokens);

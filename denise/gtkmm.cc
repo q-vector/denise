@@ -8556,7 +8556,7 @@ Map_Console::Map_Console (Gtk::Window& gtk_window,
         iterator != config_file_content.end (); iterator++)
    {
 
-      const Tokens tokens (*(iterator));
+      const Tokens tokens (*(iterator), " \f\n\t");
       if (tokens.size () != 3) { continue; }
       if (tokens[0] != "geodetic_transform") { continue; }
 
