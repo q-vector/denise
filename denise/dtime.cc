@@ -30,9 +30,9 @@ Dtime::init (const Dstring& time_string,
              bool is_local)
 {
 
-   if (time_string == L"big_bang") { this->t = GSL_NEGINF; return; }
-   if (time_string == L"big_crunch") { this->t = GSL_POSINF; return; }
-   if (time_string == L"nat") { this->t = GSL_NAN; return; }
+   if (time_string == "big_bang") { this->t = GSL_NEGINF; return; }
+   if (time_string == "big_crunch") { this->t = GSL_POSINF; return; }
+   if (time_string == "nat") { this->t = GSL_NAN; return; }
 
    Integer year  = stoi (time_string.substr (0, 4));
    Integer month = stoi (time_string.substr (4, 2));
@@ -64,9 +64,9 @@ Dtime::init (const Dstring& time_string,
              bool is_local)
 {
 
-   if (time_string == L"big_bang") { this->t = GSL_NEGINF; return; }
-   if (time_string == L"big_crunch") { this->t = GSL_POSINF; return; }
-   if (time_string == L"nat") { this->t = GSL_NAN; return; }
+   if (time_string == "big_bang") { this->t = GSL_NEGINF; return; }
+   if (time_string == "big_crunch") { this->t = GSL_POSINF; return; }
+   if (time_string == "nat") { this->t = GSL_NAN; return; }
 
    struct tm tm_struct;
    tm_struct.tm_min = 0; tm_struct.tm_sec = 0; tm_struct.tm_sec = 0;
@@ -295,13 +295,13 @@ Dtime::get_string (const Dstring& format,
 
    if (gsl_isnan (t))
    {
-      return Dstring (L"nat");
+      return Dstring ("nat");
    }
    else
    if ((inf = gsl_isinf (t)) != 0)
    {
       const bool future = (inf > 0);
-      return Dstring (future ? L"big_crunch" : L"big_bang");
+      return Dstring (future ? "big_crunch" : "big_bang");
    }
    else
    {
@@ -324,55 +324,55 @@ Dtime::get_string (const Dstring& format,
 Integer
 Dtime::get_year () const
 {
-   return stoi (get_string (L"%Y"));
+   return stoi (get_string ("%Y"));
 }
 
 Integer
 Dtime::get_month () const
 {
-   return stoi (get_string (L"%m"));
+   return stoi (get_string ("%m"));
 }
 
 Integer
 Dtime::get_day () const
 {
-   return stoi (get_string (L"%d"));
+   return stoi (get_string ("%d"));
 }
 
 Integer 
 Dtime::get_hour () const
 {
-   return stoi (get_string (L"%H"));
+   return stoi (get_string ("%H"));
 }
          
 Integer
 Dtime::get_minute () const
 {
-   return stoi (get_string (L"%M"));
+   return stoi (get_string ("%M"));
 }
          
 Integer
 Dtime::get_second () const
 {
-   return stoi (get_string (L"%S"));
+   return stoi (get_string ("%S"));
 }
          
 Integer
 Dtime::get_day_of_year () const
 {
-   return stoi (get_string (L"%j"));
+   return stoi (get_string ("%j"));
 }
 
 Dtime
 Dtime::get_start_of_year () const
 {
-   return Dtime (get_string (L"%Y") + L"010100");
+   return Dtime (get_string ("%Y") + "010100");
 }
 
 Dtime
 Dtime::get_start_of_month () const
 {
-   return Dtime (get_string (L"%Y%m") + L"0100");
+   return Dtime (get_string ("%Y%m") + "0100");
 }
 
 bool
@@ -548,7 +548,7 @@ Dtime::Span::Span (const Dstring& str)
    : start_t (GSL_NEGINF),
      end_t (GSL_POSINF)
 {
-   const Tokens tokens (str, L"-");
+   const Tokens tokens (str, "-");
    if (tokens.size () == 1)
    {
       const Real t = Dtime (tokens[0]).t;
@@ -632,7 +632,7 @@ Dtime::Set::match (const Dtime& dtime) const
 Dtime::Set::Set (const Dstring& str)
 {
 
-   const Tokens tokens (str, L":");
+   const Tokens tokens (str, ":");
 
    for (auto iterator = tokens.begin (); iterator != tokens.end (); iterator++)
    {
@@ -651,16 +651,16 @@ Dtime::Set::Set (const Dtime& start,
 namespace denise
 {
 
-   wostream&
-   operator << (wostream &out,
+   ostream&
+   operator << (ostream &out,
                 const Dtime& time)
    {
       out << time.get_string ();
       return out;
    }
 
-   wostream&
-   operator << (wostream &out,
+   ostream&
+   operator << (ostream &out,
                 const Dtime::Span& span)
    {
       const Dtime& start = span.get_start ();
@@ -670,8 +670,8 @@ namespace denise
       return out;
    }
 
-   wostream&
-   operator << (wostream &out,
+   ostream&
+   operator << (ostream &out,
                 const Dtime::Set& set)
    {
       for (auto iterator = set.begin (); iterator != set.end (); iterator++)

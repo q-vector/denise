@@ -157,7 +157,7 @@ namespace denise
       FILE* file = NULL;
 
            if (file_path.empty ()) { file = NULL; }
-      else if (file_path == L"-") { file = stdout; }
+      else if (file_path == "-") { file = stdout; }
       else
       {
          file = fopen (file_path.get_string ().c_str (), mode);
@@ -189,7 +189,7 @@ namespace denise
          {
             if (prepend_dir_path)
             {
-               dir_listing.push_back (dir_path + L"/" + file_name);
+               dir_listing.push_back (dir_path + "/" + file_name);
             }
             else
             {
@@ -214,9 +214,9 @@ namespace denise
       char* input_line = new char[max_length];
       char* ss = fgets (input_line, max_length, file);
 
-      if (ss == 0) { throw IO_Exception (L"fgets error or eof"); }
+      if (ss == 0) { throw IO_Exception ("fgets error or eof"); }
       Dstring str (input_line);
-      if (chop) { denise::chop (str); }
+      if (chop) { str.chop (); }
 
       delete[] input_line;
       return str;
@@ -233,13 +233,13 @@ namespace denise
       if (file == NULL)
       {
 
-         const Dstring& file_path_gz = file_path + L".gz";
+         const Dstring& file_path_gz = file_path + ".gz";
          file = gzopen (file_path_gz.get_string ().c_str (), "rb");
 
          if (file == NULL)
          {
 
-            const Dstring& file_path_Z = file_path + L".Z";
+            const Dstring& file_path_Z = file_path + ".Z";
             file = gzopen (file_path_Z.get_string ().c_str (), "rb");
 
             if (file == NULL)
@@ -393,7 +393,7 @@ Assignable::apply_variables (Dstring& line) const
    for (auto iterator = assign_dictionary.begin ();
         iterator != assign_dictionary.end (); iterator++)
    {
-      const Dstring variable (L"$" + iterator->first);
+      const Dstring variable ("$" + iterator->first);
       while ((found = line.find (variable)) != string::npos)
       {
          const size_t var_length = variable.length ();
@@ -401,7 +401,7 @@ Assignable::apply_variables (Dstring& line) const
       }
    }
 
-   return (line.find (L"$") != Dstring::npos);
+   return (line.find ("$") != Dstring::npos);
 
 }
 
@@ -433,11 +433,11 @@ Config_File::ingest (const Dstring& file_path)
       if (is.c_str ()[0] == '#') { continue; }
 
       const Dstring input_string (is);
-      const Tokens variable_tokens (input_string, L"=");
+      const Tokens variable_tokens (input_string, "=");
       if (variable_tokens.size () == 2)
       {
-         const Dstring& variable = get_trimmed (variable_tokens[0]);
-         const Dstring& value = get_trimmed (variable_tokens[1]);
+         const Dstring& variable = variable_tokens[0].get_trimmed ();
+         const Dstring& value = variable_tokens[1].get_trimmed ();
          assign_dictionary.insert (make_pair (variable, value));
          continue;
       }

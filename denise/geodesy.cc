@@ -285,31 +285,31 @@ Geodesy::Geodesy (const Dstring& str)
    Geodesy::Model model = SPHERE;
    const Dstring& s = str.get_upper_case ();
 
-        if (s == L"AIRY_1930")             { model = AIRY_1930; }
-   else if (s == L"MODIFIED_AIRY")         { model = MODIFIED_AIRY; }
-   else if (s == L"AUSTRALIAN_NATIONAL")   { model = AUSTRALIAN_NATIONAL; }
-   else if (s == L"BESSEL_1841")           { model = BESSEL_1841; }
-   else if (s == L"BESSEL_NAMIBIA_1841")   { model = BESSEL_NAMIBIA_1841; }
-   else if (s == L"CLARKE_1866")           { model = CLARKE_1866; }
-   else if (s == L"CLARKE_1880")           { model = CLARKE_1880; }
-   else if (s == L"EVEREST_INDIA_1830")    { model = EVEREST_INDIA_1830; }
-   else if (s == L"EVEREST_INDIA_1956")    { model = EVEREST_INDIA_1956; }
-   else if (s == L"EVEREST_SABAH")         { model = EVEREST_SABAH; }
-   else if (s == L"EVEREST_MALAYSIA_1948") { model = EVEREST_MALAYSIA_1948; }
-   else if (s == L"EVEREST_MALAYSIA_1969") { model = EVEREST_MALAYSIA_1969; }
-   else if (s == L"MODIFIED_FISCHER_1960") { model = MODIFIED_FISCHER_1960; }
-   else if (s == L"GRS_1967")              { model = GRS_1967; }
-   else if (s == L"GRS_1980")              { model = GRS_1980; }
-   else if (s == L"HELMERT_1906")          { model = HELMERT_1906; }
-   else if (s == L"HOUGH_1960")            { model = HOUGH_1960; }
-   else if (s == L"INDONESIAN_1974")       { model = INDONESIAN_1974; }
-   else if (s == L"INTERNATIONAL_1924")    { model = INTERNATIONAL_1924; }
-   else if (s == L"KRASSOVSKY_1940")       { model = KRASSOVSKY_1940; }
-   else if (s == L"SOUTH_AMERICAN_1969")   { model = SOUTH_AMERICAN_1969; }
-   else if (s == L"WGS60")                 { model = WGS60; }
-   else if (s == L"WGS66")                 { model = WGS66; }
-   else if (s == L"WGS72")                 { model = WGS72; }
-   else if (s == L"WGS84")                 { model = WGS84; }
+        if (s == "AIRY_1930")             { model = AIRY_1930; }
+   else if (s == "MODIFIED_AIRY")         { model = MODIFIED_AIRY; }
+   else if (s == "AUSTRALIAN_NATIONA")   { model = AUSTRALIAN_NATIONAL; }
+   else if (s == "BESSEL_1841")           { model = BESSEL_1841; }
+   else if (s == "BESSEL_NAMIBIA_1841")   { model = BESSEL_NAMIBIA_1841; }
+   else if (s == "CLARKE_1866")           { model = CLARKE_1866; }
+   else if (s == "CLARKE_1880")           { model = CLARKE_1880; }
+   else if (s == "EVEREST_INDIA_1830")    { model = EVEREST_INDIA_1830; }
+   else if (s == "EVEREST_INDIA_1956")    { model = EVEREST_INDIA_1956; }
+   else if (s == "EVEREST_SABAH")         { model = EVEREST_SABAH; }
+   else if (s == "EVEREST_MALAYSIA_1948") { model = EVEREST_MALAYSIA_1948; }
+   else if (s == "EVEREST_MALAYSIA_1969") { model = EVEREST_MALAYSIA_1969; }
+   else if (s == "MODIFIED_FISCHER_1960") { model = MODIFIED_FISCHER_1960; }
+   else if (s == "GRS_1967")              { model = GRS_1967; }
+   else if (s == "GRS_1980")              { model = GRS_1980; }
+   else if (s == "HELMERT_1906")          { model = HELMERT_1906; }
+   else if (s == "HOUGH_1960")            { model = HOUGH_1960; }
+   else if (s == "INDONESIAN_1974")       { model = INDONESIAN_1974; }
+   else if (s == "INTERNATIONAL_1924")    { model = INTERNATIONAL_1924; }
+   else if (s == "KRASSOVSKY_1940")       { model = KRASSOVSKY_1940; }
+   else if (s == "SOUTH_AMERICAN_1969")   { model = SOUTH_AMERICAN_1969; }
+   else if (s == "WGS60")                 { model = WGS60; }
+   else if (s == "WGS66")                 { model = WGS66; }
+   else if (s == "WGS72")                 { model = WGS72; }
+   else if (s == "WGS84")                 { model = WGS84; }
 
    set (model, epsilon_v);
 
@@ -537,10 +537,10 @@ Lat_Long::Lat_Long (const Real latitude,
 Lat_Long::Lat_Long (const Dstring& lat_long_string)
 {
 
-   const Reg_Exp south (L"[Ss]$");
-   const Reg_Exp west (L"[Ww]$");
+   const Reg_Exp south ("[Ss]$");
+   const Reg_Exp west ("[Ww]$");
 
-   const Tokens tokens (lat_long_string, L",");
+   const Tokens tokens (lat_long_string, ",");
    const Dstring& latitude_string = tokens[0];
    const Dstring& longitude_string = tokens[1];
 
@@ -556,8 +556,8 @@ Lat_Long::Lat_Long (const Dstring& latitude_string,
                     const Dstring& longitude_string)
 {
 
-   const Reg_Exp south (L"[Ss]$");
-   const Reg_Exp west (L"[Ww]$");
+   const Reg_Exp south ("[Ss]$");
+   const Reg_Exp west ("[Ww]$");
 
    this->latitude = stof (latitude_string);
    this->longitude = stof (longitude_string);
@@ -638,10 +638,10 @@ Lat_Long::get_string (const Integer decimal_places,
                       const bool with_parenthesis) const
 {
    const Integer dp = decimal_places;
-   const Dstring prefix (nsew ? L"" : L"-");
-   const Dstring suffix (with_symbol ? L"\u00b0" : L"");
+   const Dstring prefix (nsew ? "" : "-");
+   const Dstring suffix (with_symbol ? "\u00b0" : "");
    const Dstring& number_format =
-      prefix + string_render ("%%.%df", dp) + suffix;
+      prefix + Dstring::render ("%%.%df", dp) + suffix;
    return get_string (with_parenthesis, number_format);
 }
 
@@ -650,36 +650,36 @@ Lat_Long::get_string (const bool with_parenthesis,
                       const Dstring& number_format) const
 {
 
-   if (is_nall ()) { return L""; }
+   if (is_nall ()) { return ""; }
 
    Lat_Long ll = *(this);
    ll.standardize (LAT_LONG_STANDARD);
    const Real latitude = ll.latitude;
    const Real longitude = ll.longitude;
-   const bool nsew = (number_format.substr (0, 1) != L"-");
+   const bool nsew = (number_format.substr (0, 1) != "-");
    const string fmt (number_format.begin (), number_format.end ());
 
    const Dstring& latitude_string = nsew ?
       ((latitude >= 0) ?
-         string_render ((fmt + "N").c_str (), latitude) :
-         string_render ((fmt + "S").c_str (), -latitude)) :
-      string_render ((fmt.substr (1)).c_str (), latitude);
+         Dstring::render ((fmt + "N").c_str (), latitude) :
+         Dstring::render ((fmt + "S").c_str (), -latitude)) :
+      Dstring::render ((fmt.substr (1)).c_str (), latitude);
 
    const Dstring& longitude_string = nsew ?
       ((longitude >= 0) ?
-         string_render ((fmt + "E").c_str (), longitude) :
-         string_render ((fmt + "W").c_str (), -longitude)) :
-      string_render ((fmt.substr (1)).c_str (), longitude);
+         Dstring::render ((fmt + "E").c_str (), longitude) :
+         Dstring::render ((fmt + "W").c_str (), -longitude)) :
+      Dstring::render ((fmt.substr (1)).c_str (), longitude);
 
    if (with_parenthesis)
    {
-      return L"(" + latitude_string + L", " + longitude_string + L")";
+      return "(" + latitude_string + ", " + longitude_string + ")";
    }
    else
    {
       return nsew ?
          latitude_string + longitude_string :
-         latitude_string + L"," + longitude_string;
+         latitude_string + "," + longitude_string;
    }
 
 }
@@ -938,7 +938,7 @@ Journey::Simple::complete (const Geodesy& geodesy)
       return;
    }
 
-   throw Exception (L"Insufficient info to complete simple journey.");
+   throw Exception ("Insufficient info to complete simple journey.");
 
 }
 
@@ -980,25 +980,25 @@ Journey::Simple::get_cardinal_direction (const Real azimuth)
 
    switch (a)
    {
-      case 0: return L"N";
-      case 1: return L"NNE";
-      case 2: return L"NE";
-      case 3: return L"ENE";
-      case 4: return L"E";
-      case 5: return L"ESE";
-      case 6: return L"SE";
-      case 7: return L"SSE";
-      case 8: return L"S";
-      case 9: return L"SSW";
-      case 10: return L"SW";
-      case 11: return L"WSW";
-      case 12: return L"W";
-      case 13: return L"WNW";
-      case 14: return L"NW";
-      case 15: return L"NNW";
+      case 0: return "N";
+      case 1: return "NNE";
+      case 2: return "NE";
+      case 3: return "ENE";
+      case 4: return "E";
+      case 5: return "ESE";
+      case 6: return "SE";
+      case 7: return "SSE";
+      case 8: return "S";
+      case 9: return "SSW";
+      case 10: return "SW";
+      case 11: return "WSW";
+      case 12: return "W";
+      case 13: return "WNW";
+      case 14: return "NW";
+      case 15: return "NNW";
    }
 
-   return L"";
+   return "";
 
 }
 
@@ -1179,7 +1179,7 @@ Journey::Journey (const Journey& journey)
 Journey::Journey (const Dstring& str)
 {
 
-   const Tokens tokens (str, L"@");
+   const Tokens tokens (str, "@");
 
    for (auto iterator = tokens.begin ();
         iterator != tokens.end (); iterator++)
@@ -1319,12 +1319,12 @@ Journey::get_simple_journey (const Real x,
                              const Geodesy& geodesy) const
 {
 
-   if (x < 0) { throw Exception (L"Before Lat Point"); }
+   if (x < 0) { throw Exception ("Before Lat Point"); }
    Real distance = 0;
 
    for (Journey::const_iterator i = begin (); i != end (); i++)
    {
-      if (!closed && is_last (i)) { throw Exception (L"Beyond Lat Point"); }
+      if (!closed && is_last (i)) { throw Exception ("Beyond Lat Point"); }
       Journey::Simple simple_journey = get_simple_journey (i);
       simple_journey.complete (geodesy);
       distance += simple_journey.get_distance ();
@@ -1339,7 +1339,7 @@ Journey::get_simple_journey (Journey::iterator iterator) const
    if (is_last (iterator))
    {
       if (closed) { return Journey::Simple (*(iterator), *(begin ())); }
-      else { throw Exception (L"Last Node in Journey"); }
+      else { throw Exception ("Last Node in Journey"); }
    }
    else
    {
@@ -1354,7 +1354,7 @@ Journey::get_simple_journey (Journey::const_iterator iterator) const
    if (is_last (iterator))
    {
       if (closed) { return Journey::Simple (*(iterator), *(begin ())); }
-      else { throw Exception (L"Last Node in Journey"); }
+      else { throw Exception ("Last Node in Journey"); }
    }
    else
    {
@@ -1470,7 +1470,7 @@ Journey::get_azimuth_forward (Journey::const_iterator iterator,
                               const Geodesy& geodesy) const
 {
 
-   if (size () < 2) { throw Exception (L"Journey less than 2 nodes"); }
+   if (size () < 2) { throw Exception ("Journey less than 2 nodes"); }
 
    if (is_last (iterator))
    {
@@ -1502,7 +1502,7 @@ Journey::get_azimuth_forward (Journey::iterator iterator,
                               const Geodesy& geodesy) const
 {
 
-   if (size () < 2) { throw Exception (L"Journey not long enough"); }
+   if (size () < 2) { throw Exception ("Journey not long enough"); }
 
    if (is_last (iterator))
    {
@@ -1577,7 +1577,7 @@ Journey::cairo (const RefPtr<Context> cr,
    {
       const Point_2D& p = *(iterator);
       const Integer d = std::distance (simple_polyline.begin (), iterator);
-      const Dstring& str = string_render ("%d", d);
+      const Dstring& str = Dstring::render ("%d", d);
       Label (str, p, 'c', 'c').cairo (cr);
    }
 
@@ -1591,7 +1591,7 @@ Journey::cairo (const RefPtr<Context> cr,
       const Point_2D& point = transform.transform (lat_long);
 
       cr->save ();
-      Dashes (L"1:2").cairo (cr);
+      Dashes ("1:2").cairo (cr);
       cr->set_line_width (1);
       Ring (node_size / 2).cairo (cr, point);
       fg_color.cairo (cr);
@@ -1619,7 +1619,7 @@ Journey::cairo (const RefPtr<Context> cr,
       ll.standardize (LAT_LONG_PACIFIC);
 
       const Point_2D& p = transform.transform (ll);
-      const Dstring& str = string_render ("%.0fkm", distance / 1e3);
+      const Dstring& str = Dstring::render ("%.0fkm", distance / 1e3);
 
       Label label (str, p, 'c', 'b', 12);
       label.set_text_angle (theta);
@@ -1829,7 +1829,7 @@ Journey_List::get_lat_long_list_ptr (const Real approx_d,
 }
 */
 
-pair<string, Lat_Long>
+pair<Dstring, Lat_Long>
 Geodetic_Attractor::nearest (const Lat_Long& lat_long) const
 {
    return make_pair ("", lat_long);
@@ -1852,7 +1852,7 @@ Degree_Geodetic_Attractor::get_n ()
    return n;
 }
 
-pair<string, Lat_Long>
+pair<Dstring, Lat_Long>
 Degree_Geodetic_Attractor::nearest (const Lat_Long& lat_long) const
 {
    const Real latitude = round (lat_long.latitude * n) / n;
@@ -1965,40 +1965,40 @@ Geodetic_Transform::Data::Data (const Genre genre,
 Geodetic_Transform::Data::Data (const Dstring& str)
 {
 
-   const Tokens tokens (str, L":");
+   const Tokens tokens (str, ":");
    const Dstring& g = tokens[0].get_upper_case ();
 
-   if (g == L"MERCATOR")
+   if (g == "MERCATOR")
    {
       genre = MERCATOR;
    }
    else
-   if (g == L"LAMBERT_CONIC_NORTH")
+   if (g == "LAMBERT_CONIC_NORTH")
    {
       genre = LAMBERT_CONIC_NORTH;
    }
    else
-   if (g == L"LAMBERT_CONIC_SOUTH")
+   if (g == "LAMBERT_CONIC_SOUTH")
    {
       genre = LAMBERT_CONIC_SOUTH;
    }
    else
-   if (g == L"POLAR_STEREOGRAPHIC_NORTH")
+   if (g == "POLAR_STEREOGRAPHIC_NORTH")
    {
       genre = POLAR_STEREOGRAPHIC_NORTH;
    }
    else
-   if (g == L"POLAR_STEREOGRAPHIC_SOUTH")
+   if (g == "POLAR_STEREOGRAPHIC_SOUTH")
    {
       genre = POLAR_STEREOGRAPHIC_SOUTH;
    }
    else
-   if (g == L"GEOS")
+   if (g == "GEOS")
    {
       genre = GEOS;
    }
    else
-   if (g == L"MOLLWEIDE")
+   if (g == "MOLLWEIDE")
    {
       genre = MOLLWEIDE;
    }
@@ -2034,18 +2034,18 @@ Geodetic_Transform::Data::get_string () const
 
    switch (genre)
    {
-      case MERCATOR:                  str = L"MERCATOR"; break;
-      case LAMBERT_CONIC_NORTH:       str = L"LAMBERT_CONIC_NORTH"; break;
-      case LAMBERT_CONIC_SOUTH:       str = L"LAMBERT_CONIC_SOUTH"; break;
-      case POLAR_STEREOGRAPHIC_NORTH: str = L"POLAR_STEREOGRAPHIC_NORTH"; break;
-      case POLAR_STEREOGRAPHIC_SOUTH: str = L"POLAR_STEREOGRAPHIC_SOUTH"; break;
-      case GEOS:                      str = L"GOES"; break;
-      case MOLLWEIDE:                 str = L"MOLLWEIDE"; break;
+      case MERCATOR:                  str = "MERCATOR"; break;
+      case LAMBERT_CONIC_NORTH:       str = "LAMBERT_CONIC_NORTH"; break;
+      case LAMBERT_CONIC_SOUTH:       str = "LAMBERT_CONIC_SOUTH"; break;
+      case POLAR_STEREOGRAPHIC_NORTH: str = "POLAR_STEREOGRAPHIC_NORTH"; break;
+      case POLAR_STEREOGRAPHIC_SOUTH: str = "POLAR_STEREOGRAPHIC_SOUTH"; break;
+      case GEOS:                      str = "GOES"; break;
+      case MOLLWEIDE:                 str = "MOLLWEIDE"; break;
    }
 
    const Real latitude = lat_long.latitude;
    const Real longitude = lat_long.longitude;
-   str += string_render (":%.0f:%.2f:%.2f", scale, latitude, longitude);
+   str += Dstring::render (":%.0f:%.2f:%.2f", scale, latitude, longitude);
    return str;
 
 }
@@ -2070,14 +2070,14 @@ Geodetic_Transform::Geodetic_Transform (const Geodetic_Transform& gt)
 bool
 Geodetic_Transform::is_geodetic (const Dstring& str)
 {
-   const Tokens tokens (str, L":");
-   return ((tokens[0] == L"MERCATOR") ||
-           (tokens[0] == L"LAMBERT_CONIC_NORTH") ||
-           (tokens[0] == L"LAMBERT_CONIC_SOUTH") ||
-           (tokens[0] == L"POLAR_STEREOGRAPHIC_NORTH") ||
-           (tokens[0] == L"POLAR_STEREOGRAPHIC_SOUTH") ||
-           (tokens[0] == L"GEOS") ||
-           (tokens[0] == L"MOLLWEIDE"));
+   const Tokens tokens (str, ":");
+   return ((tokens[0] == "MERCATOR") ||
+           (tokens[0] == "LAMBERT_CONIC_NORTH") ||
+           (tokens[0] == "LAMBERT_CONIC_SOUTH") ||
+           (tokens[0] == "POLAR_STEREOGRAPHIC_NORTH") ||
+           (tokens[0] == "POLAR_STEREOGRAPHIC_SOUTH") ||
+           (tokens[0] == "GEOS") ||
+           (tokens[0] == "MOLLWEIDE"));
 }
 
 Geodetic_Transform*
@@ -2737,7 +2737,7 @@ Perspective_Transform::~Perspective_Transform ()
 Geodetic_Transform*
 Perspective_Transform::clone () const
 {
-   throw Exception (L"Perspective_Transform::clone () not implemented");
+   throw Exception ("Perspective_Transform::clone () not implemented");
    return new Perspective_Transform (*this);
 }
 
@@ -2897,7 +2897,7 @@ Geos_Transform::Geos_Transform (const Real nadir_longitude,
 Geodetic_Transform*
 Geos_Transform::clone () const
 {
-   throw Exception (L"Geos_Transform::clone () not implemented");
+   throw Exception ("Geos_Transform::clone () not implemented");
    return new Geos_Transform (*this);
 }
 
@@ -2979,7 +2979,7 @@ Mollweide_Transform::Mollweide_Transform (const Real scale,
 Geodetic_Transform*
 Mollweide_Transform::clone () const
 {
-   throw Exception (L"Mollweide_Transform::clone () not implemented");
+   throw Exception ("Mollweide_Transform::clone () not implemented");
    return new Mollweide_Transform (*this);
 }
 
@@ -4017,16 +4017,16 @@ Geodetic_Mesh::cairo (const RefPtr<Context> cr,
    const Integer index = size () - 1;
 
    Mesh_2D::render (cr, transform);
-   render_label_lat_long (cr, transform, index, anchor_lat_long_a, L"%.0f");
-   render_label_lat_long (cr, transform, index, anchor_lat_long_b, L"%.0f");
+   render_label_lat_long (cr, transform, index, anchor_lat_long_a, "%.0f");
+   render_label_lat_long (cr, transform, index, anchor_lat_long_b, "%.0f");
 
 }
 
 namespace denise
 {
 
-   wostream&
-   operator << (wostream &out,
+   ostream&
+   operator << (ostream &out,
                 const Lat_Long& lat_long)
    {
       out << lat_long.get_string ();

@@ -41,8 +41,8 @@ Location::Location (const Dstring& str,
    lat_long.longitude = stof (tokens[longitude_index]);
    height = GSL_NAN;
 
-   trim (id);
-   trim (name);
+   id.trim ();
+   name.trim ();
 
 }
 
@@ -63,8 +63,8 @@ Location::Location (const Dstring& str,
    lat_long.longitude = stof (tokens[longitude_index]);
    height = stof (tokens[height_index]);
 
-   trim (id);
-   trim (name);
+   id.trim ();
+   name.trim ();
 
 }
 
@@ -192,7 +192,7 @@ Metar_Wind::Metar_Wind ()
 Metar_Wind::Metar_Wind (const Dstring& metar_wind_string)
 {
 
-   if (metar_wind_string.substr (0, 3) == L"///")
+   if (metar_wind_string.substr (0, 3) == "///")
    {
       this->u = GSL_NAN;
       this->v = GSL_NAN;
@@ -212,7 +212,7 @@ Metar_Wind::Metar_Wind (const Dstring& metar_wind_string)
    Real speed = stof (str.substr (3, 2));
    Real gust = (no_gust ? GSL_NAN : stof (str.substr (6, 2)));
 
-   if (unit_str == L"KT")
+   if (unit_str == "KT")
    {
       const Real kt_to_ms = 1.852 / 3.6;
       speed *= kt_to_ms;
@@ -221,7 +221,7 @@ Metar_Wind::Metar_Wind (const Dstring& metar_wind_string)
 
    set_from_direction_speed (direction, speed);
    this->gust = gust;
-   this->variable_direction = (str.substr (0, 3) == L"000");
+   this->variable_direction = (str.substr (0, 3) == "000");
 
 }
 
@@ -272,7 +272,7 @@ void
 Metar::read_t_td (const Dstring& token)
 {
 
-   if (token == L"/////////")
+   if (token == "/////////")
    {
       this->temperature = GSL_NAN;
       this->dew_point = GSL_NAN;
@@ -283,12 +283,12 @@ Metar::read_t_td (const Dstring& token)
    const Dstring& t_str = token.substr (0, slash);
    const Dstring& td_str = token.substr (slash + 1);
 
-   if (t_str.substr (0, 2) == L"//")
+   if (t_str.substr (0, 2) == "//")
    {
       this->temperature = GSL_NAN;
    }
    else
-   if (t_str.substr (0, 2) == L"MS")
+   if (t_str.substr (0, 2) == "MS")
    {
       this->temperature = -1 * stof (t_str.substr (2));
    }
@@ -302,12 +302,12 @@ Metar::read_t_td (const Dstring& token)
       this->temperature = GSL_NAN;
    }
 
-   if (td_str.substr (0, 2) == L"//")
+   if (td_str.substr (0, 2) == "//")
    {
       this->dew_point = GSL_NAN;
    }
    else
-   if (td_str.substr (0, 2) == L"MS")
+   if (td_str.substr (0, 2) == "MS")
    {
       this->dew_point = -1 * stof (td_str.substr (2));
    }
@@ -327,7 +327,7 @@ void
 Metar::read_qnh (const Dstring& token)
 {
 
-   if (token.substr (0, 4) == L"////")
+   if (token.substr (0, 4) == "////")
    {
       this->qnh = GSL_NAN;
       return;
@@ -373,19 +373,19 @@ Metar::Metar (const Dstring& metar_string)
      visibility_auto (GSL_NAN)
 {
 
-   const Dstring wx_str_a (L"MI|DR|BL|SH|TS|FZ|DZ|RA|SN|SG|IC|PL|GR");
-   const Dstring wx_str_b (L"|GS|BR|FG|FU|VA|DI|SA|HZ|PO|SQ|FC|SS|DS");
+   const Dstring wx_str_a ("MI|DR|BL|SH|TS|FZ|DZ|RA|SN|SG|IC|PL|GR");
+   const Dstring wx_str_b ("|GS|BR|FG|FU|VA|DI|SA|HZ|PO|SQ|FC|SS|DS");
    const Dstring wx_str = wx_str_a + wx_str_b;
 
    const Reg_Exp wx_regexp (wx_str);
-   const Reg_Exp colon_regexp (L":");
-   const Reg_Exp cloud_regexp (L"[0-9][A-Z].[0-9]..");
+   const Reg_Exp colon_regexp (":");
+   const Reg_Exp cloud_regexp ("[0-9][A-Z].[0-9]..");
 
    const Tokens tokens (metar_string);
    const Integer n = tokens.size ();
-   const Dstring date_format (L"%Y%m%d%H%M");
+   const Dstring date_format ("%Y%m%d%H%M");
 
-   this->speci = (tokens[0] == L"SPECIAWS");
+   this->speci = (tokens[0] == "SPECIAWS");
    this->key = Metar::Key (Dtime (tokens[2], date_format), tokens[1]);
 
    if (n < 4) { return; }
@@ -393,8 +393,8 @@ Metar::Metar (const Dstring& metar_string)
 
    // CAVOK or NOVIS
    if (n < 5) { return; }
-   bool cavok = (tokens[4] == L"CAVOK");
-   bool no_vis = (tokens[4] == L"////");
+   bool cavok = (tokens[4] == "CAVOK");
+   bool no_vis = (tokens[4] == "////");
 
    if (!cavok && !no_vis)
    {
@@ -413,13 +413,13 @@ Metar::Metar (const Dstring& metar_string)
 
       while (wx_regexp.match (tokens[i]))
       {
-         weather += tokens[i] + L" ";
+         weather += tokens[i] + " ";
          i++;
       }
 
       while (cloud_regexp.match (tokens[i]))
       {
-         cloud += tokens[i] + L" ";
+         cloud += tokens[i] + " ";
          i++;
       }
 
@@ -441,7 +441,7 @@ Metar::Metar (const Dstring& metar_string)
       if (i >= n) { return; }
 
       // Rainfall
-      if (tokens[i].substr (0, 2) == L"RF")
+      if (tokens[i].substr (0, 2) == "RF")
       {
          read_rainfall (tokens[i]);
          continue;
@@ -449,12 +449,12 @@ Metar::Metar (const Dstring& metar_string)
 
 /*
       // cloud_auto group
-      bool first_cloud_auto = (tokens[i].substr (0, 3) == L"CLD");
+      bool first_cloud_auto = (tokens[i].substr (0, 3) == "CLD");
       if (first_cloud_auto)
       {
          while ((i < n) && (first_cloud_auto || !colon_regexp.match (tokens[i])))
          {
-            cloud_auto += tokens[i] + L" ";
+            cloud_auto += tokens[i] + " ";
             i++;
             first_cloud_auto = false;
          }
@@ -463,7 +463,7 @@ Metar::Metar (const Dstring& metar_string)
 
       // visibility_auto group
       const Dstring& vis_auto_str = tokens[i];
-      if (vis_auto_str.substr (0, 3) == L"VIS")
+      if (vis_auto_str.substr (0, 3) == "VIS")
       {
          visibility_auto = stof (vis_auto_str.substr (4, 4));
          continue;
@@ -493,16 +493,16 @@ Metar::get_string () const
    const Real wind_speed = metar_wind.get_speed ();
    const Real wind_gust = metar_wind.get_gust ();
 
-   const Dstring& time_str = dtime.get_string (L"%d%H%M");
-   const Dstring& ttd_str = string_render ("%04.1f/%04.1f", t, td);
-   const Dstring& qnh_str = string_render ("Q%06.1f", qnh);
-   const Dstring& vis_str = (gsl_isnan (vis) ? L"////" : string_render ("%04.0f", vis));
-   const Dstring& wind_str = string_render ("%03.0f%02.0f/%02.0fKT",
+   const Dstring& time_str = dtime.get_string ("%d%H%M");
+   const Dstring& ttd_str = Dstring::render ("%04.1f/%04.1f", t, td);
+   const Dstring& qnh_str = Dstring::render ("Q%06.1f", qnh);
+   const Dstring& vis_str = (gsl_isnan (vis) ? "////" : Dstring::render ("%04.0f", vis));
+   const Dstring& wind_str = Dstring::render ("%03.0f%02.0f/%02.0fKT",
       wind_dir, wind_speed / 0.514444, wind_gust / 0.514444);
-   const Dstring& rf9am_str = string_render ("RF%.1f", rain_since_9am);
+   const Dstring& rf9am_str = Dstring::render ("RF%.1f", rain_since_9am);
 
-   return (station_name + L" " + time_str + L" " + wind_str + L" "
-      + vis_str + L" " + ttd_str + L" " + qnh_str + L" " + rf9am_str);
+   return (station_name + " " + time_str + " " + wind_str + " "
+      + vis_str + " " + ttd_str + " " + qnh_str + " " + rf9am_str);
 
 }
 
@@ -691,15 +691,15 @@ Metars::setup (const Dstring& dir_path,
 Dstring
 Metars::get_status () const
 {
-   if (time_set.size () == 0) { return L"Unloaded"; }
+   if (time_set.size () == 0) { return "Unloaded"; }
    set<Dtime>::const_reverse_iterator i = time_set.rbegin ();
-   return i->get_string (L"Latest %Y.%m.%d %H:%M");
+   return i->get_string ("Latest %Y.%m.%d %H:%M");
 }
 
 void
 Metars::reload ()
 {
-   if ((dir_path == L"") || file_format == L"") { return; }
+   if ((dir_path == "") || file_format == "") { return; }
    read (dir_path, file_format);
    construct_station_metars_ptr_map ();
 }
@@ -707,7 +707,7 @@ Metars::reload ()
 void
 Metars::reload (const Location_Map& location_map)
 {
-   if ((dir_path == L"") || file_format == L"") { return; }
+   if ((dir_path == "") || file_format == "") { return; }
    read (dir_path, file_format, location_map);
    construct_station_metars_ptr_map ();
 }
@@ -715,7 +715,7 @@ Metars::reload (const Location_Map& location_map)
 void
 Metars::reload (const Location_Multimap& location_multimap)
 {
-   if ((dir_path == L"") || file_format == L"") { return; }
+   if ((dir_path == "") || file_format == "") { return; }
    read (dir_path, file_format, location_multimap);
    construct_station_metars_ptr_map ();
 }
@@ -737,9 +737,9 @@ Metars::read (const Dstring& dir_path,
    for (Integer i = 0; i < dir_listing.size (); i++)
    {
       const Dstring& file_name = dir_listing[i];
-      const Dstring& file_path = dir_path + L"/" + file_name;
+      const Dstring& file_path = dir_path + "/" + file_name;
 
-wcout << L"metar reading " << file_path << endl;
+cout << "metar reading " << file_path << endl;
       read (file_path);
 
    }
@@ -758,9 +758,9 @@ Metars::read (const Dstring& dir_path,
    for (Integer i = 0; i < dir_listing.size (); i++)
    {
       const Dstring& file_name = dir_listing[i];
-      const Dstring& file_path = dir_path + L"/" + file_name;
+      const Dstring& file_path = dir_path + "/" + file_name;
 
-wcout << L"metar reading " << file_path << endl;
+cout << "metar reading " << file_path << endl;
       read (file_path, location_map);
 
    }
@@ -779,9 +779,9 @@ Metars::read (const Dstring& dir_path,
    for (Integer i = 0; i < dir_listing.size (); i++)
    {
       const Dstring& file_name = dir_listing[i];
-      const Dstring& file_path = dir_path + L"/" + file_name;
+      const Dstring& file_path = dir_path + "/" + file_name;
 
-wcout << L"metar reading " << file_path << endl;
+cout << "metar reading " << file_path << endl;
       read (file_path, location_multimap);
 
    }
@@ -1009,7 +1009,7 @@ Metars::get_station_metars (const Dstring& station_name) const
    typedef Station_Metars_Ptr_Map::const_iterator Iterator;
    const Station_Metars_Ptr_Map& smpm = station_metars_ptr_map;
    Iterator iterator = smpm.find (station_name);
-   if (iterator == smpm.end ()) { throw Exception (L"No Such Station"); }
+   if (iterator == smpm.end ()) { throw Exception ("No Such Station"); }
    return *(iterator->second);
 }
 
@@ -1020,7 +1020,7 @@ Metars::get_station_metars (const Dstring& station_name)
    typedef Station_Metars_Ptr_Map::iterator Iterator;
    Station_Metars_Ptr_Map& smpm = station_metars_ptr_map;
    Iterator iterator = smpm.find (station_name);
-   if (iterator == smpm.end ()) { throw Exception (L"No Such Station"); }
+   if (iterator == smpm.end ()) { throw Exception ("No Such Station"); }
    return *(iterator->second);
 }
 
@@ -1084,7 +1084,7 @@ Metars::nearest (const Lat_Long& lat_long) const
    }
    catch (const Exception& e)
    {
-      return make_pair (L"", lat_long);
+      return make_pair ("", lat_long);
    }
 }
 
@@ -1121,7 +1121,7 @@ Station_Metars::get_metar (const Dtime& time) const
 
       if (ub == lower_bound (Dtime (GSL_NEGINF))) // Before first node
       {
-         throw Exception (L"Out of bounds:");
+         throw Exception ("Out of bounds:");
       }
       else
       {

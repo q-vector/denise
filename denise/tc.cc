@@ -31,7 +31,7 @@ Real
 Forecast::get_pressure (const Dstring& pressure_string)
 {
 
-   //const Reg_Exp mmhg (L"MMHG");
+   //const Reg_Exp mmhg ("MMHG");
    //const Reg_Exp hpa ("(HPA)|(MB)");
 
    Real pressure = stof (pressure_string) * 1e2;
@@ -43,9 +43,9 @@ Real
 Forecast::get_max_wind (const Dstring& max_wind_string)
 {
 
-   const Reg_Exp ms (L"(MS)|(M/S)");
-   const Reg_Exp kph (L"(KPH)|(KM/H)");
-   //const Reg_Exp knot (L"(KT)|(KNOT)|(KNOTS)");
+   const Reg_Exp ms ("(MS)|(M/S)");
+   const Reg_Exp kph ("(KPH)|(KM/H)");
+   //const Reg_Exp knot ("(KT)|(KNOT)|(KNOTS)");
 
    Real max_wind = stof (max_wind_string);
 
@@ -113,7 +113,7 @@ Advisory::get_time (const Dstring& time_string,
    if (next_year) { y_++; }
    if (next_month) { m_ += (m_ == 12 ? -11 : 1); }
 
-   const Dstring& yyyymm = string_render ("%04d%02d", y_, m_);
+   const Dstring& yyyymm = Dstring::render ("%04d%02d", y_, m_);
    return Dtime (yyyymm + time_string.substr (0, 4));
 
 
@@ -154,9 +154,9 @@ Advisory::get_key () const
    const Lat_Long& ll = begin ()->second.lat_long;
    const Real& latitude = ll.latitude;
    const Real& longitude = ll.longitude;
-   const Dstring& ll_string = string_render ("%.1f %.1f", latitude, longitude);
+   const Dstring& ll_str = Dstring::render ("%.1f %.1f", latitude, longitude);
    const Dstring& initial_time_str = initial_time.get_string ();
-   return forecast_centre + L" " + initial_time_str + L" " + ll_string;
+   return forecast_centre + " " + initial_time_str + " " + ll_str;
 }
 
 bool
@@ -238,16 +238,16 @@ Advisory::cairo (const RefPtr<Context> cr,
 
 }
 
-wostream&
-Advisory::operator << (wostream &out_file) const
+ostream&
+Advisory::operator << (ostream &out_file) const
 {
 
-   wostream& o = out_file;
+   ostream& o = out_file;
 
-   o << L"forecast_centre " << forecast_centre << endl;
-   o << L"tc_name " << tc_name << endl;
-   o << L"tc_id " << tc_id << endl;
-   o << L"initial_time_string " << initial_time_string << endl;
+   o << "forecast_centre " << forecast_centre << endl;
+   o << "tc_name " << tc_name << endl;
+   o << "tc_id " << tc_id << endl;
+   o << "initial_time_string " << initial_time_string << endl;
 
    for (auto iterator = begin (); iterator != end (); iterator++)
    {
@@ -255,8 +255,8 @@ Advisory::operator << (wostream &out_file) const
       const Real tau = iterator->first;
       const Forecast& forecast = iterator->second;
 
-      o << tau << L" " << forecast.lat_long << L" ";
-      o << forecast.pressure << L" " << forecast.max_wind << endl;
+      o << tau << " " << forecast.lat_long << " ";
+      o << forecast.pressure << " " << forecast.max_wind << endl;
 
    }
 
@@ -266,24 +266,24 @@ Advisory::operator << (wostream &out_file) const
 
 Wtss20_Vhhh::Wtss20_Vhhh (const Tokens& content,
                           const Dtime& time_stamp)
-   : Advisory (L"VHHH", L"港")
+   : Advisory ("VHHH", "港")
 //   : Advisory ("VHHH", "HK")
 {
 
-   const Reg_Exp blank (L"^ *$");
+   const Reg_Exp blank ("^ *$");
 
-   const Reg_Exp analysis (L"WITH CENTRAL PRESSURE");
-   const Reg_Exp forecast (L"^FORECAST POSITION AND INTENSITY AT");
-   const Reg_Exp max_wind_analysis (L"^MAXIMUM WINDS NEAR THE CENTRE");
+   const Reg_Exp analysis ("WITH CENTRAL PRESSURE");
+   const Reg_Exp forecast ("^FORECAST POSITION AND INTENSITY AT");
+   const Reg_Exp max_wind_analysis ("^MAXIMUM WINDS NEAR THE CENTRE");
 
-   const Reg_Exp tcid_re (L"\\([0-9]...\\)", true);
-   const Reg_Exp utc_re (L"[0-9]..... UTC", true);
-   const Reg_Exp knots_re (L"([0-9].|[0-9]..) KNOTS", true);
-   const Reg_Exp latitude_re (L"([0-9]|[0-9].)\\.[0-9] (N|S)", true);
-   const Reg_Exp longitude_re (L"([0-9]|[0-9].|[0-9]..)\\.[0-9] (E|W)", true);
-   const Reg_Exp hpa_re (L"(9[0-9].|1[0-9]..) HECTOPASCALS", true);
-   const Reg_Exp dissipate_re (L"DISSIPATED", true);
-   const Reg_Exp extratropical_re (L"EXTRATROPICAL", true);
+   const Reg_Exp tcid_re ("\\([0-9]...\\)", true);
+   const Reg_Exp utc_re ("[0-9]..... UTC", true);
+   const Reg_Exp knots_re ("([0-9].|[0-9]..) KNOTS", true);
+   const Reg_Exp latitude_re ("([0-9]|[0-9].)\\.[0-9] (N|S)", true);
+   const Reg_Exp longitude_re ("([0-9]|[0-9].|[0-9]..)\\.[0-9] (E|W)", true);
+   const Reg_Exp hpa_re ("(9[0-9].|1[0-9]..) HECTOPASCALS", true);
+   const Reg_Exp dissipate_re ("DISSIPATED", true);
+   const Reg_Exp extratropical_re ("EXTRATROPICA", true);
 
    Dstring paragraph;
    Tokens paragraphs;
@@ -305,7 +305,7 @@ Wtss20_Vhhh::Wtss20_Vhhh (const Tokens& content,
       }
       else
       {
-         paragraph += line + L" ";
+         paragraph += line + " ";
       }
 
    }
@@ -408,13 +408,13 @@ Wtss20_Vhhh::Wtss20_Vhhh (const Tokens& content,
 
 Wtpq20_Babj::Wtpq20_Babj (const Tokens& content,
                           const Dtime& time_stamp)
-   : Advisory (L"BABJ", L"中")
-//   : Advisory (L"BABJ", L"BJ")
+   : Advisory ("BABJ", "中")
+//   : Advisory ("BABJ", "BJ")
 {
 
-   const Reg_Exp reg_exp (L"P\\+[0-9].HR");
-   const Reg_Exp time_re (L"INITIAL +TIME");
-   const Reg_Exp utc_re (L"[0-9]..... *UTC", true);
+   const Reg_Exp reg_exp ("P\\+[0-9].HR");
+   const Reg_Exp time_re ("INITIAL +TIME");
+   const Reg_Exp utc_re ("[0-9]..... *UTC", true);
 
    for (Tokens::const_iterator iterator = content.begin ();
         iterator != content.end (); iterator++)
@@ -434,7 +434,7 @@ Wtpq20_Babj::Wtpq20_Babj (const Tokens& content,
          continue;
       }
 
-      if (n > 0 && tokens[0] == L"00HR")
+      if (n > 0 && tokens[0] == "00HR")
       {
          const Integer tau = 0;
          const Lat_Long ll (tokens[1], tokens[2]);
@@ -456,15 +456,15 @@ Wtpq20_Babj::Wtpq20_Babj (const Tokens& content,
 
 Wtpq20_Rjtd::Wtpq20_Rjtd (const Tokens& content,
                           const Dtime& time_stamp)
-   : Advisory (L"RJTD", L"日")
-//   : Advisory (L"RJTD", L"JMA")
+   : Advisory ("RJTD", "日")
+//   : Advisory ("RJTD", "JMA")
 {
 
-   const Reg_Exp name_re (L"^NAME");
-   const Reg_Exp pstn_re (L"^PSTN");
-   const Reg_Exp hrfc_re (L"^[0-9].HF");
-   const Reg_Exp utc_re (L"[0-9].....UTC", true);
-   const Reg_Exp tcid_re (L"\\([0-9]...\\)");
+   const Reg_Exp name_re ("^NAME");
+   const Reg_Exp pstn_re ("^PSTN");
+   const Reg_Exp hrfc_re ("^[0-9].HF");
+   const Reg_Exp utc_re ("[0-9].....UTC", true);
+   const Reg_Exp tcid_re ("\\([0-9]...\\)");
 
    for (Tokens::const_iterator iterator = content.begin ();
         iterator != content.end (); iterator++)
@@ -523,14 +523,14 @@ Wtpq20_Rjtd::Wtpq20_Rjtd (const Tokens& content,
 
       }
 
-      if (n > 0 && tokens[0] == L"PRES")
+      if (n > 0 && tokens[0] == "PRES")
       {
          const Real pres = stof (tokens[1]) * 1e2;
          rbegin ()->second.pressure = pres;
          continue;
       }
 
-      if (n > 0 && tokens[0] == L"MXWD")
+      if (n > 0 && tokens[0] == "MXWD")
       {
          const Real mxwd = stof (tokens[1]);
          rbegin ()->second.max_wind = mxwd;
@@ -543,15 +543,15 @@ Wtpq20_Rjtd::Wtpq20_Rjtd (const Tokens& content,
 
 Wtko20_Rksl::Wtko20_Rksl (const Tokens& content,
                           const Dtime& time_stamp)
-   : Advisory (L"RKSL", L"韓")
-//   : Advisory (L"RKSL", L"KMA")
+   : Advisory ("RKS", "韓")
+//   : Advisory ("RKS", "KMA")
 {
 
-   const Reg_Exp name_re (L"^NAME");
-   const Reg_Exp position_re (L"^POSITION");
-   const Reg_Exp hrfc_re (L"^[0-9].HF");
-   const Reg_Exp utc_re (L"[0-9].....UTC", true);
-   const Reg_Exp tcid_re (L"[0-9]...", true);
+   const Reg_Exp name_re ("^NAME");
+   const Reg_Exp position_re ("^POSITION");
+   const Reg_Exp hrfc_re ("^[0-9].HF");
+   const Reg_Exp utc_re ("[0-9].....UTC", true);
+   const Reg_Exp tcid_re ("[0-9]...", true);
 
    for (Tokens::const_iterator iterator = content.begin ();
         iterator != content.end (); iterator++)
@@ -605,14 +605,14 @@ Wtko20_Rksl::Wtko20_Rksl (const Tokens& content,
 
       }
 
-      if (n > 0 && tokens[0] == L"PRES")
+      if (n > 0 && tokens[0] == "PRES")
       {
          const Real pres = stof (tokens[1]) * 1e2;
          rbegin ()->second.pressure = pres;
          continue;
       }
 
-      if (n > 0 && tokens[0] == L"PRES/VMAX")
+      if (n > 0 && tokens[0] == "PRES/VMAX")
       {
          const Real pres = stof (tokens[1]);
          const Real vmax = stof (tokens[2]);
@@ -627,19 +627,19 @@ Wtko20_Rksl::Wtko20_Rksl (const Tokens& content,
 
 Wtpn31_Pgtw::Wtpn31_Pgtw (const Tokens& content,
                           const Dtime& time_stamp)
-   : Advisory (L"PGTW", L"聯")
-//   : Advisory (L"PGTW", L"JTWC")
+   : Advisory ("PGTW", "聯")
+//   : Advisory ("PGTW", "JTWC")
 {
 
    Integer tau;
-   const Reg_Exp initial_re (L"^1\\. ");
-   const Reg_Exp tc_id_re (L"[0-9].[EWC]", true);
-   const Reg_Exp tc_name_re (L"\\([A-Z\\-]+\\)", true);
-   const Reg_Exp tau_re (L"^ *[0-9]+ HRS, VALID AT:");
-   const Reg_Exp analysis_re (L"[0-9].....Z --- NEAR ([0-9]|[0-9].)\\.[0-9](N|S)");
-   const Reg_Exp forecast_re (L"[0-9].....Z --- ([0-9]|[0-9].)\\.[0-9](N|S)");
+   const Reg_Exp initial_re ("^1\\. ");
+   const Reg_Exp tc_id_re ("[0-9].[EWC]", true);
+   const Reg_Exp tc_name_re ("\\([A-Z\\-]+\\)", true);
+   const Reg_Exp tau_re ("^ *[0-9]+ HRS, VALID AT:");
+   const Reg_Exp analysis_re ("[0-9].....Z --- NEAR ([0-9]|[0-9].)\\.[0-9](N|S)");
+   const Reg_Exp forecast_re ("[0-9].....Z --- ([0-9]|[0-9].)\\.[0-9](N|S)");
 
-   wcout << L"PGTW " << time_stamp.get_string () << endl;
+   cout << "PGTW " << time_stamp.get_string () << endl;
 
    for (Tokens::const_iterator iterator = content.begin ();
         iterator != content.end (); iterator++)
@@ -647,7 +647,7 @@ Wtpn31_Pgtw::Wtpn31_Pgtw (const Tokens& content,
 
       const Dstring& input_string = *(iterator);
 
-      if (input_string.substr (0, 7) == L"REMARKS") { break; }
+      if (input_string.substr (0, 7) == "REMARKS") { break; }
 
       const Tokens tokens (input_string);
       const Integer n = tokens.size ();
@@ -672,7 +672,7 @@ Wtpn31_Pgtw::Wtpn31_Pgtw (const Tokens& content,
          this->initial_time_string = utc;
          this->initial_time = get_time (initial_time_string, time_stamp);
 
-         wcout << L"PGTW analysis " << time_stamp.get_string () << L" " << initial_time_string << L" " << initial_time.get_string () << endl;
+         cout << "PGTW analysis " << time_stamp.get_string () << " " << initial_time_string << " " << initial_time.get_string () << endl;
          const Lat_Long ll (tokens[3], tokens[4]);
          (*this)[0] = Forecast (ll, GSL_NAN, GSL_NAN);
 
@@ -705,7 +705,7 @@ Wtpn31_Pgtw::Wtpn31_Pgtw (const Tokens& content,
 
       }
 
-      if (input_string.substr (0, 25) == L"   MAX SUSTAINED WINDS - ")
+      if (input_string.substr (0, 25) == "   MAX SUSTAINED WINDS - ")
       {
          const Real max_wind = stof (tokens[4]);
          rbegin ()->second.max_wind = max_wind;
@@ -719,15 +719,15 @@ Wtpn31_Pgtw::Wtpn31_Pgtw (const Tokens& content,
 Real
 Wtph20_Rpmm::get_real (const Dstring& digit)
 {
-   if (digit == L"ONE") { return 1; }
-   if (digit == L"TWO") { return 2; }
-   if (digit == L"THREE") { return 3; }
-   if (digit == L"FOUR") { return 4; }
-   if (digit == L"FIVE") { return 5; }
-   if (digit == L"SIX") { return 6; }
-   if (digit == L"SEVEN") { return 7; }
-   if (digit == L"EIGHT") { return 8; }
-   if (digit == L"NINE") { return 9; }
+   if (digit == "ONE") { return 1; }
+   if (digit == "TWO") { return 2; }
+   if (digit == "THREE") { return 3; }
+   if (digit == "FOUR") { return 4; }
+   if (digit == "FIVE") { return 5; }
+   if (digit == "SIX") { return 6; }
+   if (digit == "SEVEN") { return 7; }
+   if (digit == "EIGHT") { return 8; }
+   if (digit == "NINE") { return 9; }
    return 0;
 }
 
@@ -748,10 +748,10 @@ Wtph20_Rpmm::get_lat_long (const Dstring& lat_long_string)
    const Real longitude_0 = get_real (tokens[9]) * 0.1;
 
    Real latitude = latitude_2 + latitude_1 + latitude_0;
-   if (tokens[4] == L"SOUTH") { latitude *= -1; }
+   if (tokens[4] == "SOUTH") { latitude *= -1; }
 
    Real longitude = longitude_3 + longitude_2 + longitude_1 + longitude_0;
-   if (tokens[10] == L"WEST") { longitude *= -1; }
+   if (tokens[10] == "WEST") { longitude *= -1; }
 
    return Lat_Long (latitude, longitude);
 
@@ -817,33 +817,33 @@ Wtph20_Rpmm::get_meters_per_second (const Tokens& tokens)
 
 Wtph20_Rpmm::Wtph20_Rpmm (const Tokens& content,
                           const Dtime& time_stamp)
-   : Advisory (L"RPMM", L"菲")
-//   : Advisory (L"RPMM", L"PAG")
+   : Advisory ("RPMM", "菲")
+//   : Advisory ("RPMM", "PAG")
 {
 
-   const Dstring d (L"(ZERO|ONE|TWO|THREE|FOUR|FIVE|SIX|SEVEN|EIGHT|NINE)");
-   const Dstring m (L"(JANUARY|FEBRUARY|MARCH|APRIL|MAY|JUNE|JULY|AUGUST|SEPTEMBER|OCTOBER|NOVEMBER|DECEMBER)");
+   const Dstring d ("(ZERO|ONE|TWO|THREE|FOUR|FIVE|SIX|SEVEN|EIGHT|NINE)");
+   const Dstring m ("(JANUARY|FEBRUARY|MARCH|APRIL|MAY|JUNE|JULY|AUGUST|SEPTEMBER|OCTOBER|NOVEMBER|DECEMBER)");
 
-   const Dstring d2 (d + L" +" + d);
-   const Dstring d3 (d + L" +" + d + L" +" + d);
-   const Dstring d4 (d + L" +" + d + L" +" + d + L" +" + d);
-   const Dstring d2or3 (L"(" + d2 + L"|" + d3 + L")");
-   const Dstring d3or4 (L"(" + d3 + L"|" + d4 + L")");
-   const Dstring lat_str (d2 + L" +POINT +" + d + L" +(NORTH|SOUTH)");
-   const Dstring long_str (d3 + L" +POINT +" + d + L" +(EAST|WEST)");
-   const Dstring cp_str (L"CENTRAL +PRESSURE +" + d3or4 + L" +HECTOPASCALS?");
-   const Dstring mw_str (L"MAXIMUM +WINDS? +" + d2or3 + L" +METERS? +PER +SECOND");
+   const Dstring d2 (d + " +" + d);
+   const Dstring d3 (d + " +" + d + " +" + d);
+   const Dstring d4 (d + " +" + d + " +" + d + " +" + d);
+   const Dstring d2or3 ("(" + d2 + "|" + d3 + ")");
+   const Dstring d3or4 ("(" + d3 + "|" + d4 + ")");
+   const Dstring lat_str (d2 + " +POINT +" + d + " +(NORTH|SOUTH)");
+   const Dstring long_str (d3 + " +POINT +" + d + " +(EAST|WEST)");
+   const Dstring cp_str ("CENTRAL +PRESSURE +" + d3or4 + " +HECTOPASCALS?");
+   const Dstring mw_str ("MAXIMUM +WINDS? +" + d2or3 + " +METERS? +PER +SECOND");
 
    Dstring paragraph;
    Tokens paragraphs;
 
-   const Reg_Exp blank (L"^ *$");
-   const Reg_Exp initial_time_string_re (L"^AT +[0-9]... +");
+   const Reg_Exp blank ("^ *$");
+   const Reg_Exp initial_time_string_re ("^AT +[0-9]... +");
 
-   const Reg_Exp tc_id_re (L"(\\(|\\{)[0-9]...(\\)|\\})", true);
-   const Reg_Exp tc_name_re (L"\\([A-Z\\-]+\\)", true);
-   const Reg_Exp ll_re (lat_str + L" " + long_str, true);
-   const Reg_Exp fcll_re (L"AT [0-9]..... " + lat_str + L" " + long_str, true);
+   const Reg_Exp tc_id_re ("(\\(|\\{)[0-9]...(\\)|\\})", true);
+   const Reg_Exp tc_name_re ("\\([A-Z\\-]+\\)", true);
+   const Reg_Exp ll_re (lat_str + " " + long_str, true);
+   const Reg_Exp fcll_re ("AT [0-9]..... " + lat_str + " " + long_str, true);
 
    const Reg_Exp cp_re (cp_str, true);
    const Reg_Exp mw_re (mw_str, true);
@@ -870,7 +870,7 @@ Wtph20_Rpmm::Wtph20_Rpmm (const Tokens& content,
       }
       else
       {
-         paragraph += line + L" ";
+         paragraph += line + " ";
       }
 
    }
@@ -956,16 +956,16 @@ Wtph20_Rpmm::Wtph20_Rpmm (const Tokens& content,
 
 Wtnt80_Egrr::Wtnt80_Egrr (const Tokens& content,
                           const Dtime& time_stamp)
-   : Advisory (L"EGRR", L"英")
+   : Advisory ("EGRR", "英")
 //   : Advisory ("EGRR", "UK")
 {
 
-   const Dstring utc_str (L"[0-9].UTC [0-9].\\.[0-9].\\.[0-9]...");
-   const Dstring ll_str (L"[0-9].\\.[0-9](N|S) [ 0-9][0-9].\\.[0-9](E|W)");
+   const Dstring utc_str ("[0-9].UTC [0-9].\\.[0-9].\\.[0-9]...");
+   const Dstring ll_str ("[0-9].\\.[0-9](N|S) [ 0-9][0-9].\\.[0-9](E|W)");
 
-   const Reg_Exp ap_re (L"ANALYSED POSITION");
-   const Reg_Exp atcf_re (L"ATCF IDENTIFIER");
-   const Reg_Exp position_re (L"^ " + utc_str + L"  " + ll_str);
+   const Reg_Exp ap_re ("ANALYSED POSITION");
+   const Reg_Exp atcf_re ("ATCF IDENTIFIER");
+   const Reg_Exp position_re ("^ " + utc_str + "  " + ll_str);
 
    Dtime initial_dtime;
 
@@ -991,13 +991,13 @@ Wtnt80_Egrr::Wtnt80_Egrr (const Tokens& content,
 
       if (position_re.match (input_string))
       {
-         const Dstring time_string = tokens[0] + L" " + tokens[1];
-         const Dtime dtime (time_string, L"%HUTC %d.%m.%Y");
+         const Dstring time_string = tokens[0] + " " + tokens[1];
+         const Dtime dtime (time_string, "%HUTC %d.%m.%Y");
 
          if (size () == 0)
          {
             initial_dtime.t = dtime.t;
-            this->initial_time_string = dtime.get_string (L"%d%H%M");
+            this->initial_time_string = dtime.get_string ("%d%H%M");
             this->initial_time = get_time (initial_time_string, time_stamp);
          }
 
@@ -1015,14 +1015,14 @@ Wtnt80_Egrr::Wtnt80_Egrr (const Tokens& content,
 
 Wtth20_Vtbb::Wtth20_Vtbb (const Tokens& content,
                           const Dtime& time_stamp)
-   : Advisory (L"VTBB", L"泰")
-//   : Advisory (L"VTBB", L"TH")
+   : Advisory ("VTBB", "泰")
+//   : Advisory ("VTBB", "TH")
 {
 
-   const Reg_Exp name_re (L"^NAME");
-   const Reg_Exp pstn_re (L"^PSTN");
-   const Reg_Exp hrfc_re (L"^[0-9]. HR");
-   const Reg_Exp utc_re (L"[0-9]..... UTC", true);
+   const Reg_Exp name_re ("^NAME");
+   const Reg_Exp pstn_re ("^PSTN");
+   const Reg_Exp hrfc_re ("^[0-9]. HR");
+   const Reg_Exp utc_re ("[0-9]..... UTC", true);
 
    for (Tokens::const_iterator iterator = content.begin ();
         iterator != content.end (); iterator++)
@@ -1107,14 +1107,14 @@ Wtth20_Vtbb::Wtth20_Vtbb (const Tokens& content,
 
       }
 
-      if (n > 0 && tokens[0] == L"PRES")
+      if (n > 0 && tokens[0] == "PRES")
       {
          const Real pres = stof (tokens[1]) * 1e2;
          rbegin ()->second.pressure = pres;
          continue;
       }
 
-      if (n > 0 && tokens[0] == L"MAXD")
+      if (n > 0 && tokens[0] == "MAXD")
       {
          const Real maxd = stof (tokens[1]);
          rbegin ()->second.max_wind = maxd;
@@ -1127,18 +1127,18 @@ Wtth20_Vtbb::Wtth20_Vtbb (const Tokens& content,
 
 Knhc_4::Knhc_4 (const Tokens& content,
                 const Dtime& time_stamp)
-   : Advisory (L"KNHC", L"颶")
+   : Advisory ("KNHC", "颶")
 //   : Advisory ("KNHC", "NHC")
 {
 
    Integer tau;
-   const Reg_Exp tc_id_re (L"[0-9].W", true);
-   const Reg_Exp tc_name_re (L"\\([A-Z]*\\)", true);
-   const Reg_Exp analysis_re (L"^INIT  [0-9]./[0-9]...Z");
-   const Reg_Exp forecast_re (L"^[ 0-9]..H  [0-9]./[0-9]...Z");
-   const Reg_Exp advisory_number_re (L"(ADVISORY|DISCUSSION) NUMBER");
-   const Reg_Exp latitude_re (L"([0-9]|[0-9].)\\.[0-9](N|S)");
-   const Reg_Exp longitude_re (L"([0-9]|[0-9].|[0-9]..)\\.[0-9](E|W)");
+   const Reg_Exp tc_id_re ("[0-9].W", true);
+   const Reg_Exp tc_name_re ("\\([A-Z]*\\)", true);
+   const Reg_Exp analysis_re ("^INIT  [0-9]./[0-9]...Z");
+   const Reg_Exp forecast_re ("^[ 0-9]..H  [0-9]./[0-9]...Z");
+   const Reg_Exp advisory_number_re ("(ADVISORY|DISCUSSION) NUMBER");
+   const Reg_Exp latitude_re ("([0-9]|[0-9].)\\.[0-9](N|S)");
+   const Reg_Exp longitude_re ("([0-9]|[0-9].|[0-9]..)\\.[0-9](E|W)");
 
    for (Tokens::const_iterator iterator = content.begin ();
         iterator != content.end (); iterator++)
@@ -1152,7 +1152,7 @@ Knhc_4::Knhc_4 (const Tokens& content,
       {
          for (Integer i = 0; i < n; i++)
          {
-            if (tokens[i] == L"ADVISORY" || tokens[i] == L"DISCUSSION")
+            if (tokens[i] == "ADVISORY" || tokens[i] == "DISCUSSION")
             {
                this->tc_name = tokens[i - 1];
                break;
@@ -1239,7 +1239,7 @@ Advisory_Store::Cluster_Info::get_tc_name (const Integer cluster_index) const
    for (set<Dstring>::const_iterator iterator = tc_name_set.begin ();
         iterator != tc_name_set.end (); iterator++)
    {
-      if (tc_name != L"") { tc_name += L"/"; }
+      if (tc_name != "") { tc_name += "/"; }
       tc_name += *(iterator);
    }
 
@@ -1294,9 +1294,9 @@ Advisory_Store::parse (const Tokens& content,
 
    const Tokens tokens (content[0]);
 
-   if (((tokens[1].substr (0, 5) == L"WTSS2") ||
-        (tokens[1].substr (0, 5) == L"WTPQ2")) &&
-       tokens[2] == L"VHHH")
+   if (((tokens[1].substr (0, 5) == "WTSS2") ||
+        (tokens[1].substr (0, 5) == "WTPQ2")) &&
+       tokens[2] == "VHHH")
    {
 
       Wtss20_Vhhh advisory (content, time_stamp);
@@ -1311,7 +1311,7 @@ Advisory_Store::parse (const Tokens& content,
 
    }
 
-   if (tokens[1].substr (0, 5) == L"WTPQ2" && tokens[2] == L"BABJ")
+   if (tokens[1].substr (0, 5) == "WTPQ2" && tokens[2] == "BABJ")
    {
 
       Wtpq20_Babj advisory (content, time_stamp);
@@ -1326,7 +1326,7 @@ Advisory_Store::parse (const Tokens& content,
 
    }
 
-   if (tokens[1].substr (0, 5) == L"WTPQ2" && tokens[2] == L"RJTD")
+   if (tokens[1].substr (0, 5) == "WTPQ2" && tokens[2] == "RJTD")
    {
 
       Wtpq20_Rjtd advisory (content, time_stamp);
@@ -1341,7 +1341,7 @@ Advisory_Store::parse (const Tokens& content,
 
    }
 
-   if (tokens[1].substr (0, 5) == L"WTKO2" && tokens[2] == L"RKSL")
+   if (tokens[1].substr (0, 5) == "WTKO2" && tokens[2] == "RKS")
    {
 
       Wtko20_Rksl advisory (content, time_stamp);
@@ -1356,7 +1356,7 @@ Advisory_Store::parse (const Tokens& content,
 
    }
 
-   if (tokens[1].substr (0, 5) == L"WTPN3" && tokens[2] == L"PGTW")
+   if (tokens[1].substr (0, 5) == "WTPN3" && tokens[2] == "PGTW")
    {
 
       Wtpn31_Pgtw advisory (content, time_stamp);
@@ -1371,7 +1371,7 @@ Advisory_Store::parse (const Tokens& content,
 
    }
 
-   if (tokens[1].substr (0, 5) == L"WTPH2" && tokens[2] == L"RPMM")
+   if (tokens[1].substr (0, 5) == "WTPH2" && tokens[2] == "RPMM")
    {
 
 /*
@@ -1388,7 +1388,7 @@ Advisory_Store::parse (const Tokens& content,
 
    }
 
-   if (tokens[1].substr (0, 5) == L"WTNT8" && tokens[2] == L"EGRR")
+   if (tokens[1].substr (0, 5) == "WTNT8" && tokens[2] == "EGRR")
    {
 
       return;
@@ -1404,7 +1404,7 @@ Advisory_Store::parse (const Tokens& content,
 
    }
 
-   if (tokens[1].substr (0, 5) == L"WTTH2" && tokens[2] == L"VTBB")
+   if (tokens[1].substr (0, 5) == "WTTH2" && tokens[2] == "VTBB")
    {
 
 /*
@@ -1421,8 +1421,8 @@ Advisory_Store::parse (const Tokens& content,
 
    }
 
-   if ((tokens[1].substr (0, 5) == L"WTNT4" && tokens[2] == L"KNHC") ||
-       (tokens[1].substr (0, 5) == L"WTPZ4" && tokens[2] == L"KNHC"))
+   if ((tokens[1].substr (0, 5) == "WTNT4" && tokens[2] == "KNHC") ||
+       (tokens[1].substr (0, 5) == "WTPZ4" && tokens[2] == "KNHC"))
    {
 
       Knhc_4 advisory (content, time_stamp);
@@ -1454,7 +1454,7 @@ Advisory_Store::ingest_dir (const Dstring& dir_path,
         iterator != dir_listing.end (); iterator++)
    {
       const Dstring& file_name = *(iterator);
-      const Dstring file_path = dir_path + L"/" + file_name;
+      const Dstring file_path = dir_path + "/" + file_name;
       ingest_file (file_path);
    }
 
@@ -1469,14 +1469,14 @@ Advisory_Store::ingest_file (const Dstring& file_path)
    ifstream file (fp.c_str ());
 
    bool first = true;
-   const Reg_Exp header (L"^\\*. [A-Z]...[0-9]. [A-Z]... [0-9]..... ");
+   const Reg_Exp header ("^\\*. [A-Z]...[0-9]. [A-Z]... [0-9]..... ");
 
-   const Reg_Exp yymmddhh (L"[0-9].......");
-   const Dstring file_name = Tokens (file_path, L"/").back ();
+   const Reg_Exp yymmddhh ("[0-9].......");
+   const Dstring file_name = Tokens (file_path, "/").back ();
    const bool file_name_is_time = yymmddhh.match (file_name);
 
    const Dtime time_stamp = (!file_name_is_time ?
-      Dtime::last_synoptic () : Dtime (file_name, L"%y%m%d%H"));
+      Dtime::last_synoptic () : Dtime (file_name, "%y%m%d%H"));
 
    Tokens content;
 

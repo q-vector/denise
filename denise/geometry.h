@@ -59,7 +59,7 @@ namespace denise
 
       public:
 
-         Geometry_Exception (const wstring& description = L"");
+         Geometry_Exception (const Dstring& description = "");
 
    };
 
@@ -903,8 +903,8 @@ namespace denise
                 const Vertex* polygon_vertex_ptr);
 
          void
-         debug_print (const wstring& prefix = L"",
-                      wostream& out_stream = wcout) const;
+         debug_print (const Dstring& prefix = "",
+                      ostream& out_stream = cout) const;
 
    };
 
@@ -1631,20 +1631,20 @@ namespace denise
    };
 */
 
-//   wostream&
-//   operator << (wostream& out_file,
+//   ostream&
+//   operator << (ostream& out_file,
 //                const Path_Ob& path_ob);
 
-   wostream&
-   operator << (wostream& out_file,
+   ostream&
+   operator << (ostream& out_file,
                 const Ellipse& ellipse);
 
-   wostream&
-   operator << (wostream& out_file,
+   ostream&
+   operator << (ostream& out_file,
                 const Simple_Polyline& simple_polylin);
 
-   wostream&
-   operator << (wostream& out_file,
+   ostream&
+   operator << (ostream& out_file,
                 const Polygon& polygon);
 
 }

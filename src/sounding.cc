@@ -43,32 +43,32 @@ Sounding_Package::sounding_print (const Dstring& identifier,
                                   const Tokens& tokens) const
 {
 
-   const Dstring time_fmt (L"%Y%m%d%H%M");
+   const Dstring time_fmt ("%Y%m%d%H%M");
    const Sounding& sounding = sounding_map.at (identifier);
    if (tokens.size () < 1) { return; }
 
    const Dstring& genre = tokens[0];
    const Tokens& arguments = tokens.subtokens (1);
 
-   if (genre == L"time")
+   if (genre == "time")
    {
-      wcout << sounding.get_time ().get_string (time_fmt) << endl;
+      cout << sounding.get_time ().get_string (time_fmt) << endl;
       return;
    }
    else
-   if (genre == L"basetime")
+   if (genre == "basetime")
    {
-      wcout << sounding.get_basetime ().get_string (time_fmt) << endl;
+      cout << sounding.get_basetime ().get_string (time_fmt) << endl;
       return;
    }
    else
-   if (genre == L"location")
+   if (genre == "location")
    {
-      wcout << sounding.get_location_str () << endl;
+      cout << sounding.get_location_str () << endl;
       return;
    }
    else
-   if (genre == L"t")
+   if (genre == "t")
    {
 
       if (arguments.size () == 0)
@@ -79,7 +79,7 @@ Sounding_Package::sounding_print (const Dstring& identifier,
          {
             const Real p = iterator->first;
             const Real t = iterator->second;
-            wcout << p << L" " << t << endl;
+            cout << p << " " << t << endl;
          }
       }
       else
@@ -87,12 +87,12 @@ Sounding_Package::sounding_print (const Dstring& identifier,
       {
          const Real p = stof (arguments[0]);
          const Real t = sounding.get_temperature (tephigram, p);
-         wcout << t << endl;
+         cout << t << endl;
       }
 
    }
    else
-   if (genre == L"td")
+   if (genre == "td")
    {
 
       if (arguments.size () == 0)
@@ -103,7 +103,7 @@ Sounding_Package::sounding_print (const Dstring& identifier,
          {
             const Real p = iterator->first;
             const Real t_d = iterator->second;
-            wcout << p << L" " << t_d << endl;
+            cout << p << " " << t_d << endl;
          }
       }
       else
@@ -111,12 +111,12 @@ Sounding_Package::sounding_print (const Dstring& identifier,
       {
          const Real p = stof (arguments[0]);
          const Real t_d = sounding.get_dew_point (tephigram, p);
-         wcout << t_d << endl;
+         cout << t_d << endl;
       }
 
    }
    else
-   if (genre == L"wind")
+   if (genre == "wind")
    {
 
       if (arguments.size () == 0)
@@ -129,7 +129,7 @@ Sounding_Package::sounding_print (const Dstring& identifier,
             const Wind& wind = iterator->second;
             const Real wind_direction = wind.get_direction ();
             const Real wind_speed = wind.get_speed ();
-            wcout << p << L" " << wind_direction << L" " << wind_speed << endl;
+            cout << p << " " << wind_direction << " " << wind_speed << endl;
          }
       }
       else
@@ -139,12 +139,12 @@ Sounding_Package::sounding_print (const Dstring& identifier,
          const Wind& wind = sounding.get_wind (p);
          const Real wind_direction = wind.get_direction ();
          const Real wind_speed = wind.get_speed ();
-         wcout << wind_direction << L" " << wind_speed << endl;
+         cout << wind_direction << " " << wind_speed << endl;
       }
 
    }
    else
-   if (genre == L"height")
+   if (genre == "height")
    {
 
       if (arguments.size () == 0)
@@ -155,7 +155,7 @@ Sounding_Package::sounding_print (const Dstring& identifier,
          {
             const Real p = iterator->first;
             const Real height = iterator->second;
-            wcout << p << L" " << height << endl;
+            cout << p << " " << height << endl;
          }
       }
       else
@@ -163,12 +163,12 @@ Sounding_Package::sounding_print (const Dstring& identifier,
       {
          const Real p = stof (arguments[0]);
          const Real height = sounding.get_height (p);
-         wcout << height << endl;
+         cout << height << endl;
       }
 
    }
    else
-   if (genre == L"brunt_vaisala")
+   if (genre == "brunt_vaisala")
    {
 
       const Real_Profile* brunt_vaisala_profile_ptr =
@@ -178,7 +178,7 @@ Sounding_Package::sounding_print (const Dstring& identifier,
       {
          const Real p = iterator->first;
          const Real brunt_vaisala = iterator->second;
-         wcout << p << L" " << brunt_vaisala << endl;
+         cout << p << " " << brunt_vaisala << endl;
       }
       delete brunt_vaisala_profile_ptr;
 
@@ -192,14 +192,14 @@ Sounding_Package::sounding_parse (const Tokens& tokens)
 
    const Integer n = tokens.size ();
 
-   if (tokens[0] == L"load")
+   if (tokens[0] == "load")
    {
       const Dstring& identifier = tokens[1];
       const Dstring& file_path = tokens[2];
       sounding_load (identifier, file_path);
    }
    else
-   if (tokens[0] == L"print")
+   if (tokens[0] == "print")
    {
       const Dstring& identifier = tokens[1];
       sounding_print (identifier, tokens.subtokens (2));
@@ -216,7 +216,7 @@ Sounding_Package::get_sounding_map () const
 const Sounding&
 Sounding_Package::get_sounding (const Dstring& identifier) const
 {
-   Exception e (L"sounding not found: " + identifier);
+   Exception e ("sounding not found: " + identifier);
    try { return sounding_map.at (identifier); }
    catch (const std::out_of_range& oor) { throw e; }
 }
@@ -227,12 +227,12 @@ Sounding_Package::surface_sounding (const Tokens& tokens) const
 
    const Dstring& operation = tokens[0];
 
-   if (tokens[0] == L"tephigram")
+   if (tokens[0] == "tephigram")
    {
       surface_sounding_tephigram (tokens.subtokens (1));
    }
    else
-   if (tokens[0] == L"chart")
+   if (tokens[0] == "chart")
    {
       surface_sounding_chart (tokens.subtokens (1));
    }
@@ -277,8 +277,8 @@ Sounding_Package::surface_sounding_chart (const Tokens& tokens) const
    const RefPtr<Context> cr = andrea.get_cr (surface_identifier);
    const Sounding& sounding = andrea.get_sounding (sounding_identifier);
 
-   const Tokens x_tokens (x_str, L"/");
-   const Tokens y_tokens (y_str, L"/");
+   const Tokens x_tokens (x_str, "/");
+   const Tokens y_tokens (y_str, "/");
    const bool is_p = (y_tokens[0][0] == 'p');
    const Domain_1D domain_x (stof (x_tokens[0]), stof (x_tokens[1]));
    const Domain_1D domain_y (stof (y_tokens[1]), stof (y_tokens[2]));
@@ -297,8 +297,8 @@ Sounding_Package::surface_sounding_chart (const Tokens& tokens) const
    const Color minor_color = Color::black (0.1);
    const Color major_color = Color::black (0.3);
 
-   const Dstring fmt_y (L"%.0f");
-   const Dstring unit_y (is_p ? L"Pa" : L"m");
+   const Dstring fmt_y ("%.0f");
+   const Dstring unit_y (is_p ? "Pa" : "m");
    const Real minor_interval_y = is_p ? 10e2 : 100;
    const Real major_interval_y = is_p ? 100e2 : 1000;
 
@@ -306,43 +306,43 @@ Sounding_Package::surface_sounding_chart (const Tokens& tokens) const
    Dstring fmt_x, unit_x;
    const Real_Profile* real_profile_ptr;
 
-   if (genre == L"height")
+   if (genre == "height")
    {
       const Real minor_interval_x = 100;
       const Real major_interval_x = 1000;
       mesh_2d = Mesh_2D (Size_2D (2, 2), domain_2d,
          major_interval_x, major_interval_y, major_color,
          minor_interval_x, minor_interval_y, minor_color);
-      fmt_x = Dstring (L"%.0f");
-      unit_x = Dstring (L"\u00b0C");
+      fmt_x = Dstring ("%.0f");
+      unit_x = Dstring ("\u00b0C");
       real_profile_ptr = sounding.get_height_profile_ptr ();
    }
    else
-   if (genre == L"theta")
+   if (genre == "theta")
    {
       const Real minor_interval_x = 1;
       const Real major_interval_x = 10;
       mesh_2d = Mesh_2D (Size_2D (2, 2), domain_2d,
          major_interval_x, major_interval_y, major_color,
          minor_interval_x, minor_interval_y, minor_color);
-      fmt_x = Dstring (L"%.0f");
-      unit_x = Dstring (L"\u00b0C");
+      fmt_x = Dstring ("%.0f");
+      unit_x = Dstring ("\u00b0C");
       real_profile_ptr = sounding.get_theta_profile_ptr ();
    }
    else
-   if (genre == L"speed")
+   if (genre == "speed")
    {
       const Real minor_interval_x = 1;
       const Real major_interval_x = 10;
       mesh_2d = Mesh_2D (Size_2D (2, 2), domain_2d,
          major_interval_x, major_interval_y, major_color,
          minor_interval_x, minor_interval_y, minor_color);
-      fmt_x = Dstring (L"%.0f");
-      unit_x = Dstring (L"ms\u207b\u00b9");
+      fmt_x = Dstring ("%.0f");
+      unit_x = Dstring ("ms\u207b\u00b9");
       real_profile_ptr = sounding.get_speed_profile_ptr ();
    }
    else
-   if (genre == L"along_speed")
+   if (genre == "along_speed")
    {
       const Real azimuth = stof (tokens[5]);
       const Real minor_interval_x = 1;
@@ -350,24 +350,24 @@ Sounding_Package::surface_sounding_chart (const Tokens& tokens) const
       mesh_2d = Mesh_2D (Size_2D (2, 2), domain_2d,
          major_interval_x, major_interval_y, major_color,
          minor_interval_x, minor_interval_y, minor_color);
-      fmt_x = Dstring (L"%.0f");
-      unit_x = Dstring (L"ms\u207b\u00b9");
+      fmt_x = Dstring ("%.0f");
+      unit_x = Dstring ("ms\u207b\u00b9");
       real_profile_ptr = sounding.get_along_speed_profile_ptr (azimuth);
    }
    else
-   if (genre == L"brunt_vaisala")
+   if (genre == "brunt_vaisala")
    {
       const Real minor_interval_x = 0.001;
       const Real major_interval_x = 0.01;
       mesh_2d = Mesh_2D (Size_2D (2, 2), domain_2d,
          major_interval_x, major_interval_y, major_color,
          minor_interval_x, minor_interval_y, minor_color);
-      fmt_x = Dstring (L"%.2f");
-      unit_x = Dstring (L"s\u207b\u00b9");
+      fmt_x = Dstring ("%.2f");
+      unit_x = Dstring ("s\u207b\u00b9");
       real_profile_ptr = sounding.get_brunt_vaisala_profile_ptr ();
    }
    else
-   if (genre == L"scorer")
+   if (genre == "scorer")
    {
       const Real azimuth = stof (tokens[5]);
       const Real minor_interval_x = 1e-6;
@@ -376,8 +376,8 @@ Sounding_Package::surface_sounding_chart (const Tokens& tokens) const
          major_interval_x, major_interval_y, major_color,
          minor_interval_x, minor_interval_y, minor_color,
          1e23, 1e23, Color::black (1.0));
-      fmt_x = Dstring (L"%g");
-      unit_x = Dstring (L"m\u207b\u00b2");
+      fmt_x = Dstring ("%g");
+      unit_x = Dstring ("m\u207b\u00b2");
       real_profile_ptr = sounding.get_scorer_profile_ptr (azimuth);
    }
 

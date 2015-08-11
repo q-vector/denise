@@ -55,7 +55,7 @@ Journey_Package::journey_print (const Dstring& identifier) const
    const bool is_present = (iterator != journey_map.end ());
    if (is_present)
    {
-      wcout << L"journey " << identifier << L" is present" << endl;
+      cout << "journey " << identifier << " is present" << endl;
    }
 }
 
@@ -65,13 +65,13 @@ Journey_Package::journey_parse (const Tokens& tokens)
 
    const Integer n = tokens.size ();
 
-   if (tokens[0] == L"assign")
+   if (tokens[0] == "assign")
    {
       const Dstring& identifier = tokens[1];
       journey_assign (identifier, tokens.subtokens (2));
    }
    else
-   if (tokens[0] == L"print")
+   if (tokens[0] == "print")
    {
       const Dstring& identifier = tokens[1];
       journey_print (identifier);
@@ -88,7 +88,7 @@ Journey_Package::get_journey_map () const
 const Journey&
 Journey_Package::get_journey (const Dstring& identifier) const
 {
-   Exception e (L"journey not found: " + identifier);
+   Exception e ("journey not found: " + identifier);
    try { return journey_map.at (identifier); }
    catch (const std::out_of_range& oor) { throw e; }
 }

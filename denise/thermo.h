@@ -1029,8 +1029,8 @@ namespace denise
                       const Real delta_p = 10e2);
 
          void
-         write (wofstream& file,
-                const wstring& identifier) const;
+         write (ofstream& file,
+                const Dstring& identifier) const;
 
          set<Real>
          get_p_set () const;
@@ -1214,7 +1214,7 @@ namespace denise
          Wind_Profile ();
 
          void
-         write (wofstream& file) const;
+         write (ofstream& file) const;
 
          set<Real>
          get_p_set () const;
@@ -1255,7 +1255,7 @@ namespace denise
          Height_Profile ();
 
          void
-         write (wofstream& file) const;
+         write (ofstream& file) const;
 
          set<Real>
          get_p_set () const;
@@ -1283,7 +1283,7 @@ namespace denise
          Dtime
          basetime;
 
-         wstring
+         Dstring
          location_str;
 
          T_Line
@@ -1329,18 +1329,18 @@ namespace denise
 
          Sounding ();
 
-         Sounding (const wstring& file_path);
+         Sounding (const Dstring& file_path);
 
          Sounding (const Sounding& sounding);
 
          void
-         load (const wstring& file_path);
+         load (const Dstring& file_path);
 
          void
-         save (const wstring& file_path) const;
+         save (const Dstring& file_path) const;
 
          void
-         write (wofstream& file) const;
+         write (ofstream& file) const;
 
          void
          set_time (const Dtime& dtime);
@@ -1349,7 +1349,7 @@ namespace denise
          set_basetime (const Dtime& basetime);
 
          void
-         set_location_str (const wstring& location_str);
+         set_location_str (const Dstring& location_str);
 
          static Sounding*
          get_mean_sounding_ptr (const list<const Sounding*>& sounding_ptr_list,
@@ -1383,7 +1383,7 @@ namespace denise
          const Dtime&
          get_basetime () const;
 
-         const wstring&
+         const Dstring&
          get_location_str () const;
 
          T_Line&
@@ -1692,31 +1692,31 @@ namespace denise
 
             protected:
 
-               wstring
+               Dstring
                yygg;
 
                Integer
                wmo_id;
 
-               Ttxx (const wstring& str);
+               Ttxx (const Dstring& str);
 
                bool
                use_knots () const;
 
-               wstring
+               Dstring
                get_yygg () const;
 
-               const wstring&
+               const Dstring&
                get_wmo_id () const;
 
-               wstring
+               Dstring
                get_key () const;
 
                pair<Real, Real>
-               parse_tttdd (const wstring& tttdd) const;
+               parse_tttdd (const Dstring& tttdd) const;
 
                Wind
-               parse_ddfff (const wstring& ddfff) const;
+               parse_ddfff (const Dstring& ddfff) const;
 
             public:
 
@@ -1742,7 +1742,7 @@ namespace denise
                                       Integer& index) const;
 
                pair<Real, Real>
-               parse_pphhh (const wstring& pphhh) const;
+               parse_pphhh (const Dstring& pphhh) const;
 
                virtual void
                interpret_p_z (const Integer pp,
@@ -1754,7 +1754,7 @@ namespace denise
 
             public:
 
-               Ttac (const wstring& str);
+               Ttac (const Dstring& str);
 
          };
 
@@ -1764,7 +1764,7 @@ namespace denise
             protected:
 
                virtual Real
-               parse_nnppp (const wstring& nnppp) const = 0;
+               parse_nnppp (const Dstring& nnppp) const = 0;
 
                bool
                parse_significant_temperature_levels (Sounding& sounding,
@@ -1776,7 +1776,7 @@ namespace denise
 
             public:
 
-               Ttbd (const wstring& str);
+               Ttbd (const Dstring& str);
 
          };
 
@@ -1795,7 +1795,7 @@ namespace denise
 
             public:
 
-               Ttaa (const wstring& str);
+               Ttaa (const Dstring& str);
 
                void
                parse_to (Sounding& sounding) const;
@@ -1808,11 +1808,11 @@ namespace denise
             protected:
 
                Real
-               parse_nnppp (const wstring& nnppp) const;
+               parse_nnppp (const Dstring& nnppp) const;
 
             public:
 
-               Ttbb (const wstring& str);
+               Ttbb (const Dstring& str);
 
                void
                parse_to (Sounding& sounding) const;
@@ -1834,7 +1834,7 @@ namespace denise
 
             public:
 
-               Ttcc (const wstring& str);
+               Ttcc (const Dstring& str);
 
                void
                parse_to (Sounding& sounding) const;
@@ -1847,11 +1847,11 @@ namespace denise
             protected:
 
                Real
-               parse_nnppp (const wstring& nnppp) const;
+               parse_nnppp (const Dstring& nnppp) const;
 
             public:
 
-               Ttdd (const wstring& str);
+               Ttdd (const Dstring& str);
 
                void
                parse_to (Sounding& sounding) const;
@@ -1866,7 +1866,7 @@ namespace denise
          Ttxx_Sounding (const Integer wmo_id,
                         const Integer yygg);
 
-         const wstring
+         const Dstring
          get_key () const;
 
    };
@@ -1949,12 +1949,12 @@ namespace denise
 
       public:
 
-         Thermo_Exception (const wstring& description = L"");
+         Thermo_Exception (const Dstring& description = "");
 
    };
 
-   wostream&
-   operator << (wostream &out,
+   ostream&
+   operator << (ostream &out,
                 const Thermo_Point& thermo_point);
 
 }

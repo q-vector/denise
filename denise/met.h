@@ -132,7 +132,7 @@ namespace denise
    ///
    /// \param tc_category_string character string
    Tc_Category
-   get_tc_category (const string& tc_category_string);
+   get_tc_category (const Dstring& tc_category_string);
 
    /// Returns maximal intensity of a Tc_Category
    ///
@@ -149,7 +149,7 @@ namespace denise
    /// Returns a string representation of a Tc_Category
    ///
    /// \param tc_category TC Category
-   string
+   Dstring
    get_tc_category_string (const Tc_Category tc_category);
 
    class Tc_Symbol : public Symbol
@@ -296,9 +296,9 @@ namespace denise
          get_direction () const;
 
          /// Returns string_representation of direction of Wind
-         wstring
+         Dstring
          get_direction_string (const Integer n = 16,
-                               const wstring& format = L"") const;
+                               const Dstring& format = "") const;
 
          /// Returns speed of Wind
          Real
@@ -307,14 +307,14 @@ namespace denise
          bool
          is_naw () const;
 
-         wstring
+         Dstring
          get_string (const Real speed_multiplier = 3.6/1.852,
-                     const wstring& format = L"%03.0f/%02.0f") const;
+                     const Dstring& format = "%03.0f/%02.0f") const;
 
          static Category
          get_category (const Real speed);
 
-         static string
+         static Dstring
          get_category_string (const Category category);
 
          Wind
@@ -417,11 +417,11 @@ namespace denise
          Real
          value;
 
-         wstring
+         Dstring
          label_str;
 
          Wind_Rose_Threshold (const Real threshold = GSL_NAN,
-                              const wstring& label_str = L"");
+                              const Dstring& label_str = "");
 
    };
 
@@ -438,7 +438,7 @@ namespace denise
 
          Wind_Rose_Record (const Real threshold,
                            const Real percentage,
-                           const wstring& label_str = L"");
+                           const Dstring& label_str = "");
 
          Wind_Rose_Record (const Wind_Rose_Threshold& threshold,
                            const Real percentage);
@@ -468,7 +468,7 @@ namespace denise
 
       protected:
 
-         wstring
+         Dstring
          unit_string;
 
          Real
@@ -495,27 +495,27 @@ namespace denise
          void
          init (const Integer number_of_directions,
                const vector<Wind_Rose_Threshold>& threshold_vector,
-               const wstring& unit_string,
+               const Dstring& unit_string,
                const Real multiplier);
 
          void
          init (const Integer number_of_directions,
                const Tuple& threshold_tuple,
-               const wstring& unit_string,
+               const Dstring& unit_string,
                const Real multiplier);
 
          void
-         init (const wstring& unit_string,
+         init (const Dstring& unit_string,
                const Real multiplier);
 
          static Real
-         get_multiplier (const wstring& unit_string);
+         get_multiplier (const Dstring& unit_string);
 
       public:
 
          Wind_Rose (const Integer number_of_directions,
                     const vector<Wind_Rose_Threshold>& threshold_vector,
-                    const wstring& unit_string = L"kt",
+                    const Dstring& unit_string = "kt",
                     const Real multiplier = GSL_NAN);
 
          /// Constructor
@@ -524,7 +524,7 @@ namespace denise
          /// \param threshold_vector     vector holding speed thresholds
          Wind_Rose (const Integer number_of_directions,
                     const Tuple& threshold_tuple,
-                    const wstring& unit_string = L"kt",
+                    const Dstring& unit_string = "kt",
                     const Real multiplier = GSL_NAN);
 
          /// Constructor
@@ -532,8 +532,8 @@ namespace denise
          /// \param number_of_directions    number_of_directions of wind_rose
          /// \param threshold_vector_string string representing threshold vector
          Wind_Rose (const Integer number_of_directions,
-                    const wstring& threshold_vector_string,
-                    const wstring& unit_string = L"kt",
+                    const Dstring& threshold_vector_string,
+                    const Dstring& unit_string = "kt",
                     const Real multiplier = GSL_NAN);
 
          ~Wind_Rose ();
@@ -817,7 +817,7 @@ namespace denise
                     const Real scatter_ring_size = 10,
                     const Real calm_radius = 40,
                     const Real label_height = 24,
-                    const wstring& unit_string = L"kt",
+                    const Dstring& unit_string = "kt",
                     const Real multiplier = GSL_NAN);
 
          ~Wind_Disc ();
@@ -1073,7 +1073,7 @@ namespace denise
 
          Level (const Level& level);
 
-         Level (const string& str);
+         Level (const Dstring& str);
 
          Level (const Level::Type type,
                 const Real value = GSL_NAN);
@@ -1154,7 +1154,7 @@ namespace denise
          Real
          get_value () const;
 
-         wstring
+         Dstring
          get_string () const;
 
          Level

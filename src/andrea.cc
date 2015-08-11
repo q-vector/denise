@@ -36,15 +36,15 @@ Real
 Entity::value () const
 {
 
-   const bool addition = Reg_Exp::match (*this, L"\\+");
-   const bool subtraction = Reg_Exp::match (*this, L"\\-");
-   const bool multiplication = Reg_Exp::match (*this, L"\\*");
-   const bool division = Reg_Exp::match (*this, L"\\/");
-   const bool power = Reg_Exp::match (*this, L"\\^");
+   const bool addition = Reg_Exp::match (*this, "\\+");
+   const bool subtraction = Reg_Exp::match (*this, "\\-");
+   const bool multiplication = Reg_Exp::match (*this, "\\*");
+   const bool division = Reg_Exp::match (*this, "\\/");
+   const bool power = Reg_Exp::match (*this, "\\^");
 
    if (addition)
    {
-      const Tokens tokens (*this, L"+");
+      const Tokens tokens (*this, "+");
       Real value = 0;
       for (auto iterator = tokens.begin ();
            iterator != tokens.end (); iterator++)
@@ -57,7 +57,7 @@ Entity::value () const
    else
    if (subtraction)
    {
-      const Tokens tokens (*this, L"-");
+      const Tokens tokens (*this, "-");
       Real value = 0;
       for (auto iterator = tokens.begin ();
            iterator != tokens.end (); iterator++)
@@ -70,7 +70,7 @@ Entity::value () const
    else
    if (multiplication)
    {
-      const Tokens tokens (*this, L"*");
+      const Tokens tokens (*this, "*");
       Real value = 1;
       for (auto iterator = tokens.begin ();
            iterator != tokens.end (); iterator++)
@@ -83,7 +83,7 @@ Entity::value () const
    else
    if (division)
    {
-      const Tokens tokens (*this, L"/");
+      const Tokens tokens (*this, "/");
       Real value = 1;
       for (auto iterator = tokens.begin ();
            iterator != tokens.end (); iterator++)
@@ -96,7 +96,7 @@ Entity::value () const
    else
    if (power)
    {
-      const Integer i = this->find (L"^");
+      const Integer i = this->find ("^");
       const Entity entity_a (this->substr (0, i));
       const Entity entity_b (this->substr (i + 1));
       return pow (entity_a.value (), entity_b.value ());
@@ -111,21 +111,21 @@ Andrea::wind_shear (const Tokens& arguments) const
 {
 
    const Integer n = arguments.size ();
-   if (n != 2) { throw Exception (L"wind_shear"); }
+   if (n != 2) { throw Exception ("wind_shear"); }
 
-   const Tokens tokens_a (arguments[0], L":");
+   const Tokens tokens_a (arguments[0], ":");
    const Integer n_a = tokens_a.size ();
-   if (n_a < 1 || n_a > 2 ) { throw Exception (L"wind_shear"); }
+   if (n_a < 1 || n_a > 2 ) { throw Exception ("wind_shear"); }
    const bool a_with_height = (n_a == 2);
-   const Tokens wind_tokens_a (tokens_a[a_with_height ? 1 : 0], L"/");
-   if (wind_tokens_a.size () != 2) { throw Exception (L"wind_shear"); }
+   const Tokens wind_tokens_a (tokens_a[a_with_height ? 1 : 0], "/");
+   if (wind_tokens_a.size () != 2) { throw Exception ("wind_shear"); }
 
-   const Tokens tokens_b (arguments[1], L":");
+   const Tokens tokens_b (arguments[1], ":");
    const Integer n_b = tokens_b.size ();
-   if (n_b < 1 || n_b > 2 ) { throw Exception (L"wind_shear"); }
+   if (n_b < 1 || n_b > 2 ) { throw Exception ("wind_shear"); }
    const bool b_with_height = (n_b == 2);
-   const Tokens wind_tokens_b (tokens_b[b_with_height ? 1 : 0], L"/");
-   if (wind_tokens_b.size () != 2) { throw Exception (L"wind_shear"); }
+   const Tokens wind_tokens_b (tokens_b[b_with_height ? 1 : 0], "/");
+   if (wind_tokens_b.size () != 2) { throw Exception ("wind_shear"); }
 
    const Real height_a    = a_with_height ? stof (tokens_a[0]) : GSL_NAN;
    const Real direction_a = stof (wind_tokens_a[0]);
@@ -147,7 +147,7 @@ Andrea::wind_shear (const Tokens& arguments) const
    const Real shear_direction = shear.get_direction ();
    const Real shear_speed = shear.get_speed () / (per_height ? d_height : 1);
 
-   wcout << shear_direction << L"/" << shear_speed << endl;
+   cout << shear_direction << "/" << shear_speed << endl;
 
 }
 
@@ -173,73 +173,73 @@ void
 Andrea::parse (const Tokens& tokens)
 {
 
-   const Dstring& action = get_lower_case (tokens[0]);
+   const Dstring& action = tokens[0].get_lower_case ();
 
-   if (action == L"surface")
+   if (action == "surface")
    {
       surface_parse (tokens.subtokens (1));
       return;
    }
    else
-   if (action == L"journey")
+   if (action == "journey")
    {
       journey_parse (tokens.subtokens (1));
       return;
    }
    else
-   if (action == L"geodesy")
+   if (action == "geodesy")
    {
       geodesy_parse (tokens.subtokens (1));
       return;
    }
    else
-   if (action == L"sounding")
+   if (action == "sounding")
    {
       sounding_parse (tokens.subtokens (1));
       return;
    }
    else
-   if (action == L"geodetic_mesh")
+   if (action == "geodetic_mesh")
    {
       geodetic_mesh_parse (tokens.subtokens (1));
       return;
    }
    else
-   if (action == L"geodetic_transform")
+   if (action == "geodetic_transform")
    {
       geodetic_transform_parse (tokens.subtokens (1));
       return;
    }
    else
-   if (action == L"gshhs")
+   if (action == "gshhs")
    {
       gshhs_parse (tokens.subtokens (1));
       return;
    }
    else
-   if (action == L"shear" ||
-       action == L"wind_shear")
+   if (action == "shear" ||
+       action == "wind_shear")
    {
       wind_shear (tokens.subtokens (1));
       return;
    }
    else
-   if (action == L"print")
+   if (action == "print")
    {
       print (tokens[1]);
       return;
    }
    else
-   if (action == L"set")
+   if (action == "set")
    {
-      if (get_lower_case (tokens[1]) == L"prompt")
+      if (tokens[1].get_lower_case () == "prompt")
       {
         prompt = tokens[2];
       }
       return;
    }
 
-   throw Exception (L"Unknown action: " + action);
+   throw Exception ("Unknown action: " + action);
 
 }
 
@@ -255,7 +255,7 @@ Andrea::loop ()
       line = readline (prompt.get_string ().c_str ());
       if (!line) { break; }
 
-      Dstring input_line = get_trimmed (Dstring (line));
+      Dstring input_line = Dstring (line).get_trimmed ();
       if (input_line[0] == '#') { continue; }
 
       try
@@ -267,7 +267,7 @@ Andrea::loop ()
 
          // This has to come second after apply_variables
          //    to allow for recursive variable declarations
-         const Tokens assign_tokens (input_line, L"= ");
+         const Tokens assign_tokens (input_line, "= ");
          if (assign_tokens.size () == 2)
          {
             const Dstring& variable = assign_tokens[0].get_trimmed ();
@@ -279,7 +279,6 @@ Andrea::loop ()
          const Tokens tokens (input_line);
          if (tokens.size () == 0) { continue; }
 
-wcout << tokens << endl;
          parse (tokens);
 
       }
@@ -289,8 +288,8 @@ wcout << tokens << endl;
       }
       catch (const std::out_of_range& oor)
       {
-         wcerr << L"andrea: out_of_range " << oor.what () <<
-            L" " << line << endl;
+         wcerr << "andrea: out_of_range " << oor.what () <<
+            " " << line << endl;
       }
 
       add_history (line);

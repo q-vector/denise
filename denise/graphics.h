@@ -41,8 +41,8 @@ namespace denise
 
    RefPtr<Surface>
    get_surface (const Size_2D& size_2d,
-                const Dstring& format = L"png",
-                const Dstring& file_path = L"/dev/null");
+                const Dstring& format = "png",
+                const Dstring& file_path = "/dev/null");
 
    RefPtr<ImageSurface>
    get_image_surface (const Size_2D& size_2d);
@@ -56,7 +56,7 @@ namespace denise
       public:
 
          Dashes (const Dstring& str,
-                 const Dstring& delimiter = L":");
+                 const Dstring& delimiter = ":");
 
          Dashes (const Tuple& tuple);
 
@@ -458,7 +458,7 @@ namespace denise
                             const Dstring& str_r,
                             const Dstring& str_g,
                             const Dstring& str_b,
-                            const Dstring& str_a = L"1",
+                            const Dstring& str_a = "1",
                             const Color& invalid_color = transparent);
 
          Color
@@ -494,10 +494,10 @@ namespace denise
 
          Hsb_Color_Chooser (const Real start_value,
                             const Real end_value,
-                            const Dstring& hue_str = L"0",
-                            const Dstring& saturation_str = L"1",
-                            const Dstring& brightness_str = L"1",
-                            const Dstring& alpha_str = L"1",
+                            const Dstring& hue_str = "0",
+                            const Dstring& saturation_str = "1",
+                            const Dstring& brightness_str = "1",
+                            const Dstring& alpha_str = "1",
                             const Color& invalid_color = transparent);
 
    };

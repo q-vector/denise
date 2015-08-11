@@ -129,8 +129,8 @@ namespace denise
                 const Geodetic_Transform& transform,
                 const Real intensity = 1.0) const;
 
-         wostream&
-         operator << (wostream& out_file) const;
+         ostream&
+         operator << (ostream& out_file) const;
 
    };
 

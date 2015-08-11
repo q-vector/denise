@@ -200,7 +200,7 @@ Intensity_Data::set (const Real intensity,
 
    if (ii < 0 || ii >= size_2d.i || jj < 0 || jj >= size_2d.j)
    {
-      throw Out_Of_Bounds_Exception (L"Out Of Bounds");
+      throw Out_Of_Bounds_Exception ("Out Of Bounds");
    }
 
    set_raw (intensity, ii,  jj);

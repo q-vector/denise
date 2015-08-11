@@ -879,7 +879,7 @@ namespace denise
          Dbutton (const Dcanvas& canvas,
                   const Dstring& str,
                   const Real font_size,
-                  const Dstring& separator = L"\t\n");
+                  const Dstring& separator = "\t\n");
 
          Dbutton (const Dcanvas& canvas,
                   const Symbol& symbol);
@@ -1052,7 +1052,7 @@ namespace denise
          Spin_Button (const Dcanvas& canvas,
                       const bool instant_update,
                       const Real font_size,
-                      const Dstring& separator = L"\t\n");
+                      const Dstring& separator = "\t\n");
 
          Dstring
          get_official_str () const;
@@ -1864,7 +1864,7 @@ namespace denise
          render_month_lines (const RefPtr<Context>& cr,
                                    const Integer year,
                                    const Integer month,
-                                   const Dstring& format = L"") const;
+                                   const Dstring& format = "") const;
 
          void
          render_background_days (const RefPtr<Context>& cr);
@@ -1875,7 +1875,7 @@ namespace denise
          void
          render_lines (const RefPtr<Context>& cr,
                        const Real hours,
-                       const Dstring& format = L"") const;
+                       const Dstring& format = "") const;
 
          void
          render_nodes (const RefPtr<Context>& cr) const;

@@ -62,7 +62,7 @@ Gshhs_Package::gshhs_print (const Dstring& identifier,
    const bool is_present = (iterator != gshhs_ptr_map.end ());
    if (is_present)
    {
-      wcout << L"gshhs " << identifier << L" is present" << endl;
+      cout << "gshhs " << identifier << " is present" << endl;
    }
 }
 
@@ -72,14 +72,14 @@ Gshhs_Package::gshhs_parse (const Tokens& tokens)
 
    const Integer n = tokens.size ();
 
-   if (tokens[0] == L"load")
+   if (tokens[0] == "load")
    {
       const Dstring& identifier = tokens[1];
       const Dstring& file_path = tokens[2];
       gshhs_load (identifier, file_path);
    }
    else
-   if (tokens[0] == L"print")
+   if (tokens[0] == "print")
    {
       const Dstring& identifier = tokens[1];
       gshhs_print (identifier, tokens.subtokens (2));
@@ -96,7 +96,7 @@ Gshhs_Package::get_gshhs_ptr_map () const
 const Gshhs*
 Gshhs_Package::get_gshhs_ptr (const Dstring& identifier) const
 {
-   Exception e (L"gshhs not found: " + identifier);
+   Exception e ("gshhs not found: " + identifier);
    try { return gshhs_ptr_map.at (identifier); }
    catch (const std::out_of_range& oor) { throw e; }
 }
@@ -123,12 +123,12 @@ Gshhs_Package::surface_gshhs (const Dstring& surface_identifier,
    for (auto iterator = arguments.begin ();
         iterator != arguments.end (); iterator++)
    {
-      const Tokens tokens (iterator->get_lower_case (), L"=");
+      const Tokens tokens (iterator->get_lower_case (), "=");
       const Dstring& option = tokens[0];
       const Dstring& value = tokens[1];
-      if (option == L"fill")
+      if (option == "fill")
       {
-         is_fill = (value == L"yes" || value == L"y" || value == L"true");
+         is_fill = (value == "yes" || value == "y" || value == "true");
       }
    }
 

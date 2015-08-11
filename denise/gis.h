@@ -302,7 +302,7 @@ namespace denise
 
       public:
 
-         Blue_Marble_Exception (const Dstring& description = L"");
+         Blue_Marble_Exception (const Dstring& description = "");
 
    };
 
@@ -381,7 +381,7 @@ namespace denise
 
       public:
 
-         Gtopo30_Exception (const Dstring& description = L"");
+         Gtopo30_Exception (const Dstring& description = "");
 
    };
 
@@ -619,7 +619,7 @@ namespace denise
 
       public:
 
-         Nsd_Exception (const Dstring& description = L"");
+         Nsd_Exception (const Dstring& description = "");
 
    };
 

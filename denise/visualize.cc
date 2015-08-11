@@ -1547,7 +1547,7 @@ Contour::trace_isoline (Isoline& isoline,
 Polygon*
 Contour::render_label (const RefPtr<Context>& cr,
                        const Transform_2D& transform,
-                       const wstring& format,
+                       const Dstring& format,
                        const Real label_multiplier,
                        const Real label_offset,
                        const Real label_distance,
@@ -1605,11 +1605,10 @@ Contour::render_label (const RefPtr<Context>& cr,
 
                   if (gsl_isnan (theta)) { continue; }
                 
-                  if (format != L"")
+                  if (format != "")
                   {
 
-                     const string fmt (format.begin (), format.end ());
-                     const wstring str = string_render (fmt.c_str (), cl);
+                     const Dstring str = Dstring::render (format, cl);
                      Label label (str, this_p, 'c', 'c');
                      label.set_text_angle (theta);
                      label.cairo (cr);
@@ -2759,7 +2758,7 @@ void
 Contour::render_isoline (const RefPtr<Context>& cr,
                          const Transform_2D& transform,
                          const Integer level_index,
-                         const wstring& format,
+                         const Dstring& format,
                          const Real label_multiplier,
                          const Real label_offset,
                          const Real label_distance,
@@ -2820,7 +2819,7 @@ Contour::render_isoline (const RefPtr<Context>& cr,
 void
 Contour::render_isolines (const RefPtr<Context>& cr,
                           const Transform_2D& transform,
-                          const wstring& format,
+                          const Dstring& format,
                           const Real label_multiplier,
                           const Real label_offset,
                           const Real label_distance,

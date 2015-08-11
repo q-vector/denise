@@ -39,7 +39,7 @@ using namespace std;
 namespace denise
 {
 
-   class Dstring : public wstring
+   class Dstring : public string
    {
 
       public:
@@ -47,10 +47,6 @@ namespace denise
          Dstring ();
 
          Dstring (const Dstring& dstring);
-
-         Dstring (const wstring& wstr);
-
-         Dstring (const wchar_t* buffer);
 
          Dstring (const string& str);
 
@@ -72,13 +68,13 @@ namespace denise
          chop ();
 
          void
-         trim (const Dstring& white_string = L" \f\n\t");
+         trim (const Dstring& white_string = " \f\n\t");
 
          void
-         left_trim (const Dstring& white_string = L" \f\n\t");
+         left_trim (const Dstring& white_string = " \f\n\t");
 
          void
-         right_trim (const Dstring& white_string = L" \f\n\t");
+         right_trim (const Dstring& white_string = " \f\n\t");
 
          Dstring
          get_lower_case () const;
@@ -90,16 +86,19 @@ namespace denise
          get_captial_case () const;
 
          Dstring
-         get_trimmed (const Dstring& white_string = L" \f\n\t") const;
+         get_trimmed (const Dstring& white_string = " \f\n\t") const;
 
          Dstring
-         get_left_trimmed (const Dstring& white_string = L" \f\n\t") const;
+         get_left_trimmed (const Dstring& white_string = " \f\n\t") const;
 
          Dstring
-         get_right_trimmed (const Dstring& white_string = L" \f\n\t") const;
+         get_right_trimmed (const Dstring& white_string = " \f\n\t") const;
 
          Dstring
          get_file_extension () const;
+
+         static Dstring
+         render (const char* format, ...);
 
          static Dstring
          render (const Dstring& format, ...);
@@ -193,69 +192,8 @@ namespace denise
 
    };
 
-   /// Converts the given string into lower case.
-   void
-   to_lower_case (wstring& s);
-
-   wstring
-   get_lower_case (const wstring& s);
-
-   /// Converts the given string into upper case.
-   void
-   to_upper_case (wstring& s);
-
-   wstring
-   get_upper_case (const wstring& s);
-
-   /// Converts the given string into capital case.
-   void
-   to_capital_case (wstring& s);
-
-   wstring
-   get_captial_case (const wstring& s);
-
-   /// Chops the last character off the string.
-   void
-   chop (wstring& s);
-
-   /// Trims white spaces
-   void
-   trim (wstring& s,
-         const wstring& white_string = wstring (L" \f\n\t"));
-
-   /// Trims left white spaces
-   void
-   left_trim (wstring& s,
-              const wstring& white_string = wstring (L" \f\n\t"));
-
-   /// Trims right white spaces
-   void
-   right_trim (wstring& s,
-               const wstring& white_string = wstring (L" \f\n\t"));
-
-   wstring
-   get_trimmed (const wstring s,
-                const wstring& white_string = wstring (L" \f\n\t"));
-
-   wstring
-   get_left_trimmed (const wstring s, 
-                     const wstring& white_string = wstring (L" \f\n\t"));
-
-   wstring
-   get_right_trimmed (const wstring s,
-                      const wstring& white_string = wstring (L" \f\n\t"));
-
-   /// Returns file extension
-   wstring
-   get_file_extension (const wstring& file_path);
-
-   /// Returns a rendered std::string similar to output of printf
-   wstring
-   string_render (const char* format,
-                  ...);
-
-   wostream&
-   operator << (wostream &out_file,
+   ostream&
+   operator << (ostream &out_file,
                 const Tokens& tokens);
 
 }

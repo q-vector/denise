@@ -618,7 +618,7 @@ namespace denise
          Polygon*
          render_label (const RefPtr<Context>& cr,
                        const Transform_2D& transform,
-                       const wstring& format,
+                       const Dstring& format,
                        const Real label_multiplier,
                        const Real label_offset,
                        const Real label_distance,
@@ -872,7 +872,7 @@ namespace denise
          render_isoline (const RefPtr<Context>& cr,
                          const Transform_2D& transform,
                          const Integer level_index,
-                         const wstring& format = L"",
+                         const Dstring& format = "",
                          const Real label_multiplier = GSL_NAN,
                          const Real label_offset = 0,
                          const Real label_distance = 40,
@@ -881,7 +881,7 @@ namespace denise
          void
          render_isolines (const RefPtr<Context>& cr,
                           const Transform_2D& transform,
-                          const wstring& format = L"",
+                          const Dstring& format = "",
                           const Real label_multiplier = GSL_NAN,
                           const Real label_offset = 0,
                           const Real label_distance = 40,

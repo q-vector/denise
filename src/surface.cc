@@ -41,14 +41,14 @@ Surface_Package::surface_init (const Dstring& identifier,
                                const Dstring& geometry)
 {
 
-   const Tokens geometry_tokens (geometry, L"x");
+   const Tokens geometry_tokens (geometry, "x");
    const Integer ww = stof (geometry_tokens[0]);
    const Integer hh = stof (geometry_tokens[1]);
    const Size_2D size_2d (ww, hh);
 
-   const Tokens file_path_tokens (file_path, L".");
+   const Tokens file_path_tokens (file_path, ".");
    const Dstring& extension = file_path_tokens.back ();
-   const Dstring& e = get_lower_case (extension);
+   const Dstring& e = extension.get_lower_case ();
    const RefPtr<Surface> surface = denise::get_surface (size_2d, e, file_path);
    const RefPtr<Context> cr = denise::get_cr (surface);
 
@@ -72,7 +72,7 @@ Surface_Package::surface_show (const Dstring& identifier) const
    Display* d = XOpenDisplay (NULL);
    if (d == NULL)
    {
-      cerr << L"Cannot open display" << endl;
+      cerr << "Cannot open display" << endl;
       return;
    }
 
@@ -336,7 +336,7 @@ Surface_Package::surface_range_circle (const Dstring& surface_identifier,
       andrea.get_geodetic_transform_ptr (geodetic_transform_identifier, centre);
    const Geodetic_Transform& geodetic_transform = *geodetic_transform_ptr;
 
-wcout << distance << L" " << lat_long << endl;
+cout << distance << " " << lat_long << endl;
    Range_Circle range_circle (lat_long, distance);
    range_circle.cairo (cr, geodetic_transform);
    cr->fill ();
@@ -351,7 +351,7 @@ Surface_Package::surface_parse (const Tokens& tokens)
 
    const Integer n = tokens.size ();
 
-   if (tokens[0] == L"init")
+   if (tokens[0] == "init")
    {
       const Dstring& identifier = tokens[1];
       const Dstring& file_path = tokens[2];
@@ -359,144 +359,144 @@ Surface_Package::surface_parse (const Tokens& tokens)
       surface_init (identifier, file_path, geometry);
    }
    else
-   if (tokens[0] == L"show")
+   if (tokens[0] == "show")
    {
       const Dstring& identifier = tokens[1];
       surface_show (identifier);
    }
    else
-   if (tokens[0] == L"finish")
+   if (tokens[0] == "finish")
    {
       const Dstring& identifier = tokens[1];
       surface_finish (identifier);
    }
    else
-   if (tokens[0] == L"write")
+   if (tokens[0] == "write")
    {
       const Dstring& identifier = tokens[1];
       const Dstring& file_path = tokens[2];
       surface_write (identifier, file_path);
    }
    else
-   if (tokens[0] == L"save")
+   if (tokens[0] == "save")
    {
       const Dstring& identifier = tokens[1];
       surface_save (identifier);
    }
    else
-   if (tokens[0] == L"restore")
+   if (tokens[0] == "restore")
    {
       const Dstring& identifier = tokens[1];
       surface_restore (identifier);
    }
    else
-   if (tokens[0] == L"stroke")
+   if (tokens[0] == "stroke")
    {
       const Dstring& identifier = tokens[1];
       surface_stroke (identifier);
    }
    else
-   if (tokens[0] == L"stroke_preserve")
+   if (tokens[0] == "stroke_preserve")
    {
       const Dstring& identifier = tokens[1];
       surface_stroke_preserve (identifier);
    }
    else
-   if (tokens[0] == L"fill")
+   if (tokens[0] == "fill")
    {
       const Dstring& identifier = tokens[1];
       surface_fill (identifier);
    }
    else
-   if (tokens[0] == L"fill_preserve")
+   if (tokens[0] == "fill_preserve")
    {
       const Dstring& identifier = tokens[1];
       surface_fill_preserve (identifier);
    }
    else
-   if (tokens[0] == L"clip")
+   if (tokens[0] == "clip")
    {
       const Dstring& identifier = tokens[1];
       surface_clip (identifier);
    }
    else
-   if (tokens[0] == L"clip_preserve")
+   if (tokens[0] == "clip_preserve")
    {
       const Dstring& identifier = tokens[1];
       surface_clip_preserve (identifier);
    }
    else
-   if (tokens[0] == L"color")
+   if (tokens[0] == "color")
    {
       const Dstring& identifier = tokens[1];
       const Color& color (tokens[2]);
       surface_color (identifier, color);
    }
    else
-   if (tokens[0] == L"line_width")
+   if (tokens[0] == "line_width")
    {
       const Dstring& identifier = tokens[1];
       const Real line_width = stof (tokens[2]);
       surface_line_width (identifier, line_width);
    }
    else
-   if (tokens[0] == L"font_size")
+   if (tokens[0] == "font_size")
    {
       const Dstring& identifier = tokens[1];
       const Real font_size = stof (tokens[2]);
       surface_font_size (identifier, font_size);
    }
    else
-   if (tokens[0] == L"font_face")
+   if (tokens[0] == "font_face")
    {
       const Dstring& identifier = tokens[1];
       const Dstring& font_face = tokens[2];
       surface_font_face (identifier, font_face);
    }
    else
-   if (tokens[0] == L"paint")
+   if (tokens[0] == "paint")
    {
       const Dstring& identifier = tokens[1];
       surface_paint (identifier);
    }
    else
-   if (tokens[0] == L"title")
+   if (tokens[0] == "title")
    {
       const Dstring& surface_identifier = tokens[1];
       surface_title (surface_identifier, tokens.subtokens (2));
    }
    else
-   if (tokens[0] == L"paint")
+   if (tokens[0] == "paint")
    {
       const Dstring& surface_identifier = tokens[1];
       surface_paint (surface_identifier);
    }
    else
-   if (tokens[0] == L"edge")
+   if (tokens[0] == "edge")
    {
       const Dstring& surface_identifier = tokens[1];
       surface_edge (surface_identifier, tokens.subtokens (2));
    }
    else
-   if (tokens[0] == L"circle")
+   if (tokens[0] == "circle")
    {
       const Dstring& surface_identifier = tokens[1];
       surface_circle (surface_identifier, tokens.subtokens (2));
    }
    else
-   if (tokens[0] == L"ellipse")
+   if (tokens[0] == "ellipse")
    {
       const Dstring& surface_identifier = tokens[1];
       surface_ellipse (surface_identifier, tokens.subtokens (2));
    }
    else
-   if (tokens[0] == L"label")
+   if (tokens[0] == "label")
    {
       const Dstring& surface_identifier = tokens[1];
       surface_label (surface_identifier, tokens.subtokens (2));
    }
    else
-   if (tokens[0] == L"range_circle")
+   if (tokens[0] == "range_circle")
    {
       const Dstring& surface_identifier = tokens[1];
       const Dstring& geodetic_transform_identifier = tokens[2];
@@ -506,12 +506,12 @@ Surface_Package::surface_parse (const Tokens& tokens)
          geodetic_transform_identifier, lat_long, distance);
    }
    else
-   if (tokens[0] == L"sounding")
+   if (tokens[0] == "sounding")
    {
       andrea.surface_sounding (tokens.subtokens (1));
    }
    else
-   if (tokens[0] == L"journey")
+   if (tokens[0] == "journey")
    {
       const Dstring& surface_identifier = tokens[1];
       const Dstring& geodetic_transform_identifier = tokens[2];
@@ -520,7 +520,7 @@ Surface_Package::surface_parse (const Tokens& tokens)
          geodetic_transform_identifier, journey_identifier);
    }
    else
-   if (tokens[0] == L"geodetic_mesh")
+   if (tokens[0] == "geodetic_mesh")
    {
       const Dstring& surface_identifier = tokens[1];
       const Dstring& geodetic_transform_identifier = tokens[2];
@@ -529,7 +529,7 @@ Surface_Package::surface_parse (const Tokens& tokens)
          geodetic_transform_identifier, geodetic_mesh_identifier);
    }
    else
-   if (tokens[0] == L"gshhs")
+   if (tokens[0] == "gshhs")
    {
       const Dstring& surface_identifier = tokens[1];
       const Dstring& geodetic_transform_identifier = tokens[2];
@@ -568,7 +568,7 @@ Surface_Package::get_cr_map () const
 const RefPtr<Surface>&
 Surface_Package::get_surface (const Dstring& identifier) const
 {
-   Exception e (L"surface not found: " + identifier);
+   Exception e ("surface not found: " + identifier);
    try { return surface_map.at (identifier); }
    catch (const std::out_of_range& oor) { throw e; }
 }
@@ -576,7 +576,7 @@ Surface_Package::get_surface (const Dstring& identifier) const
 const Size_2D&
 Surface_Package::get_size_2d (const Dstring& identifier) const
 {
-   Exception e (L"surface not found: " + identifier);
+   Exception e ("surface not found: " + identifier);
    try { return size_2d_map.at (identifier); }
    catch (const std::out_of_range& oor) { throw e; }
 }
@@ -584,7 +584,7 @@ Surface_Package::get_size_2d (const Dstring& identifier) const
 const Dstring&
 Surface_Package::get_extension (const Dstring& identifier) const
 {
-   Exception e (L"surface not found: " + identifier);
+   Exception e ("surface not found: " + identifier);
    try { return extension_map.at (identifier); }
    catch (const std::out_of_range& oor) { throw e; }
 }
@@ -592,7 +592,7 @@ Surface_Package::get_extension (const Dstring& identifier) const
 const RefPtr<Context>&
 Surface_Package::get_cr (const Dstring& identifier) const
 {
-   Exception e (L"surface not found: " + identifier);
+   Exception e ("surface not found: " + identifier);
    try { return cr_map.at (identifier); }
    catch (const std::out_of_range& oor) { throw e; }
 }

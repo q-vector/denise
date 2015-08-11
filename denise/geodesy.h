@@ -283,7 +283,7 @@ namespace denise
 
          Dstring
          get_string (const bool with_parenthesis = false,
-                     const Dstring& number_format = L"-%f") const;
+                     const Dstring& number_format = "-%f") const;
 
          bool
          operator == (const Lat_Long& lat_long) const;
@@ -627,7 +627,7 @@ namespace denise
 
       public:
 
-         virtual pair<string, Lat_Long>
+         virtual pair<Dstring, Lat_Long>
          nearest (const Lat_Long& lat_long) const = 0;
 
    };
@@ -650,7 +650,7 @@ namespace denise
          const Integer
          get_n ();
 
-         virtual pair<string, Lat_Long>
+         virtual pair<Dstring, Lat_Long>
          nearest (const Lat_Long& lat_long) const;
 
    };
@@ -1585,8 +1585,8 @@ namespace denise
 
    };
 
-   wostream&
-   operator << (wostream &out,
+   ostream&
+   operator << (ostream &out,
                 const Lat_Long& lat_long);
 
 }

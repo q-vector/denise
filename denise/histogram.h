@@ -134,8 +134,8 @@ namespace denise
          render (const RefPtr<Context> cr,
                  const Transform_2D& transform,
                  const Domain_1D& domain_y,
-                 const wstring& bin_fmt,
-                 const wstring& value_format,
+                 const Dstring& bin_fmt,
+                 const Dstring& value_format,
                  const Color& color,
                  const Color& value_color,
                  const Color& baseline_color) const;
@@ -208,7 +208,7 @@ namespace denise
          render (const RefPtr<Context> cr,
                  const Transform_2D& transform,
                  const Color_Chooser& color_chooser,
-                 const wstring& format,
+                 const Dstring& format,
                  const Color& fg_color,
                  const Color& box_border_color) const;
 

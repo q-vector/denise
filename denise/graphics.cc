@@ -51,24 +51,24 @@ namespace denise
       const Integer ww = size_2d.i;
       const Integer hh = size_2d.j;
 
-      if (f == L"pdf")
+      if (f == "pdf")
       {
          return Cairo::PdfSurface::create (fp, ww, hh);
       }
       else
-      if (f == L"svg")
+      if (f == "svg")
       {
          return Cairo::SvgSurface::create (fp, ww, hh);
       }
       else
-      if (f == L"ps")
+      if (f == "ps")
       {
          auto surface = Cairo::PsSurface::create (fp, ww, hh);
          surface->set_eps (false);
          return surface;
       }
       else
-      if (f == L"eps")
+      if (f == "eps")
       {
          auto surface = Cairo::PsSurface::create (fp, ww, hh);
          surface->set_eps (true);
@@ -148,65 +148,65 @@ Color::Color (const Real r,
 Color::Color (const Dstring& str)
 {
 
-   const Tokens tokens (str.get_lower_case (), L":");
+   const Tokens tokens (str.get_lower_case (), ":");
    const Integer n = tokens.size ();
 
-   if (tokens[0] == L"black")
+   if (tokens[0] == "black")
    {
       const Real a = (n > 1 ? stof (tokens[1]) : 1.0);
       set (Color::black (a));
    }
    else
-   if (tokens[0] == L"white")
+   if (tokens[0] == "white")
    {
       const Real a = (n > 1 ? stof (tokens[1]) : 1.0);
       set (Color::white (a));
    }
    else
-   if (tokens[0] == L"gray")
+   if (tokens[0] == "gray")
    {
       const Real b = (n > 1 ? stof (tokens[1]) : 0.5);
       const Real a = (n > 2 ? stof (tokens[2]) : 1.0);
       set (Color::gray (b, a));
    }
    else
-   if (tokens[0] == L"red")
+   if (tokens[0] == "red")
    {
       const Real a = (n > 1 ? stof (tokens[1]) : 1.0);
       set (Color::red (a));
    }
    else
-   if (tokens[0] == L"green")
+   if (tokens[0] == "green")
    {
       const Real a = (n > 1 ? stof (tokens[1]) : 1.0);
       set (Color::green (a));
    }
    else
-   if (tokens[0] == L"blue")
+   if (tokens[0] == "blue")
    {
       const Real a = (n > 1 ? stof (tokens[1]) : 1.0);
       set (Color::blue (a));
    }
    else
-   if (tokens[0] == L"cyan")
+   if (tokens[0] == "cyan")
    {
       const Real a = (n > 1 ? stof (tokens[1]) : 1.0);
       set (Color::cyan (a));
    }
    else
-   if (tokens[0] == L"yellow")
+   if (tokens[0] == "yellow")
    {
       const Real a = (n > 1 ? stof (tokens[1]) : 1.0);
       set (Color::yellow (a));
    }
    else
-   if (tokens[0] == L"magenta")
+   if (tokens[0] == "magenta")
    {
       const Real a = (n > 1 ? stof (tokens[1]) : 1.0);
       set (Color::magenta (a));
    }
    else
-   if (tokens[0] == L"rgb")
+   if (tokens[0] == "rgb")
    {
       const Real r = stof (tokens[1]);
       const Real g = stof (tokens[2]);
@@ -215,7 +215,7 @@ Color::Color (const Dstring& str)
       set (r, g, b, a);
    }
    else
-   if (tokens[0] == L"hsb")
+   if (tokens[0] == "hsb")
    {
       const Real h = stof (tokens[1]);
       const Real s = stof (tokens[2]);
@@ -664,7 +664,7 @@ Rgb_Color_Chooser::Component::Component (const Rgb_Color_Chooser& rcc,
    : rgb_color_chooser (rcc)
 {
 
-   const Tokens tokens (config_str, L":");
+   const Tokens tokens (config_str, ":");
    const Integer n = tokens.size ();
 
    start_fraction = tokens.real (0);
@@ -802,8 +802,8 @@ Hue_Color_Chooser::Hue_Color_Chooser (const Real start_value,
                                       const Dstring& hue_str,
                                       const Real alpha,
                                       const Color& invalid_color)
-   : Hsb_Color_Chooser (start_value, end_value, hue_str, L"1",
-        L"1", string_render ("%f", alpha), invalid_color)
+   : Hsb_Color_Chooser (start_value, end_value, hue_str, "1",
+        "1", Dstring::render ("%f", alpha), invalid_color)
 {
 }
 
@@ -815,10 +815,10 @@ Hue_Color_Chooser::Hue_Color_Chooser (const Real start_value,
                                       const Real gamma,
                                       const Color& invalid_color)
    : Hsb_Color_Chooser (start_value, end_value,
-        string_render ("0:0.8333:%f", gamma),
-        string_render ("%f", saturation),
-        string_render ("%f", brightness),
-        string_render ("%f", alpha),
+        Dstring::render ("0:0.8333:%f", gamma),
+        Dstring::render ("%f", saturation),
+        Dstring::render ("%f", brightness),
+        Dstring::render ("%f", alpha),
         invalid_color)
 {
 }
@@ -833,10 +833,10 @@ Hue_Color_Chooser::Hue_Color_Chooser (const Real start_value,
                                       const Real gamma,
                                       const Color& invalid_color)
    : Hsb_Color_Chooser (start_value, end_value,
-        string_render ("%f:%f:%f", start_hue, end_hue, gamma),
-        string_render ("%f", saturation),
-        string_render ("%f", brightness),
-        string_render ("%f", alpha),
+        Dstring::render ("%f:%f:%f", start_hue, end_hue, gamma),
+        Dstring::render ("%f", saturation),
+        Dstring::render ("%f", brightness),
+        Dstring::render ("%f", alpha),
         invalid_color)
 {
 }
@@ -845,8 +845,8 @@ Gray_Color_Chooser::Gray_Color_Chooser (const Real start_value,
                                         const Real end_value,
                                         const Dstring& brightness_str,
                                         const Color& invalid_color)
-   : Hsb_Color_Chooser (start_value, end_value, L"0", L"0",
-        brightness_str, L"1", invalid_color)
+   : Hsb_Color_Chooser (start_value, end_value, "0", "0",
+        brightness_str, "1", invalid_color)
 {
 }
 
@@ -854,8 +854,8 @@ Gray_Color_Chooser::Gray_Color_Chooser (const Real start_value,
                                         const Real end_value,
                                         const Real gamma,
                                         const Color& invalid_color)
-   : Hsb_Color_Chooser (start_value, end_value, L"0", L"0",
-        string_render ("0:1:%f", gamma), L"1", invalid_color)
+   : Hsb_Color_Chooser (start_value, end_value, "0", "0",
+        Dstring::render ("0:1:%f", gamma), "1", invalid_color)
 {
 }
 
@@ -1261,8 +1261,7 @@ Label::get_string (const Real value,
 
       case Label::REAL:
       {
-         const string fmt (format.begin (), format.end ());
-         return string_render (fmt.c_str (), x);
+         return Dstring::render (format, x);
       }
 
       case Label::TIME:
@@ -1274,10 +1273,9 @@ Label::get_string (const Real value,
       {
          const bool small = fabs (x) < 0.0001;
          const bool positive = x > 0;
-         const Dstring ns = (small ? L"" : (positive ? L"N" : L"S"));
-         const Dstring& format_str = format + L"\u00b0" + ns;
-         const string fmt (format_str.begin (), format_str.end ());
-         return string_render (fmt.c_str (), fabs (x));
+         const Dstring ns = (small ? "" : (positive ? "N" : "S"));
+         const Dstring& format_str = format + "\u00b0" + ns;
+         return Dstring::render (format_str, fabs (x));
       }
 
       case Label::LONGITUDE:
@@ -1289,10 +1287,9 @@ Label::get_string (const Real value,
          const bool dateline = fabs (longitude - 180) < 0.0001;
          const bool positive = longitude > 0;
          const bool no_ew = (small || dateline);
-         const Dstring ew = (no_ew ? L"" : (positive ? L"E" : L"W"));
-         const Dstring& format_str = format + L"\u00b0" + ew;
-         const string fmt (format_str.begin (), format_str.end ());
-         return string_render (fmt.c_str (), fabs (longitude));
+         const Dstring ew = (no_ew ? "" : (positive ? "E" : "W"));
+         const Dstring& format_str = format + "\u00b0" + ew;
+         return Dstring::render (format_str, fabs (longitude));
       }
 
    }

@@ -28,29 +28,18 @@ Dstring::Dstring ()
 }
 
 Dstring::Dstring (const Dstring& dstring)
-   : wstring (dstring)
-{
-}
-
-Dstring::Dstring (const wstring& wstr)
-   : wstring (wstr)
-{
-}
-
-Dstring::Dstring (const wchar_t* buffer)
-   : wstring (buffer)
+   : string (dstring)
 {
 }
 
 Dstring::Dstring (const string& str)
-   : wstring (str.begin (), str.end ())
+   : string (str)
 {
 }
 
 Dstring::Dstring (const char* buffer)
+   : string (buffer)
 {
-   const string str (buffer);
-   this->assign (wstring (str.begin (), str.end ()));
 }
 
 string
@@ -80,7 +69,7 @@ Dstring::to_capital_case ()
    for (auto iterator = begin (); iterator != end (); iterator++)
    {
 
-      wchar_t& c = *(iterator);
+      char& c = *(iterator);
 
       if (!first_char) { c = ::tolower (c); }
       else { c = ::toupper (c), first_char = false; }
@@ -182,6 +171,25 @@ Dstring::get_file_extension () const
 }
 
 Dstring
+Dstring::render (const char* format, ...)
+{
+
+   va_list ap;
+
+   int n = strlen (format) * 5;
+   char* c_rendered = new char[n];
+
+   va_start (ap, format);
+   vsnprintf (c_rendered, n, format, ap);
+   va_end (ap);
+
+   const Dstring str (c_rendered);
+   delete[] c_rendered;
+   return str;
+
+}
+
+Dstring
 Dstring::render (const Dstring& format, ...)
 {
 
@@ -249,7 +257,7 @@ Reg_Exp::get_match (const Dstring& str,
    {
       if (!ignore_no_match)
       {
-         throw Exception (L"Reg_Exp: no match ");
+         throw Exception ("Reg_Exp: no match ");
       }
       else
       {
@@ -306,7 +314,7 @@ Reg_Exp::get_match_sub (const Dstring& str,
    {
       if (!ignore_no_match)
       {
-         throw Exception (L"Reg_Exp: no match ");
+         throw Exception ("Reg_Exp: no match ");
       }
    }
 
@@ -333,13 +341,11 @@ Tokens::Tokens (const Tuple& tuple,
                 const Dstring& fmt)
 {
 
-   string s_fmt (fmt.begin (), fmt.end ());
-
    for (Tuple::const_iterator iterator = tuple.begin ();
         iterator != tuple.end (); iterator++)
    {
       const Real value = *(iterator);
-      const Dstring& token = string_render (s_fmt.c_str (), value);
+      const string& token = Dstring::render (fmt, value);
       push_back (token);  
    }
 }
@@ -399,7 +405,7 @@ Tokens::add (const Dstring& str)
    for (int i = 0; i < str.size (); i++)
    {
 
-      wchar_t c = str[i];
+      char c = str[i];
 
       if (is_escaped)
       {
@@ -530,163 +536,8 @@ Tokens::add_suffix (const Dstring& suffix)
 namespace denise
 {
 
-   void
-   to_lower_case (wstring& s)
-   {
-      transform (s.begin (), s.end (), s.begin (), ::tolower);
-   }
-
-   wstring
-   get_lower_case (const wstring& s)
-   {
-      wstring str = s;
-      to_lower_case (str);
-      return str;
-   }
-
-   void
-   to_upper_case (wstring& s)
-   {
-      transform (s.begin (), s.end (), s.begin (), ::toupper);
-   }
-
-   wstring
-   get_upper_case (const wstring& s)
-   {
-      wstring str = s;
-      to_upper_case (str);
-      return str;
-   }
-
-   void
-   to_capital_case (wstring& s)
-   {
-
-      bool first_char = true;
-
-      for (wstring::iterator iterator = s.begin ();
-           iterator != s.end (); iterator++)
-      {
-
-         wchar_t& c = *(iterator);
-
-         if (!first_char) { c = ::tolower (c); }
-         else { c = ::toupper (c), first_char = false; }
-
-         if (!isalnum (c)) { first_char = true; }
-
-      }
-
-   }
-
-   wstring
-   get_capital_case (const wstring& s)
-   {
-      wstring str = s;
-      to_capital_case (str);
-      return str;
-   }
-
-   void
-   chop (wstring& s)
-   {
-      s.erase (s.size () - 1);
-   }
-
-   void
-   trim (wstring& s,
-         const wstring& white_string)
-   {
-      left_trim (s, white_string);
-      right_trim (s, white_string);
-   }
-
-   void
-   left_trim (wstring& s,
-              const wstring& white_string)
-   {
-      s.erase (0, s.find_first_not_of (white_string));
-   }
-   
-   void
-   right_trim (wstring& s,
-               const wstring& white_string)
-   {
-      s.erase (s.find_last_not_of (white_string) + 1); 
-   }
-
-   wstring
-   get_trimmed (const wstring s,
-                const wstring& white_string)
-   {
-      wstring trimmed = s;
-      trim (trimmed);
-      return trimmed;
-   }
-
-   wstring
-   get_left_trimmed (const wstring s,
-                     const wstring& white_string)
-   {
-      wstring trimmed = s;
-      left_trim (trimmed);
-      return trimmed;
-   }
-
-   wstring
-   get_right_trimmed (const wstring s,
-                      const wstring& white_string)
-   {
-      wstring trimmed = s;
-      right_trim (trimmed);
-      return trimmed;
-   }
-
-   wstring
-   get_file_extension (const wstring& file_path)
-   {
-
-      wstring::size_type idx = file_path.rfind ('.');
-
-      if (idx != wstring::npos)
-      {
-         return file_path.substr (idx + 1);
-      } 
-      else
-      {
-         return wstring ();
-      }
-
-   }
-
-   wstring
-   string_render (const char* format,
-                  ...)
-   {
-
-      va_list ap;
-
-      int n = strlen (format) * 4;
-      char* c_string = new char[n];
-
-      va_start (ap, format);
-      vsnprintf (c_string, n, format, ap);
-      va_end(ap);
-
-      const string str (c_string);
-      delete[] c_string;
-      wstring w_str (str.begin (), str.end ());
-      return w_str;
-
-   }
-
-}
-
-namespace denise
-{
-
-   wostream&
-   operator << (wostream& out_file,
+   ostream&
+   operator << (ostream& out_file,
                 const Tokens& tokens)
    {
 

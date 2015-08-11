@@ -193,8 +193,8 @@ void
 Histogram_1D::render (const RefPtr<Context> cr,
                       const Transform_2D& transform,
                       const Domain_1D& domain_y,
-                      const wstring& bin_format,
-                      const wstring& value_format,
+                      const Dstring& bin_format,
+                      const Dstring& value_format,
                       const Color& color,
                       const Color& value_color,
                       const Color& baseline_color) const
@@ -234,10 +234,8 @@ Histogram_1D::render (const RefPtr<Context> cr,
       if (!last)
       {
 
-         const string bin_fmt (bin_format.begin (), bin_format.end ());
-         const string value_fmt (value_format.begin (), value_format.end ());
-         const wstring& bin_str = string_render (bin_fmt.c_str (), bin);
-         const wstring& value_str = string_render (value_fmt.c_str (), value);
+         const Dstring& bin_str = Dstring::render (bin_format, bin);
+         const Dstring& value_str = Dstring::render (value_format, value);
 
          const Point_2D bin_point (0, bin);
          const Point_2D value_point (value, bin);
@@ -407,7 +405,7 @@ void
 Histogram_2D::render (const RefPtr<Context> cr,
                       const Transform_2D& transform,
                       const Color_Chooser& color_chooser,
-                      const wstring& format,
+                      const Dstring& format,
                       const Color& fg_color,
                       const Color& box_border_color) const
 {
@@ -416,7 +414,6 @@ Histogram_2D::render (const RefPtr<Context> cr,
    cr->set_antialias (ANTIALIAS_NONE);
 
    Point_2D p;
-   const string fmt (format.begin (), format.end ());
 
    for (Axis::const_iterator i = axis_x.begin ();
         i != axis_x.end (); i++)
@@ -467,7 +464,7 @@ Histogram_2D::render (const RefPtr<Context> cr,
          else
          {
             cr->fill_preserve ();
-            const wstring& str = string_render (fmt.c_str (), value);
+            const Dstring& str = Dstring::render (format, value);
             box_border_color.cairo (cr);
             cr->stroke ();
             fg_color.cairo (cr);

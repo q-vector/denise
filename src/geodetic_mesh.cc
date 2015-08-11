@@ -79,7 +79,7 @@ Geodetic_Mesh_Package::geodetic_mesh_print (const Dstring& identifier,
    const bool is_present = (iterator != geodetic_mesh_map.end ());
    if (is_present)
    {
-      wcout << L"geodetic_mesh " << identifier << L" is present" << endl;
+      cout << "geodetic_mesh " << identifier << " is present" << endl;
    }
 }
 
@@ -89,7 +89,7 @@ Geodetic_Mesh_Package::geodetic_mesh_parse (const Tokens& tokens)
 
    const Integer n = tokens.size ();
 
-   if (tokens[0] == L"assign")
+   if (tokens[0] == "assign")
    {
       const Dstring& identifier = tokens[1];
       const Size_2D size_2d (tokens[2]);
@@ -97,13 +97,13 @@ Geodetic_Mesh_Package::geodetic_mesh_parse (const Tokens& tokens)
       geodetic_mesh_assign (identifier, size_2d, domain_2d);
    }
    else
-   if (tokens[0] == L"add")
+   if (tokens[0] == "add")
    {
       const Dstring& identifier = tokens[1];
       geodetic_mesh_add (identifier, tokens.subtokens (2));
    }
    else
-   if (tokens[0] == L"print")
+   if (tokens[0] == "print")
    {
       const Dstring& identifier = tokens[1];
       geodetic_mesh_print (identifier, tokens.subtokens (2));
@@ -120,7 +120,7 @@ Geodetic_Mesh_Package::get_geodetic_mesh_map () const
 const Geodetic_Mesh&
 Geodetic_Mesh_Package::get_geodetic_mesh (const Dstring& identifier) const
 {
-   Exception e (L"geodetic_mesh not found: " + identifier);
+   Exception e ("geodetic_mesh not found: " + identifier);
    try { return geodetic_mesh_map.at (identifier); }
    catch (const std::out_of_range& oor) { throw e; }
 }

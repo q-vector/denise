@@ -274,8 +274,8 @@ namespace denise
 
                Key (const Key& key);
 
-               wostream&
-               operator << (wostream& out);
+               ostream&
+               operator << (ostream& out);
 
          };
 
@@ -785,12 +785,12 @@ namespace denise
 
    };
 
-   wostream&
-   operator << (wostream &out_file,
+   ostream&
+   operator << (ostream &out_file,
                 const Grib::Key& key);
 
-   wostream&
-   operator << (wostream &out_file,
+   ostream&
+   operator << (ostream &out_file,
                 const Grib2::Key& key);
 
    class Access : public Nwp,

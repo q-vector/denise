@@ -856,11 +856,11 @@ International_Standard_Atmosphere::get_node (const Real p) const
 }
 
 International_Standard_Atmosphere::International_Standard_Atmosphere ()
-          : tuple_z (Tuple (L"0:11000:20000:32000:47000:51000:71000:84852")),
-            tuple_t (Tuple (L"15:-56.5:-56.5:-44.5:-2.5:-2.5:-58.5:-86.2"))
+          : tuple_z (Tuple ("0:11000:20000:32000:47000:51000:71000:84852")),
+            tuple_t (Tuple ("15:-56.5:-56.5:-44.5:-2.5:-2.5:-58.5:-86.2"))
 {
 
-   Tuple tuple_p (L"101325:0:0:0:0:0:0:0");
+   Tuple tuple_p ("101325:0:0:0:0:0:0:0");
 
    for (Integer i = 1; i < 8; i++)
    {
@@ -978,7 +978,7 @@ International_Standard_Atmosphere::get_t (const Real p) const
 //      Thermo_Point thermo_point = Thermo_Point::t_p (t, p);
 //      Point_2D point = thermo_diagram.transform (thermo_point);
 //
-//      wstring str = string_render (L"%.0f", z);
+//      Dstring str = Dstring::render ("%.0f", z);
 //      ring.cairo (cr, point);
 //
 //      Label label (str, point, 'l', 'b', 4);
@@ -1045,7 +1045,7 @@ International_Standard_Atmosphere::get_t (const Real p) const
 //      Real direction = (270 + wind.get_direction ()) * DEGREE_TO_RADIAN;
 //      Point_2D point = transform.transform (speed, direction);
 //
-//      wstring text = string_render ("%.0f", p * 1e-2);
+//      Dstring text = Dstring::render ("%.0f", p * 1e-2);
 //
 //      Label label (text, point, 'c', 'c');
 //      label.cairo (cr);
@@ -1403,7 +1403,7 @@ Downdraft::render (const RefPtr<Context>& cr,
    render_dmape_area (cr, thermo_diagram, line_width);
 
    Color (1, 0, 1, 1).cairo (cr);
-   Dashes (Tuple (L"8:2:2:2")).cairo (cr);
+   Dashes (Tuple ("8:2:2:2")).cairo (cr);
    cr->set_line_width (line_width);
    cr->set_line_join (LINE_JOIN_ROUND);
 
@@ -1564,12 +1564,12 @@ Thermo_Line::process_bracketing_iterators (Thermo_Line::const_iterator& lb,
 
       if (lb == lower_bound (GSL_NEGINF)) // Before first node
       {
-         throw Thermo_Exception (L"Out of bounds:");
+         throw Thermo_Exception ("Out of bounds:");
       }
       else
       if (lb == end ()) // After last node
       {
-         throw Thermo_Exception (L"Out of bounds:");
+         throw Thermo_Exception ("Out of bounds:");
       }
       else // Ordinary segment
       {
@@ -1721,15 +1721,15 @@ Thermo_Line::Thermo_Line (const International_Standard_Atmosphere& isa,
 }
 
 void
-Thermo_Line::write (wofstream& file,
-                    const wstring& identifier) const
+Thermo_Line::write (ofstream& file,
+                    const Dstring& identifier) const
 {
    for (auto iterator = begin (); iterator != end (); iterator++)
    {
       const Real pressure = iterator->first;
       const Real datum = iterator->second;
-      file << identifier << fixed << setprecision (4) << L" " <<
-              pressure << L" " << datum << endl;
+      file << identifier << fixed << setprecision (4) << " " <<
+              pressure << " " << datum << endl;
    }
 
 }
@@ -1903,8 +1903,8 @@ Thermo_Line::get_thermo_point (const Thermo_Diagram& thermo_diagram,
       return Thermo_Point::t_p (rbegin ()->second, surface_p, p_0);
    }
 
-   const wstring& p_str = string_render ("%f", p);
-   throw Thermo_Exception (L"Thermo_Line::get_thermo_point ()" + p_str);
+   const Dstring& p_str = Dstring::render ("%f", p);
+   throw Thermo_Exception ("Thermo_Line::get_thermo_point ()" + p_str);
 
 }
 
@@ -1934,14 +1934,14 @@ Thermo_Line::get_nearest_p (const Real p) const
 Real
 Thermo_Line::get_start_p () const
 {
-   if (size () == 0) { throw Thermo_Exception (L"Empty Thermo_Line"); }
+   if (size () == 0) { throw Thermo_Exception ("Empty Thermo_Line"); }
    return begin ()->first;
 }
 
 Real
 Thermo_Line::get_end_p () const
 {
-   if (size () == 0) { throw Thermo_Exception (L"Empty Thermo_Line"); }
+   if (size () == 0) { throw Thermo_Exception ("Empty Thermo_Line"); }
    return rbegin ()->first;
 }
 
@@ -2002,7 +2002,7 @@ Thermo_Line::intersection_t (const Thermo_Diagram& thermo_diagram,
             }
             catch (const Geometry_Exception& ge)
             {
-               cerr << L"Thermo_Line::intersection_t" << endl;
+               cerr << "Thermo_Line::intersection_t" << endl;
             }
 
          }
@@ -2010,7 +2010,7 @@ Thermo_Line::intersection_t (const Thermo_Diagram& thermo_diagram,
       }
       catch (const Geometry_Exception& ge)
       {
-         cerr << L"Thermo_Line::interserction_t 2" << ge << endl;
+         cerr << "Thermo_Line::interserction_t 2" << ge << endl;
          continue;
       }
       catch (const Thermo_Exception& e)
@@ -2427,7 +2427,7 @@ Thermo_Line::get_tp_set_t (const Thermo_Diagram& thermo_diagram,
    }
    catch (const Geometry_Exception& ge)
    {
-      cerr << L"Thermo_Line::get_tp-set_t Geometry_Exceptin" << endl;
+      cerr << "Thermo_Line::get_tp-set_t Geometry_Exceptin" << endl;
    }
 
    return tp_set;
@@ -2613,12 +2613,12 @@ Wind_Profile::process_bracketing_iterators (Wind_Profile::const_iterator& lb,
 
       if (lb == lower_bound (GSL_NEGINF)) // Before first node
       {
-         throw Thermo_Exception (L"Out of bounds:");
+         throw Thermo_Exception ("Out of bounds:");
       }
       else
       if (lb == end ()) // After last node
       {
-         throw Thermo_Exception (L"Out of bounds:");
+         throw Thermo_Exception ("Out of bounds:");
       }
       else // Ordinary segment
       {
@@ -2647,7 +2647,7 @@ Wind_Profile::Wind_Profile ()
 }
 
 void
-Wind_Profile::write (wofstream& file) const
+Wind_Profile::write (ofstream& file) const
 {
    for (auto iterator = begin (); iterator != end (); iterator++)
    {
@@ -2655,8 +2655,8 @@ Wind_Profile::write (wofstream& file) const
       const Wind& wind = iterator->second;
       const Real wind_direction = wind.get_direction ();
       const Real wind_speed = wind.get_speed ();
-      file << L"wind " << fixed << setprecision (4) << pressure <<
-         L" " << wind_direction << L" " << wind_speed << endl;
+      file << "wind " << fixed << setprecision (4) << pressure <<
+         " " << wind_direction << " " << wind_speed << endl;
    }
 
 }
@@ -2821,14 +2821,14 @@ Height_Profile::Height_Profile ()
 }
 
 void
-Height_Profile::write (wofstream& file) const
+Height_Profile::write (ofstream& file) const
 {
    for (auto iterator = begin (); iterator != end (); iterator++)
    {
       const Real pressure = iterator->first;
       const Real height = iterator->second;
-      file << L"height " << fixed << setprecision (4) <<
-           pressure << L" " << height << endl;
+      file << "height " << fixed << setprecision (4) <<
+           pressure << " " << height << endl;
    }
 
 }
@@ -2935,7 +2935,7 @@ Height_Profile::get_pressure (const Real height) const
 
    }
 
-   throw Thermo_Exception (L"Height unknown");
+   throw Thermo_Exception ("Height unknown");
 
 }
 
@@ -2958,7 +2958,7 @@ Sounding::render_thermo_line_nodes (const RefPtr<Context>& cr,
 Sounding::Sounding ()
    : t_line (),
      t_d_line (),
-     location_str (L""),
+     location_str (""),
      time (GSL_NAN),
      basetime (GSL_NAN),
      dry_layer (400e2, 600e2),
@@ -2968,10 +2968,10 @@ Sounding::Sounding ()
 {
 }
 
-Sounding::Sounding (const wstring& file_path)
+Sounding::Sounding (const Dstring& file_path)
    : t_line (),
      t_d_line (),
-     location_str (L""),
+     location_str (""),
      time (GSL_NAN),
      basetime (GSL_NAN),
      dry_layer (400e2, 600e2),
@@ -2987,7 +2987,7 @@ Sounding::Sounding (const Sounding& sounding)
      t_d_line (sounding.t_d_line),
      wind_profile (sounding.wind_profile),
      height_profile (sounding.height_profile),
-     location_str (L""),
+     location_str (""),
      time (sounding.time),
      basetime (sounding.basetime),
      dry_layer (sounding.dry_layer),
@@ -2998,49 +2998,47 @@ Sounding::Sounding (const Sounding& sounding)
 }
 
 void
-Sounding::load (const wstring& file_path)
+Sounding::load (const Dstring& file_path)
 {
 
-   const string fp (file_path.begin (), file_path.end ());
-   ifstream file (fp.c_str ());
-   string is;
+   ifstream file (file_path);
+   string input_string;
 
-   while (getline (file, is))
+   while (getline (file, input_string))
    {
 
-      const wstring input_string (is.begin (), is.end ());;
       const Tokens tokens (input_string);
 
-      if (tokens[0] == L"time")
+      if (tokens[0] == "time")
       {
          this->time = Dtime (tokens[1]);
       }
       else
-      if (tokens[0] == L"basetime")
+      if (tokens[0] == "basetime")
       {
          this->basetime = Dtime (tokens[1]);
       }
       else
-      if (tokens[0] == L"location")
+      if (tokens[0] == "location")
       {
          this->location_str = tokens[1];
       }
       else
-      if (tokens[0] == L"t")
+      if (tokens[0] == "t")
       {
          const Real p = stof (tokens[1]);
          const Real t = stof (tokens[2]);
          t_line.add (p, t);
       }
       else
-      if (tokens[0] == L"td")
+      if (tokens[0] == "td")
       {
          const Real p = stof (tokens[1]);
          const Real td = stof (tokens[2]);
          t_d_line.add (p, td);
       }
       else
-      if (tokens[0] == L"wind")
+      if (tokens[0] == "wind")
       {
          const Real p = stof (tokens[1]);
          const Real wind_dir = stof (tokens[2]);
@@ -3049,7 +3047,7 @@ Sounding::load (const wstring& file_path)
          wind_profile.add (p, wind);
       }
       else
-      if (tokens[0] == L"height")
+      if (tokens[0] == "height")
       {
          const Real p = stof (tokens[1]);
          const Real height = stof (tokens[2]);
@@ -3063,27 +3061,26 @@ Sounding::load (const wstring& file_path)
 }
 
 void
-Sounding::save (const wstring& file_path) const
+Sounding::save (const Dstring& file_path) const
 {
 
-   const string fp (file_path.begin (), file_path.end ());
-   wofstream file (fp);
+   ofstream file (file_path);
 
-   const wstring time_fmt (L"%Y%m%d%H%M");
+   const Dstring time_fmt ("%Y%m%d%H%M");
 
    if (!time.is_nat ())
    {
-      file << L"time " << time.get_string (time_fmt) << endl;
+      file << "time " << time.get_string (time_fmt) << endl;
    }
 
    if (!basetime.is_nat ())
    {
-      file << L"basetime " << basetime.get_string (time_fmt) << endl;
+      file << "basetime " << basetime.get_string (time_fmt) << endl;
    }
 
-   if (location_str != L"")
+   if (location_str != "")
    {
-      file << L"location " << location_str << endl;
+      file << "location " << location_str << endl;
    }
 
    write (file);
@@ -3092,10 +3089,10 @@ Sounding::save (const wstring& file_path) const
 }
 
 void
-Sounding::write (wofstream& file) const
+Sounding::write (ofstream& file) const
 {
-   t_line.write (file, L"t");
-   t_d_line.write (file, L"td");
+   t_line.write (file, "t");
+   t_d_line.write (file, "td");
    wind_profile.write (file);
    height_profile.write (file);
 }
@@ -3113,7 +3110,7 @@ Sounding::set_basetime (const Dtime& basetime)
 }
 
 void
-Sounding::set_location_str (const wstring& location_str)
+Sounding::set_location_str (const Dstring& location_str)
 {
    this->location_str = location_str;
 }
@@ -3473,7 +3470,7 @@ Sounding::get_basetime () const
    return basetime;
 }
 
-const wstring&
+const Dstring&
 Sounding::get_location_str () const
 {
    return location_str;
@@ -3560,7 +3557,7 @@ Sounding::update_updraft (const Thermo_Diagram& thermo_diagram,
 
 /*
    typedef Thermo_Point Tp;
-   if (t_line.size () == 0) { throw Thermo_Exception (L"Empty Thermo_Line"); }
+   if (t_line.size () == 0) { throw Thermo_Exception ("Empty Thermo_Line"); }
 
    if (updraft_ptr == NULL) { delete updraft_ptr; }
    const Real start_p = get_start_p ();
@@ -3807,7 +3804,7 @@ Sounding::get_thermo_node (const Thermo_Diagram& thermo_diagram,
    {
       Thermo_Node node = t_d_line.get_iterator (thermo_diagram, point, tolerance);
       if (node != t_d_line.end ()) { return node; }
-      else { throw Thermo_Exception (L"No nearby node."); }
+      else { throw Thermo_Exception ("No nearby node."); }
    }
 
 }
@@ -3826,7 +3823,7 @@ Sounding::get_thermo_node (const Thermo_Diagram& thermo_diagram,
    {
       Thermo_Node node = t_d_line.get_iterator (thermo_diagram, point, tolerance);
       if (node != t_d_line.end ()) { return node; }
-      else { throw Thermo_Exception (L"No nearby node."); }
+      else { throw Thermo_Exception ("No nearby node."); }
    }
 
 }
@@ -3859,7 +3856,7 @@ Sounding::get_thermo_line_iterator (const Thermo_Diagram& thermo_diagram,
       }
       else
       {
-         throw Thermo_Exception (L"No nearby node.");
+         throw Thermo_Exception ("No nearby node.");
       }
    }
 
@@ -3893,7 +3890,7 @@ Sounding::get_thermo_line_iterator (const Thermo_Diagram& thermo_diagram,
       }
       else
       {
-         throw Thermo_Exception (L"No nearby node.");
+         throw Thermo_Exception ("No nearby node.");
       }
    }
 
@@ -3916,7 +3913,7 @@ Sounding::get_prev_thermo_point (const Thermo_Diagram& thermo_diagram,
    }
    else
    {
-      throw Thermo_Exception (L"No previous node");
+      throw Thermo_Exception ("No previous node");
    }
 
 }
@@ -3938,7 +3935,7 @@ Sounding::get_next_thermo_point (const Thermo_Diagram& thermo_diagram,
    }
    else
    {
-      throw Thermo_Exception (L"No previous node");
+      throw Thermo_Exception ("No previous node");
    }
 
 }
@@ -4153,8 +4150,8 @@ Sounding::render_winds (const RefPtr<Context>& cr,
    const Real width = thermo_diagram.get_size_2d ().i;
    const Real xx = (gsl_isnan (x) ? width - 100 : x);
 
-   Tuple tuple_p (L"1000e2:925e2:850e2:800e2:700e2:600e2");
-   tuple_p.add_content (L"500e2:400e2:300e2:200e2:100e2");
+   Tuple tuple_p ("1000e2:925e2:850e2:800e2:700e2:600e2");
+   tuple_p.add_content ("500e2:400e2:300e2:200e2:100e2");
 
    cr->save ();
    Color::black ().cairo (cr);
@@ -4200,8 +4197,8 @@ Sounding::render_heights (const RefPtr<Context>& cr,
    const Real width = thermo_diagram.get_size_2d ().i;
    const Real xx = (gsl_isnan (x) ? width - 200 : x);
 
-   Tuple tuple_p (L"1000e2:925e2:850e2:800e2:700e2:600e2");
-   tuple_p.add_content (L"500e2:400e2:300e2:200e2:100e2");
+   Tuple tuple_p ("1000e2:925e2:850e2:800e2:700e2:600e2");
+   tuple_p.add_content ("500e2:400e2:300e2:200e2:100e2");
 
    cr->save ();
    cr->set_font_size (12);
@@ -4219,7 +4216,7 @@ Sounding::render_heights (const RefPtr<Context>& cr,
          const Real& z = get_height (p) * multiplier;
          const Thermo_Point& tp = thermo_diagram.get_thermo_point (xx, p);
          const Point_2D& point = thermo_diagram.transform (tp);
-         const wstring& str = string_render (show_feet ? "%.0fft" : "%.0fm", z);
+         const Dstring& str = Dstring::render (show_feet ? "%.0fft" : "%.0fm", z);
          Label (str, point, 'l', 'c').cairo (cr);
       }
       catch (const Thermo_Exception& te)
@@ -4237,7 +4234,7 @@ Sounding::get_mixed_layer_from (const Thermo_Diagram& thermo_diagram,
 {
 
    typedef Thermo_Point Tp;
-   if (t_line.size () == 0) { throw Thermo_Exception (L"Empty Thermo_Line"); }
+   if (t_line.size () == 0) { throw Thermo_Exception ("Empty Thermo_Line"); }
 
    const Real start_p = t_line.get_start_p ();
    const Real end_p = t_line.get_end_p ();
@@ -4261,7 +4258,7 @@ Sounding::get_mixed_layer_surface (const Thermo_Diagram& thermo_diagram,
 {
 
    typedef Thermo_Point Tp;
-   if (t_line.size () == 0) { throw Thermo_Exception (L"Empty Thermo_Line"); }
+   if (t_line.size () == 0) { throw Thermo_Exception ("Empty Thermo_Line"); }
 
    const Real start_p = t_line.get_start_p ();
    const Real end_p = t_line.get_end_p ();
@@ -4924,15 +4921,15 @@ Thermo_Diagram::render_isohumes (const RefPtr<Context>& cr,
 
    cr->save ();
    color_1.cairo (cr);
-   Dashes (L"4:2").cairo (cr);
+   Dashes ("4:2").cairo (cr);
 
-   Tuple r_s_tuple (L"0.001e-3:0.002e-3:0.005e-3:0.01e-3:0.02e-3:0.03e-3");
-   r_s_tuple.add_content (L"0.05e-3:0.1e-3:0.15e-3:0.2e-3:0.3e-3:0.4e-3");
-   r_s_tuple.add_content (L"0.5e-3:0.6e-3:0.8e-3:1e-3:1.5e-3:2e-3:2.5e-3");
-   r_s_tuple.add_content (L"3e-3:4e-3:5e-3:6e-3:7e-3:8e-3:9e-3:10e-3");
-   r_s_tuple.add_content (L"12e-3:14e-3:16e-3:18e-3:20e-3:24e-3:28e-3");
-   r_s_tuple.add_content (L"32e-3:36e-3:40e-3:44e-3:48e-3:52e-3:56e-3");
-   r_s_tuple.add_content (L"60e-3:68e-3:80e-3");
+   Tuple r_s_tuple ("0.001e-3:0.002e-3:0.005e-3:0.01e-3:0.02e-3:0.03e-3");
+   r_s_tuple.add_content ("0.05e-3:0.1e-3:0.15e-3:0.2e-3:0.3e-3:0.4e-3");
+   r_s_tuple.add_content ("0.5e-3:0.6e-3:0.8e-3:1e-3:1.5e-3:2e-3:2.5e-3");
+   r_s_tuple.add_content ("3e-3:4e-3:5e-3:6e-3:7e-3:8e-3:9e-3:10e-3");
+   r_s_tuple.add_content ("12e-3:14e-3:16e-3:18e-3:20e-3:24e-3:28e-3");
+   r_s_tuple.add_content ("32e-3:36e-3:40e-3:44e-3:48e-3:52e-3:56e-3");
+   r_s_tuple.add_content ("60e-3:68e-3:80e-3");
 
    for (Tuple::iterator iterator = r_s_tuple.begin ();
         iterator != r_s_tuple.end (); iterator++)
@@ -4962,7 +4959,7 @@ Thermo_Diagram::render_labels (const RefPtr<Context>& cr,
     
       const Thermo_Point& thermo_point = Thermo_Point::t_p (t, 1000e2);
       const Point_2D& point = transform (thermo_point);
-      const wstring& text = string_render ("%.0f", t);
+      const Dstring& text = Dstring::render ("%.0f", t);
       Label (text, point, 'r', 't', 2).cairo (cr);
    }
 
@@ -4970,7 +4967,7 @@ Thermo_Diagram::render_labels (const RefPtr<Context>& cr,
    {
       const Thermo_Point& thermo_point = Thermo_Point::t_p (t, 190e2);
       const Point_2D& point = transform (thermo_point);
-      const wstring& text = string_render ("%.0f", t);
+      const Dstring& text = Dstring::render ("%.0f", t);
       Label (text, point, 'c', 'c').cairo (cr);
    }
 
@@ -4988,7 +4985,7 @@ Thermo_Diagram::render_labels (const RefPtr<Context>& cr,
    {
 
       const Real& p = *(iterator);
-      const wstring& text = string_render ("%.0fhPa", p * 1e-2);
+      const Dstring& text = Dstring::render ("%.0fhPa", p * 1e-2);
 
       const Thermo_Point& tp = get_thermo_point (label_x, p);
       const Point_2D& point = transform (tp);
@@ -5014,7 +5011,7 @@ Thermo_Diagram::render_labels (const RefPtr<Context>& cr,
    {
       const Tp& thermo_point = Tp::t_theta (-45, theta);
       const Point_2D& point = transform (thermo_point);
-      const wstring& text = string_render ("%.0f", theta);
+      const Dstring& text = Dstring::render ("%.0f", theta);
       Label (text, point, 'c', 'c').cairo (cr);
    }
 
@@ -5025,20 +5022,20 @@ Thermo_Diagram::render_labels (const RefPtr<Context>& cr,
    const Real p_b = 500e2;
    const Real padding = label_size * 0.4;
 
-   Tuple r_s_tuple (L"0.001e-3:0.002e-3:0.005e-3:0.01e-3:0.02e-3:0.03e-3");
-   r_s_tuple.add_content (L"0.05e-3:0.1e-3:0.15e-3:0.2e-3:0.3e-3:0.4e-3");
-   r_s_tuple.add_content (L"0.5e-3:0.6e-3:0.8e-3:1e-3:1.5e-3:2e-3:2.5e-3");
-   r_s_tuple.add_content (L"3e-3:4e-3:5e-3:6e-3:7e-3:8e-3:9e-3:10e-3");
-   r_s_tuple.add_content (L"12e-3:14e-3:16e-3:18e-3:20e-3:24e-3:28e-3");
-   r_s_tuple.add_content (L"32e-3:36e-3:40e-3:44e-3:48e-3:52e-3:56e-3");
-   r_s_tuple.add_content (L"60e-3:68e-3:80e-3");
+   Tuple r_s_tuple ("0.001e-3:0.002e-3:0.005e-3:0.01e-3:0.02e-3:0.03e-3");
+   r_s_tuple.add_content ("0.05e-3:0.1e-3:0.15e-3:0.2e-3:0.3e-3:0.4e-3");
+   r_s_tuple.add_content ("0.5e-3:0.6e-3:0.8e-3:1e-3:1.5e-3:2e-3:2.5e-3");
+   r_s_tuple.add_content ("3e-3:4e-3:5e-3:6e-3:7e-3:8e-3:9e-3:10e-3");
+   r_s_tuple.add_content ("12e-3:14e-3:16e-3:18e-3:20e-3:24e-3:28e-3");
+   r_s_tuple.add_content ("32e-3:36e-3:40e-3:44e-3:48e-3:52e-3:56e-3");
+   r_s_tuple.add_content ("60e-3:68e-3:80e-3");
 
    for (Tuple::iterator iterator = r_s_tuple.begin ();
         iterator != r_s_tuple.end (); iterator++)
    {
 
       const Real& r_s = *(iterator);
-      const wstring& text = string_render ("%g", r_s * 1e3);
+      const Dstring& text = Dstring::render ("%g", r_s * 1e3);
 
       const Tp& tp_a = Tp::p_r_s (p_a, r_s, 0.02, WATER, p_0);
       const Real t_a = tp_a.get_t ();
@@ -5354,29 +5351,29 @@ Ttxx_Sounding::Ttxx_Sounding (const Integer wmo_id,
 {
 }
 
-const wstring
+const Dstring
 Ttxx_Sounding::get_key () const
 {
-   //return string_render ("%05d:%04d", wmo_id, yygg);
-   return L"";
+   //return Dstring::render ("%05d:%04d", wmo_id, yygg);
+   return "";
 }
 
-Thermo_Exception::Thermo_Exception (const wstring& description)
-   : Exception (L"Thermo_Exception", description)
+Thermo_Exception::Thermo_Exception (const Dstring& description)
+   : Exception ("Thermo_Exception", description)
 {
 }
 
 namespace denise
 {
 
-   wostream&
-   operator << (wostream &out,
+   ostream&
+   operator << (ostream &out,
                 const Thermo_Point& thermo_point)
    {
-      out << L"(" << thermo_point.get_t () << L", " <<
-         thermo_point.get_theta () << L", " <<
-         thermo_point.get_p () << L", " <<
-         thermo_point.get_p_0 () << L")";
+      out << "(" << thermo_point.get_t () << ", " <<
+         thermo_point.get_theta () << ", " <<
+         thermo_point.get_p () << ", " <<
+         thermo_point.get_p_0 () << ")";
       return out;
    }
 

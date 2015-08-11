@@ -29,10 +29,10 @@ Gts::Gts (const Dstring& message,
    : Tokens (message),
      time_hint (time_hint)
 {
-   if (size () < 3) { throw Exception (L"Empty GTS"); }
-//   if (((*this)[0]).substr (0, 3) == "NIL") { throw Exception ("Empty GTS"); }
-   if (((*this)[1]).substr (0, 3) == L"NIL") { throw Exception (L"Empty GTS"); }
-   if (((*this)[2]).substr (0, 3) == L"NIL") { throw Exception (L"Empty GTS"); }
+   if (size () < 3) { throw Exception ("Empty GTS"); }
+//   if (((*this)[0]).substr (0, 3) == "NI") { throw Exception ("Empty GTS"); }
+   if (((*this)[1]).substr (0, 3) == "NI") { throw Exception ("Empty GTS"); }
+   if (((*this)[2]).substr (0, 3) == "NI") { throw Exception ("Empty GTS"); }
 }
 
 Dstring
@@ -41,7 +41,7 @@ Gts::get_yygg () const
    const Dstring& yyggi = (*this)[1];
    const Integer yy = stoi (yyggi.substr (0, 2));
    const Integer gg = stoi (yyggi.substr (2, 2));
-   return string_render ("%02d%02d", yy - (yy >= 50 ? 50 : 0), gg);
+   return Dstring::render ("%02d%02d", yy - (yy >= 50 ? 50 : 0), gg);
 }
 
 Dstring
@@ -49,11 +49,11 @@ Gts::get_time_string () const
 {
 
    const Dstring& yygg = get_yygg ();
-   const Dstring yyyymmdd = time_hint.get_string (L"%Y%m%d");
+   const Dstring yyyymmdd = time_hint.get_string ("%Y%m%d");
    const bool same_day = (yygg.substr (0, 2) == yyyymmdd.substr (6, 2));
 
    const Dtime yyyymm_time (time_hint.t - (same_day ? 0 : 24));
-   const Dstring& yyyymm = yyyymm_time.get_string (L"%Y%m");
+   const Dstring& yyyymm = yyyymm_time.get_string ("%Y%m");
 
    return yyyymm + yygg;
 
@@ -69,7 +69,7 @@ Gts::get_wmo_id () const
 Dstring
 Gts::get_key () const
 {
-   return get_wmo_id () + L":" + get_time_string ();
+   return get_wmo_id () + ":" + get_time_string ();
 }
 
 Tokens*
@@ -80,16 +80,16 @@ Gts::parse_file (const Dstring& file_path)
    string is;
    Dstring message, input_string, sticker;
 
-   Reg_Exp block_delimiter (L"[\001\003]");
-   Reg_Exp block_header_1 (L"^[0-9]..");
-   Reg_Exp block_header_2 (L"^[A-Z0-9]..... [A-Z0-9]... [A-Z0-9].....");
-   Reg_Exp empty_line (L"^[ \015]*$");
-   Reg_Exp white_head (L"^[^A-Z0-9/=]+", true);
-   Reg_Exp white_tail (L"[^A-Z0-9/=]+$", true);
-   Reg_Exp end_of_message (L"=", true);
-   Reg_Exp control_char (L"[\001-\037]+", true);
-   Reg_Exp aaxx (L"^AAXX *[0-9]....[^A-Z0-9/=]*$");
-   Reg_Exp bbxx (L"^BBXX[^A-Z0-9/=]*$");
+   Reg_Exp block_delimiter ("[\001\003]");
+   Reg_Exp block_header_1 ("^[0-9]..");
+   Reg_Exp block_header_2 ("^[A-Z0-9]..... [A-Z0-9]... [A-Z0-9].....");
+   Reg_Exp empty_line ("^[ \015]*$");
+   Reg_Exp white_head ("^[^A-Z0-9/=]+", true);
+   Reg_Exp white_tail ("[^A-Z0-9/=]+$", true);
+   Reg_Exp end_of_message ("=", true);
+   Reg_Exp control_char ("[\001-\037]+", true);
+   Reg_Exp aaxx ("^AAXX *[0-9]....[^A-Z0-9/=]*$");
+   Reg_Exp bbxx ("^BBXX[^A-Z0-9/=]*$");
 
    ifstream file (file_path.get_string ());
 
@@ -103,13 +103,13 @@ Gts::parse_file (const Dstring& file_path)
       if (block_delimiter.match (input_string))
       {
          i = 0;
-         sticker = L"";
+         sticker = "";
          first_sticker = true;
       }
 
-      control_char.replace (input_string, L"");
-      white_head.replace (input_string, L"");
-      white_tail.replace (input_string, L"");
+      control_char.replace (input_string, "");
+      white_head.replace (input_string, "");
+      white_tail.replace (input_string, "");
 
       if (i == 1)
       {
@@ -140,12 +140,12 @@ Gts::parse_file (const Dstring& file_path)
       {
          if (!empty_line.match (message))
          {
-            if (sticker != L"")
+            if (sticker != "")
             {
                if (first_sticker) { first_sticker = false; }
-               else { message = sticker + L" " + message; }
+               else { message = sticker + " " + message; }
             }
-            end_of_message.replace (message, L"");
+            end_of_message.replace (message, "");
             message_tokens_ptr->push_back (message);
          }
          message.clear ();
@@ -154,18 +154,18 @@ Gts::parse_file (const Dstring& file_path)
       if (end_of_message.match (input_string))
       {
          message += input_string;
-         if (sticker != L"")
+         if (sticker != "")
          {
             if (first_sticker) { first_sticker = false; }
-            else { message = sticker + L" " + message; }
+            else { message = sticker + " " + message; }
          }
-         end_of_message.replace (message, L"");
+         end_of_message.replace (message, "");
          message_tokens_ptr->push_back (message);
          message.clear ();
       }
       else
       {
-         message += input_string + L" ";
+         message += input_string + " ";
       }
 
    }
@@ -190,17 +190,17 @@ Gts_Ptr_Store::ingest (const Dstring& message,
                        const Dtime& time_hint)
 {
 
-   if (Reg_Exp (L"NIL").match (message)) { return; }
+   if (Reg_Exp ("NI").match (message)) { return; }
 
    Gts* gts_ptr = NULL;
    const Dstring& hdr = message.substr (0, 5);
 
    try
    {
-           if (hdr == L"TTAA ") { gts_ptr = (new Ttaa (message, time_hint)); }
-      else if (hdr == L"TTBB ") { gts_ptr = (new Ttbb (message, time_hint)); }
-      else if (hdr == L"TTCC ") { gts_ptr = (new Ttcc (message, time_hint)); }
-      else if (hdr == L"TTDD ") { gts_ptr = (new Ttdd (message, time_hint)); }
+           if (hdr == "TTAA ") { gts_ptr = (new Ttaa (message, time_hint)); }
+      else if (hdr == "TTBB ") { gts_ptr = (new Ttbb (message, time_hint)); }
+      else if (hdr == "TTCC ") { gts_ptr = (new Ttcc (message, time_hint)); }
+      else if (hdr == "TTDD ") { gts_ptr = (new Ttdd (message, time_hint)); }
    }
    catch (const Exception& e) { }
 
@@ -215,7 +215,7 @@ const Gts&
 Gts_Ptr_Store::get_gts (const Dstring& gts_key) const
 {
    Gts_Ptr_Store::const_iterator i = find (gts_key);
-   if (i == end ()) { throw No_Match_Exception (L"GTS with this key N/A"); }
+   if (i == end ()) { throw No_Match_Exception ("GTS with this key N/A"); }
    return *(i->second);
 }
 
@@ -240,10 +240,10 @@ Gts_Ptr_Grandstore::ingest (const Dstring& message,
 
    const Dstring& header = message.substr (0, 5); 
 
-        if (header == L"TTAA ") { ingest (L"TTAA", message, time_hint); }
-   else if (header == L"TTBB ") { ingest (L"TTBB", message, time_hint); }
-   else if (header == L"TTCC ") { ingest (L"TTCC", message, time_hint); }
-   else if (header == L"TTDD ") { ingest (L"TTDD", message, time_hint); }
+        if (header == "TTAA ") { ingest ("TTAA", message, time_hint); }
+   else if (header == "TTBB ") { ingest ("TTBB", message, time_hint); }
+   else if (header == "TTCC ") { ingest ("TTCC", message, time_hint); }
+   else if (header == "TTDD ") { ingest ("TTDD", message, time_hint); }
 
 }
 
@@ -251,9 +251,9 @@ void
 Gts_Ptr_Grandstore::ingest_file (const Dstring& file_path)
 {
 
-   Reg_Exp yymmddhh_re (L"[0-9].......");
+   Reg_Exp yymmddhh_re ("[0-9].......");
    Tokens* message_tokens_ptr = Gts::parse_file (file_path);
-   const Dstring file_name = Tokens (file_path, L"/").back ();
+   const Dstring file_name = Tokens (file_path, "/").back ();
 
    const bool match = (yymmddhh_re.match (file_name));
 
@@ -261,7 +261,7 @@ Gts_Ptr_Grandstore::ingest_file (const Dstring& file_path)
    if (yymmddhh_re.match (file_name))
    {
       const Dstring& yymmddhh = file_name.substr (0, 8);
-      time_hint = Dtime (yymmddhh, L"%y%m%d%H");
+      time_hint = Dtime (yymmddhh, "%y%m%d%H");
    }
 
    for (Tokens::const_iterator iterator = message_tokens_ptr->begin ();
@@ -286,7 +286,7 @@ Gts_Ptr_Grandstore::ingest_dir (const Dstring& dir_path,
         iterator != dir_listing.end (); iterator++)
    {
       const Dstring& file_name = *(iterator);
-      const Dstring file_path = dir_path + L"/" + file_name;
+      const Dstring file_path = dir_path + "/" + file_name;
       ingest_file (file_path);
    }
 
@@ -296,7 +296,7 @@ const Gts_Ptr_Store&
 Gts_Ptr_Grandstore::get_gts_ptr_store (const Dstring& genre) const
 {
    Gts_Ptr_Grandstore::const_iterator i = find (genre);
-   if (i == end ()) { throw Exception (L"Invalid GTS genre"); }
+   if (i == end ()) { throw Exception ("Invalid GTS genre"); }
    return i->second;
 }
 
@@ -316,7 +316,7 @@ Temp::parse_tttdd (const Dstring& tttdd) const
    Real dew_point = GSL_NAN;
 
    const Dstring& ttt = tttdd.substr (0, 3);
-   if (ttt != L"///")
+   if (ttt != "///")
    {
       const bool minus = (stoi (tttdd.substr (2, 1)) % 2 == 1);
       const Real sign = (minus ? -1 : 1);
@@ -324,7 +324,7 @@ Temp::parse_tttdd (const Dstring& tttdd) const
    }
 
    const Dstring& dd = tttdd.substr (3, 2);
-   if (dd != L"//")
+   if (dd != "//")
    {
       const Real dep = stof (dd);
       const bool dry = dep > 55;
@@ -343,7 +343,7 @@ Temp::parse_ddfff (const Dstring& ddfff) const
    Real direction = GSL_NAN;
    Real speed = GSL_NAN;
 
-   if (ddfff != L"/////")
+   if (ddfff != "/////")
    {
 
       const Integer centre_digit = stoi (ddfff.substr (2, 1));
@@ -377,7 +377,7 @@ Temp::Temp (const Dstring& message,
    {
       const Dstring& group = at (i);
       const Integer n = group.size ();
-      if (n != 5) { throw Exception (L"Invalid TEMP message"); }
+      if (n != 5) { throw Exception ("Invalid TEMP message"); }
    }
 }
 
@@ -407,7 +407,7 @@ Ttac::parse_special_level (Sounding& sounding,
       {
 
          const Dstring& ppp = nnppp.substr (2, 3);
-         if (ppp == L"999") { return index; }
+         if (ppp == "999") { return index; }
 
          const Real p = stof (ppp) * 1e2;
          const Real pressure = (p < 500e2 ? p + 1000e2 : p);
@@ -530,7 +530,7 @@ Ttac::parse_pphhh (const Dstring& pphhh) const
 
    const Integer pp = stoi (pphhh.substr (0, 2));
    const Dstring& hhh = pphhh.substr (2, 3);
-   if (hhh != L"///") { geopotential_height = stof (hhh); }
+   if (hhh != "///") { geopotential_height = stof (hhh); }
 
    interpret_p_z (pp, pressure, geopotential_height);
    return make_pair (pressure, geopotential_height);
@@ -554,7 +554,7 @@ Ttbd::parse_significant_temperature_levels (Sounding& sounding,
       const Dstring& nnppp = (*this)[index++];
       // reached end of message for temperatures
       if (nnppp[0] != nnppp[1]) { return false; }
-      if (nnppp == L"21212") { return false; }
+      if (nnppp == "21212") { return false; }
 
       const Dstring& tttdd = (*this)[index++];
 
@@ -593,7 +593,7 @@ Ttbd::parse_significant_wind_levels (Sounding& sounding,
 
       const Dstring& nnppp = (*this)[index++];
       if (nnppp[0] != nnppp[1]) { return false; }
-      if (nnppp == L"31313") { return false; }
+      if (nnppp == "31313") { return false; }
 
       const Dstring& ddfff = (*this)[index++];
 
@@ -664,7 +664,7 @@ Ttaa::get_number_of_standard_levels () const
       case '8': return 3;
       case '9': return 2;
       case '/': return 0;
-      default: throw Exception (L"TEMP Parse Error");
+      default: throw Exception ("TEMP Parse Error");
    }
 
 }
@@ -692,7 +692,7 @@ Real
 Ttbb::parse_nnppp (const Dstring& nnppp) const
 {
    const Dstring& ppp = nnppp.substr (2, 3);
-   if (ppp == L"///") { return GSL_NAN; }
+   if (ppp == "///") { return GSL_NAN; }
    else
    {
       Real pressure = stof (ppp) * 1e2;
@@ -756,7 +756,7 @@ Ttcc::get_number_of_standard_levels () const
       case '5': return 2;
       case '7': return 1;
       case '/': return 0;
-      default: throw Exception (L"TEMP Parse Error");
+      default: throw Exception ("TEMP Parse Error");
    }
 }
 
@@ -772,7 +772,7 @@ Ttcc::parse_to (Sounding& sounding) const
 
    Integer index = 3;
    if (size () < 4) { return; }
-   if (((*this)[index]) == L"NIL") { return; }
+   if (((*this)[index]) == "NI") { return; }
 
    parse_standard_levels (sounding, index);
    //parse_special_level (sounding, index); // Tropopause Level
@@ -783,7 +783,7 @@ Real
 Ttdd::parse_nnppp (const Dstring& nnppp) const
 {
    const Dstring& ppp = nnppp.substr (2, 3);
-   if (ppp == L"///") { return GSL_NAN; }
+   if (ppp == "///") { return GSL_NAN; }
    else { return stof (ppp) * 10; }
 }
 
@@ -799,7 +799,7 @@ Ttdd::parse_to (Sounding& sounding) const
 
    Integer index = 3;
    if (size () < 4) { return; }
-   if (((*this)[index]) == L"NIL") { return; }
+   if (((*this)[index]) == "NI") { return; }
 
    // if not reaching end of message by completionof
    //    parse_significant_temperature_levels, proceed to
@@ -813,8 +813,8 @@ Ttdd::parse_to (Sounding& sounding) const
 namespace denise
 {
 
-   wostream&
-   operator << (wostream &out,
+   ostream&
+   operator << (ostream &out,
                 const Gts& gts)
    {
       for (Gts::const_iterator iterator = gts.begin ();

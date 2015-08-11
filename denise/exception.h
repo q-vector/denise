@@ -34,16 +34,16 @@ namespace denise
 
       public:
 
-         wstring
+         string
          identifier;
 
-         wstring
+         string
          description;
 
-         Exception (const wstring& description = wstring ()) throw ();
+         Exception (const string& description = string ()) throw ();
 
-         Exception (const wstring& identifier,
-                    const wstring& description) throw ();
+         Exception (const string& identifier,
+                    const string& description) throw ();
 
          Exception (const Exception& exception) throw ();
 
@@ -59,7 +59,7 @@ namespace denise
 
       public:
 
-         IO_Exception (const wstring& description = wstring ()) throw ();
+         IO_Exception (const string& description = string ()) throw ();
 
    };
 
@@ -68,7 +68,7 @@ namespace denise
 
       public:
 
-         No_Match_Exception (const wstring& description = wstring ()) throw ();
+         No_Match_Exception (const string& description = string ()) throw ();
 
    };
 
@@ -77,7 +77,7 @@ namespace denise
 
       public:
 
-         Out_Of_Bounds_Exception (const wstring& description = wstring ()) throw ();
+         Out_Of_Bounds_Exception (const string& description = string ()) throw ();
 
    };
 

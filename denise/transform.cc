@@ -164,9 +164,9 @@ Transform_2D*
 Transform_2D::get_transform_ptr (const Dstring& str)
 {
 
-   const Tokens tokens (str, L":");
+   const Tokens tokens (str, ":");
 
-   if (tokens[0] == L"CARTESIAN")
+   if (tokens[0] == "CARTESIAN")
    {
       const Real domain_x_start = stof (tokens[1]);
       const Real domain_x_end = stof (tokens[2]);
@@ -183,7 +183,7 @@ Transform_2D::get_transform_ptr (const Dstring& str)
          domain_y, width, height, origin);
    }
    else
-   if (tokens[0] == L"LOG")
+   if (tokens[0] == "LOG")
    {
       const Real domain_x_start = stof (tokens[1]);
       const Real domain_x_end = stof (tokens[2]);
@@ -193,8 +193,8 @@ Transform_2D::get_transform_ptr (const Dstring& str)
       const Real height = stof (tokens[6]);
       const Real origin_x = stof (tokens[7]);
       const Real origin_y = stof (tokens[8]);
-      const bool log_x = (tokens[9] == L"y");
-      const bool log_y = (tokens[10] == L"y");
+      const bool log_x = (tokens[9] == "y");
+      const bool log_y = (tokens[10] == "y");
       const Domain_1D domain_x (domain_x_start, domain_x_end);
       const Domain_1D domain_y (domain_y_start, domain_y_end);
       const Point_2D origin (origin_x, origin_y);
@@ -202,7 +202,7 @@ Transform_2D::get_transform_ptr (const Dstring& str)
          width, height, log_x, log_y, origin);
    }
    else
-   if (tokens[0] == L"POLAR")
+   if (tokens[0] == "POLAR")
    {
       const Real x = stof (tokens[1]);
       const Real y = stof (tokens[2]);
@@ -210,14 +210,14 @@ Transform_2D::get_transform_ptr (const Dstring& str)
       return new Polar_Transform_2D (Point_2D (x, y), scale);
    }
    else
-   if (tokens[0] == L"PARABOLIC")
+   if (tokens[0] == "PARABOLIC")
    {
       const Real x = stof (tokens[1]);
       const Real y = stof (tokens[2]);
       return new Parabolic_Transform_2D (Point_2D (x, y));
    }
    else
-   if (tokens[0] == L"ELLIPTIC")
+   if (tokens[0] == "ELLIPTIC")
    {
       const Real x = stof (tokens[1]);
       const Real y = stof (tokens[2]);
@@ -225,7 +225,7 @@ Transform_2D::get_transform_ptr (const Dstring& str)
       return new Elliptic_Transform_2D (Point_2D (x, y), scale);
    }
    else
-   if (tokens[0] == L"BIPOLAR")
+   if (tokens[0] == "BIPOLAR")
    {
       const Real x = stof (tokens[1]);
       const Real y = stof (tokens[2]);

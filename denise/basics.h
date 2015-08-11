@@ -189,9 +189,9 @@ namespace denise
          Index_2D (const Integer i = 0,
                    const Integer j = 0);
 
-         Index_2D (const wstring& str);
+         Index_2D (const string& str);
 
-         wstring
+         string
          get_string () const;
 
          bool
@@ -436,7 +436,7 @@ namespace denise
 
          Point_2D (const Index_2D& index_2d);
 
-         Point_2D (const wstring& str);
+         Point_2D (const string& str);
 
          complex<Real>
          get_complex () const;
@@ -564,8 +564,8 @@ namespace denise
          Tuple (const set<Real>::const_iterator begin,
                 const set<Real>::const_iterator end);
 
-         Tuple (const wstring& tuple_string,
-                const wstring& delimiter = L":");
+         Tuple (const string& tuple_string,
+                const string& delimiter = ":");
 
          Tuple (const Integer number_of_values,
                 const Real value);
@@ -584,8 +584,8 @@ namespace denise
                       const bool clear_first = false);
 
          void
-         add_content (const wstring& tuple_string,
-                      const wstring& delimiter = L":",
+         add_content (const string& tuple_string,
+                      const string& delimiter = ":",
                       const bool clear_first = false);
 
          void
@@ -628,8 +628,8 @@ namespace denise
          Ituple (const set<Integer>::const_iterator begin,
                  const set<Integer>::const_iterator end);
 
-         Ituple (const wstring& ituple_string,
-                 const wstring& delimiter = L":");
+         Ituple (const string& ituple_string,
+                 const string& delimiter = ":");
 
          Ituple (const Integer number_of_values,
                  const Integer value);
@@ -648,8 +648,8 @@ namespace denise
                       const bool clear_first = false);
 
          void
-         add_content (const wstring& ituple_string,
-                      const wstring& delimiter = L":",
+         add_content (const string& ituple_string,
+                      const string& delimiter = ":",
                       const bool clear_first = false);
 
          void
@@ -759,7 +759,7 @@ namespace denise
          Domain_1D         
          domain_y;         
 
-         Domain_2D (const wstring& str);
+         Domain_2D (const string& str);
 
          Domain_2D (const Real start_x = 0,
                     const Real end_x = 1,
@@ -854,47 +854,47 @@ namespace denise
 
    };
 
-   wostream&
-   operator << (wostream& out_file,
+   ostream&
+   operator << (ostream& out_file,
                 const Index_nD& index_nd);
 
-   wostream&
-   operator << (wostream& out_file,
+   ostream&
+   operator << (ostream& out_file,
                 const Point_nD& point_nd);
 
-   wostream&
-   operator << (wostream &out_file,
+   ostream&
+   operator << (ostream &out_file,
                 const Index_2D& index);
 
-   wostream&
-   operator << (wostream &out_file,
+   ostream&
+   operator << (ostream &out_file,
                 const Index_3D& index);
  
-   wostream&
-   operator << (wostream &out_file,
+   ostream&
+   operator << (ostream &out_file,
                 const Box_2D& box_2d);
  
-   wostream&
-   operator << (wostream &out_file,
+   ostream&
+   operator << (ostream &out_file,
                 const Point_2D& point);
 
-   wostream&
-   operator << (wostream &out_file,
+   ostream&
+   operator << (ostream &out_file,
                 const Point_3D& point);
 
-   wostream&
-   operator << (wostream &out_file,
+   ostream&
+   operator << (ostream &out_file,
                 const Tuple& tuple);
-   wostream&
-   operator << (wostream &out_file,
+   ostream&
+   operator << (ostream &out_file,
                 const Ituple& ituple);
 
-   wostream&
-   operator << (wostream &out_file,
+   ostream&
+   operator << (ostream &out_file,
                 const Ituple& ituple);
 
-   wostream&
-   operator << (wostream &out_file,
+   ostream&
+   operator << (ostream &out_file,
                 const Domain_1D& domain);
 
 }

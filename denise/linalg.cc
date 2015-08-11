@@ -52,7 +52,7 @@ Vector::Vector (const Vector& vector_a,
 
    const Integer a = vector_a.get_size ();
    const Integer b = vector_b.get_size ();
-   if (a != b) { throw Exception (L"size mismatch"); }
+   if (a != b) { throw Exception ("size mismatch"); }
    const Integer n = a;
 
    this->gv = gsl_vector_alloc (n);
@@ -109,13 +109,13 @@ Vector::op (const Vector& vector,
 {
 
    const Integer n = get_size ();
-   if (n != vector.get_size ()) { throw Exception (L"size mismatch"); }
+   if (n != vector.get_size ()) { throw Exception ("size mismatch"); }
 
    switch (vector_op)
    {
 
       default:
-         throw Exception (L"vector_op not supported");
+         throw Exception ("vector_op not supported");
          break;
 
       case VO_ADD:
@@ -150,7 +150,7 @@ void
 Matrix::calculate_inverse ()
 {
 
-   if (!is_square ()) { throw Exception (L"not square matrix"); }
+   if (!is_square ()) { throw Exception ("not square matrix"); }
    const Integer n = get_rows ();
 
    this->inverse_ptr = new Matrix (n, n);
@@ -321,7 +321,7 @@ Real_Symmetric_Eigen::Real_Symmetric_Eigen (const Matrix& matrix,
                                             const bool sort)
 {
 
-   if (!matrix.is_square ()) { throw Exception (L"not square matrix"); }
+   if (!matrix.is_square ()) { throw Exception ("not square matrix"); }
    const Integer n = matrix.get_rows ();
 
    gsl_vector* eval = gsl_vector_alloc (n);

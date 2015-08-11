@@ -1244,7 +1244,7 @@ Dcanvas::Dcanvas (Gtk::Window& gtk_window)
    : Dcontainer (*this),
      gtk_window (gtk_window),
      title (*this),
-     easter_egg (L"")
+     easter_egg ("")
 {
    Glib::Mutex::Lock lock (mutex);
 }
@@ -1770,7 +1770,7 @@ Dbutton::Dbutton (const Dcanvas& canvas,
      disabled (false),
      band_color (Color (GSL_NAN, GSL_NAN, GSL_NAN)),
      led_color (Color (GSL_NAN, GSL_NAN, GSL_NAN)),
-     separator (L"\t\n")
+     separator ("\t\n")
 {
 }
 
@@ -2005,7 +2005,7 @@ Spin_Button::Spin_Button (const Dcanvas& canvas,
                           const bool instant_update,
                           const Real font_size,
                           const Dstring& separator)
-   : Dbutton (canvas, L"", font_size, separator),
+   : Dbutton (canvas, "", font_size, separator),
      instant_update (instant_update)
 {
    official_iterator = end ();
@@ -2015,14 +2015,14 @@ Spin_Button::Spin_Button (const Dcanvas& canvas,
 Dstring
 Spin_Button::get_official_str () const
 {
-   if (official_iterator == end ()) { return L""; }
+   if (official_iterator == end ()) { return ""; }
    return *(official_iterator);
 }
 
 Dstring
 Spin_Button::get_str () const
 {
-   if (iterator == end ()) { return L""; }
+   if (iterator == end ()) { return ""; }
    return *(iterator);
 }
 
@@ -2096,7 +2096,7 @@ Spin_Button::add_tokens (const Tokens& tokens,
 
    if (clear_first) { clear (); }
 
-   Dstring default_str = L"";
+   Dstring default_str = "";
 
    for (Tokens::const_iterator i = tokens.begin (); i != tokens.end (); i++)
    {
@@ -2112,7 +2112,7 @@ Spin_Button::add_tokens (const Tokens& tokens,
 
    this->official_iterator = begin ();
 
-   if (default_str != L"")
+   if (default_str != "")
    {
       Tokens::iterator i = std::find (begin (), end (), default_str);
       if (i != end ()) { this->official_iterator = i; }
@@ -2635,7 +2635,7 @@ Drawer_Panel::get_drawer (const Dstring& str) const
 {
    Drawer_Ptr_Map::const_iterator iterator = drawer_ptr_map.find (str);
    const bool cannot_find = (iterator == drawer_ptr_map.end ());
-   if (cannot_find) { throw Exception (L"No Such Drawer"); }
+   if (cannot_find) { throw Exception ("No Such Drawer"); }
    return *(iterator->second);
 }
 
@@ -2644,7 +2644,7 @@ Drawer_Panel::get_drawer (const Dstring& str)
 {
    Drawer_Ptr_Map::iterator iterator = drawer_ptr_map.find (str);
    const bool cannot_find = (iterator == drawer_ptr_map.end ());
-   if (cannot_find) { throw Exception (L"No Such Drawer"); }
+   if (cannot_find) { throw Exception ("No Such Drawer"); }
    return *(iterator->second);
 }
 
@@ -2653,7 +2653,7 @@ Drawer_Panel::get_button (const Dstring& str) const
 {
    Button_Ptr_Map::const_iterator iterator = button_ptr_map.find (str);
    const bool cannot_find = (iterator == button_ptr_map.end ());
-   if (cannot_find) { throw Exception (L"No Such Button"); }
+   if (cannot_find) { throw Exception ("No Such Button"); }
    return *(iterator->second);
 }
 
@@ -2662,7 +2662,7 @@ Drawer_Panel::get_button (const Dstring& str)
 {
    Button_Ptr_Map::iterator iterator = button_ptr_map.find (str);
    const bool cannot_find = (iterator == button_ptr_map.end ());
-   if (cannot_find) { throw Exception (L"No Such Button"); }
+   if (cannot_find) { throw Exception ("No Such Button"); }
    return *(iterator->second);
 }
 
@@ -2671,7 +2671,7 @@ Drawer_Panel::get_toggle_button (const Dstring& str) const
 {
    Toggle_Button_Ptr_Map::const_iterator iterator = toggle_button_ptr_map.find (str);
    const bool cannot_find = (iterator == toggle_button_ptr_map.end ());
-   if (cannot_find) { throw Exception (L"No Such Toggle_Button"); }
+   if (cannot_find) { throw Exception ("No Such Toggle_Button"); }
    return *(iterator->second);
 }
 
@@ -2680,7 +2680,7 @@ Drawer_Panel::get_toggle_button (const Dstring& str)
 {
    Toggle_Button_Ptr_Map::iterator iterator = toggle_button_ptr_map.find (str);
    const bool cannot_find = (iterator == toggle_button_ptr_map.end ());
-   if (cannot_find) { throw Exception (L"No Such Toggle_Button"); }
+   if (cannot_find) { throw Exception ("No Such Toggle_Button"); }
    return *(iterator->second);
 }
 
@@ -3214,7 +3214,7 @@ Time_Chooser::Shape::const_iterator
 Time_Chooser::Shape::get_iterator (const Dtime& dtime) const
 {
 
-   if (size () == 0) { throw Exception (L"Time_Chooser::Data empty"); }
+   if (size () == 0) { throw Exception ("Time_Chooser::Data empty"); }
 
    Real smallest_fabs_dt = GSL_POSINF;
    Shape::const_iterator iterator = end ();
@@ -3293,16 +3293,16 @@ Time_Chooser::Data::init (const Dstring& str)
 void
 Time_Chooser::Data::rectify (Dstring& str)
 {
-   const Tokens tokens (str, L":");
+   const Tokens tokens (str, ":");
    const bool b = (tokens.size () > 1 && tokens[0] > tokens[1]);
-   if (b) { str = tokens[1] + L":" + tokens[0]; } }
+   if (b) { str = tokens[1] + ":" + tokens[0]; } }
 
 bool
 Time_Chooser::Data::contains (const Dstring& str,
                               const Dtime& dtime)
 {
 
-   const Tokens tokens (str, L":");
+   const Tokens tokens (str, ":");
    if (tokens.size () == 0) { return false; }
    if (tokens.size () == 1) { return dtime == Dtime (tokens[0]); }
 
@@ -3336,11 +3336,11 @@ Time_Chooser::Data::Data (const Tokens& tokens)
 }
 
 Time_Chooser::Data::Data (const Dtime& dtime)
-   : Tokens (dtime.get_string (L"%Y%m%d%H%M")),
+   : Tokens (dtime.get_string ("%Y%m%d%H%M")),
      dtime (GSL_NAN),
      candidate_time (GSL_NAN)
 {
-   init (dtime.get_string (L"%Y%m%d%H%M"));
+   init (dtime.get_string ("%Y%m%d%H%M"));
 }
 
 Time_Chooser::Data::Data (const Dstring& str)
@@ -3366,7 +3366,7 @@ Time_Chooser::Data::set_time (const Dtime& dtime,
                               const bool is_leap)
 {
 
-   const Dstring fmt (L"%Y%m%d%H%M");
+   const Dstring fmt ("%Y%m%d%H%M");
 
    const Dstring& old_time_str = this->dtime.get_string (fmt);
    const Dstring& new_time_str = dtime.get_string (fmt);
@@ -3385,13 +3385,13 @@ Time_Chooser::Data::set_time (const Dtime& dtime,
            iterator != end (); iterator++)
       {
          Dstring& str = *(iterator);
-         const Tokens tokens (str, L":");
+         const Tokens tokens (str, ":");
          const bool singleton = (tokens.size () == 1);
          if (singleton)
          {
             if (str == old_time_str)
             {
-               str = old_time_str + L":" + new_time_str;
+               str = old_time_str + ":" + new_time_str;
                rectify (str);
                break;
             }
@@ -3401,7 +3401,7 @@ Time_Chooser::Data::set_time (const Dtime& dtime,
             if (!contains (str, this->dtime)) { continue; }
             const Dstring& str_a = std::min (tokens[0], new_time_str);
             const Dstring& str_b = std::max (tokens[1], new_time_str);
-            str = str_a + L":" + str_b;
+            str = str_a + ":" + str_b;
             rectify (str);
             break;
          }
@@ -3472,13 +3472,13 @@ Time_Chooser::Data::conform_to (const Shape& shape)
 {
 
    Tokens new_tokens;
-   const Dstring fmt (L"%Y%m%d%H%M");
+   const Dstring fmt ("%Y%m%d%H%M");
 
    for (Data::const_iterator iterator = begin ();
         iterator != end (); iterator++)
    {
 
-      const Tokens tokens (*(iterator), L":");
+      const Tokens tokens (*(iterator), ":");
       const bool singleton = (tokens.size () == 1);
 
       if (singleton)
@@ -3495,7 +3495,7 @@ Time_Chooser::Data::conform_to (const Shape& shape)
          if (st > e || et < s) { return; }
          const Dstring& str_s = std::max (s, st).get_string (fmt);
          const Dstring& str_e = std::min (e, et).get_string (fmt);
-         new_tokens.push_back (str_s + L":" + str_e);
+         new_tokens.push_back (str_s + ":" + str_e);
       }
 
    }
@@ -3518,13 +3518,13 @@ Time_Chooser::Data::conform_to (const Shape& shape)
 void
 Time_Chooser::Data::dump () const
 {
-   wcout << L"===" << endl;
+   cout << "===" << endl;
    for (Data::const_iterator iterator = begin ();
         iterator != end (); iterator++)
    {
-      wcout << *(iterator) << endl;
+      cout << *(iterator) << endl;
    }
-   wcout << L"===" << endl;
+   cout << "===" << endl;
 }
 
 Real
@@ -3613,7 +3613,7 @@ Time_Chooser::render_background_months (const RefPtr<Context>& cr)
       for (Integer month = 1; month <= 12; month++)
       {
          color.cairo (cr);
-         render_month_lines (cr, year, month, L"%d");
+         render_month_lines (cr, year, month, "%d");
          fg_color.cairo (cr);
          render_month (cr, year, month);
       }
@@ -3647,8 +3647,8 @@ Time_Chooser::render_month (const RefPtr<Context>& cr,
    const Point_2D& p_b = (v ? P (w - 5.0 * m, y) : P (x, h - 3.0 * m));
    const Point_2D& p_c = (v ? P (w - 4.5 * m, y) : P (x, h - 3.5 * m));
    const Point_2D& p_d = (v ? P (w - 7.0 * m, y) : P (x, h - 1.0 * m));
-   const Dstring& str_a = dtime.get_string (v ? L"%b" : L"%B");
-   const Dstring& str_b = dtime.get_string (L"%Y");
+   const Dstring& str_a = dtime.get_string (v ? "%b" : "%B");
+   const Dstring& str_b = dtime.get_string ("%Y");
 
    cr->set_line_width (1);
    cr->move_to (p_c.x, p_c.y);
@@ -3681,7 +3681,7 @@ Time_Chooser::render_month_lines (const RefPtr<Context>& cr,
                                   const Dstring& format) const
 {
 
-   if (format == L"") { return; }
+   if (format == "") { return; }
 
    for (Integer day = 1; day <= 21; day += 10)
    {
@@ -3720,7 +3720,7 @@ Time_Chooser::render_background_days (const RefPtr<Context>& cr)
 
    cr->set_line_width (1);
    Color (0.5, 0.5, 0.5).cairo (cr);
-   render_lines (cr, line_interval, L"%HZ");
+   render_lines (cr, line_interval, "%HZ");
 
    cr->set_line_width (1);
    Color (0, 0, 0).cairo (cr);
@@ -3736,7 +3736,7 @@ Time_Chooser::render_dates (const RefPtr<Context>& cr) const
 
    const Integer hours = 24;
    const Dtime st (shape.start_time.t - fmod (shape.start_time.t, hours));
-   const Dstring time_format_str (L"%b %d");
+   const Dstring time_format_str ("%b %d");
 
    typedef Point_2D P;
    const Real w = width;
@@ -3760,8 +3760,8 @@ Time_Chooser::render_dates (const RefPtr<Context>& cr) const
       const Point_2D p_c = (v ? P (w - 4.5 * margin, y) : P (x, h - 3.5 * m));
       const Point_2D p_d = (v ? P (w - 7.0 * margin, y) : P (x, h - 1.0 * m));
 
-      const Dstring str_a = dtime.get_string (L"%b %d");
-      const Dstring str_b = dtime.get_string (L"(%a)");
+      const Dstring str_a = dtime.get_string ("%b %d");
+      const Dstring str_b = dtime.get_string ("(%a)");
 
       cr->set_line_width (1);
       cr->move_to (p_c.x, p_c.y);
@@ -3795,7 +3795,7 @@ Time_Chooser::render_lines (const RefPtr<Context>& cr,
                             const Dstring& format) const
 {
 
-   if (format == L"") { return; }
+   if (format == "") { return; }
    const Dtime& start_time = shape.start_time;
    const Dtime& end_time = shape.end_time;
    const Dtime st (start_time.t - fmod (start_time.t, double (hours)));
@@ -3927,7 +3927,7 @@ Time_Chooser::render_now (const RefPtr<Context>& cr) const
       const Arrow arrow (0, 2*margin);
       arrow.cairo (cr, point);
       cr->stroke ();
-      Label (L"NOW", point + Point_2D (-1.5 * margin, 0), 'r', 'c').cairo (cr);
+      Label ("NOW", point + Point_2D (-1.5 * margin, 0), 'r', 'c').cairo (cr);
    }
    else
    {
@@ -3935,7 +3935,7 @@ Time_Chooser::render_now (const RefPtr<Context>& cr) const
       const Arrow arrow (-M_PI/2, 2*margin);
       arrow.cairo (cr, point);
       cr->stroke ();
-      Label (L"NOW", point + Point_2D (0, 1.5 * margin), 'c', 't').cairo (cr);
+      Label ("NOW", point + Point_2D (0, 1.5 * margin), 'c', 't').cairo (cr);
    }
 
    cr->restore ();
@@ -3979,9 +3979,9 @@ Time_Chooser::Time_Chooser (const Dcanvas& canvas,
                             const bool vertical,
                             const Real line_interval)
    : Dcontainer (canvas),
-     anim_button (canvas, L"ANIM", font_size, false),
-     prev_button (canvas, L"PREV", font_size),
-     next_button (canvas, L"NEXT", font_size),
+     anim_button (canvas, "ANIM", font_size, false),
+     prev_button (canvas, "PREV", font_size),
+     next_button (canvas, "NEXT", font_size),
      margin (font_size),
      thread_ptr (NULL),
      dwell (400000),
@@ -4636,7 +4636,7 @@ Level_Panel::get_level_tuple () const
       case Level::THETA:    return level_tuple_theta;
    }
 
-   throw Nwp_Exception (L"Level_Tuple::get_level_tuple confused");
+   throw Nwp_Exception ("Level_Tuple::get_level_tuple confused");
 
 }
 
@@ -5266,10 +5266,10 @@ Level_Panel::Level_Panel (Dcanvas& dcanvas,
                           const Real font_size)
    : Dv_Pack_Box (dcanvas, 0, 6/*margin*/),
      dcanvas (dcanvas),
-     level_tuple_z (Level::HEIGHT, L"40000:36000:32000:28000:24000:20000:18000:16000:14000:12000:10000:9000:8000:7000:6000:5000:4500:4000:3500:3000:2500:2000:1800:1600:1400:1200:1000:900:800:700:600:500:400:350:300:250:200:150:100:75:45:20:5:0"),
-     level_tuple_sigma (Level::SIGMA, L"0.2:0.25:0.3:0.35:0.4:0.45:0.5:0.55:0.6:0.65:0.7:0.75:0.8:0.85:0.875:0.9:0.925:0.95:0.975:0.9943:0.9975:0.9988"),
-     level_tuple_theta (Level::THETA, L"355:350:345:340:335:330:325:320:315:310:305:300:295:290:285:280:275:270"),
-     level_tuple_p (Level::PRESSURE, L"200e2:250e2:300e2:350e2:400e2:450e2:500e2:550e2:600e2:650e2:700e2:750e2:800e2:850e2:900e2:925e2:950e2:975e2:995e2:1000e2"),
+     level_tuple_z (Level::HEIGHT, "40000:36000:32000:28000:24000:20000:18000:16000:14000:12000:10000:9000:8000:7000:6000:5000:4500:4000:3500:3000:2500:2000:1800:1600:1400:1200:1000:900:800:700:600:500:400:350:300:250:200:150:100:75:45:20:5:0"),
+     level_tuple_sigma (Level::SIGMA, "0.2:0.25:0.3:0.35:0.4:0.45:0.5:0.55:0.6:0.65:0.7:0.75:0.8:0.85:0.875:0.9:0.925:0.95:0.975:0.9943:0.9975:0.9988"),
+     level_tuple_theta (Level::THETA, "355:350:345:340:335:330:325:320:315:310:305:300:295:290:285:280:275:270"),
+     level_tuple_p (Level::PRESSURE, "200e2:250e2:300e2:350e2:400e2:450e2:500e2:550e2:600e2:650e2:700e2:750e2:800e2:850e2:900e2:925e2:950e2:975e2:995e2:1000e2"),
      start_margin (50),
      end_margin (90),
 
@@ -5952,7 +5952,7 @@ Console_2D::Zoom_Box::cairo (const RefPtr<Context>& cr)
    cr->save ();
    color.cairo (cr);
 
-   Dashes (L"4:2").cairo (cr);
+   Dashes ("4:2").cairo (cr);
 
    cr->set_line_width (1);
    cr->move_to (centre.x + wa, centre.y + ha);
@@ -5984,7 +5984,7 @@ Console_2D::Zoom_Box::cairo (const RefPtr<Context>& cr)
    Ring (6).cairo (cr, point_2c);
    cr->fill ();
    cr->set_font_size (font_size);
-   Label label (L"TOP LEFT", point_2c, 'l', 't', font_size / 2);
+   Label label ("TOP LEFT", point_2c, 'l', 't', font_size / 2);
    label.set_text_angle (tilt);
    label.cairo (cr);
 
@@ -6006,7 +6006,7 @@ Console_2D::Hud::Popup_Menu::Popup_Menu (Console_2D& console_2d,
      console_2d (console_2d)
 {
    clear ();
-   append (L"Clear");
+   append ("Clear");
 }
 
 void
@@ -6095,7 +6095,7 @@ Console_2D::Marker::Marker (const Integer id,
                             const Real node_size)
    : Hud (id, node_size),
      Point_2D (point),
-     str (L"")
+     str ("")
 {
 }
 
@@ -6167,7 +6167,7 @@ Console_2D::Marker::cairo (const RefPtr<Context>& cr,
 
    }
 
-   const Real hue = (str == L"" ? 0.667 : 0.000);
+   const Real hue = (str == "" ? 0.667 : 0.000);
    const Color& bg_color = Color::hsb (hue, 0.5, 1, 0.7);
    const Color fg_color (0, 0, 0);
    Ring (node_size).cairo (cr, point);
@@ -6547,7 +6547,7 @@ const Attractor&
 Console_2D::Hud_Store::get_attractor () const
 {
    if (attractor_ptr != NULL) { return *attractor_ptr; }
-   else throw Exception (L"attractor_ptr is NULL.");
+   else throw Exception ("attractor_ptr is NULL.");
 }
 
 void
@@ -6758,7 +6758,7 @@ Console_2D::Marker_Store::try_dragging (Console_2D& console_2d,
    const Point_2D& point = event.point;
 
    transform.reverse (marker.x, marker.y, point.x, point.y);
-   marker.set_str (L"");
+   marker.set_str ("");
 
    if (event.control ())
    {
@@ -7577,7 +7577,7 @@ Console_2D::get_shape_popup_menu ()
 Dstring
 Console_2D::get_string (const Marker& marker) const
 {
-   return string_render ("%f %f", marker.x, marker.y);
+   return Dstring::render ("%f %f", marker.x, marker.y);
 }
 
 Tokens
@@ -7836,13 +7836,13 @@ void
 Console_2D::save_image (const Dstring& file_path)
 {
 
-   const Tokens tokens (file_path, L".");
-   const Dstring& extension = get_lower_case (tokens.back ());
+   const Tokens tokens (file_path, ".");
+   const Dstring& extension = tokens.back ().get_lower_case ();
 
-   if (extension == L"png") { save_png (file_path); return; }
-   if (extension == L"svg") { save_svg (file_path); return; }
+   if (extension == "png") { save_png (file_path); return; }
+   if (extension == "svg") { save_svg (file_path); return; }
 
-   cerr << L"Unrecognized file format" << endl;
+   cerr << "Unrecognized file format" << endl;
 
 }
 
@@ -8100,7 +8100,7 @@ Map_Console::Overlay_Store::add (const Dstring& overlay_string,
                                  const bool heavy)
 {
 
-   const Tokens tokens (overlay_string, L":");
+   const Tokens tokens (overlay_string, ":");
    if (tokens.size () < 7) { return; }
 
    const Dstring& genre = tokens[0];
@@ -8112,16 +8112,16 @@ Map_Console::Overlay_Store::add (const Dstring& overlay_string,
    const Real& a = stof (tokens[6]);
    const Color color (r, g, b, a);
 
-   if (genre == L"GSHHS")
+   if (genre == "GSHHS")
    {
-      const bool filled = (tokens[7] == L"filled");
+      const bool filled = (tokens[7] == "filled");
       const Dstring& file_path = tokens[8];
       Gshhs* gshhs_ptr = new Gshhs (file_path);
       add (identifier, gshhs_ptr, filled, line_width, color, heavy);
       return;
    }
 
-   if (genre == L"OUTL")
+   if (genre == "OUT")
    {
       const Dstring& file_path = tokens[7];
       Outl* outl_ptr = new Outl (file_path);
@@ -8129,7 +8129,7 @@ Map_Console::Overlay_Store::add (const Dstring& overlay_string,
       return;
    }
 
-   if (genre == L"KIDNEY")
+   if (genre == "KIDNEY")
    {
       const Dstring& file_path = tokens[7];
       Kidney* kidney_ptr = new Kidney (file_path);
@@ -8159,7 +8159,7 @@ Map_Console::Overlay_Store::is_on (const Dstring& identifier) const
    On_Off_Map::const_iterator iterator = on_off_map.find (identifier);
    if (iterator == on_off_map.end ())
    {
-      throw Exception (L"Invalid overlay identifier");
+      throw Exception ("Invalid overlay identifier");
    }
    return iterator->second;
 }
@@ -8209,7 +8209,7 @@ Map_Console::Overlay_Store::cairo (const RefPtr<Context>& cr,
 }
 
 Map_Console::Option_Panel::Zoom_Drawer::Zoom_Drawer (Option_Panel& option_panel)
-   : Drawer (option_panel.map_console, option_panel, false, L"Zoom", 12) 
+   : Drawer (option_panel.map_console, option_panel, false, "Zoom", 12) 
 {
 }
 
@@ -8226,7 +8226,7 @@ Map_Console::Option_Panel::Zoom_Drawer::switch_off_zoom_button ()
       try
       {
          Dtoggle_Button& tb = dynamic_cast<Dtoggle_Button&>(widget);
-         if (tb.get_str () != L"Custom") { continue; }
+         if (tb.get_str () != "Custom") { continue; }
          tb.set (false);
          break;
       }
@@ -8239,7 +8239,7 @@ Map_Console::Option_Panel::Zoom_Drawer::switch_off_zoom_button ()
 }
 
 Map_Console::Option_Panel::Overlay_Drawer::Overlay_Drawer (Option_Panel& option_panel)
-   : Drawer (option_panel.map_console, option_panel, false, L"Overlay", 12) 
+   : Drawer (option_panel.map_console, option_panel, false, "Overlay", 12) 
 {
 }
 
@@ -8305,7 +8305,7 @@ Map_Console::Option_Panel::setup_zoom (const Tokens& config_file_content)
    add_drawer_ptr (drawer_ptr, true);
 
    // Make Custom Zoom Button
-   Dbutton* button_ptr = new Dbutton (map_console, L"Custom", font_size);
+   Dbutton* button_ptr = new Dbutton (map_console, "Custom", font_size);
    Dbutton::Signal& signal = button_ptr->get_signal ();
    Console_2D::Zoom_Box& zoom_box = map_console.get_zoom_box ();
    signal.connect (sigc::mem_fun (zoom_box, &Console_2D::Zoom_Box::toggle_visible));
@@ -8318,7 +8318,7 @@ Map_Console::Option_Panel::setup_zoom (const Tokens& config_file_content)
 
       const Tokens tokens (*(iterator));
       if (tokens.size () != 3) { continue; }
-      if (tokens[0] != L"geodetic_transform") { continue; }
+      if (tokens[0] != "geodetic_transform") { continue; }
 
       const Dstring& identifier = tokens[1];
       const Geodetic_Transform::Data gtd (tokens[2]);
@@ -8414,28 +8414,28 @@ Map_Console::Option_Panel::overlay_is_on (const Dstring& overlay_str) const
 const Map_Console::Option_Panel::Zoom_Drawer&
 Map_Console::Option_Panel::get_zoom_drawer () const
 {
-   const Drawer& drawer = *(drawer_ptr_map.find (L"Zoom")->second);
+   const Drawer& drawer = *(drawer_ptr_map.find ("Zoom")->second);
    return dynamic_cast<const Zoom_Drawer&>(drawer);
 }
 
 Map_Console::Option_Panel::Zoom_Drawer&
 Map_Console::Option_Panel::get_zoom_drawer ()
 {
-   Drawer& drawer = *(drawer_ptr_map.find (L"Zoom")->second);
+   Drawer& drawer = *(drawer_ptr_map.find ("Zoom")->second);
    return dynamic_cast<Zoom_Drawer&>(drawer);
 }
 
 const Map_Console::Option_Panel::Overlay_Drawer&
 Map_Console::Option_Panel::get_overlay_drawer () const
 {
-   const Drawer& drawer = *(drawer_ptr_map.find (L"Overlay")->second);
+   const Drawer& drawer = *(drawer_ptr_map.find ("Overlay")->second);
    return dynamic_cast<const Overlay_Drawer&>(drawer);
 }
 
 Map_Console::Option_Panel::Overlay_Drawer&
 Map_Console::Option_Panel::get_overlay_drawer ()
 {
-   Drawer& drawer = *(drawer_ptr_map.find (L"Overlay")->second);
+   Drawer& drawer = *(drawer_ptr_map.find ("Overlay")->second);
    return dynamic_cast<Overlay_Drawer&>(drawer);
 }
 
@@ -8529,7 +8529,7 @@ Dstring
 Map_Console::get_string (const Marker& marker) const
 {
    const Lat_Long lat_long (marker);
-   return lat_long.get_string (false, Dstring (L"%.3f\u00b0"));
+   return lat_long.get_string (false, Dstring ("%.3f\u00b0"));
 }
 
 Map_Console::Map_Console (Gtk::Window& gtk_window,
@@ -8558,7 +8558,7 @@ Map_Console::Map_Console (Gtk::Window& gtk_window,
 
       const Tokens tokens (*(iterator));
       if (tokens.size () != 3) { continue; }
-      if (tokens[0] != L"geodetic_transform") { continue; }
+      if (tokens[0] != "geodetic_transform") { continue; }
 
       const Dstring& identifier = tokens[1];
       const Geodetic_Transform::Data gtd (tokens[2]);
@@ -8633,7 +8633,7 @@ Map_Console::set_geodetic_transform_data (const Geodetic_Transform::Data& gtd)
    delete geodetic_transform_ptr;
    geodetic_transform_ptr =
       Gt::get_transform_ptr (gtd.genre, gtd.scale, gtd.lat_long, middle);
-   wcout << geodetic_transform_ptr->data.get_string () << endl;
+   cout << geodetic_transform_ptr->data.get_string () << endl;
 
    zoom_box.reset ();
    set_background_ready (false);
@@ -8849,7 +8849,7 @@ Time_Series_Canvas::render_background_buffer (const RefPtr<Context>& cr)
    Color (1, 1, 1).cairo (cr);
    cr->paint ();
 
-   const Dstring fmt_t (L"%HZ");
+   const Dstring fmt_t ("%HZ");
 
    mesh_2d.render (cr, transform);
 
@@ -8882,8 +8882,8 @@ Time_Series_Canvas::render_background_buffer (const RefPtr<Context>& cr)
       const Point_2D& point = transform.transform (p);
       const Point_2D point_a (point.x, point.y + 15);
       const Point_2D point_b (point.x, point.y + 25);
-      const Dstring str_a = dtime.get_string (L"%b %d");
-      const Dstring str_b = dtime.get_string (L"(%a)");
+      const Dstring str_a = dtime.get_string ("%b %d");
+      const Dstring str_b = dtime.get_string ("(%a)");
 
       const Point_2D point_c (point.x, point.y + 5);
       const Point_2D point_d (point.x, point.y + 40);

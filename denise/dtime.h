@@ -119,7 +119,7 @@ namespace denise
          /// Returns a string representation of the time with
          /// the given format.
          Dstring
-         get_string (const Dstring& format = L"%Y%m%d%H",
+         get_string (const Dstring& format = "%Y%m%d%H",
                      const bool is_local = false) const;
 
          /// Returns the integral value of year.
@@ -176,7 +176,7 @@ namespace denise
 
          static Tuple
          get_time_tuple (const Dstring& time_str,
-                         const Dstring& delimiter = L":");
+                         const Dstring& delimiter = ":");
 
          static Tuple
          get_yearly_time_tuple (const Dtime& start_time,
@@ -268,16 +268,16 @@ namespace denise
 
    };
 
-   wostream&
-   operator << (wostream& out,
+   ostream&
+   operator << (ostream& out,
                 const Dtime& time);
 
-   wostream&
-   operator << (wostream& out,
+   ostream&
+   operator << (ostream& out,
                 const Dtime::Span& span);
 
-   wostream&
-   operator << (wostream& out,
+   ostream&
+   operator << (ostream& out,
                 const Dtime::Set& set);
 
 }

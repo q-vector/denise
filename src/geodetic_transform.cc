@@ -44,7 +44,7 @@ Geodetic_Transform_Package::geodetic_transform_print (const Dstring& identifier,
    const bool is_present = (iterator != geodetic_transform_str_map.end ());
    if (is_present)
    {
-      wcout << L"geodetic_transform " << identifier << L" is present" << endl;
+      cout << "geodetic_transform " << identifier << " is present" << endl;
    }
 }
 
@@ -54,14 +54,14 @@ Geodetic_Transform_Package::geodetic_transform_parse (const Tokens& tokens)
 
    const Integer n = tokens.size ();
 
-   if (tokens[0] == L"assign")
+   if (tokens[0] == "assign")
    {
       const Dstring& identifier = tokens[1];
       const Dstring& str = tokens[2];
       geodetic_transform_assign (identifier, str);
    }
    else
-   if (tokens[0] == L"print")
+   if (tokens[0] == "print")
    {
       const Dstring& identifier = tokens[1];
       geodetic_transform_print (identifier, tokens.subtokens (2));
@@ -79,7 +79,7 @@ const Geodetic_Transform*
 Geodetic_Transform_Package::get_geodetic_transform_ptr (const Dstring& identifier,
                                                         const Point_2D& point) const
 {
-   Exception e (L"geodetic_transform not found: " + identifier);
+   Exception e ("geodetic_transform not found: " + identifier);
    try
    {
       typedef Geodetic_Transform Gt;

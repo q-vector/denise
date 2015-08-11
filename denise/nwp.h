@@ -43,12 +43,12 @@ namespace denise
          //Level_Tuple ();
 
          Level_Tuple (const Level::Type type,
-                      const wstring& str,
-                      const wstring& delimiter = L":");
+                      const Dstring& str,
+                      const Dstring& delimiter = ":");
 
          void
-         add (const wstring& str,
-              const wstring& delimiter = L":",
+         add (const Dstring& str,
+              const Dstring& delimiter = ":",
               const bool clear_first = false);
 
          const Real
@@ -381,13 +381,13 @@ namespace denise
          Tuple
          tuple_p;
 
-         const wstring
+         const Dstring
          path;
 
-         const wstring
+         const Dstring
          description;
 
-         wstring
+         Dstring
          status;
 
          Key_Multimap
@@ -665,8 +665,8 @@ namespace denise
 
       public:
 
-         Nwp (const wstring& description,
-              const wstring& path);
+         Nwp (const Dstring& description,
+              const Dstring& path);
 
          ~Nwp ();
 
@@ -682,10 +682,10 @@ namespace denise
          virtual void
          set_domain_2d (const Domain_2D& domain_2d);
 
-         const wstring&
+         const Dstring&
          get_description () const;
 
-         const wstring&
+         const Dstring&
          get_status () const;
 
          virtual set<Dtime>
@@ -945,7 +945,7 @@ namespace denise
 
       public:
 
-         Nwp_Exception (const wstring& str = L"");
+         Nwp_Exception (const Dstring& str = "");
 
    };
 
