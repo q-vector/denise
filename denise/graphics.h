@@ -155,6 +155,12 @@ namespace denise
          static Color
          magenta (const Real a = 1.0);
 
+         static Color
+         land (const Real a = 1.0);
+
+         static Color
+         sea (const Real a = 1.0);
+
          Color&
          operator = (const Color& color);
 

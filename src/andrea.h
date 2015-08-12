@@ -62,8 +62,14 @@ namespace andrea
 
       private:
 
+         map<Dstring, Dstring>
+         data_path_map;
+
          Dstring
          prompt;
+
+         void
+         data_path (const Tokens& arguments);
 
          void
          wind_shear (const Tokens& arguments) const;
@@ -74,6 +80,9 @@ namespace andrea
       public:
 
          Andrea (const Dstring& prompt);
+
+         const Dstring&
+         get_data_path (const Dstring& identifier) const;
 
          virtual void
          parse (const Tokens& tokens);

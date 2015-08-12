@@ -206,6 +206,18 @@ Color::Color (const Dstring& str)
       set (Color::magenta (a));
    }
    else
+   if (tokens[0] == "land")
+   {
+      const Real a = (n > 1 ? stof (tokens[1]) : 1.0);
+      set (Color::land (a));
+   }
+   else
+   if (tokens[0] == "sea")
+   {
+      const Real a = (n > 1 ? stof (tokens[1]) : 1.0);
+      set (Color::sea (a));
+   }
+   else
    if (tokens[0] == "rgb")
    {
       const Real r = stof (tokens[1]);
@@ -320,6 +332,19 @@ Color
 Color::magenta (const Real a)
 {
    return Color (1.0, 0.0, 1.0, a);
+}
+
+Color
+Color::land (const Real a)
+{
+   //return Color::hsb (0.5, 0.8, 0.2, a);
+   return Color::hsb (0.3, 0.8, 0.3, a);
+}
+
+Color
+Color::sea (const Real a)
+{
+   return Color::hsb (0.667, 0.8, 0.2, a);
 }
 
 Color&

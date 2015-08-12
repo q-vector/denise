@@ -379,8 +379,8 @@ Surface_Package::surface_gtopo30 (const Dstring& surface_identifier,
       andrea.get_geodetic_transform_ptr (geodetic_transform_identifier, centre);
    const Geodetic_Transform& geodetic_transform = *geodetic_transform_ptr;
 
-   const Dstring gtopo30_path ("/data/research/gtopo30");
-   Gtopo30 gtopo30 (gtopo30_path, geodetic_transform, size_2d, 1e-3);
+   const Dstring& data_path = andrea.get_data_path ("gtopo30");
+   Gtopo30 gtopo30 (data_path, geodetic_transform, size_2d, 1e-3);
    gtopo30.blit (cr);
 
    delete geodetic_transform_ptr;
@@ -401,8 +401,8 @@ Surface_Package::surface_blue_marble (const Dstring& surface_identifier,
       andrea.get_geodetic_transform_ptr (geodetic_transform_identifier, centre);
    const Geodetic_Transform& geodetic_transform = *geodetic_transform_ptr;
 
-   const Dstring blue_marble_path ("/data/research/blue_marble");
-   Blue_Marble blue_marble (blue_marble_path, geodetic_transform, size_2d);
+   const Dstring& data_path = andrea.get_data_path ("blue_marble");
+   Blue_Marble blue_marble (data_path, geodetic_transform, size_2d);
    blue_marble.blit (cr);
 
    delete geodetic_transform_ptr;

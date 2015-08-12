@@ -107,6 +107,26 @@ Entity::value () const
 }
 
 void
+Andrea::data_path (const Tokens& arguments)
+{
+
+   const Dstring& a = arguments[0].get_lower_case ();
+   const Dstring& identifier = arguments[1].get_lower_case ();
+
+   if (a == "assign")
+   {
+      const Dstring& data_path = arguments[2];
+      data_path_map[identifier] = data_path;
+   }
+   else
+   if (a == "print")
+   {
+      cout << data_path_map[identifier];
+   }
+
+}
+
+void
 Andrea::wind_shear (const Tokens& arguments) const
 {
 
@@ -169,12 +189,24 @@ Andrea::Andrea (const Dstring& prompt)
 {
 }
 
+const Dstring&
+Andrea::get_data_path (const Dstring& identifier) const
+{
+   return data_path_map.at (identifier);
+}
+
 void
 Andrea::parse (const Tokens& tokens)
 {
 
    const Dstring& action = tokens[0].get_lower_case ();
 
+   if (action == "data_path")
+   {
+      data_path (tokens.subtokens (1));
+      return;
+   }
+   else
    if (action == "surface")
    {
       surface_parse (tokens.subtokens (1));

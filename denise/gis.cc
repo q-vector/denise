@@ -857,8 +857,10 @@ Gtopo30::fill_raster (const Real* data,
                       const Real shade_constant)
 {
 
-   const Color& land = Color::hsb (0.5, 0.27, 0.3);
-   const Color& sea = Color::hsb (0.67, 0.67, 0.3);
+   //const Color& land = Color::hsb (0.5, 0.27, 0.3);
+   //const Color& sea = Color::hsb (0.67, 0.67, 0.3);
+   const Color& land = Color::land ();
+   const Color& sea = Color::sea ();
 
    for (Integer i = 0; i < size_2d.i; i++)
    {
