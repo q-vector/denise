@@ -57,6 +57,72 @@ Square_Contour::Segment::match (const Segment& segment) const
            (orientation == segment.orientation));
 }
 
+Point_2D
+Square_Contour::Segment::get_head (const Scalar_Data_2D& scalar_data_2d) const
+{
+
+   const Scalar_Data_2D& sd2d = scalar_data_2d;
+
+   if (direction == Square_Contour::FORWARD)
+   {
+      const Real xl = sd2d.get_coordinate (0, i == 0 ? 0 : i-1);
+      const Real yt = sd2d.get_coordinate (1, j == 0 ? 0 : j-1);
+      return Point_2D (xl, yt);
+   }
+   else
+   {
+      const Size_2D& size_2d = sd2d.get_size_2d ();
+      if (orientation == Square_Contour::HORIZONTAL)
+      {
+         const Integer n = size_2d.i;
+         const Real xr = sd2d.get_coordinate (0, i == n-1 ? n-1 : i+1);
+         const Real yt = sd2d.get_coordinate (1, j == 0   ? 0   : j-1);
+         return Point_2D (xr, yt);
+      }
+      else
+      {
+         const Integer m = size_2d.j;
+         const Real xl = sd2d.get_coordinate (0, i == 0   ? 0   : i-1);
+         const Real yb = sd2d.get_coordinate (1, j == m-1 ? m-1 : j+1);
+         return Point_2D (xl, yb);
+      }
+   }
+
+}
+
+Point_2D
+Square_Contour::Segment::get_tail (const Scalar_Data_2D& scalar_data_2d) const
+{
+
+   const Scalar_Data_2D& sd2d = scalar_data_2d;
+
+   if (direction == Square_Contour::BACKWARD)
+   {
+      const Real xl = sd2d.get_coordinate (0, i == 0 ? 0 : i-1);
+      const Real yt = sd2d.get_coordinate (1, j == 0 ? 0 : j-1);
+      return Point_2D (xl, yt);
+   }
+   else
+   {
+      const Size_2D& size_2d = sd2d.get_size_2d ();
+      if (orientation == Square_Contour::HORIZONTAL)
+      {
+         const Integer n = size_2d.i;
+         const Real xr = sd2d.get_coordinate (0, i == n-1 ? n-1 : i+1);
+         const Real yt = sd2d.get_coordinate (1, j == 0   ? 0   : j-1);
+         return Point_2D (xr, yt);
+      }
+      else
+      {
+         const Integer m = size_2d.j;
+         const Real xl = scalar_data_2d.get_coordinate (0, i == 0   ? 0   : i-1);
+         const Real yb = scalar_data_2d.get_coordinate (1, j == m-1 ? m-1 : j+1);
+         return Point_2D (xl, yb);
+      }
+   }
+
+}
+
 bool
 Square_Contour::Segment::is_isosegment (const Scalar_Data_2D& scalar_data_2d,
                                         const Real contour_value) const
@@ -203,7 +269,6 @@ Square_Contour::Isoline::add (const Scalar_Data_2D& scalar_data_2d,
 
    if (to_head)
    {
-
       if (tip_orientation == Square_Contour::HORIZONTAL)
       {
          if (tip_direction == Square_Contour::FORWARD)
@@ -225,13 +290,10 @@ Square_Contour::Isoline::add (const Scalar_Data_2D& scalar_data_2d,
          {
             if ((s.i == i && s.j == j + 1)) { s.reverse (); }
          }
-
       }
-
    }
    else
    {
-
       if (tip_orientation == Square_Contour::HORIZONTAL)
       {
          if (tip_direction == Square_Contour::FORWARD)
@@ -255,10 +317,7 @@ Square_Contour::Isoline::add (const Scalar_Data_2D& scalar_data_2d,
             if ((s.i == i - 1 && s.j == j) ||
                 (s.i == i && s.j == j - 1)) { s.reverse (); }
          }
-
-
       }
-
    }
 
    tip_segment = s;
@@ -272,11 +331,63 @@ Square_Contour::Isoline::add (const Scalar_Data_2D& scalar_data_2d,
 bool
 Square_Contour::Isoline::ingest (const Isoline& isoline)
 {
-   // if not ingestable
+
+   if (true)
+   //if (match (head_segment, isoline.head_segment))
+   {
+      for (auto iterator = isoline.begin ();
+           iterator != isoline.end (); iterator++)
+      {
+         const Point_2D& point = *(iterator);
+         push_front (point);
+      }
+      head_segment = isoline.tail_segment;
+      head_segment.reverse ();
+      return true;
+   }
+   else
+   if (true)
+   //if (match (head_segment, isoline.tail_segment))
+   {
+      for (auto iterator = isoline.rbegin ();
+           iterator != isoline.rend (); iterator++)
+      {
+         const Point_2D& point = *(iterator);
+         push_front (point);
+      }
+      head_segment = isoline.head_segment;
+      return true;
+   }
+   else
+   if (true)
+   //if (match (tail_segment, isoline.head_segment))
+   {
+      for (auto iterator = isoline.begin ();
+           iterator != isoline.end (); iterator++)
+      {
+         const Point_2D& point = *(iterator);
+         push_back (point);
+      }
+      tail_segment = isoline.tail_segment;
+      return true;
+   }
+   else
+   if (true)
+   //if (match (tail_segment, isoline.tail_segment))
+   {
+      for (auto iterator = isoline.rbegin ();
+           iterator != isoline.rend (); iterator++)
+      {
+         const Point_2D& point = *(iterator);
+         push_back (point);
+      }
+      tail_segment = isoline.head_segment;
+      tail_segment.reverse ();
+      return true;
+   }
+
    return false;
-   // if ingestable
-   // ingest;
-   return true;
+
 }
 
 void

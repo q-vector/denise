@@ -854,13 +854,14 @@ Gtopo30::get_data (const Transform_2D& transform)
 
 void
 Gtopo30::fill_raster (const Real* data,
-                      const Real shade_constant)
+                      const Real max_gradient)
 {
 
    //const Color& land = Color::hsb (0.5, 0.27, 0.3);
    //const Color& sea = Color::hsb (0.67, 0.67, 0.3);
    const Color& land = Color::land ();
    const Color& sea = Color::sea ();
+   const Real mg = max_gradient;
 
    for (Integer i = 0; i < size_2d.i; i++)
    {
@@ -869,28 +870,31 @@ Gtopo30::fill_raster (const Real* data,
       {
 
          const Real datum = data[i * size_2d.j + j];
-         Color color = (datum > 0 ? land : sea);
+
+         const Real h = std::min (std::max (datum / 1200.0, 0.0), 1.0);
+         const Real hue = 0.45 - h * 0.4;
+         //const Real brightness = h * 0.7 + 0.28;
+         const Real brightness = h * 0.3 + 0.2;
+         Color color = (datum > 0 ? Color::hsb (hue, 0.54, brightness) : sea);
+         //Color color = (datum > 0 ? land : sea);
          //Color color = color_chooser.get_color (datum);
 
-         if (gsl_finite (shade_constant))
+         Real gradient = 0;
+
+         if (i != 0 && i != size_2d.i - 1 && j != 0 && i != size_2d.j - 1)
          {
 
-            Real gradient = 0;
+            const Real datum_e = data[(i+1) * size_2d.j + j];
+            const Real datum_w = data[(i-1) * size_2d.j + j];
+            const Real datum_n = data[i * size_2d.j + (j+1)];
+            const Real datum_s = data[i * size_2d.j + (j-1)];
 
-            if (i != 0 && i != size_2d.i - 1 && j != 0 && i != size_2d.j - 1)
-            {
+            gradient = datum_e - datum_n - datum_w + datum_s;
+            if (!gsl_finite (gradient)) { gradient = 0; }
 
-               const Real datum_e = data[(i+1) * size_2d.j + j];
-               const Real datum_w = data[(i-1) * size_2d.j + j];
-               const Real datum_n = data[i * size_2d.j + (j+1)];
-               const Real datum_s = data[i * size_2d.j + (j-1)];
-
-               gradient = datum_e - datum_n - datum_w + datum_s;
-               if (!gsl_finite (gradient)) { gradient = 0; }
-
-               color.scale_brightness (exp (gradient * shade_constant));
-
-            }
+            Real scale = 1 + gradient * 0.0025;
+            scale = std::max (0.7, std::min (1.3, scale));
+            color.scale_brightness (scale);
 
          }
 
@@ -904,7 +908,7 @@ Gtopo30::fill_raster (const Real* data,
 Gtopo30::Gtopo30 (const Dstring& gtopo30_path,
                   const Transform_2D& transform_2d,
                   const Size_2D& size_2d,
-                  const Real shade_constant)
+                  const Real max_gradient)
    : Raster (size_2d),
      gtopo30_path (gtopo30_path),
      delta (Real (1) / Real (120)),
@@ -912,7 +916,7 @@ Gtopo30::Gtopo30 (const Dstring& gtopo30_path,
      start_longitude (-180 + delta/2)
 {
    Real* data = get_data (transform_2d);
-   fill_raster (data, shade_constant);
+   fill_raster (data, max_gradient);
    delete[] data;
 }
 

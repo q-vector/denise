@@ -357,7 +357,7 @@ namespace denise
 
          void
          fill_raster (const Real* data,
-                      const Real shade_constant);
+                      const Real max_gradient);
 
       public:
 
@@ -373,7 +373,7 @@ namespace denise
          Gtopo30 (const Dstring& gtopo30_path,
                   const Transform_2D& transform,
                   const Size_2D& size_2d,
-                  const Real shade_constance = 0.1);
+                  const Real max_gradient = GSL_POSINF);
 
          ~Gtopo30 ();
 
