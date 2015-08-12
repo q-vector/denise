@@ -1,7 +1,7 @@
 //
 // visualize.h
 // 
-// Copyright (C) 2005-2013 Simon E. Ching
+// Copyright (C) 2005-2015 Simon E. Ching
 // 
 // This file is part of libdenise.
 //
@@ -21,6 +21,7 @@
 #ifndef DENISE_VISUALIZE_H
 #define DENISE_VISUALIZE_H
 
+#include <queue>
 #include <gsl/gsl_poly.h>
 #include <cairomm/context.h>
 #include <denise/analysis.h>
@@ -39,6 +40,149 @@ namespace denise
       MAGNITUDE,
       DIVERGENCE,
       VORTICITY
+   };
+
+   class Square_Contour
+   {
+
+      private:
+
+         enum Orientation
+         {
+            HORIZONTAL,
+            VERTICAL
+         };
+
+         enum Direction
+         {
+            FORWARD,
+            BACKWARD
+         };
+
+         enum Tip
+         {
+            HEAD,
+            TAIL
+         };
+
+         class Segment : public Index_2D
+         {
+
+            public:
+
+               Orientation
+               orientation;
+
+               Direction
+               direction;
+
+               Segment ();
+
+               Segment (const Segment& segment);
+
+               Segment (const Index_2D& index_2d,
+                        const Orientation& orientation,
+                        const Direction direction = FORWARD);
+
+               void
+               reverse ();
+
+               bool
+               match (const Segment& segment) const;
+
+               Point_2D
+               get_head (const Scalar_Data_2D& scalar_data_2d) const;
+
+               Point_2D
+               get_tail (const Scalar_Data_2D& scalar_data_2d) const;
+
+               bool
+               is_isosegment (const Scalar_Data_2D& scalar_data_2d,
+                              const Real contour_value) const;
+
+               bool
+               is_isosegment (const Scalar_Data_2D& scalar_data_2d,
+                              const Real lower_contour_value,
+                              const Real upper_contour_value) const;
+
+               class Bag : public queue<Segment>
+               {
+
+                   public:
+
+                      static Bag*
+                      inner_segments (const Size_2D& size_2d);
+
+                      static Bag*
+                      boundary_segments (const Size_2D& size_2d);
+
+               };
+
+         };
+
+         class Isoline : public Simple_Polyline
+         {
+
+            public:
+
+               Segment
+               head_segment;
+
+               Segment
+               tail_segment;
+
+               Isoline ();
+
+               Isoline (const Scalar_Data_2D& scalar_data_2d,
+                        const Segment& segment);
+
+               void
+               add (const Scalar_Data_2D& scalar_data_2d,
+                    const Segment& segment,
+                    const bool to_head);
+
+               bool
+               ingest (const Isoline& isoline);
+
+               class Bag : public list<Isoline>
+               {
+
+                  private:
+
+                     void
+                     bred (Square_Contour::Isoline::Bag::iterator& iterator);
+
+                  public:
+
+                     Bag ();
+
+                     Bag::iterator
+                     add (const Scalar_Data_2D& scalar_data_2d,
+                          const Segment& segment);
+
+                     iterator
+                     get_iterator (Tip& tip,
+                                   const Segment& segment);
+
+               };
+
+         };
+
+         vector<Isoline::Bag>
+         isoline_bag_vector;
+
+         Scalar_Data_2D
+         scalar_data_2d;
+
+         Tuple
+         contour_tuple;
+
+      public:
+
+         Square_Contour (const Vector_Data_2D& vector_data_2d,
+                         const Integer vector_element,
+                         const Tuple& contour_tuple);
+
    };
 
    class Contour

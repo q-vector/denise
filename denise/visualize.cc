@@ -1,7 +1,7 @@
-	//
+//
 // visualize.cc
 // 
-// Copyright (C) 2010 Simon E. Ching
+// Copyright (C) 2005-2015 Simon E. Ching
 // 
 // This file is part of libdenise.
 //
@@ -22,6 +22,395 @@
 
 using namespace std;
 using namespace denise;
+
+Square_Contour::Segment::Segment ()
+   : orientation (HORIZONTAL)
+{
+}
+
+Square_Contour::Segment::Segment (const Segment& segment)
+   : Index_2D (segment),
+     orientation (segment.orientation),
+     direction (segment.direction)
+{
+}
+
+Square_Contour::Segment::Segment (const Index_2D& index_2d,
+                                  const Orientation& orientation,
+                                  const Direction direction)
+   : Index_2D (index_2d),
+     orientation (orientation),
+     direction (direction)
+{
+}
+
+void
+Square_Contour::Segment::reverse ()
+{
+   direction = (direction == FORWARD ? BACKWARD : FORWARD);
+}
+
+bool
+Square_Contour::Segment::match (const Segment& segment) const
+{
+   return ((i == segment.i) && (j == segment.j) &&
+           (orientation == segment.orientation));
+}
+
+bool
+Square_Contour::Segment::is_isosegment (const Scalar_Data_2D& scalar_data_2d,
+                                        const Real contour_value) const
+{
+
+   const Scalar_Data_2D& sd2d = scalar_data_2d;
+   const Size_2D& size_2d = sd2d.get_size_2d ();
+   const Integer n = size_2d.i;
+   const Integer m = size_2d.j;
+
+   switch (orientation)
+   {
+
+      case Square_Contour::HORIZONTAL:
+      {
+         const Real t = sd2d.get_datum (i, j - 1); 
+         const Real b = sd2d.get_datum (i, j + 1); 
+         return ((contour_value - t) * (contour_value - t) < 0);
+      };
+
+      case Square_Contour::VERTICAL:
+      {
+         const Real l = sd2d.get_datum (i - 1, j); 
+         const Real r = sd2d.get_datum (i + 1, j); 
+         return ((contour_value - l) * (contour_value - r) < 0);
+      };
+
+   }
+
+}
+
+bool
+Square_Contour::Segment::is_isosegment (const Scalar_Data_2D& scalar_data_2d,
+                                        const Real lower_contour_value,
+                                        const Real upper_contour_value) const
+{
+
+   const Scalar_Data_2D& sd2d = scalar_data_2d;
+   const Size_2D& size_2d = sd2d.get_size_2d ();
+   const Integer n = size_2d.i;
+   const Integer m = size_2d.j;
+
+   switch (orientation)
+   {
+
+      case Square_Contour::HORIZONTAL:
+      {
+         const Integer jj = (j == 0 ? 0 : size_2d.j - 1);
+         const Real v = sd2d.get_datum (i, jj); 
+         return ((lower_contour_value - v) * (upper_contour_value - v) < 0);
+      };
+
+      case Square_Contour::VERTICAL:
+      {
+         const Integer ii = (i == 0 ? 0 : size_2d.i - 1);
+         const Real v = sd2d.get_datum (ii, j); 
+         return ((lower_contour_value - v) * (upper_contour_value - v) < 0);
+      };
+
+   }
+
+}
+
+Square_Contour::Segment::Bag*
+Square_Contour::Segment::Bag::inner_segments (const Size_2D& size_2d)
+{
+
+   const Integer n = size_2d.i;
+   const Integer m = size_2d.j;
+   auto bag_ptr = new Square_Contour::Segment::Bag ();
+   auto bag = *bag_ptr;
+
+   for (Integer i = 0; i < n; i++)
+   {
+      for (Integer j = 0; j < m - 1; j++)
+      {
+         bag.push (Segment (Index_2D (i, j), Square_Contour::HORIZONTAL));
+      }
+   }
+
+   for (Integer i = 0; i < n - 1; i++)
+   {
+      for (Integer j = 0; j < m; j++)
+      {
+         bag.push (Segment (Index_2D (i, j), Square_Contour::VERTICAL));
+      }
+   }
+
+   return bag_ptr;
+
+}
+
+Square_Contour::Segment::Bag*
+Square_Contour::Segment::Bag::boundary_segments (const Size_2D& size_2d)
+{
+
+   const Integer n = size_2d.i;
+   const Integer m = size_2d.j;
+   auto bag_ptr = new Square_Contour::Segment::Bag ();
+   auto bag = *bag_ptr;
+
+   for (Integer i = 0; i < n; i++)
+   {
+      bag.push (Segment (Index_2D (i, 0), Square_Contour::HORIZONTAL));
+      bag.push (Segment (Index_2D (i, m), Square_Contour::HORIZONTAL));
+   }
+
+   for (Integer j = 0; j < m; j++)
+   {
+      bag.push (Segment (Index_2D (0, j), Square_Contour::VERTICAL));
+      bag.push (Segment (Index_2D (n, j), Square_Contour::VERTICAL));
+   }
+
+   return bag_ptr;
+
+}
+
+Square_Contour::Isoline::Isoline ()
+{
+}
+
+Square_Contour::Isoline::Isoline (const Scalar_Data_2D& scalar_data_2d,
+                                  const Segment& segment)
+   : head_segment (segment),
+     tail_segment (segment)
+{
+   Simple_Polyline::add (segment.get_head (scalar_data_2d));
+   Simple_Polyline::add (segment.get_tail (scalar_data_2d));
+}
+
+void
+Square_Contour::Isoline::add (const Scalar_Data_2D& scalar_data_2d,
+                              const Segment& segment,
+                              const bool to_head)
+{
+
+   Segment s = segment;
+   Segment& tip_segment = to_head ? head_segment : tail_segment;;
+
+   const Orientation tip_orientation = tip_segment.orientation;
+   const Direction tip_direction = tip_segment.direction;
+   const Integer i = tip_segment.i;
+   const Integer j = tip_segment.j;
+
+   if (to_head)
+   {
+
+      if (tip_orientation == Square_Contour::HORIZONTAL)
+      {
+         if (tip_direction == Square_Contour::FORWARD)
+         {
+            if (s.i == i && s.j == j) { s.reverse (); }
+         }
+         else                         
+         {
+            if ((s.i == i + 1 && s.j == j)) { s.reverse (); }
+         }
+      }
+      else
+      {
+         if (tip_direction == Square_Contour::FORWARD)
+         {
+            if (s.i == i && s.j == j) { s.reverse (); }
+         }
+         else                         
+         {
+            if ((s.i == i && s.j == j + 1)) { s.reverse (); }
+         }
+
+      }
+
+   }
+   else
+   {
+
+      if (tip_orientation == Square_Contour::HORIZONTAL)
+      {
+         if (tip_direction == Square_Contour::FORWARD)
+         {
+            if (s.i == i + 1 && s.j == j + 1) { s.reverse (); }
+         }
+         else                         
+         {
+            if ((s.i == i - 1 && s.j == j) ||
+                (s.i == i && s.j == j + 1)) { s.reverse (); }
+         }
+      }
+      else
+      {
+         if (tip_direction == Square_Contour::FORWARD)
+         {
+            if (s.i == i - 1 && s.j == j + 1) { s.reverse (); }
+         }
+         else                         
+         {
+            if ((s.i == i - 1 && s.j == j) ||
+                (s.i == i && s.j == j - 1)) { s.reverse (); }
+         }
+
+
+      }
+
+   }
+
+   tip_segment = s;
+   const Scalar_Data_2D& sd2d = scalar_data_2d;
+
+   if (to_head) { push_front (s.get_head (sd2d)); }
+   else         { push_back (s.get_tail (sd2d)); }
+
+}
+
+bool
+Square_Contour::Isoline::ingest (const Isoline& isoline)
+{
+   // if not ingestable
+   return false;
+   // if ingestable
+   // ingest;
+   return true;
+}
+
+void
+Square_Contour::Isoline::Bag::bred (Square_Contour::Isoline::Bag::iterator& iterator)
+{
+
+   Isoline& isoline = *(iterator);
+
+   for (bool exhausted = false; !exhausted; )
+   {
+      for (auto i = begin (); i != end (); i++)
+      {
+         Isoline& il = *(i);
+         if (isoline.ingest (il))
+         {
+            remove (il);
+            break;
+         }
+         exhausted = true;
+      }
+   }
+
+}
+
+Square_Contour::Isoline::Bag::Bag ()
+{
+}
+
+Square_Contour::Isoline::Bag::iterator
+Square_Contour::Isoline::Bag::add (const Scalar_Data_2D& scalar_data_2d,
+                                   const Segment& segment)
+{
+
+   Square_Contour::Tip tip;
+   auto i = get_iterator (tip, segment);
+   if (i == end ())
+   {
+      push_back (Isoline (scalar_data_2d, segment));
+      return end ();
+   }
+   else
+   {
+      i = get_iterator (tip, segment);
+      Isoline& isoline = *(i);
+      const bool to_head = (tip == Square_Contour::HEAD);
+      isoline.add (scalar_data_2d, segment, to_head);
+
+      bred (i);
+
+      if (true/*isoline is now a closed loop*/)
+      {
+         //isoline.closed = true;
+         //return isoline;
+      }
+
+      if (true/*isoline reached boundary on both ends*/)
+      {
+         //return isoline;
+      }
+
+      return end ();
+
+   }
+
+}
+
+Square_Contour::Isoline::Bag::iterator
+Square_Contour::Isoline::Bag::get_iterator (Square_Contour::Tip& tip,
+                                            const Segment& segment)
+{
+
+   for (auto i = begin (); i != end (); i++)
+   {
+      const Isoline& isoline = *(i);
+      if (isoline.head_segment.match (segment)) { tip == HEAD; return i; }
+      if (isoline.tail_segment.match (segment)) { tip == TAIL; return i; }
+   }
+
+   return end ();
+
+}
+
+Square_Contour::Square_Contour (const Vector_Data_2D& vector_data_2d,
+                                const Integer vector_element,
+                                const Tuple& contour_tuple)
+   : scalar_data_2d (vector_data_2d, vector_element),
+     contour_tuple (contour_tuple)
+{
+
+   const Size_2D& size_2d = vector_data_2d.get_size_2d ();
+
+   for (auto iterator = contour_tuple.begin ();
+        iterator != contour_tuple.end (); iterator++)
+   {
+      const Real contour_level = *(iterator);
+      isoline_bag_vector.push_back (Square_Contour::Isoline::Bag ());
+   }
+
+   for (auto ci = 0; ci < contour_tuple.size (); ci++)
+   {
+
+      const Real contour_value = contour_tuple[ci];
+
+      Square_Contour::Isoline::Bag& isoline_bag = isoline_bag_vector[ci];
+      Square_Contour::Isoline::Bag tmp_isoline_bag;
+
+      Square_Contour::Segment::Bag* inner_segment_bag_ptr =
+         Square_Contour::Segment::Bag::inner_segments (size_2d);
+      auto inner_segment_bag = *inner_segment_bag_ptr;
+
+      while (!inner_segment_bag.empty ())
+      {
+
+         Segment segment = inner_segment_bag.front ();
+         inner_segment_bag.pop ();
+
+         if (segment.is_isosegment (scalar_data_2d, contour_value))
+         {
+            auto isoline_itr = tmp_isoline_bag.add (scalar_data_2d, segment);
+            if (isoline_itr != tmp_isoline_bag.end ())
+            {
+               Isoline& isoline = *(isoline_itr);
+               isoline_bag.push_back (isoline);
+               tmp_isoline_bag.remove (isoline);
+            }
+         }
+
+      }
+
+      delete inner_segment_bag_ptr;
+
+   }
+
+}
 
 Contour::Label_Point_Set::Label_Point_Set (const Real tolerance)
    : tolerance (tolerance)

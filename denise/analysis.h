@@ -339,7 +339,7 @@ namespace denise
    class Chunk
    {
 
-      private:
+      protected:
 
          size_t
          chunk_size;
@@ -582,6 +582,9 @@ namespace denise
          Bicubic_Coefficients**
          bicubic_coefficients_ptrs;
 
+         void
+         init_bicubic_coefficients ();
+
          Bicubic_Coefficients*
          get_bicubic_coefficients_ptr (const Chunk& chunk,
                                        const Chunk& chunk_x,
@@ -669,6 +672,9 @@ namespace denise
                             const Real magnitude) const;
 
       public:
+
+         Vector_Data_2D (const Vector_Data_2D& vector_data_2d,
+                         const bool copy_data);
 
          Vector_Data_2D (const Integer vector_size,
                          const Size_2D& size_2d,
@@ -1129,6 +1135,9 @@ namespace denise
                          const Tuple coordinate_tuple_y,
                          const bool periodic_x = false,
                          const bool periodic_y = false);
+
+         Scalar_Data_2D (const Vector_Data_2D& vector_data_2d,
+                         const Integer vector_element = -1);
 
          Domain_1D
          get_max_min () const;

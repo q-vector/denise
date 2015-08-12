@@ -1049,6 +1049,16 @@ Tricubic_Coefficients::get_array (const Integer node_z,
    return data[node_z][node_x][node_y];
 }
 
+void
+Vector_Data_2D::init_bicubic_coefficients ()
+{
+   bicubic_coefficients_ptrs = new Bicubic_Coefficients*[vector_size];
+   for (Integer v = 0; v < vector_size; v++)
+   {
+      bicubic_coefficients_ptrs[v] = NULL;
+   }
+}
+
 Bicubic_Coefficients*
 Vector_Data_2D::get_bicubic_coefficients_ptr (const Chunk& chunk,
                                               const Chunk& chunk_x,
@@ -1616,13 +1626,33 @@ Vector_Data_2D::get_dmagnitude_dy (const Integer vector_element_u,
    return 2 * (u + v) + (du_dy + dv_dy);
 }
 
+Vector_Data_2D::Vector_Data_2D (const Vector_Data_2D& vector_data_2d,
+                                const bool copy_data)
+   : Vector_Data_nD (vector_data_2d.get_vector_size (), 2)
+{
+
+   init_bicubic_coefficients ();
+
+   Grid_nD::init (vector_data_2d.coordinate_tuples,
+      vector_data_2d.spacings, vector_data_2d.periodics);
+
+   if (copy_data)
+   {
+      size_t buffer_size = sizeof (Real) * vector_size * Grid_nD::size ();
+      memcpy (buffer, vector_data_2d.buffer, buffer_size);
+   }
+
+}
+
 Vector_Data_2D::Vector_Data_2D (const Integer vector_size,
                                 const Size_2D& size_2d,
                                 const Domain_2D& domain_2d,
                                 const bool periodic_x,
                                 const bool periodic_y)
-              : Vector_Data_nD (vector_size, 2)
+   : Vector_Data_nD (vector_size, 2)
 {
+
+   init_bicubic_coefficients ();
 
    const Real& start_x = domain_2d.domain_x.start;
    const Real& end_x   = domain_2d.domain_x.end;
@@ -1634,12 +1664,6 @@ Vector_Data_2D::Vector_Data_2D (const Integer vector_size,
    Tuple coordinate_tuple_x (size_2d.i, start_x, end_x);
    Tuple coordinate_tuple_y (size_2d.j, start_y, end_y);
 
-   bicubic_coefficients_ptrs = new Bicubic_Coefficients*[vector_size];
-   for (Integer v = 0; v < vector_size; v++)
-   {
-      bicubic_coefficients_ptrs[v] = NULL;
-   }
-
    init (coordinate_tuple_x, coordinate_tuple_y,
       spacing_x, spacing_y, periodic_x, periodic_y);
 
@@ -1650,18 +1674,11 @@ Vector_Data_2D::Vector_Data_2D (const Integer vector_size,
                                 const Tuple coordinate_tuple_y,
                                 const bool periodic_x,
                                 const bool periodic_y)
-              : Vector_Data_nD (vector_size, 2)
+   : Vector_Data_nD (vector_size, 2)
 {
-
-   bicubic_coefficients_ptrs = new Bicubic_Coefficients*[vector_size];
-   for (Integer v = 0; v < vector_size; v++)
-   {
-      bicubic_coefficients_ptrs[v] = NULL;
-   }
-
+   init_bicubic_coefficients ();
    init (coordinate_tuple_x, coordinate_tuple_y, gsl_nan (),
       gsl_nan (), periodic_x, periodic_y);
-
 }
 
 Vector_Data_2D::~Vector_Data_2D ()
@@ -4664,7 +4681,7 @@ Scalar_Data_2D::Scalar_Data_2D (const Size_2D& size_2d,
                                 const Domain_2D& domain_2d,
                                 const bool periodic_x,
                                 const bool periodic_y)
-              : Vector_Data_2D (1, size_2d, domain_2d, periodic_x, periodic_y)
+   : Vector_Data_2D (1, size_2d, domain_2d, periodic_x, periodic_y)
 {
 }
 
@@ -4672,9 +4689,20 @@ Scalar_Data_2D::Scalar_Data_2D (const Tuple coordinate_tuple_x,
                                 const Tuple coordinate_tuple_y,
                                 const bool periodic_x,
                                 const bool periodic_y)
-              : Vector_Data_2D (1, coordinate_tuple_x, coordinate_tuple_y,
-                                periodic_x, periodic_y)
+   : Vector_Data_2D (1, coordinate_tuple_x, coordinate_tuple_y,
+                     periodic_x, periodic_y)
 {
+}
+
+Scalar_Data_2D::Scalar_Data_2D (const Vector_Data_2D& vector_data_2d,
+                                const Integer vector_element)
+   : Vector_Data_2D (vector_data_2d, false)
+{
+   if (vector_element != -1)
+   {
+      const size_t address = vector_element * Grid_nD::size ();
+      copy (vector_data_2d, address);
+   }
 }
 
 Domain_1D
