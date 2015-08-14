@@ -222,27 +222,12 @@ namespace denise
 
       private:
 
-         enum Tile
-         {
-            WEST,
-            EAST,
-         };
-
-         static Tile
-         get_tile (const Integer blue_marble_i,
-                   const Integer blue_marble_j);
-
-         static Dstring
-         get_tile_string (const Tile tile);
-
-         static Index_2D
-         get_tile_index (const Tile tile);
-
          static Color
          get_color (const Lat_Long& lat_long,
                     const Real start_latitude,
                     const Real start_longitude,
-                    FILE** blue_marble_files);
+                    FILE* west_file,
+                    FILE* east_file);
 
          void
          fill_raster (const Dstring& blue_marble_path,
@@ -306,7 +291,8 @@ namespace denise
             E020N90 = 29,
             E060N90 = 30,
             E100N90 = 31,
-            E140N90 = 32
+            E140N90 = 32,
+            NUMBER_OF_TILES = 33
          };
 
          const Real
@@ -357,7 +343,8 @@ namespace denise
 
          void
          fill_raster (const Real* data,
-                      const Real max_gradient);
+                      const Blue_Marble* blue_marble_ptr,
+                      const Real scale_factor);
 
       public:
 
@@ -373,7 +360,8 @@ namespace denise
          Gtopo30 (const Dstring& gtopo30_path,
                   const Transform_2D& transform,
                   const Size_2D& size_2d,
-                  const Real max_gradient = GSL_POSINF);
+                  const Dstring& blue_marble_path = "",
+                  const Real scale_factor = 0.0025);
 
          ~Gtopo30 ();
 

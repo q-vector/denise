@@ -2189,9 +2189,9 @@ Raster::set_pixel (const Integer i,
    uint32_t& pixel = *(buffer + offset);
 
    uint32_t a = uint32_t (rint (color.a * 255));
-   uint32_t r = uint32_t (rint (color.a * color.r * 255));
-   uint32_t g = uint32_t (rint (color.a * color.g * 255));
-   uint32_t b = uint32_t (rint (color.a * color.b * 255));
+   uint32_t r = uint32_t (rint (color.r * 255));
+   uint32_t g = uint32_t (rint (color.g * 255));
+   uint32_t b = uint32_t (rint (color.b * 255));
 
    pixel = (a << 24) + (r << 16) + (g << 8) + b;
 
@@ -2208,9 +2208,9 @@ Raster::get_pixel (const Integer i,
    const Real a = Real ((pixel & 0xff000000) >> 24) / 255;
    const Real r = Real ((pixel & 0x00ff0000) >> 16) / 255;
    const Real g = Real ((pixel & 0x0000ff00) >> 8) / 255;
-   const Real b = Real ((pixel & 0x000000ff) / 255);
+   const Real b = Real ((pixel & 0x000000ff)) / 255;
 
-   return Color (r / a, g / a, b / a, a);
+   return Color (r, g, b, a);
 
 }
 

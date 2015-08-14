@@ -367,7 +367,8 @@ Surface_Package::surface_domain (const Dstring& surface_identifier,
 
 void
 Surface_Package::surface_gtopo30 (const Dstring& surface_identifier,
-                                  const Dstring& geodetic_transform_identifier) const
+                                  const Dstring& geodetic_transform_identifier,
+                                  const Tokens& arguments) const
 {
 
    const RefPtr<Surface>& surface = andrea.get_surface (surface_identifier);
@@ -375,15 +376,43 @@ Surface_Package::surface_gtopo30 (const Dstring& surface_identifier,
    const Size_2D& size_2d = andrea.get_size_2d (surface_identifier);
    const Point_2D centre (Real (size_2d.i) / 2, Real (size_2d.j) / 2);
 
-   const Geodetic_Transform* geodetic_transform_ptr =
+   const Geodetic_Transform* transform_ptr =
       andrea.get_geodetic_transform_ptr (geodetic_transform_identifier, centre);
-   const Geodetic_Transform& geodetic_transform = *geodetic_transform_ptr;
+   const Geodetic_Transform& transform = *transform_ptr;
 
-   const Dstring& data_path = andrea.get_data_path ("gtopo30");
-   Gtopo30 gtopo30 (data_path, geodetic_transform, size_2d, 1e-3);
-   gtopo30.blit (cr);
+   Real sf = 0.0025;
+   Dstring bm_path;
 
-   delete geodetic_transform_ptr;
+   for (auto iterator = arguments.begin ();
+        iterator != arguments.end (); iterator++)
+   {
+
+      const Tokens t (*(iterator), "=");
+      const string& parameter = t[0].get_trimmed ().get_lower_case ();
+
+      if (parameter == "blue_marble")
+      {
+         string bm_path = t[1].get_trimmed ().get_lower_case ();
+         try { bm_path = andrea.get_data_path ("blue_marble"); }
+         catch (...)
+         {
+            const bool b = t.size () > 1;
+            if (b) { bm_path = t[1].get_trimmed ().get_lower_case (); }
+         }
+      }
+      else
+      if (parameter == "scale_factor")
+      {
+         sf = stof (t[1]);
+      }
+
+   }
+
+   const Dstring& g_path = andrea.get_data_path ("gtopo30");
+   try         { Gtopo30 (g_path, transform, size_2d, bm_path, sf).blit (cr); }
+   catch (...) { Gtopo30 (g_path, transform, size_2d, "", sf).blit (cr); }
+
+   delete transform_ptr;
 
 }
 
@@ -617,7 +646,7 @@ Surface_Package::surface_parse (const Tokens& tokens)
       const Dstring& surface_identifier = tokens[1];
       const Dstring& geodetic_transform_identifier = tokens[2];
       andrea.surface_gtopo30 (surface_identifier,
-         geodetic_transform_identifier);
+         geodetic_transform_identifier, tokens.subtokens (3));
    }
    else
    if (tokens[0] == "blue_marble")

@@ -501,28 +501,12 @@ Gshhs::cairo (const RefPtr<Context> cr,
    delete clipped_gshhs_ptr;
 }
 
-Dstring
-Blue_Marble::get_tile_string (const Blue_Marble::Tile tile)
-{
-
-   Dstring tile_string;
-
-   switch (tile)
-   {
-      case EAST: tile_string += "blue_marble_east"; break;
-      case WEST: tile_string += "blue_marble_west"; break;
-      default: throw Blue_Marble::Exception ("Invalid Tile");
-   }
-
-   return tile_string;
-
-}
-
 Color
 Blue_Marble::get_color (const Lat_Long& lat_long,
                         const Real start_latitude,
                         const Real start_longitude,
-                        FILE** blue_marble_files)
+                        FILE* west_file,
+                        FILE* east_file)
 {
 
    uint8_t raw_datum[3];
@@ -535,10 +519,10 @@ Blue_Marble::get_color (const Lat_Long& lat_long,
    const Integer gi = Integer (rint ((longitude - start_longitude) * 120));
    const Integer gj = Integer (rint ((latitude - start_latitude) * 120));
 
-   const Blue_Marble::Tile tile = (gi >= 21600 ? EAST : WEST);
-   FILE* file = blue_marble_files[tile];
+   const bool is_east = gi >= 21600;
+   FILE* file = (is_east ? east_file : west_file);
 
-   const Integer tile_i = gi - (tile == EAST ? 21600 : 0);
+   const Integer tile_i = gi - (is_east ? 21600 : 0);
    const Integer tile_j = 21600 - gj - 1;
 
    const long position = (tile_j * 21600 + tile_i) * pixel_size;
@@ -557,16 +541,15 @@ Blue_Marble::fill_raster (const Dstring& blue_marble_path,
 
 {
 
+   const Real d = 1.0 / 240.0;
+   const Real start_latitude = -90 + d;
+   const Real start_longitude = -180 + d;
+
    const Dstring& east_file_path = blue_marble_path + "/blue_marble_east.bin";
    const Dstring& west_file_path = blue_marble_path + "/blue_marble_west.bin";
 
-   FILE** blue_marble_files = new FILE*[2];
-   blue_marble_files[EAST] = get_input_file (east_file_path);
-   blue_marble_files[WEST] = get_input_file (west_file_path);
-
-   const Real delta_2 = Real (1) / Real (240);
-   const Real start_latitude = -90 + delta_2;
-   const Real start_longitude = -180 + delta_2;
+   FILE* east_file = get_input_file (east_file_path);
+   FILE* west_file = get_input_file (west_file_path);
 
    for (Integer i = 0; i < size_2d.i; i++)
    {
@@ -580,7 +563,7 @@ Blue_Marble::fill_raster (const Dstring& blue_marble_path,
          const Lat_Long lat_long = transform_2d.reverse (x, y);
 
          const Color& color = get_color (lat_long, start_latitude,
-            start_longitude, blue_marble_files);
+            start_longitude, west_file, east_file);
 
          set_pixel (i, j, color);
 
@@ -588,8 +571,8 @@ Blue_Marble::fill_raster (const Dstring& blue_marble_path,
 
    }
 
-   fclose (blue_marble_files[EAST]);
-   fclose (blue_marble_files[WEST]);
+   fclose (west_file);
+   fclose (east_file);
 
 }
 
@@ -598,7 +581,9 @@ Blue_Marble::Blue_Marble (const Dstring& blue_marble_path,
                           const Size_2D& size_2d)
    : Raster (size_2d)
 {
+
    fill_raster (blue_marble_path, transform_2d);
+
 }
 
 Blue_Marble::~Blue_Marble ()
@@ -816,11 +801,11 @@ Real*
 Gtopo30::get_data (const Transform_2D& transform)
 {
 
-   file_array = new FILE*[33];
-   tile_size_array = new Size_2D[33];
-   tile_index_array = new Index_2D[33];
+   file_array = new FILE*[Gtopo30::NUMBER_OF_TILES];
+   tile_size_array = new Size_2D[Gtopo30::NUMBER_OF_TILES];
+   tile_index_array = new Index_2D[Gtopo30::NUMBER_OF_TILES];
 
-   for (Integer tile = 0; tile < 33; tile++)
+   for (Integer tile = 0; tile < Gtopo30::NUMBER_OF_TILES; tile++)
    {  
       file_array[tile] = NULL;
    }   
@@ -854,14 +839,14 @@ Gtopo30::get_data (const Transform_2D& transform)
 
 void
 Gtopo30::fill_raster (const Real* data,
-                      const Real max_gradient)
+                      const Blue_Marble* blue_marble_ptr,
+                      const Real scale_factor)
 {
 
    //const Color& land = Color::hsb (0.5, 0.27, 0.3);
    //const Color& sea = Color::hsb (0.67, 0.67, 0.3);
    const Color& land = Color::land ();
    const Color& sea = Color::sea ();
-   const Real mg = max_gradient;
 
    for (Integer i = 0; i < size_2d.i; i++)
    {
@@ -869,17 +854,24 @@ Gtopo30::fill_raster (const Real* data,
       for (Integer j = 0; j < size_2d.j; j++)
       {
 
+         Color color;
          const Real datum = data[i * size_2d.j + j];
 
-         const Real h = std::min (std::max (datum / 1200.0, 0.0), 1.0);
-         const Real hue = 0.45 - h * 0.4;
-         //const Real brightness = h * 0.7 + 0.28;
-         const Real brightness = h * 0.3 + 0.2;
-         Color color = (datum > 0 ? Color::hsb (hue, 0.54, brightness) : sea);
-         //Color color = (datum > 0 ? land : sea);
-         //Color color = color_chooser.get_color (datum);
-
-         Real gradient = 0;
+         if (blue_marble_ptr != NULL)
+         {
+            color = blue_marble_ptr->get_pixel (i, j);
+         }
+         else
+         {
+            const Real max_height = 1200.0;
+            const Real h = std::min (std::max (datum / max_height, 0.0), 1.0);
+            const Real hue = 0.45 - h * 0.4;
+            //const Real brightness = h * 0.7 + 0.28;
+            const Real brightness = h * 0.3 + 0.2;
+            color = (datum > 0 ? Color::hsb (hue, 0.54, brightness) : sea);
+            //Color color = (datum > 0 ? land : sea);
+            //Color color = color_chooser.get_color (datum);
+         }
 
          if (i != 0 && i != size_2d.i - 1 && j != 0 && i != size_2d.j - 1)
          {
@@ -889,10 +881,10 @@ Gtopo30::fill_raster (const Real* data,
             const Real datum_n = data[i * size_2d.j + (j+1)];
             const Real datum_s = data[i * size_2d.j + (j-1)];
 
-            gradient = datum_e - datum_n - datum_w + datum_s;
+            Real gradient = datum_e - datum_n - datum_w + datum_s;
             if (!gsl_finite (gradient)) { gradient = 0; }
 
-            Real scale = 1 + gradient * 0.0025;
+            Real scale = 1 + gradient * scale_factor;
             scale = std::max (0.7, std::min (1.3, scale));
             color.scale_brightness (scale);
 
@@ -908,22 +900,35 @@ Gtopo30::fill_raster (const Real* data,
 Gtopo30::Gtopo30 (const Dstring& gtopo30_path,
                   const Transform_2D& transform_2d,
                   const Size_2D& size_2d,
-                  const Real max_gradient)
+                  const Dstring& blue_marble_path,
+                  const Real scalr_factor)
    : Raster (size_2d),
      gtopo30_path (gtopo30_path),
      delta (Real (1) / Real (120)),
      start_latitude (-90 + delta/2),
      start_longitude (-180 + delta/2)
 {
+
    Real* data = get_data (transform_2d);
-   fill_raster (data, max_gradient);
+
+   try
+   {
+      Blue_Marble blue_marble (blue_marble_path, transform_2d, size_2d);
+      fill_raster (data, &blue_marble, scalr_factor);
+   }
+   catch (const IO_Exception& ioe)
+   {
+      fill_raster (data, NULL, scalr_factor);
+   }
+
    delete[] data;
+
 }
 
 Gtopo30::~Gtopo30 ()
 {
 
-   for (Integer tile = 0; tile < 33; tile++)
+   for (Integer tile = 0; tile < Gtopo30::NUMBER_OF_TILES; tile++)
    {
       FILE*& file = file_array[tile];
       if (file != NULL) { fclose (file); }

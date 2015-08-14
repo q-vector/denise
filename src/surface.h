@@ -142,7 +142,8 @@ namespace andrea
 
          void
          surface_gtopo30 (const Dstring& surface_identifier,
-                          const Dstring& geodetic_transform_identifier) const;
+                          const Dstring& geodetic_transform_identifier,
+                          const Tokens& tokens) const;
 
          void
          surface_blue_marble (const Dstring& surface_identifier,
