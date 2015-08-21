@@ -2619,6 +2619,12 @@ Level::Level (const Dstring& str)
       value = stof (str);
    }
    else
+   if (str.find ("M") != Dstring::npos)
+   {
+      type = MODEL;
+      value = stof (str.substr (1));
+   }
+   else
    {
       type = SIGMA;
       value = stof (str);
@@ -2677,6 +2683,12 @@ Level
 Level::z_level (const Real z)
 {
    return Level (HEIGHT, z, GSL_NAN);
+}
+
+Level
+Level::model_level (const Real m)
+{
+   return Level (MODEL, m, GSL_NAN);
 }
 
 Level
@@ -2743,6 +2755,13 @@ Level::set_sigma (const Real sigma)
 }
 
 void
+Level::set_model (const Real m)
+{
+   this->type = MODEL;
+   this->value = m;
+}
+
+void
 Level::set_screen ()
 {
    this->type = SCREEN;
@@ -2806,6 +2825,8 @@ Level::get_string () const
             return Dstring::render ("%.0fhPa", round (value * 1e-2));
          case HEIGHT:
             return Dstring::render ("%.0fm", round (value));
+         case MODEL:
+            return Dstring::render ("M%.0f", round (value));
          case SCREEN:
             return "Screen";
          case FIFTY_METRE:
@@ -2851,6 +2872,11 @@ Level::get_string () const
          case HEIGHT:
          {
             return Dstring::render ("%.0fm to %.0fm", value, value_);
+         }
+
+         case MODEL:
+         {
+            return Dstring::render ("M%.0f to M%.0f", value, value_);
          }
 
       }

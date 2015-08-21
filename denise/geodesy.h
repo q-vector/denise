@@ -1461,22 +1461,58 @@ namespace denise
    class Track : public map<Real, Lat_Long>
    {
 
-      private:
+      protected:
+
+         class Element_Data : public map<Real, Real>
+         {
+         };
+
+         class Element_Data_Map : public map<Dstring, Element_Data>
+         {
+
+            public:
+
+               void
+               add (const Real tau,
+                    const Dstring& element,
+                    const Real datum);
+
+         };
 
          Vector_Data_1D*
          lat_long_spline_ptr;
 
+         Dtime
+         dtime;
+
+         Element_Data_Map
+         element_data_map;
+
       public:
 
-         Track ();
+         Track (const Dtime& dtime = Dtime (0.0));
 
          ~Track ();
 
          void
-         add (const Real& tau,
+         set_dtime (const Dtime& dtime);
+
+         const Dtime&
+         get_dtime () const;
+
+         Dtime
+         get_dtime (const Real tau) const;
+
+         void
+         add (const Real tau,
               const Lat_Long& lat_long);
 
          void
+         add (const Real tau,
+              const Dstring& element,
+              const Real datum);
+
+         virtual void
          okay ();
 
          Lat_Long

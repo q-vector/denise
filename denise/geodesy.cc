@@ -2274,11 +2274,11 @@ Geodetic_Transform::get_mesh (const Size_2D& size_2d) const
    const Real longitude_span = domain_2d.domain_y.get_span ();
    const Real span = std::min (latitude_span, longitude_span);
 
-   const Color& color_n = Color::black (0.10);
-   const Color& color_j = Color::black (0.40);
+   const Color& color_n = Color::black (0.20);
+   const Color& color_j = Color::black (0.60);
 
-   const Real minor = (span > 90 ? 5 : span > 30 ? 1 : 0.2);
-   const Real major = (span > 90 ? 30 : span > 30 ? 10 : span > 5 ? 2 : 1);
+   const Real minor = (span > 72 ? 5  : span > 22 ? 1  : span > 9 ? 1 : span > 4 ? 0.2 : 0.1);
+   const Real major = (span > 72 ? 30 : span > 22 ? 10 : span > 9 ? 5 : span > 4 ? 2   : 1);
 
    return Geodetic_Mesh (minor, color_n, major, color_j, size_2d, domain_2d);
 
@@ -3795,8 +3795,18 @@ Geodetic_Scalar_Data_3D::evaluate (const Integer k,
       0, k, latitude, longitude, evaluate_op);
 }
 
-Track::Track ()
-   : lat_long_spline_ptr (NULL)
+void
+Track::Element_Data_Map::add (const Real tau,
+                              const Dstring& element,
+                              const Real datum)
+{
+   auto i = insert (make_pair (element, Track::Element_Data ())).first;
+   i->second[tau] = datum;
+}
+
+Track::Track (const Dtime& dtime)
+   : dtime (dtime),
+     lat_long_spline_ptr (NULL)
 {
 }
 
@@ -3806,10 +3816,30 @@ Track::~Track ()
 }
 
 void
-Track::add (const Real& tau,
+Track::set_dtime (const Dtime& dtime)
+{
+   this->dtime = dtime;
+}
+
+Dtime
+Track::get_dtime (const Real tau) const
+{
+   return Dtime (dtime.t + tau);
+}
+
+void
+Track::add (const Real tau,
             const Lat_Long& lat_long)
 {
-   insert (make_pair (tau, lat_long));
+   (*this)[tau] = lat_long;
+}
+
+void
+Track::add (const Real tau,
+               const Dstring& element,
+               const Real datum)
+{
+   element_data_map.add (tau, element, datum);
 }
 
 void

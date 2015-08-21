@@ -99,6 +99,10 @@ namespace denise
       PRECIP_RATE,
       BRUNT_VAISALA,
       SCORER_PARAMETER,
+      Q_H_ADVECTION,
+      Q_V_ADVECTION,
+      Q_S_ADVECTION,
+      Q_N_ADVECTION,
       P_THETA,
       P_RHO,
       VARIANCE_TEMPERATURE,
@@ -1057,6 +1061,7 @@ namespace denise
             MEAN_SEA,
             NIL,
             SURFACE,
+            MODEL,
             NAL
          };
 
@@ -1101,6 +1106,9 @@ namespace denise
          z_level (const Real z);
 
          static Level
+         model_level (const Real m);
+
+         static Level
          screen_level ();
 
          static Level
@@ -1129,6 +1137,9 @@ namespace denise
 
          void
          set_sigma (const Real sigma);
+
+         void
+         set_model (const Real m);
 
          void
          set_screen ();

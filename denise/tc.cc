@@ -123,6 +123,8 @@ void
 Advisory::make_track ()
 {
 
+   track.set_dtime (initial_time);
+
    for (Advisory::const_iterator iterator = begin ();
         iterator != end (); iterator++)
    {
