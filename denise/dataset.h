@@ -1,7 +1,7 @@
 //
 // dataset.h
 // 
-// Copyright (C) 2005-2013 Simon E. Ching
+// Copyright (C) 2005-2015 Simon E. Ching
 // 
 // This file is part of libdenise.
 //

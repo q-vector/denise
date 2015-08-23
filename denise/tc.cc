@@ -18,14 +18,141 @@
 // You should have received a copy of the GNU General Public License
 // along with libdenise.  If not, see <http://www.gnu.org/licenses/>.
 
-#include <iterator>
-#include <fstream>
-#include <sstream>
+#include <denise/gzstream.h>
 #include <denise/tc.h>
 
 using namespace std;
 using namespace Cairo;
 using namespace denise;
+
+Tc_Track::Tc_Track (const Dstring& name,
+                    const Dtime& dtime)
+   : Track (dtime),
+     name (name)
+{
+}
+
+const Dstring&
+Tc_Track::get_name () const
+{
+   return name;
+}
+
+Best_Tracks::Best_Tracks ()
+{
+}
+
+void
+Best_Tracks::ingest_jma (const Dstring& file_path)
+{
+
+   igzstream file (file_path);
+   Best_Tracks::iterator i = end ();
+
+   for (Dstring is; getline (file, is); )
+   {
+
+      if (is.substr (0, 5) == "66666")
+      {
+         if (i != end ()) { i->second.okay (); }
+         const bool post_49 = stoi (is.substr (6, 2)) > 49;
+         const Dstring& id = (post_49 ? "19" : "20") + is.substr (6, 4);
+         const Dstring& name = Dstring (is.substr (30, 20)).get_trimmed ();
+         i = insert (make_pair (id, Tc_Track (name))).first;
+         continue;
+      }
+
+      if (i != end ())
+      {
+
+         Tc_Track& tc_track = i->second;
+
+         const bool post_49 = stoi (is.substr (0, 2)) > 49;
+         const Dtime dtime ((post_49 ? "19" : "20") + is.substr (0, 2));
+         const Real latitude = stof (is.substr (15, 3)) * 0.1;
+         const Real longitude = stof (is.substr (19, 4)) * 0.1;
+         const Real pressure = stof (is.substr (24, 4));
+         const Real max_wind = stof (is.substr (33, 3));
+
+         tc_track.add (dtime.t, Lat_Long (latitude, longitude));
+         tc_track.add (dtime.t, "pressure", pressure);
+         tc_track.add (dtime.t, "max_wind", max_wind);
+
+      }
+
+   }
+
+   file.close ();
+
+}
+
+set<Dstring>
+Best_Tracks::get_subset (const Integer year) const
+{
+
+   set<Dstring> subset;
+
+   for (auto iterator = begin (); iterator != end (); iterator++)
+   {
+      const Dstring& id = iterator->first;
+      const Tc_Track& tc_track = iterator->second;
+      const Integer y = tc_track.get_start_time ().get_year ();
+      if (y == year) { subset.insert (id); }
+   }
+
+   return subset;
+
+}
+
+set<Dstring>
+Best_Tracks::get_subset (const Domain_2D& domain_2d,
+                         const Real dt) const
+{
+
+   set<Dstring> subset;
+
+   for (auto iterator = begin (); iterator != end (); iterator++)
+   {
+      const Dstring& id = iterator->first;
+      const Tc_Track& tc_track = iterator->second;
+      if (!tc_track.trespass (domain_2d, dt)) { continue;}
+      subset.insert (id);
+   }
+
+   return subset;
+
+}
+
+set<Dstring>
+Best_Tracks::get_subset (const Integer day_of_year,
+                         const Integer delta_days,
+                         const Domain_2D& domain_2d,
+                         const Real dt) const
+{
+
+   set<Dstring> subset;
+   const Integer sjd = (day_of_year - delta_days);
+   const Integer ejd = (day_of_year + delta_days);
+
+   for (auto iterator = begin (); iterator != end (); iterator++)
+   {
+
+      const Dstring& id = iterator->first;
+      const Tc_Track& tc_track = iterator->second;
+
+      const Integer s = tc_track.get_start_time ().get_day_of_year ();
+      const Integer e = tc_track.get_end_time ().get_day_of_year ();
+
+      if ((sjd < s && ejd < s) || (sjd > e && ejd < e)) { continue; }
+      if (!tc_track.trespass (domain_2d, dt)) { continue;}
+
+      subset.insert (id);
+
+   }
+
+   return subset;
+
+}
 
 Real
 Forecast::get_pressure (const Dstring& pressure_string)

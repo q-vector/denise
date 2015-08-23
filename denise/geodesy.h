@@ -1,7 +1,7 @@
 //
 // geodesy.h
 // 
-// Copyright (C) 2005-2013 Simon E. Ching
+// Copyright (C) 2005-2015 Simon E. Ching
 // 
 // This file is part of libdenise.
 //
@@ -1503,6 +1503,12 @@ namespace denise
          Dtime
          get_dtime (const Real tau) const;
 
+         Dtime
+         get_start_time () const;
+
+         Dtime
+         get_end_time () const;
+
          void
          add (const Real tau,
               const Lat_Long& lat_long);
@@ -1518,6 +1524,10 @@ namespace denise
          Lat_Long
          get_lat_long (const Real tau,
                        const bool forbid_extrapolate = true) const;
+
+         bool
+         trespass (const Domain_2D& domain_2d,
+                   const Real dt = 0.1) const; 
 
    };
 

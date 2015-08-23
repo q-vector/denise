@@ -1,7 +1,7 @@
 //
 // tc.h
 // 
-// Copyright (C) 2005-2013 Simon E. Ching
+// Copyright (C) 2005-2015 Simon E. Ching
 // 
 // This file is part of libdenise.
 //
@@ -34,6 +34,75 @@ using namespace denise;
 
 namespace denise
 {
+
+   class Tc_Track : public Track
+   {
+
+      protected:
+
+         const Dstring
+         name;
+
+      public:
+
+         Tc_Track (const Dstring& name = "",
+                   const Dtime& dtime = Dtime (0.0));
+
+         const Dstring&
+         get_name () const;
+
+   };
+
+   class Best_Tracks : public map<Dstring, Tc_Track>
+   {
+
+      public:
+
+         class Subset : public set<Dstring>
+         {
+
+            public:
+
+               Subset
+               get_subset (const Integer year) const;
+
+               Subset
+               get_subset (const Dstring& name) const;
+
+               Subset
+               get_subset (const Domain_2D& domain_2d,
+                           const Real dt = 0.1) const;
+
+               Subset
+               get_subset (const Integer day_of_year,
+                           const Integer delta_days,
+                           const Domain_2D& domain_2d,
+                           const Real dt = 0.1) const;
+
+         };
+
+         Best_Tracks ();
+
+         void
+         ingest_jma (const Dstring& file_path);
+
+         set<Dstring>
+         get_subset (const Integer year) const;
+
+         set<Dstring>
+         get_subset (const Dstring& name) const;
+
+         set<Dstring>
+         get_subset (const Domain_2D& domain_2d,
+                     const Real dt = 0.1) const;
+
+         set<Dstring>
+         get_subset (const Integer day_of_year,
+                     const Integer delta_days,
+                     const Domain_2D& domain_2d,
+                     const Real dt = 0.1) const;
+
+   };
 
    class Forecast
    {

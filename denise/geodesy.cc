@@ -1,7 +1,7 @@
 //
 // geodesy.cc
 // 
-// Copyright (C) 2010 Simon E. Ching
+// Copyright (C) 2005-2015 Simon E. Ching
 // 
 // This file is part of libdenise.
 //
@@ -3827,6 +3827,18 @@ Track::get_dtime (const Real tau) const
    return Dtime (dtime.t + tau);
 }
 
+Dtime
+Track::get_start_time () const
+{
+   return Dtime (dtime.t + begin ()->first);
+}
+
+Dtime
+Track::get_end_time () const
+{
+   return Dtime (dtime.t + rbegin ()->first);
+}
+
 void
 Track::add (const Real tau,
             const Lat_Long& lat_long)
@@ -3903,6 +3915,30 @@ Track::get_lat_long (const Real tau,
    return Lat_Long (latitude, longitude);
 
 }
+
+bool
+Track::trespass (const Domain_2D& domain_2d,
+                 const Real dt) const
+{
+
+   const Real min_tau = begin ()->first;
+   const Real max_tau = rbegin ()->first;
+
+   const Integer n = Integer (round ((max_tau - min_tau) / dt)) + 1;
+   const Tuple tuple (n, min_tau, max_tau);
+
+   for (auto iterator = tuple.begin (); iterator != tuple.end (); iterator++)
+   {
+      const Real tau = *(iterator);
+      const Real latitude = lat_long_spline_ptr->evaluate (0, tau);
+      const Real longitude = lat_long_spline_ptr->evaluate (1, tau);
+      if (!domain_2d.is_out_of_bounds (latitude, longitude)) { return true; }
+   }
+
+   return false;
+
+}
+
 
 Geodetic_Mesh::Geodetic_Mesh (const Size_2D& size_2d,
                               const Domain_2D& domain_2d)
