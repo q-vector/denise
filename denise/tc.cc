@@ -42,6 +42,21 @@ Best_Tracks::Best_Tracks ()
 {
 }
 
+Best_Tracks::Subset::Subset (const Best_Tracks& best_tracks,
+                             const bool fill)
+   : best_tracks (best_tracks)
+{
+   if (fill)
+   {
+      for (auto iterator = best_tracks.begin ();
+           iterator != best_tracks.end (); iterator++)
+      {
+         const Dstring& id = iterator->first;
+         insert (id);
+      }
+   }
+}
+
 void
 Best_Tracks::ingest_jma (const Dstring& file_path)
 {

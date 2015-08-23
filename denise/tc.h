@@ -61,7 +61,15 @@ namespace denise
          class Subset : public set<Dstring>
          {
 
+            private:
+
+               const Best_Tracks&
+               best_tracks;
+
             public:
+
+               Subset (const Best_Tracks& best_tracks,
+                       const bool fill);
 
                Subset
                get_subset (const Integer year) const;
