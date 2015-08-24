@@ -47,6 +47,23 @@ Gshhs::Point::read (FILE* file)
 }
 
 void
+Gshhs::Point::read (ifstream& file)
+{
+
+   file.read ((char*)&x, sizeof (int32_t));
+   file.read ((char*)&y, sizeof (int32_t));
+
+#ifndef WORDS_BIGENDIAN
+   denise::swap_endian (&x, sizeof (int32_t));
+   denise::swap_endian (&y, sizeof (int32_t));
+#endif
+
+   if (x % 100000 == 0) { x += 1; }
+   if (y % 100000 == 0) { y += 1; }
+   
+}
+
+void
 Gshhs::Header::swap_endian ()
 {
 
@@ -144,6 +161,36 @@ Gshhs::Header::read (FILE* file)
       {
          throw IO_Exception ("EOF reached");
       }
+   }
+
+#ifndef WORDS_BIGENDIAN
+   swap_endian ();
+#endif
+   
+}
+
+void
+Gshhs::Header::read (ifstream& file)
+{
+
+   const size_t old_size = 40;
+   const size_t new_size = 44;
+   const size_t size_difference = new_size - old_size;
+
+   uint8_t* temp_buffer = new uint8_t[old_size];
+
+   file.read ((char*)temp_buffer, old_size);
+
+   const bool old = (temp_buffer[10] == 0);
+   buffer_size = (old ? old_size : new_size);
+   buffer = new uint8_t[buffer_size];
+
+   memcpy (buffer, temp_buffer, old_size);
+   delete[] temp_buffer;
+
+   if (!old)
+   {
+      file.read ((char*)(buffer + old_size), size_difference);
    }
 
 #ifndef WORDS_BIGENDIAN
@@ -269,6 +316,61 @@ Gshhs::get_header_ptr () const
 
 void
 Gshhs::add_polygon (FILE* file,
+                    const Header& header,
+                    const Real max_longitude)
+{
+
+   Point point;
+   Point_2D p;
+   Real last_y;
+
+   const uint32_t n = header.get_int32_t (4);
+   const bool antartica = (header.get_int32_t (20) * 1e-6 < -89);
+   const bool cross_greenwich = header.is_cross_greenwich ();
+   const bool western = header.is_western ();
+
+   if (antartica)
+   {
+//      add (Point_2D (-68.9257, 0), true);
+//      add (Point_2D (-89, 0), false);
+//      add (Point_2D (-89, 360), false);
+//      add (Point_2D (-68.9257, 360), false);
+   }
+
+   for (Integer i = 0; i < n; i++)
+   {
+
+      point.read (file);
+
+      p.x = point.y * 1e-6;
+      p.y = point.x * 1e-6;
+
+      if (cross_greenwich && p.y > max_longitude) { p.y -= 360; }
+      if ((antartica || western) && p.y > 180) { p.y -= 360; }
+
+      if (antartica && (fabs (last_y - p.y) > 350))
+      {
+         add (Point_2D (-78.5, -180), true);
+         add (Point_2D (-89.9, -180), false);
+         add (Point_2D (-89.9, 180), false);
+         add (Point_2D (-78.5, 180), false);
+      }
+
+      if (i < n - 1)
+      {
+         //const bool new_handle = (!antartica && (i == 0));
+         const bool new_handle = (i == 0);
+         add (p, new_handle);
+      }
+
+      last_y = p.y;
+
+   }
+
+}
+
+void
+Gshhs::add_polygon (ifstream& file,
                     const Header& header,
                     const Real max_longitude)
 {

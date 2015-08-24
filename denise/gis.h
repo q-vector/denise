@@ -56,6 +56,9 @@ namespace denise
                void
                read (FILE* file);
 
+               void
+               read (ifstream& file);
+
          };
 
          class Header
@@ -88,6 +91,9 @@ namespace denise
 
                void
                read (FILE* file);
+
+               void
+               read (ifstream& file);
 
                void
                reset (Polygon::Vertex* handle_ptr);
@@ -130,6 +136,11 @@ namespace denise
 
          void
          add_polygon (FILE* file,
+                      const Header& header,
+                      const Real max_longitude);
+
+         void
+         add_polygon (ifstream& file,
                       const Header& header,
                       const Real max_longitude);
 
