@@ -3795,24 +3795,92 @@ Geodetic_Scalar_Data_3D::evaluate (const Integer k,
       0, k, latitude, longitude, evaluate_op);
 }
 
-void
-Track::Element_Data_Map::add (const Real tau,
-                              const Dstring& element,
-                              const Real datum)
+Track_Data::Track_Data ()
+   : spline_ptr (NULL)
 {
-   auto i = insert (make_pair (element, Track::Element_Data ())).first;
-   i->second[tau] = datum;
+}
+
+Track_Data::~Track_Data ()
+{
+   delete spline_ptr;
+}
+
+void
+Track_Data::okay (const bool cubic)
+{
+
+   const Integer n = size ();
+   const Real last_tau = rbegin ()->first;
+
+   if (spline_ptr != NULL) { delete spline_ptr; }
+   spline_ptr = new Scalar_Data_1D (n, Domain_1D (0, last_tau));
+
+   for (Track_Data::iterator i = begin (); i != end (); i++)
+   {
+
+      const Real tau = i->first;
+      const Real datum = i->second;
+      const Integer node = distance (begin (), i);
+
+      spline_ptr->modify_coordinate_tuple (node, tau);
+      spline_ptr->set_datum (node, datum);
+
+   }
+
+   const bool c = (cubic && n > 3);
+   auto interp_type = (c ?  gsl_interp_cspline : gsl_interp_linear);
+   spline_ptr->set_interpolation (interp_type);
+
+}
+
+Real
+Track_Data::get_datum (const Real tau,
+                       const bool forbid_extrapolate) const
+{
+
+   if (forbid_extrapolate)
+   {
+      const Real start_tau = begin ()->first;
+      const Real end_tau = rbegin ()->first;
+      if (tau < start_tau || tau > end_tau) { return GSL_NAN; }
+   }
+
+   return spline_ptr->evaluate (tau);
+
+}
+
+Domain_1D
+Track_Data::get_domain_1d (const Real dt) const
+{
+
+   Real start = GSL_POSINF;
+   Real end = GSL_NEGINF;
+
+   const Real start_tau = begin ()->first;
+   const Real end_tau = rbegin ()->first;
+
+   const Integer n = Integer (round ((end_tau - start_tau) / dt)) + 1;
+   const Tuple tuple (n, start_tau, end_tau);
+
+   for (auto iterator = tuple.begin (); iterator != tuple.end (); iterator++)
+   {
+      const Real tau = *(iterator);
+      const Real datum = spline_ptr->evaluate (tau);
+      if (datum < start) { start = datum; }
+      if (datum > end) { end = datum; }
+   }
+
+   return Domain_1D (start, end);
+
 }
 
 Track::Track (const Dtime& dtime)
-   : dtime (dtime),
-     lat_long_spline_ptr (NULL)
+   : dtime (dtime)
 {
 }
 
 Track::~Track ()
 {
-   if (lat_long_spline_ptr != NULL) { delete lat_long_spline_ptr; }
 }
 
 void
@@ -3830,90 +3898,111 @@ Track::get_dtime (const Real tau) const
 Dtime
 Track::get_start_time () const
 {
-   return Dtime (dtime.t + begin ()->first);
+   const Real start_tau = get_start_tau ();
+   return Dtime (dtime.t + start_tau);
 }
 
 Dtime
 Track::get_end_time () const
 {
-   return Dtime (dtime.t + rbegin ()->first);
+   const Real end_tau = get_end_tau ();
+   return Dtime (dtime.t + end_tau);
+}
+
+Real
+Track::get_start_tau () const
+{
+   return at ("latitude").begin ()->first;
+}
+
+Real
+Track::get_end_tau () const
+{
+   return at ("latitude").rbegin ()->first;
+}
+
+const set<Dstring>&
+Track::get_element_set () const
+{
+   return element_set;
 }
 
 void
 Track::add (const Real tau,
             const Lat_Long& lat_long)
 {
-   (*this)[tau] = lat_long;
+   add ("latitude", tau, lat_long.latitude);
+   add ("longitude", tau, lat_long.longitude);
 }
 
 void
-Track::add (const Real tau,
-               const Dstring& element,
-               const Real datum)
+Track::add (const Dstring& element,
+            const Real tau,
+            const Real datum)
 {
-   element_data_map.add (tau, element, datum);
+
+   element_set.insert (element);
+
+   Track::iterator iterator;
+   if ((iterator = find (element)) == end ())
+   {
+      iterator = insert (make_pair (element, Track_Data ())).first;
+   }
+   iterator->second[tau] = datum;
 }
 
 void
 Track::okay ()
 {
-
-   const Integer n = size ();
-   const Real last_tau = rbegin ()->first;
-
-   if (n < 2) { return; }
-   if (lat_long_spline_ptr != NULL) { delete lat_long_spline_ptr; }
-
-   Tuple tau_tuple;
-   for (Track::iterator i = begin (); i != end (); i++)
-
-   lat_long_spline_ptr = new Vector_Data_1D (2, n, Domain_1D (0, last_tau));
-
-   for (Track::iterator i = begin (); i != end (); i++)
+   for (auto iterator = element_set.begin ();
+        iterator != element_set.end (); iterator++)
    {
-
-      const Real tau = i->first;
-      const Lat_Long& lat_long = i->second;
-
-      const Integer node = distance (begin (), i);
-      const Real& latitude = lat_long.latitude;
-      const Real& longitude = lat_long.longitude;
-
-      lat_long_spline_ptr->modify_coordinate_tuple (node, tau);
-      lat_long_spline_ptr->set_datum (0, node, latitude);
-      lat_long_spline_ptr->set_datum (1, node, longitude);
-
+      const Dstring& element = *(iterator);
+      const bool cubic = (element == "latitude" || element == "longitude");
+      at (element).okay (cubic);
    }
+}
 
-   const gsl_interp_type* interp_type = (n > 3 ?
-      gsl_interp_cspline : gsl_interp_linear);
-   lat_long_spline_ptr->set_interpolation (interp_type);
-
+Lat_Long
+Track::get_lat_long (const Dtime& dtime,
+                     const bool forbid_extrapolate) const
+{
+   const Real tau = (dtime.t - this->dtime.t);
+   return get_lat_long (tau, forbid_extrapolate);
 }
 
 Lat_Long
 Track::get_lat_long (const Real tau,
                      const bool forbid_extrapolate) const
 {
-
-   if (forbid_extrapolate)
-   {
-
-      const Real min_tau = begin ()->first;
-      const Real max_tau = rbegin ()->first;
-
-      if (tau < min_tau || tau > max_tau)
-      {
-         return Lat_Long (GSL_NAN, GSL_NAN);
-      }
-
-   }
-
-   const Real latitude = lat_long_spline_ptr->evaluate (0, tau);
-   const Real longitude = lat_long_spline_ptr->evaluate (1, tau);
-
+   const Real latitude = at ("latitude").get_datum (tau, forbid_extrapolate);
+   const Real longitude = at ("longitude").get_datum (tau, forbid_extrapolate);
    return Lat_Long (latitude, longitude);
+}
 
+Real
+Track::get_datum (const Dstring& element,
+                  const Dtime& dtime,
+                  const bool forbid_extrapolate) const
+{
+   const Real tau = (dtime.t - this->dtime.t);
+   return get_datum (element, tau, forbid_extrapolate);
+}
+
+Real
+Track::get_datum (const Dstring& element,
+                  const Real tau,
+                  const bool forbid_extrapolate) const
+{
+   return at ("element").get_datum (tau, forbid_extrapolate);
+}
+
+Domain_2D
+Track::get_domain_2d (const Real dt) const
+{
+   const Domain_1D& domain_latitude = at ("latitude").get_domain_1d (dt);
+   const Domain_1D& domain_longitude = at ("longitude").get_domain_1d (dt);
+   return Domain_2D (domain_latitude, domain_longitude);
 }
 
 bool
@@ -3921,18 +4010,17 @@ Track::trespass (const Domain_2D& domain_2d,
                  const Real dt) const
 {
 
-   const Real min_tau = begin ()->first;
-   const Real max_tau = rbegin ()->first;
+   const Real start_tau = get_start_tau ();
+   const Real end_tau = get_end_tau ();
 
-   const Integer n = Integer (round ((max_tau - min_tau) / dt)) + 1;
-   const Tuple tuple (n, min_tau, max_tau);
+   const Integer n = Integer (round ((end_tau - start_tau) / dt)) + 1;
+   const Tuple tuple (n, start_tau, end_tau);
 
    for (auto iterator = tuple.begin (); iterator != tuple.end (); iterator++)
    {
       const Real tau = *(iterator);
-      const Real latitude = lat_long_spline_ptr->evaluate (0, tau);
-      const Real longitude = lat_long_spline_ptr->evaluate (1, tau);
-      if (!domain_2d.is_out_of_bounds (latitude, longitude)) { return true; }
+      const Lat_Long& lat_long = get_lat_long (tau);
+      if (!domain_2d.is_out_of_bounds (lat_long)) { return true; }
    }
 
    return false;

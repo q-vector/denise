@@ -38,11 +38,13 @@ Tc_Track::get_name () const
    return name;
 }
 
-Best_Tracks::Best_Tracks ()
+Best_Tracks::Id_Set::Id_Set (const Best_Tracks::Id_Set& id_set)
+   : set<Dstring> (id_set),
+     best_tracks (id_set.best_tracks)
 {
 }
 
-Best_Tracks::Subset::Subset (const Best_Tracks& best_tracks,
+Best_Tracks::Id_Set::Id_Set (const Best_Tracks& best_tracks,
                              const bool fill)
    : best_tracks (best_tracks)
 {
@@ -55,6 +57,96 @@ Best_Tracks::Subset::Subset (const Best_Tracks& best_tracks,
          insert (id);
       }
    }
+}
+
+Best_Tracks::Id_Set
+Best_Tracks::Id_Set::get_id_set (const Integer year) const
+{
+
+   Best_Tracks::Id_Set id_set (best_tracks);
+
+   for (auto iterator = begin (); iterator != end (); iterator++)
+   {
+      const Dstring& id = *(iterator);
+      const Tc_Track& tc_track = best_tracks.at (id);
+      const Integer y = tc_track.get_start_time ().get_year ();
+      if (y == year) { id_set.insert (id); }
+   }
+
+   return id_set;
+
+}
+
+Best_Tracks::Id_Set
+Best_Tracks::Id_Set::get_id_set (const Dstring& name) const
+{
+
+   Best_Tracks::Id_Set id_set (best_tracks);
+
+   for (auto iterator = begin (); iterator != end (); iterator++)
+   {
+      const Dstring& id = *(iterator);
+      const Tc_Track& tc_track = best_tracks.at (id);
+      if (name == tc_track.get_name ()) { id_set.insert (id); }
+   }
+
+   return id_set;
+
+}
+
+Best_Tracks::Id_Set
+Best_Tracks::Id_Set::get_id_set (const Domain_2D& domain_2d,
+                                 const Real dt) const
+{
+
+   Best_Tracks::Id_Set id_set (best_tracks);
+
+   for (auto iterator = begin (); iterator != end (); iterator++)
+   {
+      const Dstring& id = *(iterator);
+      const Tc_Track& tc_track = best_tracks.at (id);
+      if (!tc_track.trespass (domain_2d, dt)) { continue;}
+      id_set.insert (id);
+   }
+
+   return id_set;
+
+}
+
+Best_Tracks::Id_Set
+Best_Tracks::Id_Set::get_id_set (const Integer day_of_year,
+                                 const Integer delta_days,
+                                 const Domain_2D& domain_2d,
+                                 const Real dt) const
+{
+
+   Best_Tracks::Id_Set id_set (best_tracks);
+   const Integer sjd = (day_of_year - delta_days);
+   const Integer ejd = (day_of_year + delta_days);
+
+   for (auto iterator = begin (); iterator != end (); iterator++)
+   {
+
+      const Dstring& id = *(iterator);
+      const Tc_Track& tc_track = best_tracks.at (id);
+
+      const Integer s = tc_track.get_start_time ().get_day_of_year ();
+      const Integer e = tc_track.get_end_time ().get_day_of_year ();
+
+      if ((sjd < s && ejd < s) || (sjd > e && ejd < e)) { continue; }
+      if (!tc_track.trespass (domain_2d, dt)) { continue;}
+
+      id_set.insert (id);
+
+   }
+
+   return id_set;
+
+}
+
+Best_Tracks::Best_Tracks ()
+   : id_set (*this, true)
+{
 }
 
 void
@@ -89,9 +181,10 @@ Best_Tracks::ingest_jma (const Dstring& file_path)
          const Real pressure = stof (is.substr (24, 4));
          const Real max_wind = stof (is.substr (33, 3));
 
-         tc_track.add (dtime.t, Lat_Long (latitude, longitude));
-         tc_track.add (dtime.t, "pressure", pressure);
-         tc_track.add (dtime.t, "max_wind", max_wind);
+         tc_track.add ("latitude", dtime.t, latitude);
+         tc_track.add ("longitude", dtime.t, longitude);
+         tc_track.add ("pressure", dtime.t, pressure);
+         tc_track.add ("max_wind", dtime.t, max_wind);
 
       }
 
@@ -101,72 +194,32 @@ Best_Tracks::ingest_jma (const Dstring& file_path)
 
 }
 
-set<Dstring>
-Best_Tracks::get_subset (const Integer year) const
+Best_Tracks::Id_Set
+Best_Tracks::get_id_set (const Integer year) const
 {
-
-   set<Dstring> subset;
-
-   for (auto iterator = begin (); iterator != end (); iterator++)
-   {
-      const Dstring& id = iterator->first;
-      const Tc_Track& tc_track = iterator->second;
-      const Integer y = tc_track.get_start_time ().get_year ();
-      if (y == year) { subset.insert (id); }
-   }
-
-   return subset;
-
+   return id_set.get_id_set (year);
 }
 
-set<Dstring>
-Best_Tracks::get_subset (const Domain_2D& domain_2d,
+Best_Tracks::Id_Set
+Best_Tracks::get_id_set (const Dstring& name) const
+{
+   return id_set.get_id_set (name);
+}
+
+Best_Tracks::Id_Set
+Best_Tracks::get_id_set (const Domain_2D& domain_2d,
                          const Real dt) const
 {
-
-   set<Dstring> subset;
-
-   for (auto iterator = begin (); iterator != end (); iterator++)
-   {
-      const Dstring& id = iterator->first;
-      const Tc_Track& tc_track = iterator->second;
-      if (!tc_track.trespass (domain_2d, dt)) { continue;}
-      subset.insert (id);
-   }
-
-   return subset;
-
+   return id_set.get_id_set (domain_2d, dt);
 }
 
-set<Dstring>
-Best_Tracks::get_subset (const Integer day_of_year,
+Best_Tracks::Id_Set
+Best_Tracks::get_id_set (const Integer day_of_year,
                          const Integer delta_days,
                          const Domain_2D& domain_2d,
                          const Real dt) const
 {
-
-   set<Dstring> subset;
-   const Integer sjd = (day_of_year - delta_days);
-   const Integer ejd = (day_of_year + delta_days);
-
-   for (auto iterator = begin (); iterator != end (); iterator++)
-   {
-
-      const Dstring& id = iterator->first;
-      const Tc_Track& tc_track = iterator->second;
-
-      const Integer s = tc_track.get_start_time ().get_day_of_year ();
-      const Integer e = tc_track.get_end_time ().get_day_of_year ();
-
-      if ((sjd < s && ejd < s) || (sjd > e && ejd < e)) { continue; }
-      if (!tc_track.trespass (domain_2d, dt)) { continue;}
-
-      subset.insert (id);
-
-   }
-
-   return subset;
-
+   return id_set.get_id_set (day_of_year, delta_days, domain_2d, dt);
 }
 
 Real
@@ -341,8 +394,8 @@ Advisory::cairo (const RefPtr<Context> cr,
                  const Real intensity) const
 {
 
-   const Real start_tau = track.begin ()->first;
-   const Real end_tau = track.rbegin ()->first;
+   const Real start_tau = track.get_start_tau ();
+   const Real end_tau = track.get_end_tau ();
    const Integer n = Integer (round (end_tau - start_tau)) + 1;
 
    Real font_size;

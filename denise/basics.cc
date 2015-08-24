@@ -1067,6 +1067,54 @@ Domain_2D::get_height () const
    return domain_y.get_span ();
 }
 
+const Real&
+Domain_2D::get_start_x () const
+{
+   return domain_x.start;
+}
+
+Real&
+Domain_2D::get_start_x ()
+{
+   return domain_x.start;
+}
+
+const Real&
+Domain_2D::get_end_x () const
+{
+   return domain_x.end;
+}
+
+Real&
+Domain_2D::get_end_x ()
+{
+   return domain_x.end;
+}
+
+const Real& 
+Domain_2D::get_start_y () const
+{
+   return domain_y.start;
+}
+
+Real&
+Domain_2D::get_start_y ()
+{
+   return domain_y.start;
+}
+
+const Real&
+Domain_2D::get_end_y () const
+{
+   return domain_y.end;
+}
+
+Real&
+Domain_2D::get_end_y ()
+{
+   return domain_y.end;
+}
+
 bool
 Domain_2D::is_out_of_bounds (const Real x,
                              const Real y) const

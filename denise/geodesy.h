@@ -1458,35 +1458,42 @@ namespace denise
 
    };
 
-   class Track : public map<Real, Lat_Long>
+   class Track_Data : public map<Real, Real>
+   {
+
+      private:
+
+         Scalar_Data_1D*
+         spline_ptr;
+
+      public:
+
+         Track_Data ();
+
+         ~Track_Data ();
+
+         void
+         okay (const bool cubic = false);
+
+         Real
+         get_datum (const Real tau,
+                    const bool forbid_extrapolate) const;
+
+         Domain_1D
+         get_domain_1d (const Real dt = 0.1) const;
+
+   };
+
+   class Track : public map<Dstring, Track_Data>
    {
 
       protected:
 
-         class Element_Data : public map<Real, Real>
-         {
-         };
-
-         class Element_Data_Map : public map<Dstring, Element_Data>
-         {
-
-            public:
-
-               void
-               add (const Real tau,
-                    const Dstring& element,
-                    const Real datum);
-
-         };
-
-         Vector_Data_1D*
-         lat_long_spline_ptr;
-
          Dtime
          dtime;
 
-         Element_Data_Map
-         element_data_map;
+         set<Dstring>
+         element_set;
 
       public:
 
@@ -1509,21 +1516,47 @@ namespace denise
          Dtime
          get_end_time () const;
 
+         Real
+         get_start_tau () const;
+
+         Real
+         get_end_tau () const;
+
+         const set<Dstring>&
+         get_element_set () const;
+
          void
          add (const Real tau,
               const Lat_Long& lat_long);
 
          void
-         add (const Real tau,
-              const Dstring& element,
+         add (const Dstring& element,
+              const Real tau,
               const Real datum);
 
-         virtual void
+         void
          okay ();
+
+         Lat_Long
+         get_lat_long (const Dtime& dtime,
+                       const bool forbid_extrapolate = true) const;
 
          Lat_Long
          get_lat_long (const Real tau,
                        const bool forbid_extrapolate = true) const;
+
+         Real
+         get_datum (const Dstring& element,
+                    const Dtime& dtime,
+                    const bool forbid_extrapolate = true) const;
+
+         Real
+         get_datum (const Dstring& element,
+                    const Real tau,
+                    const bool forbid_extrapolate = true) const;
+
+         Domain_2D
+         get_domain_2d (const Real dt = 0.1) const;
 
          bool
          trespass (const Domain_2D& domain_2d,

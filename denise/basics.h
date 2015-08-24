@@ -776,6 +776,30 @@ namespace denise
          
          Real
          get_height () const;
+
+         const Real&
+         get_start_x () const;
+         
+         Real&
+         get_start_x ();
+         
+         const Real&
+         get_end_x () const;
+         
+         Real&
+         get_end_x ();
+         
+         const Real&
+         get_start_y () const;
+         
+         Real&
+         get_start_y ();
+         
+         const Real&
+         get_end_y () const;
+         
+         Real&
+         get_end_y ();
          
          bool
          is_out_of_bounds (const Real x,

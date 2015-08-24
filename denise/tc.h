@@ -58,7 +58,7 @@ namespace denise
 
       public:
 
-         class Subset : public set<Dstring>
+         class Id_Set : public set<Dstring>
          {
 
             private:
@@ -68,44 +68,53 @@ namespace denise
 
             public:
 
-               Subset (const Best_Tracks& best_tracks,
-                       const bool fill);
+               Id_Set (const Id_Set& id_set);
 
-               Subset
-               get_subset (const Integer year) const;
+               Id_Set (const Best_Tracks& best_tracks,
+                       const bool fill = false);
 
-               Subset
-               get_subset (const Dstring& name) const;
+               Id_Set
+               get_id_set (const Integer year) const;
 
-               Subset
-               get_subset (const Domain_2D& domain_2d,
+               Id_Set
+               get_id_set (const Dstring& name) const;
+
+               Id_Set
+               get_id_set (const Domain_2D& domain_2d,
                            const Real dt = 0.1) const;
 
-               Subset
-               get_subset (const Integer day_of_year,
+               Id_Set
+               get_id_set (const Integer day_of_year,
                            const Integer delta_days,
                            const Domain_2D& domain_2d,
                            const Real dt = 0.1) const;
 
          };
 
+      private:
+
+         Id_Set
+         id_set;
+
+      public:
+
          Best_Tracks ();
 
          void
          ingest_jma (const Dstring& file_path);
 
-         set<Dstring>
-         get_subset (const Integer year) const;
+         Id_Set
+         get_id_set (const Integer year) const;
 
-         set<Dstring>
-         get_subset (const Dstring& name) const;
+         Id_Set
+         get_id_set (const Dstring& name) const;
 
-         set<Dstring>
-         get_subset (const Domain_2D& domain_2d,
+         Id_Set
+         get_id_set (const Domain_2D& domain_2d,
                      const Real dt = 0.1) const;
 
-         set<Dstring>
-         get_subset (const Integer day_of_year,
+         Id_Set
+         get_id_set (const Integer day_of_year,
                      const Integer delta_days,
                      const Domain_2D& domain_2d,
                      const Real dt = 0.1) const;
