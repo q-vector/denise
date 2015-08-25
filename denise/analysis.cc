@@ -476,7 +476,7 @@ Chunk::~Chunk ()
 }
 
 void
-Chunk::read (ifstream& file,
+Chunk::read (igzstream& file,
              const bool float_length)
 {
 
@@ -522,7 +522,7 @@ Chunk::read (ifstream& file,
 }
 
 void
-Chunk::write (ofstream& file,
+Chunk::write (ogzstream& file,
               const bool float_length) const
 {
 

@@ -166,11 +166,11 @@ namespace denise
                ~Data_3D ();
 
                void
-               read (ifstream& file,
+               read (igzstream& file,
                      const bool float_length = true);
 
                void
-               write (ofstream& file,
+               write (ogzstream& file,
                       const bool float_length = true) const;
 
                void

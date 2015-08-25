@@ -38,6 +38,7 @@
 #include <denise/exception.h>
 #include <denise/geometry.h>
 #include <denise/graphics.h>
+#include <denise/gzstream.h>
 #include <denise/transform.h>
 #include <denise/util.h>
 
@@ -354,11 +355,11 @@ namespace denise
          ~Chunk ();
 
          void
-         read (ifstream& file,
+         read (igzstream& file,
                const bool float_length = true);
 
          void
-         write (ofstream& file,
+         write (ogzstream& file,
                 const bool float_length = true) const;
 
          void

@@ -23,6 +23,7 @@
 // Group at UNC Chapel Hill http://www.cs.unc.edu/Research/compgeom/gzstream/
 
 #include <cstring>
+#include "exception.h"
 #include "gzstream.h"
 
 using namespace std;
@@ -190,6 +191,12 @@ gzstreambase::~gzstreambase ()
    buf.close ();
 }
 
+bool
+gzstreambase::is_open ()
+{
+   return buf.is_open ();
+}
+
 void
 gzstreambase::open (const string& file_path,
                     int open_mode)
@@ -225,6 +232,7 @@ igzstream::igzstream (const string& file_path,
    : gzstreambase (file_path, open_mode),
      std::istream (&buf)
 {
+   if (!is_open ()) { throw IO_Exception ("Can't open " + file_path); }
 }
 
 gzstreambuf*
@@ -238,6 +246,7 @@ igzstream::open (const string& file_path,
                  int open_mode)
 {
    gzstreambase::open (file_path, open_mode);
+   if (!is_open ()) { throw IO_Exception ("Can't open " + file_path); }
 }
 
 ogzstream::ogzstream ()
@@ -250,6 +259,7 @@ ogzstream::ogzstream (const string& file_path,
    : gzstreambase (file_path, mode),
      std::ostream (&buf)
 {
+   if (!is_open ()) { throw IO_Exception ("Can't open " + file_path); }
 }
 
 gzstreambuf*
@@ -262,6 +272,7 @@ void
 ogzstream::open (const string& file_path,
                  int open_mode)
 {
-  gzstreambase::open (file_path, open_mode);
+   gzstreambase::open (file_path, open_mode);
+   if (!is_open ()) { throw IO_Exception ("Can't open " + file_path); }
 }
 

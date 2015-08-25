@@ -53,7 +53,7 @@ namespace denise
                Block (const uint32_t n,
                       const bool set_zero = false);
 
-               Block (FILE* file,
+               Block (ifstream& file,
                       const uint32_t address);
 
                Block (const Block& block);
@@ -61,7 +61,7 @@ namespace denise
                ~Block ();
 
                static uint32_t
-               get_size (FILE* file,
+               get_size (ifstream& file,
                          const uint32_t address);
 
                bool
@@ -77,12 +77,12 @@ namespace denise
                           const uint8_t bit_number);
 
                static uint32_t
-               get_uint (FILE* file,
+               get_uint (ifstream& file,
                          const uint32_t address,
                          const uint32_t n);
 
                static int32_t
-               get_int (FILE* file,
+               get_int (ifstream& file,
                         const uint32_t address,
                         const uint32_t n);
 
@@ -190,7 +190,7 @@ namespace denise
 
                };
 
-               Pds (FILE* file,
+               Pds (ifstream& file,
                     const uint32_t address);
 
                uint8_t
@@ -227,7 +227,7 @@ namespace denise
 
             public:
 
-               Gds (FILE* file,
+               Gds (ifstream& file,
                     const uint32_t address);
 
                const Size_2D
@@ -240,7 +240,7 @@ namespace denise
 
             public:
 
-               Bms (FILE* file,
+               Bms (ifstream& file,
                     const uint32_t address);
 
          };
@@ -250,7 +250,7 @@ namespace denise
 
             public:
 
-               Bds (FILE* file,
+               Bds (ifstream& file,
                     const uint32_t address);
 
                float
@@ -305,7 +305,7 @@ namespace denise
                Gds*
                gds_ptr;
 
-               Header (FILE* file,
+               Header (ifstream& file,
                        uint32_t& offset);
 
                ~Header ();
@@ -336,15 +336,15 @@ namespace denise
          get_header_ptr_map () const;
 
          Gds*
-         get_gds_ptr (FILE* file,
+         get_gds_ptr (ifstream& file,
                       const Key& key) const;
 
          Bms*
-         get_bms_ptr (FILE* file,
+         get_bms_ptr (ifstream& file,
                       const Key& key) const;
 
          Bds*
-         get_bds_ptr (FILE* file,
+         get_bds_ptr (ifstream& file,
                       const Key& key) const;
 
          void
@@ -381,7 +381,7 @@ namespace denise
                Block (const uint32_t n,
                       const bool set_zero = false);
 
-               Block (FILE* file,
+               Block (ifstream& file,
                       uint32_t& address);
 
                Block (const Block& block);
@@ -389,7 +389,7 @@ namespace denise
                ~Block ();
 
                static uint32_t
-               get_size (FILE* file,
+               get_size (ifstream& file,
                          const uint32_t address);
 
                bool
@@ -405,12 +405,12 @@ namespace denise
                           const uint8_t bit_number);
 
                static uint64_t
-               get_uint (FILE* file,
+               get_uint (ifstream& file,
                          const uint32_t address,
                          const uint32_t n);
 
                static int64_t
-               get_int (FILE* file,
+               get_int (ifstream& file,
                         const uint32_t address,
                         const uint32_t n);
 
@@ -501,7 +501,7 @@ namespace denise
 
                };
 
-               Block_1 (FILE* file,
+               Block_1 (ifstream& file,
                         uint32_t& address);
 
                Dtime
@@ -517,7 +517,7 @@ namespace denise
 
             public:
 
-               Block_2 (FILE* file,
+               Block_2 (ifstream& file,
                         uint32_t& address);
 
          };
@@ -535,7 +535,7 @@ namespace denise
 
             public:
 
-               Block_3 (FILE* file,
+               Block_3 (ifstream& file,
                         uint32_t& address);
 
                uint32_t
@@ -600,7 +600,7 @@ namespace denise
 
             public:
 
-               Block_4 (FILE* file,
+               Block_4 (ifstream& file,
                         uint32_t& address);
 
                Grib2::Block_4::Parameter
@@ -622,7 +622,7 @@ namespace denise
 
             public:
 
-               Block_5 (FILE* file,
+               Block_5 (ifstream& file,
                         uint32_t& address);
 
                uint16_t
@@ -650,7 +650,7 @@ namespace denise
 
             public:
 
-               Block_6 (FILE* file,
+               Block_6 (ifstream& file,
                         uint32_t& address);
 
                uint8_t
@@ -666,7 +666,7 @@ namespace denise
 
             public:
 
-               Block_7 (FILE* file,
+               Block_7 (ifstream& file,
                         uint32_t& address);
 
          };

@@ -226,7 +226,7 @@ Nwp::Data_3D::~Data_3D ()
 }
 
 void
-Nwp::Data_3D::read (ifstream& file,
+Nwp::Data_3D::read (igzstream& file,
                     const bool float_length)
 {
 
@@ -242,7 +242,7 @@ Nwp::Data_3D::read (ifstream& file,
 }
 
 void
-Nwp::Data_3D::write (ofstream& file,
+Nwp::Data_3D::write (ogzstream& file,
                      const bool float_length) const
 {
    typedef vector<Met_Element>::const_iterator Iterator;

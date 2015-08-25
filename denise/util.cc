@@ -23,6 +23,7 @@
 #include <fstream>
 #include <map>
 #include <stdint.h>
+#include "gzstream.h"
 #include "util.h"
 
 using namespace std;
@@ -424,7 +425,7 @@ void
 Config_File::ingest (const Dstring& file_path)
 {
 
-   ifstream file (file_path.get_string ());
+   igzstream file (file_path);
 
    for (string is; getline (file, is); )
    {

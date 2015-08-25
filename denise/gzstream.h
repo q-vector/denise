@@ -104,6 +104,9 @@ namespace denise
 
          ~gzstreambase ();
 
+         bool
+         is_open ();
+
          void
          open (const string& file_path,
                int open_mode);

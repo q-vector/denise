@@ -26,6 +26,7 @@
 #include <denise/geodesy.h>
 #include <denise/geometry.h>
 #include <denise/graphics.h>
+#include <denise/gzstream.h>
 
 using namespace std;
 using namespace Cairo;
@@ -54,10 +55,7 @@ namespace denise
                swap_endian ();
 
                void
-               read (FILE* file);
-
-               void
-               read (ifstream& file);
+               read (igzstream& file);
 
          };
 
@@ -89,11 +87,8 @@ namespace denise
 
                ~Header ();
 
-               void
-               read (FILE* file);
-
-               void
-               read (ifstream& file);
+	       bool
+               read (igzstream& file);
 
                void
                reset (Polygon::Vertex* handle_ptr);
@@ -117,7 +112,7 @@ namespace denise
                get_int8_t (const Integer position);
 
                void
-               write (FILE* file,
+               write (ofstream& file,
                       const bool preserve_header);
 
                virtual int8_t
@@ -135,17 +130,12 @@ namespace denise
          get_header_ptr () const;
 
          void
-         add_polygon (FILE* file,
+         add_polygon (igzstream& file,
                       const Header& header,
                       const Real max_longitude);
 
          void
-         add_polygon (ifstream& file,
-                      const Header& header,
-                      const Real max_longitude);
-
-         void
-         write_simple_polygon (FILE* file,
+         write_simple_polygon (ofstream& file,
                                const Polygon::Vertex* vertex_ptr) const;
 
       public:
@@ -237,8 +227,8 @@ namespace denise
          get_color (const Lat_Long& lat_long,
                     const Real start_latitude,
                     const Real start_longitude,
-                    FILE* west_file,
-                    FILE* east_file);
+                    ifstream& west_file,
+                    ifstream& east_file);
 
          void
          fill_raster (const Dstring& blue_marble_path,
@@ -318,7 +308,7 @@ namespace denise
          const Dstring
          gtopo30_path;
 
-         FILE**
+         ifstream*
          file_array;
 
          Size_2D*
@@ -441,7 +431,7 @@ namespace denise
                     const uint16_t ni = 180,
                     const uint16_t nj = 360);
 
-         Land_Mask (const Dstring& land_mask_file_path);
+         Land_Mask (const Dstring& file_path);
 
          ~Land_Mask ();
 
@@ -460,7 +450,7 @@ namespace denise
                    const uint16_t nj);
 
          void
-         save (const Dstring& land_mask_file_path) const;
+         save (const Dstring& file_path) const;
 
          bool
          is_land (const Lat_Long& lat_long) const;
@@ -534,12 +524,12 @@ namespace denise
                 const uint16_t ni = 180,
                 const uint16_t nj = 360);
 
-         Fetch (const Dstring& fetch_file_path);
+         Fetch (const Dstring& file_path);
 
          ~Fetch ();
 
          void
-         save (const Dstring& fetch_file_path) const;
+         save (const Dstring& file_path) const;
 
          Real
          get_fetch (const Real& bearing,

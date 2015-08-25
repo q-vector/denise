@@ -20,6 +20,7 @@
 
 #include <fstream>
 #include "gis.h"
+#include "gzstream.h"
 
 using namespace std;
 using namespace denise;
@@ -32,22 +33,7 @@ Gshhs::Point::swap_endian ()
 }
 
 void
-Gshhs::Point::read (FILE* file)
-{
-
-   fread (this, sizeof (class Point), 1, file);
-
-#ifndef WORDS_BIGENDIAN
-   swap_endian ();
-#endif
-
-   if (x % 100000 == 0) { x += 1; }
-   if (y % 100000 == 0) { y += 1; }
-   
-}
-
-void
-Gshhs::Point::read (ifstream& file)
+Gshhs::Point::read (igzstream& file)
 {
 
    file.read ((char*)&x, sizeof (int32_t));
@@ -133,8 +119,8 @@ Gshhs::Header::~Header ()
    }
 }
 
-void
-Gshhs::Header::read (FILE* file)
+bool
+Gshhs::Header::read (igzstream& file)
 {
 
    const size_t old_size = 40;
@@ -143,43 +129,9 @@ Gshhs::Header::read (FILE* file)
 
    uint8_t* temp_buffer = new uint8_t[old_size];
 
-   if (fread (temp_buffer, old_size, 1, file) == 0)
-   {
-      throw IO_Exception ("EOF reached");
-   }
-
-   const bool old = (temp_buffer[10] == 0);
-   buffer_size = (old ? old_size : new_size);
-   buffer = new uint8_t[buffer_size];
-
-   memcpy (buffer, temp_buffer, old_size);
-   delete[] temp_buffer;
-
-   if (!old)
-   {
-      if (fread (buffer + old_size, size_difference, 1, file) == 0)
-      {
-         throw IO_Exception ("EOF reached");
-      }
-   }
-
-#ifndef WORDS_BIGENDIAN
-   swap_endian ();
-#endif
-   
-}
-
-void
-Gshhs::Header::read (ifstream& file)
-{
-
-   const size_t old_size = 40;
-   const size_t new_size = 44;
-   const size_t size_difference = new_size - old_size;
-
-   uint8_t* temp_buffer = new uint8_t[old_size];
 
    file.read ((char*)temp_buffer, old_size);
+   if ((file.rdstate () & igzstream::eofbit) != 0) { return false; }
 
    const bool old = (temp_buffer[10] == 0);
    buffer_size = (old ? old_size : new_size);
@@ -191,11 +143,14 @@ Gshhs::Header::read (ifstream& file)
    if (!old)
    {
       file.read ((char*)(buffer + old_size), size_difference);
+      if ((file.rdstate () & igzstream::eofbit) != 0) { return false; }
    }
 
 #ifndef WORDS_BIGENDIAN
    swap_endian ();
 #endif
+
+   return true;
    
 }
 
@@ -266,7 +221,7 @@ Gshhs::Header::get_int16_t (const Integer position)
 }
 
 void
-Gshhs::Header::write (FILE* file,
+Gshhs::Header::write (ofstream& file,
                       const bool preserve_header)
 {
 
@@ -280,7 +235,7 @@ Gshhs::Header::write (FILE* file,
 #ifndef WORDS_BIGENDIAN
       swap_endian ();
 #endif
-      fwrite (buffer, buffer_size, 1, file);
+      file.write ((char*)buffer, buffer_size);
    }
 
 }
@@ -315,7 +270,7 @@ Gshhs::get_header_ptr () const
 }
 
 void
-Gshhs::add_polygon (FILE* file,
+Gshhs::add_polygon (igzstream& file,
                     const Header& header,
                     const Real max_longitude)
 {
@@ -370,62 +325,7 @@ Gshhs::add_polygon (FILE* file,
 }
 
 void
-Gshhs::add_polygon (ifstream& file,
-                    const Header& header,
-                    const Real max_longitude)
-{
-
-   Point point;
-   Point_2D p;
-   Real last_y;
-
-   const uint32_t n = header.get_int32_t (4);
-   const bool antartica = (header.get_int32_t (20) * 1e-6 < -89);
-   const bool cross_greenwich = header.is_cross_greenwich ();
-   const bool western = header.is_western ();
-
-   if (antartica)
-   {
-//      add (Point_2D (-68.9257, 0), true);
-//      add (Point_2D (-89, 0), false);
-//      add (Point_2D (-89, 360), false);
-//      add (Point_2D (-68.9257, 360), false);
-   }
-
-   for (Integer i = 0; i < n; i++)
-   {
-
-      point.read (file);
-
-      p.x = point.y * 1e-6;
-      p.y = point.x * 1e-6;
-
-      if (cross_greenwich && p.y > max_longitude) { p.y -= 360; }
-      if ((antartica || western) && p.y > 180) { p.y -= 360; }
-
-      if (antartica && (fabs (last_y - p.y) > 350))
-      {
-         add (Point_2D (-78.5, -180), true);
-         add (Point_2D (-89.9, -180), false);
-         add (Point_2D (-89.9, 180), false);
-         add (Point_2D (-78.5, 180), false);
-      }
-
-      if (i < n - 1)
-      {
-         //const bool new_handle = (!antartica && (i == 0));
-         const bool new_handle = (i == 0);
-         add (p, new_handle);
-      }
-
-      last_y = p.y;
-
-   }
-
-}
-
-void
-Gshhs::write_simple_polygon (FILE* file,
+Gshhs::write_simple_polygon (ofstream& file,
                              const Polygon::Vertex* handle_ptr) const
 {
 
@@ -445,7 +345,7 @@ Gshhs::write_simple_polygon (FILE* file,
       point.swap_endian ();
 #endif
 
-      fwrite (&point, sizeof (class Point), 1, file);
+      file.write ((char*)&point, sizeof (class Point));
 
       current_ptr = current_ptr->next_ptr;
 
@@ -467,16 +367,18 @@ Gshhs::Gshhs (const Dstring& file_path,
    Header* header_ptr = get_header_ptr ();
    Header& header = *header_ptr;
 
-   FILE* file = get_input_file (file_path);
+   igzstream file (file_path);
+   if (!file.is_open ()) { throw IO_Exception ("Can't open " + file_path); }
 
    while (true)
    {
 
-      try { header.read (file); } catch (const IO_Exception& ioe) { break; }
+      if (!header.read (file)) { break; }
 
       const int32_t n = header.get_int32_t (4);
       const bool fail_level = (header.get_level () > level);
-      if (fail_level) { fseek (file, point_size * n, SEEK_CUR); continue; }
+      //if (fail_level) { fseek (file, point_size * n, SEEK_CUR); continue; }
+      if (fail_level) { file.seekg (point_size * n, ios::cur); continue; }
 
       add_polygon (file, header, max_longitude);
       max_longitude = 180;
@@ -484,7 +386,7 @@ Gshhs::Gshhs (const Dstring& file_path,
    }
 
    delete header_ptr;
-   fclose (file);
+   file.close ();
 
 }
 
@@ -499,7 +401,8 @@ Gshhs::save (const Dstring& file_path) const
    Header* header_ptr = get_header_ptr ();
    Header& header = *header_ptr;
 
-   FILE* file = get_output_file (file_path);
+   ofstream file (file_path);
+   if (!file.is_open ()) { throw IO_Exception ("Can't open " + file_path); }
 
    const Polygon::Vertex* first_handle_ptr = this->get_first_handle_ptr ();
    Polygon::Vertex* current_handle_ptr = (Polygon::Vertex*)(first_handle_ptr);
@@ -520,7 +423,7 @@ Gshhs::save (const Dstring& file_path) const
    while (current_handle_ptr != first_handle_ptr);
    
    delete header_ptr;
-   fclose (file);
+   file.close ();
 
 }
 
@@ -607,8 +510,8 @@ Color
 Blue_Marble::get_color (const Lat_Long& lat_long,
                         const Real start_latitude,
                         const Real start_longitude,
-                        FILE* west_file,
-                        FILE* east_file)
+                        ifstream& west_file,
+                        ifstream& east_file)
 {
 
    uint8_t raw_datum[3];
@@ -622,14 +525,14 @@ Blue_Marble::get_color (const Lat_Long& lat_long,
    const Integer gj = Integer (rint ((latitude - start_latitude) * 120));
 
    const bool is_east = gi >= 21600;
-   FILE* file = (is_east ? east_file : west_file);
+   ifstream& file = (is_east ? east_file : west_file);
 
    const Integer tile_i = gi - (is_east ? 21600 : 0);
    const Integer tile_j = 21600 - gj - 1;
 
    const long position = (tile_j * 21600 + tile_i) * pixel_size;
-   fseek (file, position, SEEK_SET);
-   fread (raw_datum, pixel_size, 1, file);
+   file.seekg (position);
+   file.read ((char*)raw_datum, pixel_size);
 
    return Color (Real (raw_datum[0]) / 255,
                  Real (raw_datum[1]) / 255,
@@ -650,8 +553,10 @@ Blue_Marble::fill_raster (const Dstring& blue_marble_path,
    const Dstring& east_file_path = blue_marble_path + "/blue_marble_east.bin";
    const Dstring& west_file_path = blue_marble_path + "/blue_marble_west.bin";
 
-   FILE* east_file = get_input_file (east_file_path);
-   FILE* west_file = get_input_file (west_file_path);
+   ifstream east_file (east_file_path);
+   ifstream west_file (west_file_path);
+   if (!east_file.is_open ()) { throw IO_Exception ("Can't open " + east_file_path); }
+   if (!west_file.is_open ()) { throw IO_Exception ("Can't open " + west_file_path); }
 
    for (Integer i = 0; i < size_2d.i; i++)
    {
@@ -673,8 +578,8 @@ Blue_Marble::fill_raster (const Dstring& blue_marble_path,
 
    }
 
-   fclose (west_file);
-   fclose (east_file);
+   west_file.close ();
+   west_file.close ();
 
 }
 
@@ -903,14 +808,9 @@ Real*
 Gtopo30::get_data (const Transform_2D& transform)
 {
 
-   file_array = new FILE*[Gtopo30::NUMBER_OF_TILES];
+   file_array = new ifstream[Gtopo30::NUMBER_OF_TILES];
    tile_size_array = new Size_2D[Gtopo30::NUMBER_OF_TILES];
    tile_index_array = new Index_2D[Gtopo30::NUMBER_OF_TILES];
-
-   for (Integer tile = 0; tile < Gtopo30::NUMBER_OF_TILES; tile++)
-   {  
-      file_array[tile] = NULL;
-   }   
 
    Lat_Long lat_long;
    Real& latitude = lat_long.latitude;
@@ -1032,8 +932,8 @@ Gtopo30::~Gtopo30 ()
 
    for (Integer tile = 0; tile < Gtopo30::NUMBER_OF_TILES; tile++)
    {
-      FILE*& file = file_array[tile];
-      if (file != NULL) { fclose (file); }
+      ifstream& file = file_array[tile];
+      if (!file.is_open ()) { file.close (); }
    }
 
    delete[] file_array;
@@ -1055,16 +955,17 @@ Gtopo30::get_datum (const Lat_Long& lat_long) const
    Integer gj = Integer (rint ((latitude - start_latitude) / delta));
 
    Gtopo30::Tile tile = get_tile (gi, gj);
-   FILE*& file = file_array[tile];
+   ifstream& file = file_array[tile];
    Size_2D& tile_size = tile_size_array[tile];
    Index_2D& tile_index = tile_index_array[tile];
 
-   if (file == NULL)
+   if (!file.is_open ())
    { 
 
       Dstring tile_string = get_tile_string (tile);
       Dstring file_path = gtopo30_path + "/" + tile_string + ".DEM";
-      file = get_input_file (file_path);
+      file.open (file_path);
+      if (!file.is_open ()) { throw IO_Exception ("Can't open " + file_path); }
 
       tile_size = get_tile_size (tile);
       tile_index = get_tile_index (tile);
@@ -1075,8 +976,8 @@ Gtopo30::get_datum (const Lat_Long& lat_long) const
    const Integer tile_j = tile_size.j - (gj - tile_index.j) - 1;
 
    long position = (tile_j * tile_size.i + tile_i) * sizeof (int16_t);
-   fseek (file, position, SEEK_SET);
-   fread (&datum, sizeof (int16_t), 1, file);
+   file.seekg (position);
+   file.read ((char*)&datum, sizeof (int16_t));
 #ifndef WORDS_BIGENDIAN
    swap_endian (&datum, sizeof (int16_t));
 #endif
@@ -1197,17 +1098,18 @@ Land_Mask::Land_Mask (const Gtopo30& gtopo30,
 
 }
  
-Land_Mask::Land_Mask (const Dstring& land_mask_file_path)
+Land_Mask::Land_Mask (const Dstring& file_path)
 {
 
 
-   FILE* file = get_input_file (land_mask_file_path);
+   igzstream file (file_path);
+   if (!file.is_open ()) { throw IO_Exception ("Can't open " + file_path); }
 
-   fread (&n, 1, sizeof (uint16_t), file);
-   fread (&start_i, 1, sizeof (int16_t), file);
-   fread (&start_j, 1, sizeof (int16_t), file);
-   fread (&ni, 1, sizeof (uint16_t), file);
-   fread (&nj, 1, sizeof (uint16_t), file);
+   file.read ((char*)&n, sizeof (uint16_t));
+   file.read ((char*)&start_i, sizeof (int16_t));
+   file.read ((char*)&start_j, sizeof (int16_t));
+   file.read ((char*)&ni, sizeof (uint16_t));
+   file.read ((char*)&nj, sizeof (uint16_t));
 
 #ifndef WORDS_BIGENDIAN
    denise::swap_endian (&n, sizeof (uint16_t));
@@ -1221,9 +1123,9 @@ Land_Mask::Land_Mask (const Dstring& land_mask_file_path)
    const uint32_t buffer_size = ni * nj * degree_box_size;
    buffer = new uint8_t[buffer_size];
 
-   fread (buffer, buffer_size, sizeof (uint8_t), file);
+   file.read ((char*)buffer, buffer_size * sizeof (uint8_t));
 
-   fclose (file);
+   file.close ();
 
 }
 
@@ -1351,10 +1253,11 @@ Land_Mask::populate (const Gtopo30& gtopo30,
 }
 
 void
-Land_Mask::save (const Dstring& land_mask_file_path) const
+Land_Mask::save (const Dstring& file_path) const
 {
 
-   FILE* file = get_output_file (land_mask_file_path);
+   ofstream file (file_path);
+   if (!file.is_open ()) { throw IO_Exception ("Can't open " + file_path); }
 
    const uint32_t box_size = get_degree_box_size ();
    const uint32_t buffer_size = ni * nj * box_size;
@@ -1373,14 +1276,14 @@ Land_Mask::save (const Dstring& land_mask_file_path) const
    denise::swap_endian (&nj_copy, sizeof (uint16_t));
 #endif
 
-   fwrite (&n_copy, 1, sizeof (uint16_t), file);
-   fwrite (&start_i_copy, 1, sizeof (uint16_t), file);
-   fwrite (&start_j_copy, 1, sizeof (uint16_t), file);
-   fwrite (&ni_copy, 1, sizeof (uint16_t), file);
-   fwrite (&nj_copy, 1, sizeof (uint16_t), file);
-   fwrite (buffer, buffer_size, sizeof (uint8_t), file);
+   file.write ((char*)&n_copy, sizeof (uint16_t));
+   file.write ((char*)&start_i_copy, sizeof (uint16_t));
+   file.write ((char*)&start_j_copy, sizeof (uint16_t));
+   file.write ((char*)&ni_copy, sizeof (uint16_t));
+   file.write ((char*)&nj_copy, sizeof (uint16_t));
+   file.write ((char*)buffer, buffer_size * sizeof (uint8_t));
 
-   fclose (file);
+   file.close ();
 
 }
 
@@ -1576,25 +1479,18 @@ Fetch::Fetch (const Land_Mask& land_mask,
    populate (land_mask);
 }
 
-Fetch::Fetch (const Dstring& fetch_file_path)
+Fetch::Fetch (const Dstring& file_path)
 {
 
    int i = 0;
-   //FILE* file = get_input_file (fetch_file_path);
-   gzFile file = get_gzfile (fetch_file_path);
+   igzstream file (file_path);
 
-   //fread (&nb, 1, sizeof (uint16_t), file);
-   //fread (&n, 1, sizeof (uint16_t), file);
-   //fread (&start_i, 1, sizeof (int16_t), file);
-   //fread (&start_j, 1, sizeof (int16_t), file);
-   //fread (&ni, 1, sizeof (uint16_t), file);
-   //fread (&nj, 1, sizeof (uint16_t), file);
-   gzread (file, &nb, sizeof (uint16_t));
-   gzread (file, &n, sizeof (uint16_t));
-   gzread (file, &start_i, sizeof (int16_t));
-   gzread (file, &start_j, sizeof (int16_t));
-   gzread (file, &ni, sizeof (uint16_t));
-   gzread (file, &nj, sizeof (uint16_t));
+   file.read ((char*)&nb, sizeof (uint16_t));
+   file.read ((char*)&n, sizeof (uint16_t));
+   file.read ((char*)&start_i, sizeof (int16_t));
+   file.read ((char*)&start_j, sizeof (int16_t));
+   file.read ((char*)&ni, sizeof (uint16_t));
+   file.read ((char*)&nj, sizeof (uint16_t));
 
 #ifndef WORDS_BIGENDIAN
    denise::swap_endian (&nb, sizeof (uint16_t));
@@ -1613,11 +1509,10 @@ Fetch::Fetch (const Dstring& fetch_file_path)
 
    buffer = new uint8_t[buffer_size];
    //fread (buffer, buffer_size, sizeof (uint8_t), file);
-   r = gzread (file, buffer, buffer_size);
+   file.read ((char*)buffer, buffer_size);
 
 
-   //fclose (file);
-   gzclose (file);
+   file.close ();
 
 }
 
@@ -1627,14 +1522,15 @@ Fetch::~Fetch ()
 }
 
 void
-Fetch::save (const Dstring& fetch_file_path) const
+Fetch::save (const Dstring& file_path) const
 {
 
    const uint16_t nii = ni * n;
    const uint16_t njj = nj * n;
    const uint32_t buffer_size = nb * nii * njj;
 
-   FILE* file = get_output_file (fetch_file_path);
+   ofstream file (file_path);
+   if (!file.is_open ()) { throw IO_Exception ("Can't open " + file_path); }
 
    uint16_t nb_copy = nb;
    uint16_t n_copy = n;
@@ -1652,15 +1548,15 @@ Fetch::save (const Dstring& fetch_file_path) const
    denise::swap_endian (&nj_copy, sizeof (uint16_t));
 #endif
 
-   fwrite (&nb_copy, 1, sizeof (uint16_t), file);
-   fwrite (&n_copy, 1, sizeof (uint16_t), file);
-   fwrite (&start_i_copy, 1, sizeof (int16_t), file);
-   fwrite (&start_j_copy, 1, sizeof (int16_t), file);
-   fwrite (&ni_copy, 1, sizeof (uint16_t), file);
-   fwrite (&nj_copy, 1, sizeof (uint16_t), file);
-   fwrite (buffer, buffer_size, sizeof (uint8_t), file);
+   file.write ((char*)&nb_copy, sizeof (uint16_t));
+   file.write ((char*)&n_copy, sizeof (uint16_t));
+   file.write ((char*)&start_i_copy, sizeof (int16_t));
+   file.write ((char*)&start_j_copy, sizeof (int16_t));
+   file.write ((char*)&ni_copy, sizeof (uint16_t));
+   file.write ((char*)&nj_copy, sizeof (uint16_t));
+   file.write ((char*)buffer, buffer_size * sizeof (uint8_t));
 
-   fclose (file);
+   file.close ();
 
 }
 
@@ -1772,7 +1668,8 @@ Nsd_Wmo::Nsd_Wmo (const Dstring& file_path)
    string il;
    Dstring input_line;
    
-   ifstream file (file_path.get_string ());
+   igzstream file (file_path);
+   if (!file.is_open ()) { throw IO_Exception ("Can't open " + file_path); }
 
    while (file)
    {
@@ -1806,7 +1703,8 @@ Nsd_Wmo::get_nsd (const Integer wmo_id) const
 Nsd_Icao::Nsd_Icao (const Dstring& file_path)
 {
 
-   ifstream file (file_path.get_string ().c_str ());
+   igzstream file (file_path);
+   if (!file.is_open ()) { throw IO_Exception ("Can't open " + file_path); }
 
    string il;
 
@@ -1853,8 +1751,9 @@ Outl::read (const Dstring& file_path)
    int32_t raw_latitude, raw_longitude;
    int32_t pos, number_of_lines, number_of_points;
 
-   FILE* file = get_input_file (file_path);
-   fread (&number_of_lines, sizeof (int32_t), 1, file);
+   igzstream file (file_path);
+   if (!file.is_open ()) { throw IO_Exception ("Can't open " + file_path); }
+   file.read ((char*)&number_of_lines, sizeof (int32_t));
 
 #ifndef WORDS_BIGENDIAN
    denise::swap_endian (&number_of_lines, sizeof (int32_t));
@@ -1864,10 +1763,10 @@ Outl::read (const Dstring& file_path)
    {
 
       header_pos = (i * 6 + 5) * sizeof (int32_t);
-      fseek (file, header_pos, SEEK_SET);
+      file.seekg (header_pos);
 
-      fread (&pos, sizeof (int32_t), 1, file);
-      fread (&number_of_points, sizeof (int32_t), 1, file);
+      file.read ((char*)&pos, sizeof (int32_t));
+      file.read ((char*)&number_of_points, sizeof (int32_t));
 
 #ifndef WORDS_BIGENDIAN
       denise::swap_endian (&pos, sizeof (int32_t));
@@ -1877,13 +1776,13 @@ Outl::read (const Dstring& file_path)
       pos *= sizeof (int32_t);
       number_of_points /= 2;
 
-      fseek (file, pos, SEEK_SET);
+      file.seekg (pos);
 
       for (Integer j = 0; j < number_of_points; j++)
       {
 
-         fread (&raw_latitude, sizeof (int32_t), 1, file);
-         fread (&raw_longitude, sizeof (int32_t), 1, file);
+         file.read ((char*)&raw_latitude, sizeof (int32_t));
+         file.read ((char*)&raw_longitude, sizeof (int32_t));
 
 #ifndef WORDS_BIGENDIAN
          denise::swap_endian (&raw_latitude, sizeof (int32_t));
@@ -1899,7 +1798,7 @@ Outl::read (const Dstring& file_path)
 
    }
 
-   fclose (file);
+   file.close ();
 
 }
 
@@ -1919,8 +1818,8 @@ void
 Kidney::read (const Dstring& file_path)
 {
 
-   ifstream file (file_path.get_string ());
-   string is;
+   igzstream file (file_path);
+   if (!file.is_open ()) { throw IO_Exception ("Can't open " + file_path); }
 
    for (string is; std::getline (file, is); )
    {

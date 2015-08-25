@@ -37,15 +37,15 @@ Grib::Block::Block (const uint32_t n,
    if (set_zero) { for (uint16_t i = 0; i < n; i++) { buffer[i] = 0; } }
 }
 
-Grib::Block::Block (FILE* file,
+Grib::Block::Block (ifstream& file,
                     const uint32_t address)
 {
 
    n = get_size (file, address);
 
    buffer = new uint8_t[n];
-   fseek (file, address, SEEK_SET);
-   fread (buffer, n, 1, file);
+   file.seekg (address);
+   file.read ((char*)buffer, n);
 
 }
 
@@ -62,7 +62,7 @@ Grib::Block::~Block ()
 }
 
 uint32_t
-Grib::Block::get_size (FILE* file,
+Grib::Block::get_size (ifstream& file,
                        const uint32_t address)
 {
    return get_uint (file, address, 3);
@@ -135,24 +135,24 @@ Grib::Block::unset_bit (const uint32_t position,
 }
 
 uint32_t
-Grib::Block::get_uint (FILE* file,
+Grib::Block::get_uint (ifstream& file,
                        const uint32_t address,
                        const uint32_t n)
 {
    Block block (n);
-   fseek (file, address, SEEK_SET);
-   fread (block.buffer, n, 1, file);
+   file.seekg (address);
+   file.read ((char*)block.buffer, n);
    return block.get_uint (0, n);
 }
 
 int32_t
-Grib::Block::get_int (FILE* file,
+Grib::Block::get_int (ifstream& file,
                       const uint32_t address,
                       const uint32_t n)
 {
    Block block (n);
-   fseek (file, address, SEEK_SET);
-   fread (block.buffer, n, 1, file);
+   file.seekg (address);
+   file.read ((char*)block.buffer, n);
    return block.get_int (0, n);
 }
 
@@ -380,7 +380,7 @@ Grib::Pds::Forecast_Time::get_p2 () const
    return get_uint (2, 1);
 }
 
-Grib::Pds::Pds (FILE* file,
+Grib::Pds::Pds (ifstream& file,
                 const uint32_t address)
    : Block (file, address)
 {
@@ -451,7 +451,7 @@ Grib::Pds::get_D () const
    return get_int (26, 2);
 }
 
-Grib::Gds::Gds (FILE* file,
+Grib::Gds::Gds (ifstream& file,
                 const uint32_t address)
    : Block (file, address)
 {
@@ -472,13 +472,13 @@ Grib::Gds::get_size_2d () const
 
 }
 
-Grib::Bms::Bms (FILE* file,
+Grib::Bms::Bms (ifstream& file,
                 const uint32_t address)
    : Block (file, address)
 {
 }
 
-Grib::Bds::Bds (FILE* file,
+Grib::Bds::Bds (ifstream& file,
                 const uint32_t address)
    : Block (file, address)
 {
@@ -530,7 +530,7 @@ Grib::Key::operator << (ostream& out)
    }
 }
 
-Grib::Header::Header (FILE* file,
+Grib::Header::Header (ifstream& file,
                       uint32_t& address)
    : address (address)
 {
@@ -579,7 +579,7 @@ Grib::Grib (const Dstring& file_path)
    : file_path (file_path)
 {
 
-   FILE* file = get_input_file (file_path);
+   ifstream file (file_path);
    uint32_t file_size = get_file_size (file_path);
 
    char buffer[5];
@@ -590,8 +590,8 @@ Grib::Grib (const Dstring& file_path)
 
       if ((offset + 4) >= file_size) { break; }
 
-      fseek (file, offset, SEEK_SET);
-      fread (buffer, 4, 1, file);
+      file.seekg (offset);
+      file.read ((char*)buffer, 4);
 
       if (strcmp ("GRIB", buffer) == 0)
       {
@@ -606,7 +606,7 @@ Grib::Grib (const Dstring& file_path)
 
    }
 
-   fclose (file);
+   file.close ();
 
 }
 
@@ -631,7 +631,7 @@ Grib::get_header_ptr_map () const
 }
 
 Grib::Gds*
-Grib::get_gds_ptr (FILE* file,
+Grib::get_gds_ptr (ifstream& file,
                    const Key& key) const
 {
    const Header& header = *(header_ptr_map.find (key)->second);
@@ -640,7 +640,7 @@ Grib::get_gds_ptr (FILE* file,
 }
 
 Grib::Bms*
-Grib::get_bms_ptr (FILE* file,
+Grib::get_bms_ptr (ifstream& file,
                    const Key& key) const
 {
    const Header& header = *(header_ptr_map.find (key)->second);
@@ -649,7 +649,7 @@ Grib::get_bms_ptr (FILE* file,
 }
 
 Grib::Bds*
-Grib::get_bds_ptr (FILE* file,
+Grib::get_bds_ptr (ifstream& file,
                    const Key& key) const
 {
    const Header& header = *(header_ptr_map.find (key)->second);
@@ -663,7 +663,7 @@ Grib::fill_data (Geodetic_Vector_Data_3D& gvd_3d,
                  const Key& key) const
 {
 
-   FILE* file = get_input_file (file_path);
+   ifstream file (file_path);
 
    typedef map<Grib::Key, Grib::Header*>::const_iterator Iterator;
    Iterator iterator = header_ptr_map.find (key);
@@ -771,7 +771,7 @@ Grib::fill_data (Geodetic_Vector_Data_3D& gvd_3d,
 
    }
 
-   fclose (file);
+   file.close ();
 
 }
 
@@ -781,7 +781,7 @@ Grib::fill_data (Geodetic_Vector_Data_2D& gvd_2d,
                  const Key& key) const
 {
 
-   FILE* file = get_input_file (file_path);
+   ifstream file (file_path);
 
    typedef map<Grib::Key, Grib::Header*>::const_iterator Iterator;
    Iterator iterator = header_ptr_map.find (key);
@@ -880,7 +880,7 @@ Grib::fill_data (Geodetic_Vector_Data_2D& gvd_2d,
 
    }
 
-   fclose (file);
+   file.close ();
 
 } 
 
@@ -896,15 +896,15 @@ Grib2::Block::Block (const uint32_t n,
    if (set_zero) { for (uint16_t i = 0; i < n; i++) { buffer[i] = 0; } }
 }
 
-Grib2::Block::Block (FILE* file,
+Grib2::Block::Block (ifstream& file,
                      uint32_t& address)
 {
 
    n = get_size (file, address);
 
    buffer = new uint8_t[n];
-   fseek (file, address, SEEK_SET);
-   fread (buffer, n, 1, file);
+   file.seekg (address);
+   file.read ((char*)buffer, n);
 
    address += n;
 
@@ -923,7 +923,7 @@ Grib2::Block::~Block ()
 }
 
 uint32_t
-Grib2::Block::get_size (FILE* file,
+Grib2::Block::get_size (ifstream& file,
                         const uint32_t address)
 {
    return get_uint (file, address, 4);
@@ -996,24 +996,24 @@ Grib2::Block::unset_bit (const uint32_t position,
 }
 
 uint64_t
-Grib2::Block::get_uint (FILE* file,
+Grib2::Block::get_uint (ifstream& file,
                         const uint32_t address,
                         const uint32_t n)
 {
    Block block (n);
-   fseek (file, address, SEEK_SET);
-   fread (block.buffer, n, 1, file);
+   file.seekg (address);
+   file.read ((char*)block.buffer, n);
    return block.get_uint (0, n);
 }
 
 int64_t
-Grib2::Block::get_int (FILE* file,
+Grib2::Block::get_int (ifstream& file,
                        const uint32_t address,
                        const uint32_t n)
 {
    Block block (n);
-   fseek (file, address, SEEK_SET);
-   fread (block.buffer, n, 1, file);
+   file.seekg (address);
+   file.read ((char*)block.buffer, n);
    return block.get_int (0, n);
 }
 
@@ -1224,7 +1224,7 @@ Grib2::Block_1::Base_Time::Base_Time (const Block_1& block_1)
 {
 }
 
-Grib2::Block_1::Block_1 (FILE* file,
+Grib2::Block_1::Block_1 (ifstream& file,
                          uint32_t& address)
    : Block (file, address)
 {
@@ -1252,7 +1252,7 @@ Grib2::Block_1::get_base_time () const
    return Grib2::Block_1::Base_Time (*this);
 }
 
-Grib2::Block_2::Block_2 (FILE* file,
+Grib2::Block_2::Block_2 (ifstream& file,
                          uint32_t& address)
    : Block (file, address)
 {
@@ -1270,7 +1270,7 @@ Grib2::Block_3::get_scanning_mode () const
    return buffer[71];
 }
 
-Grib2::Block_3::Block_3 (FILE* file,
+Grib2::Block_3::Block_3 (ifstream& file,
                          uint32_t& address)
    : Block (file, address)
 {
@@ -1378,7 +1378,7 @@ Grib2::Block_4::get_template_number () const
    return get_uint (7, 2);
 }
 
-Grib2::Block_4::Block_4 (FILE* file,
+Grib2::Block_4::Block_4 (ifstream& file,
                          uint32_t& address)
    : Block (file, address)
 {
@@ -1434,7 +1434,7 @@ Grib2::Block_4::parameter_is_percentage () const
 
 }
 
-Grib2::Block_5::Block_5 (FILE* file,
+Grib2::Block_5::Block_5 (ifstream& file,
                          uint32_t& address)
    : Block (file, address)
 {
@@ -1551,7 +1551,7 @@ Grib2::Block_5::get_bits_per_datum () const
 
 }
 
-Grib2::Block_6::Block_6 (FILE* file,
+Grib2::Block_6::Block_6 (ifstream& file,
                          uint32_t& address)
    : Block (file, address)
 {
@@ -1569,7 +1569,7 @@ Grib2::Block_6::bitmap_present () const
    return (get_bitmap_indicator () == 0);
 }
 
-Grib2::Block_7::Block_7 (FILE* file,
+Grib2::Block_7::Block_7 (ifstream& file,
                          uint32_t& address)
    : Block (file, address)
 {
@@ -1741,7 +1741,7 @@ Grib2::Grib2 (const Dstring& file_path)
    : file_path (file_path)
 {
 
-   FILE* file = get_input_file (file_path);
+   ifstream file (file_path);
    uint32_t file_size = get_file_size (file_path);
 
    char buffer[5];
@@ -1754,8 +1754,8 @@ Integer count = 0;
       const uint32_t address = offset;
       if ((offset + 4) >= file_size) { break; }
 
-      fseek (file, offset, SEEK_SET);
-      fread (buffer, 4, 1, file);
+      file.seekg (offset);
+      file.read ((char*)buffer, 4);
 
       const bool grib_head = (strcmp ("GRIB", buffer) == 0);
 
@@ -1851,7 +1851,7 @@ const Dstring b3 (bit_3 ? "yes" : "no");
 
    }
 
-   fclose (file);
+   file.close ();
 
    const Header& header = *(header_ptr_map.begin ()->second);
    const Integer n = header.block_5.get_number_of_points ();
@@ -1896,10 +1896,10 @@ Grib2::fill_data (Geodetic_Vector_Data_3D& gvd_3d,
    const Block_3& block_3 = header.block_3;
    const Block_5& block_5 = header.block_5;
 
-   FILE* file = get_input_file (file_path);
+   ifstream file (file_path);
    uint32_t block_7_address = header.block_7_address;
    const Block_7 block_7 (file, block_7_address);
-   fclose (file);
+   file.close ();
 
    const uint32_t n = block_5.get_number_of_points ();
 //   Data& data = *data_ptr;
@@ -1989,10 +1989,10 @@ Grib2::fill_data (Geodetic_Vector_Data_2D& gvd_2d,
    const Block_4& block_4 = header.block_4;
    const Block_5& block_5 = header.block_5;
 
-   FILE* file = get_input_file (file_path);
+   ifstream file (file_path);
    uint32_t block_7_address = header.block_7_address;
    const Block_7 block_7 (file, block_7_address);
-   fclose (file);
+   file.close ();
 
    const uint32_t n = block_5.get_number_of_points ();
 //   Data& data = *data_ptr;
