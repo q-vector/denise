@@ -51,6 +51,7 @@ namespace andrea
    };
 
    class Andrea : public Assignable,
+                  public Best_Tracks_Package,
                   public Geodesy_Package,
                   public Geodetic_Mesh_Package,
                   public Geodetic_Transform_Package,
