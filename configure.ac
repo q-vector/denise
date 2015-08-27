@@ -1,6 +1,7 @@
 dnl Process this file with autoconf to produce a configure script.
 AC_INIT([denise], [0.1.0])
-AM_INIT_AUTOMAKE([denise], [0.1.0])
+AC_CONFIG_SRCDIR([denise])
+AM_INIT_AUTOMAKE
 
 dnl Check for options.
 AC_ARG_ENABLE(fft, AC_HELP_STRING([--enable-fft],
@@ -95,5 +96,5 @@ AC_SUBST(DENISE_REQUIRES)
 AC_SUBST(DENISE_CFLAGS)
 AC_SUBST(DENISE_LIBS)
 
-AC_CONFIG_FILES([denise.pc Makefile denise/Makefile src/Makefile])
+AC_CONFIG_FILES([denise.pc Makefile denise/Makefile])
 AC_OUTPUT

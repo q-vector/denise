@@ -1,4 +1,4 @@
-INCLUDES = -I$(top_srcdir) -I$(top_builddir)
+AM_CPPFLAGS = -I$(top_srcdir) -I$(top_builddir)
 lib_LTLIBRARIES	= libdenise.la
 
 pkginclude_HEADERS = analysis.h astronomy.h basics.h aviation.h \

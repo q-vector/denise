@@ -3952,6 +3952,23 @@ Track::add (const Dstring& element,
 }
 
 void
+Track::add (const Dtime& dtime,
+            const Lat_Long& lat_long)
+{
+   const Real tau = (dtime.t - this->dtime.t);
+   return add (tau, lat_long);
+}
+
+void
+Track::add (const Dstring& element,
+            const Dtime& dtime,
+            const Real datum)
+{
+   const Real tau = (dtime.t - this->dtime.t);
+   return add (element, tau, datum);
+}
+
+void
 Track::okay ()
 {
    for (auto iterator = element_set.begin ();

@@ -1535,6 +1535,15 @@ namespace denise
               const Real datum);
 
          void
+         add (const Dtime& dtime,
+              const Lat_Long& lat_long);
+
+         void
+         add (const Dstring& element,
+              const Dtime& dtime,
+              const Real datum);
+
+         void
          okay ();
 
          Lat_Long
