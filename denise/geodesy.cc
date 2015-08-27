@@ -3833,6 +3833,22 @@ Track_Data::okay (const bool cubic)
 
 }
 
+set<Real>
+Track_Data::get_tau_set () const
+{
+
+   set<Real> tau_set;
+
+   for (auto iterator = begin (); iterator != end (); iterator++)
+   {
+      const Real tau = iterator->first;
+      tau_set.insert (tau);
+   }   
+
+   return tau_set;
+
+}
+
 Real
 Track_Data::get_datum (const Real tau,
                        const bool forbid_extrapolate) const
@@ -3889,6 +3905,12 @@ Track::set_dtime (const Dtime& dtime)
    this->dtime = dtime;
 }
 
+const Dtime&
+Track::get_dtime () const
+{
+   return dtime;
+}
+
 Dtime
 Track::get_dtime (const Real tau) const
 {
@@ -3925,6 +3947,27 @@ const set<Dstring>&
 Track::get_element_set () const
 {
    return element_set;
+}
+
+set<Real>
+Track::get_tau_set (const Dstring& element) const
+{
+   return at (element).get_tau_set ();
+}
+
+set<Dtime>
+Track::get_dtime_set (const Dstring& element) const
+{
+   set<Dtime> dtime_set;
+   const set<Real>& tau_set = at (element).get_tau_set ();
+   for (auto iterator = tau_set.begin ();
+        iterator != tau_set.end (); iterator++)
+   {
+      const Real tau = *(iterator);
+      const Dtime dt (dtime.t + tau, false);
+      dtime_set.insert (dt);
+   }
+   return dtime_set;
 }
 
 void
@@ -4011,7 +4054,7 @@ Track::get_datum (const Dstring& element,
                   const Real tau,
                   const bool forbid_extrapolate) const
 {
-   return at ("element").get_datum (tau, forbid_extrapolate);
+   return at (element).get_datum (tau, forbid_extrapolate);
 }
 
 Domain_2D

@@ -436,10 +436,8 @@ Advisory::cairo (const RefPtr<Context> cr,
 }
 
 ostream&
-Advisory::operator << (ostream &out_file) const
+Advisory::operator<< (ostream &o) const
 {
-
-   ostream& o = out_file;
 
    o << "forecast_centre " << forecast_centre << endl;
    o << "tc_name " << tc_name << endl;

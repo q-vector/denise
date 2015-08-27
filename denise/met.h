@@ -1183,6 +1183,9 @@ namespace denise
          bool
          is_nal () const;
 
+         ostream&
+         operator << (ostream& out) const;
+
    };
 
    class Layer : public Level

@@ -216,7 +216,7 @@ namespace denise
                 const Real intensity = 1.0) const;
 
          ostream&
-         operator << (ostream& out_file) const;
+         operator << (ostream& o) const;
 
    };
 

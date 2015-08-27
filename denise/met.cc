@@ -2909,6 +2909,13 @@ Level::is_nal () const
    return (type == NAL);
 }
 
+ostream&
+Level::operator<< (ostream& o) const
+{
+   o << get_string ();
+   return o;
+}
+
 Layer::Layer (const Level::Type type,
               const Real value_0,
               const Real value_1)

@@ -1475,6 +1475,9 @@ namespace denise
          void
          okay (const bool cubic = false);
 
+         set<Real>
+         get_tau_set () const;
+
          Real
          get_datum (const Real tau,
                     const bool forbid_extrapolate) const;
@@ -1524,6 +1527,12 @@ namespace denise
 
          const set<Dstring>&
          get_element_set () const;
+
+         set<Real>
+         get_tau_set (const Dstring& element = "latitude") const;
+
+         set<Dtime>
+         get_dtime_set (const Dstring& element = "latitude") const;
 
          void
          add (const Real tau,
