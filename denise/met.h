@@ -99,7 +99,7 @@ namespace denise
       PRECIP_RATE,
       BRUNT_VAISALA,
       SCORER_PARAMETER,
-      Q_LOCAL_CHANGE,
+      Q_TENDENCY,
       Q_ADVECTION,
       Q_H_ADVECTION,
       Q_V_ADVECTION,
