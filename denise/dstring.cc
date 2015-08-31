@@ -378,6 +378,17 @@ Tokens::subtokens (const Integer i,
 
 }
 
+set<Dstring>
+Tokens::get_set () const
+{
+   set<Dstring> s;
+   for (auto iterator = begin (); iterator != end (); iterator++)
+   {
+      s.insert (*(iterator));
+   }
+   return s;
+}
+
 Real
 Tokens::real (const Integer index) const
 {

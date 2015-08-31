@@ -171,6 +171,9 @@ namespace denise
          subtokens (const Integer i,
                     const Integer n = -1) const;
 
+         set<Dstring>
+         get_set () const;
+
          Real
          real (const Integer index) const;
 

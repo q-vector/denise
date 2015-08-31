@@ -909,6 +909,7 @@ namespace denise
    ostream&
    operator << (ostream &out_file,
                 const Tuple& tuple);
+
    ostream&
    operator << (ostream &out_file,
                 const Ituple& ituple);
@@ -920,6 +921,10 @@ namespace denise
    ostream&
    operator << (ostream &out_file,
                 const Domain_1D& domain);
+
+   ostream&
+   operator << (ostream &out_file,
+                const Domain_2D& domain);
 
 }
 

@@ -1411,4 +1411,12 @@ namespace denise
       return out_file;
    }
 
+   ostream&
+   operator << (ostream &out_file,
+                const Domain_2D& domain)
+   {
+      out_file << "(" << domain.domain_x << " -> " << domain.domain_y << ")";
+      return out_file;
+   }
+
 }

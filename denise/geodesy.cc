@@ -3891,7 +3891,8 @@ Track_Data::get_domain_1d (const Real dt) const
 }
 
 Track::Track (const Dtime& dtime)
-   : dtime (dtime)
+   : dtime (dtime),
+     cubic_tokens ("latitude:longitude", ":")
 {
 }
 
@@ -4014,11 +4015,11 @@ Track::add (const Dstring& element,
 void
 Track::okay ()
 {
-   for (auto iterator = element_set.begin ();
-        iterator != element_set.end (); iterator++)
+   const set<Dstring>& s = cubic_tokens.get_set ();
+   for (auto iterator = s.begin (); iterator != s.end (); iterator++)
    {
       const Dstring& element = *(iterator);
-      const bool cubic = (element == "latitude" || element == "longitude");
+      const bool cubic = (s.find (element) != s.end ());
       at (element).okay (cubic);
    }
 }

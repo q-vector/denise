@@ -1498,6 +1498,9 @@ namespace denise
          set<Dstring>
          element_set;
 
+         Tokens
+         cubic_tokens;
+
       public:
 
          Track (const Dtime& dtime = Dtime (0.0));

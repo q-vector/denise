@@ -269,16 +269,16 @@ namespace denise
    };
 
    ostream&
-   operator << (ostream& out,
-                const Dtime& time);
+   operator<< (ostream& out,
+               const Dtime& time);
 
    ostream&
-   operator << (ostream& out,
-                const Dtime::Span& span);
+   operator<< (ostream& out,
+               const Dtime::Span& span);
 
    ostream&
-   operator << (ostream& out,
-                const Dtime::Set& set);
+   operator<< (ostream& out,
+               const Dtime::Set& set);
 
 }
 
