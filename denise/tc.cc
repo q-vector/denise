@@ -38,20 +38,20 @@ Tc_Track::get_name () const
    return name;
 }
 
-Best_Tracks::Id_Set::Id_Set (const Best_Tracks::Id_Set& id_set)
+Tc_Track_Map::Id_Set::Id_Set (const Tc_Track_Map::Id_Set& id_set)
    : set<Dstring> (id_set),
-     best_tracks (id_set.best_tracks)
+     tc_track_map (id_set.tc_track_map)
 {
 }
 
-Best_Tracks::Id_Set::Id_Set (const Best_Tracks& best_tracks,
-                             const bool fill)
-   : best_tracks (best_tracks)
+Tc_Track_Map::Id_Set::Id_Set (const Tc_Track_Map& tc_track_map,
+                              const bool fill)
+   : tc_track_map (tc_track_map)
 {
    if (fill)
    {
-      for (auto iterator = best_tracks.begin ();
-           iterator != best_tracks.end (); iterator++)
+      for (auto iterator = tc_track_map.begin ();
+           iterator != tc_track_map.end (); iterator++)
       {
          const Dstring& id = iterator->first;
          insert (id);
@@ -59,16 +59,16 @@ Best_Tracks::Id_Set::Id_Set (const Best_Tracks& best_tracks,
    }
 }
 
-Best_Tracks::Id_Set
-Best_Tracks::Id_Set::get_id_set (const Integer year) const
+Tc_Track_Map::Id_Set
+Tc_Track_Map::Id_Set::get_id_set (const Integer year) const
 {
 
-   Best_Tracks::Id_Set id_set (best_tracks);
+   Tc_Track_Map::Id_Set id_set (tc_track_map);
 
    for (auto iterator = begin (); iterator != end (); iterator++)
    {
       const Dstring& id = *(iterator);
-      const Tc_Track& tc_track = best_tracks.at (id);
+      const Tc_Track& tc_track = tc_track_map.at (id);
       const Integer y = tc_track.get_start_time ().get_year ();
       if (y == year) { id_set.insert (id); }
    }
@@ -77,16 +77,16 @@ Best_Tracks::Id_Set::get_id_set (const Integer year) const
 
 }
 
-Best_Tracks::Id_Set
-Best_Tracks::Id_Set::get_id_set (const Dstring& name) const
+Tc_Track_Map::Id_Set
+Tc_Track_Map::Id_Set::get_id_set (const Dstring& name) const
 {
 
-   Best_Tracks::Id_Set id_set (best_tracks);
+   Tc_Track_Map::Id_Set id_set (tc_track_map);
 
    for (auto iterator = begin (); iterator != end (); iterator++)
    {
       const Dstring& id = *(iterator);
-      const Tc_Track& tc_track = best_tracks.at (id);
+      const Tc_Track& tc_track = tc_track_map.at (id);
       if (name == tc_track.get_name ()) { id_set.insert (id); }
    }
 
@@ -94,17 +94,17 @@ Best_Tracks::Id_Set::get_id_set (const Dstring& name) const
 
 }
 
-Best_Tracks::Id_Set
-Best_Tracks::Id_Set::get_id_set (const Domain_2D& domain_2d,
-                                 const Real dt) const
+Tc_Track_Map::Id_Set
+Tc_Track_Map::Id_Set::get_id_set (const Domain_2D& domain_2d,
+                                  const Real dt) const
 {
 
-   Best_Tracks::Id_Set id_set (best_tracks);
+   Tc_Track_Map::Id_Set id_set (tc_track_map);
 
    for (auto iterator = begin (); iterator != end (); iterator++)
    {
       const Dstring& id = *(iterator);
-      const Tc_Track& tc_track = best_tracks.at (id);
+      const Tc_Track& tc_track = tc_track_map.at (id);
       if (!tc_track.trespass (domain_2d, dt)) { continue;}
       id_set.insert (id);
    }
@@ -113,14 +113,14 @@ Best_Tracks::Id_Set::get_id_set (const Domain_2D& domain_2d,
 
 }
 
-Best_Tracks::Id_Set
-Best_Tracks::Id_Set::get_id_set (const Integer day_of_year,
-                                 const Integer delta_days,
-                                 const Domain_2D& domain_2d,
-                                 const Real dt) const
+Tc_Track_Map::Id_Set
+Tc_Track_Map::Id_Set::get_id_set (const Integer day_of_year,
+                                  const Integer delta_days,
+                                  const Domain_2D& domain_2d,
+                                  const Real dt) const
 {
 
-   Best_Tracks::Id_Set id_set (best_tracks);
+   Tc_Track_Map::Id_Set id_set (tc_track_map);
    const Integer sjd = (day_of_year - delta_days);
    const Integer ejd = (day_of_year + delta_days);
 
@@ -128,7 +128,7 @@ Best_Tracks::Id_Set::get_id_set (const Integer day_of_year,
    {
 
       const Dstring& id = *(iterator);
-      const Tc_Track& tc_track = best_tracks.at (id);
+      const Tc_Track& tc_track = tc_track_map.at (id);
 
       const Integer s = tc_track.get_start_time ().get_day_of_year ();
       const Integer e = tc_track.get_end_time ().get_day_of_year ();
@@ -144,17 +144,52 @@ Best_Tracks::Id_Set::get_id_set (const Integer day_of_year,
 
 }
 
-Best_Tracks::Best_Tracks ()
+Tc_Track_Map::Tc_Track_Map ()
    : id_set (*this, true)
 {
 }
 
+Tc_Track_Map::Id_Set
+Tc_Track_Map::get_id_set (const Integer year) const
+{
+   return id_set.get_id_set (year);
+}
+
+Tc_Track_Map::Id_Set
+Tc_Track_Map::get_id_set (const Dstring& name) const
+{
+   return id_set.get_id_set (name);
+}
+
+Tc_Track_Map::Id_Set
+Tc_Track_Map::get_id_set (const Domain_2D& domain_2d,
+                          const Real dt) const
+{
+   return id_set.get_id_set (domain_2d, dt);
+}
+
+Tc_Track_Map::Id_Set
+Tc_Track_Map::get_id_set (const Integer day_of_year,
+                          const Integer delta_days,
+                          const Domain_2D& domain_2d,
+                          const Real dt) const
+{
+   return id_set.get_id_set (day_of_year, delta_days, domain_2d, dt);
+}
+
+Tc_Track_Map::iterator
+Tc_Track_Map::insert (const Dstring& id,
+                      const Tc_Track& tc_track)
+{
+   return map<Dstring, Tc_Track>::insert (make_pair (id, tc_track)).first;
+}
+
 void
-Best_Tracks::ingest_jma (const Dstring& file_path)
+Jma_Best_Tracks::ingest (const Dstring& file_path)
 {
 
    igzstream file (file_path);
-   Best_Tracks::iterator i = end ();
+   Tc_Track_Map::iterator i = end ();
 
    for (Dstring is; getline (file, is); )
    {
@@ -165,7 +200,7 @@ Best_Tracks::ingest_jma (const Dstring& file_path)
          const bool post_49 = stoi (is.substr (6, 2)) > 49;
          const Dstring& id = (post_49 ? "19" : "20") + is.substr (6, 4);
          const Dstring& name = Dstring (is.substr (30, 20)).get_trimmed ();
-         i = insert (make_pair (id, Tc_Track (name))).first;
+         i = insert (id, Tc_Track (name));
          continue;
       }
 
@@ -192,34 +227,6 @@ Best_Tracks::ingest_jma (const Dstring& file_path)
 
    file.close ();
 
-}
-
-Best_Tracks::Id_Set
-Best_Tracks::get_id_set (const Integer year) const
-{
-   return id_set.get_id_set (year);
-}
-
-Best_Tracks::Id_Set
-Best_Tracks::get_id_set (const Dstring& name) const
-{
-   return id_set.get_id_set (name);
-}
-
-Best_Tracks::Id_Set
-Best_Tracks::get_id_set (const Domain_2D& domain_2d,
-                         const Real dt) const
-{
-   return id_set.get_id_set (domain_2d, dt);
-}
-
-Best_Tracks::Id_Set
-Best_Tracks::get_id_set (const Integer day_of_year,
-                         const Integer delta_days,
-                         const Domain_2D& domain_2d,
-                         const Real dt) const
-{
-   return id_set.get_id_set (day_of_year, delta_days, domain_2d, dt);
 }
 
 Real

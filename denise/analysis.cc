@@ -232,15 +232,15 @@ Grid_nD::init (const Tuple* coordinate_tuples,
 }
 
 Grid_nD::Grid_nD (const Integer n)
-             : n (n),
-         size_nd (n)
+   : n (n),
+     size_nd (n)
 {
    init ();
 }
 
 Grid_nD::Grid_nD (const Grid_nD& grid_nd)
-             : n (grid_nd.n),
-         size_nd (grid_nd.n)
+   : n (grid_nd.n),
+     size_nd (grid_nd.n)
 {
    init (grid_nd.coordinate_tuples, grid_nd.spacings, grid_nd.periodics);
 }
@@ -467,6 +467,14 @@ Chunk::Chunk ()
    : chunk_size (0),
      buffer (NULL)
 {
+}
+
+Chunk::Chunk (const Chunk& chunk)
+   : chunk_size (chunk.chunk_size),
+     buffer (new Real[chunk.chunk_size])
+{
+   const Integer buffer_size = sizeof (Real) * chunk.chunk_size;
+   memcpy (buffer, chunk.buffer, buffer_size);
 }
 
 Chunk::~Chunk ()
@@ -707,6 +715,13 @@ Vector_Data_nD::Vector_Data_nD (const Integer vector_size,
 {
 }
 
+Vector_Data_nD::Vector_Data_nD (const Vector_Data_nD& vector_data_nd)
+   : Grid_nD (vector_data_nd),
+     Chunk (vector_data_nd),
+     vector_size (vector_data_nd.vector_size)
+{
+}
+
 Vector_Data_nD::~Vector_Data_nD ()
 {
 }
@@ -784,11 +799,51 @@ Vector_Data_1D::init (const Tuple& coordinate_tuple,
 
 }
 
+Vector_Data_1D::Vector_Data_1D (const Vector_Data_1D& vector_data_1d)
+   : Vector_Data_nD (vector_data_1d)
+{
+
+   const Integer& n = Grid_nD::size ();
+   gia_ptrs = new gsl_interp_accel*[vector_size];
+   gs_ptrs = new gsl_spline*[vector_size];
+
+   for (Integer i = 0; i < vector_size; i++)
+   {
+
+      const gsl_spline* s = vector_data_1d.gs_ptrs[i];
+      const gsl_interp_type* interp_type = s->interp->type;
+
+      //if (n < gsl_interp_min_size (interp_type)) { return; }
+
+      double* x = new double[n];
+      double* y = new double[n];
+
+      gsl_interp_accel*& gia_ptr = gia_ptrs[i];
+      gsl_spline*& gs_ptr = gs_ptrs[i];
+
+      gia_ptrs[i] = gsl_interp_accel_alloc ();
+      gs_ptrs[i] = gsl_spline_alloc (interp_type, n);
+
+      for (Integer j = 0; j < n; j++)
+      {
+         x[j] = get_coordinate (0, j);
+         y[j] = get_datum (i, j);
+      }
+
+      gsl_spline_init (gs_ptrs[i], x, y, n);
+
+      delete[] x;
+      delete[] y;
+
+   }
+
+}
+
 Vector_Data_1D::Vector_Data_1D (const Integer vector_size,
                                 const Integer size_1d,
                                 const Domain_1D& domain_1d,
                                 const bool periodic)
-              : Vector_Data_nD (vector_size, 1)
+   : Vector_Data_nD (vector_size, 1)
 {
 
    Real spacing = domain_1d.get_span () / (size_1d - 1);
@@ -801,7 +856,7 @@ Vector_Data_1D::Vector_Data_1D (const Integer vector_size,
 Vector_Data_1D::Vector_Data_1D (const Integer vector_size,
                                 const Tuple coordinate_tuple,
                                 const bool periodic)
-              : Vector_Data_nD (vector_size, 1)
+   : Vector_Data_nD (vector_size, 1)
 {
    init (coordinate_tuple, GSL_NAN, periodic);
 }

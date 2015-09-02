@@ -53,7 +53,7 @@ namespace denise
 
    };
 
-   class Best_Tracks : public map<Dstring, Tc_Track>
+   class Tc_Track_Map : public map<Dstring, Tc_Track>
    {
 
       public:
@@ -63,14 +63,14 @@ namespace denise
 
             private:
 
-               const Best_Tracks&
-               best_tracks;
+               const Tc_Track_Map&
+               tc_track_map;
 
             public:
 
                Id_Set (const Id_Set& id_set);
 
-               Id_Set (const Best_Tracks& best_tracks,
+               Id_Set (const Tc_Track_Map& tc_track_map,
                        const bool fill = false);
 
                Id_Set
@@ -98,10 +98,7 @@ namespace denise
 
       public:
 
-         Best_Tracks ();
-
-         void
-         ingest_jma (const Dstring& file_path);
+         Tc_Track_Map ();
 
          Id_Set
          get_id_set (const Integer year) const;
@@ -118,6 +115,20 @@ namespace denise
                      const Integer delta_days,
                      const Domain_2D& domain_2d,
                      const Real dt = 0.1) const;
+
+         Tc_Track_Map::iterator
+         insert (const Dstring& id,
+                 const Tc_Track& tc_track);
+
+   };
+
+   class Jma_Best_Tracks : public Tc_Track_Map
+   {
+
+      public:
+
+         void
+         ingest (const Dstring& file_path);
 
    };
 

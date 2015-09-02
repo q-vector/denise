@@ -1470,6 +1470,8 @@ namespace denise
 
          Track_Data ();
 
+         Track_Data (const Track_Data& track_data);
+
          ~Track_Data ();
 
          void

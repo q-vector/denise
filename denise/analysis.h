@@ -352,6 +352,8 @@ namespace denise
 
          Chunk ();
 
+         Chunk (const Chunk& chunk);
+
          ~Chunk ();
 
          void
@@ -421,6 +423,8 @@ namespace denise
          Vector_Data_nD (const Integer vector_size,
                          const Integer n);
 
+         Vector_Data_nD (const Vector_Data_nD& vector_data_nd);
+
          ~Vector_Data_nD ();
 
          Chunk*
@@ -472,6 +476,8 @@ namespace denise
                const bool periodic);
 
       public:
+
+         Vector_Data_1D (const Vector_Data_1D& vector_data_1d);
 
          Vector_Data_1D (const Integer vector_size,
                          const Integer size_1d,

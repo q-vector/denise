@@ -3800,6 +3800,12 @@ Track_Data::Track_Data ()
 {
 }
 
+Track_Data::Track_Data (const Track_Data& track_data)
+{
+   if (track_data.spline_ptr == NULL) { spline_ptr = NULL; }
+   else { spline_ptr = new Scalar_Data_1D (*track_data.spline_ptr); }
+}
+
 Track_Data::~Track_Data ()
 {
    delete spline_ptr;
@@ -3828,7 +3834,7 @@ Track_Data::okay (const bool cubic)
    }
 
    const bool c = (cubic && n > 3);
-   auto interp_type = (c ?  gsl_interp_cspline : gsl_interp_linear);
+   auto interp_type = (c ? gsl_interp_cspline : gsl_interp_linear);
    spline_ptr->set_interpolation (interp_type);
 
 }
