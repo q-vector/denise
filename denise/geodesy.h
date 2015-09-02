@@ -1487,7 +1487,15 @@ namespace denise
          Domain_1D
          get_domain_1d (const Real dt = 0.1) const;
 
+         friend ostream&
+         operator<< (ostream &o,
+                     const Track_Data& track_data);
+
    };
+
+   ostream&
+   operator<< (ostream &out,
+               const Track_Data& track_data);
 
    class Track : public map<Dstring, Track_Data>
    {
@@ -1585,7 +1593,15 @@ namespace denise
          trespass (const Domain_2D& domain_2d,
                    const Real dt = 0.1) const; 
 
+         friend ostream&
+         operator<< (ostream &o,
+                     const Track& track);
+
    };
+
+   ostream&
+   operator<< (ostream &out,
+               const Track& track);
 
    class Geodetic_Cairoable
    {

@@ -3801,6 +3801,7 @@ Track_Data::Track_Data ()
 }
 
 Track_Data::Track_Data (const Track_Data& track_data)
+   : map<Real, Real> (track_data)
 {
    if (track_data.spline_ptr == NULL) { spline_ptr = NULL; }
    else { spline_ptr = new Scalar_Data_1D (*track_data.spline_ptr); }
@@ -3893,6 +3894,24 @@ Track_Data::get_domain_1d (const Real dt) const
    }
 
    return Domain_1D (start, end);
+
+}
+
+ostream&
+denise::operator<< (ostream &o,
+                    const Track_Data& track_data)
+{
+
+   for (auto iterator = track_data.begin ();
+        iterator != track_data.end (); iterator++)
+   {
+      if (iterator != track_data.begin ()) { o << ", "; }
+      const Real tau = iterator->first;
+      const Real datum = iterator->second;
+      o << tau << ":" << datum;
+   }   
+
+   return o;
 
 }
 
@@ -4091,6 +4110,35 @@ Track::trespass (const Domain_2D& domain_2d,
    }
 
    return false;
+
+}
+
+ostream&
+denise::operator<< (ostream &o,
+                    const Track& track)
+{
+
+   for (auto i = track.begin (); i != track.end (); i++)
+   {
+
+      if (i != track.begin ()) { o << endl; }
+      const Dstring& element = i->first;
+      const Track_Data& track_data = i->second;
+      o << "{ " << element << " ";
+
+      for (auto j = track_data.begin (); j != track_data.end (); j++)
+      {
+         if (j != track_data.begin ()) { o << ", "; }
+         const Real tau = j->first;
+         const Real datum = j->second;
+         o << Dtime (track.dtime.t + tau) << ":" << datum;
+      }   
+
+      o << " }";
+
+   }   
+
+   return o;
 
 }
 

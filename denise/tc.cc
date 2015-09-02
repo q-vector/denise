@@ -65,10 +65,11 @@ Tc_Track_Map::Id_Set::get_id_set (const Integer year) const
 
    Tc_Track_Map::Id_Set id_set (tc_track_map);
 
-   for (auto iterator = begin (); iterator != end (); iterator++)
+   for (auto iterator = tc_track_map.begin ();
+        iterator != tc_track_map.end (); iterator++)
    {
-      const Dstring& id = *(iterator);
-      const Tc_Track& tc_track = tc_track_map.at (id);
+      const Dstring& id = iterator->first;
+      const Tc_Track& tc_track = iterator->second;
       const Integer y = tc_track.get_start_time ().get_year ();
       if (y == year) { id_set.insert (id); }
    }
@@ -83,10 +84,11 @@ Tc_Track_Map::Id_Set::get_id_set (const Dstring& name) const
 
    Tc_Track_Map::Id_Set id_set (tc_track_map);
 
-   for (auto iterator = begin (); iterator != end (); iterator++)
+   for (auto iterator = tc_track_map.begin ();
+        iterator != tc_track_map.end (); iterator++)
    {
-      const Dstring& id = *(iterator);
-      const Tc_Track& tc_track = tc_track_map.at (id);
+      const Dstring& id = iterator->first;
+      const Tc_Track& tc_track = iterator->second;
       if (name == tc_track.get_name ()) { id_set.insert (id); }
    }
 
@@ -101,10 +103,11 @@ Tc_Track_Map::Id_Set::get_id_set (const Domain_2D& domain_2d,
 
    Tc_Track_Map::Id_Set id_set (tc_track_map);
 
-   for (auto iterator = begin (); iterator != end (); iterator++)
+   for (auto iterator = tc_track_map.begin ();
+        iterator != tc_track_map.end (); iterator++)
    {
-      const Dstring& id = *(iterator);
-      const Tc_Track& tc_track = tc_track_map.at (id);
+      const Dstring& id = iterator->first;
+      const Tc_Track& tc_track = iterator->second;
       if (!tc_track.trespass (domain_2d, dt)) { continue;}
       id_set.insert (id);
    }
@@ -124,11 +127,12 @@ Tc_Track_Map::Id_Set::get_id_set (const Integer day_of_year,
    const Integer sjd = (day_of_year - delta_days);
    const Integer ejd = (day_of_year + delta_days);
 
-   for (auto iterator = begin (); iterator != end (); iterator++)
+   for (auto iterator = tc_track_map.begin ();
+        iterator != tc_track_map.end (); iterator++)
    {
 
-      const Dstring& id = *(iterator);
-      const Tc_Track& tc_track = tc_track_map.at (id);
+      const Dstring& id = iterator->first;
+      const Tc_Track& tc_track = iterator->second;
 
       const Integer s = tc_track.get_start_time ().get_day_of_year ();
       const Integer e = tc_track.get_end_time ().get_day_of_year ();
@@ -210,7 +214,7 @@ Jma_Best_Tracks::ingest (const Dstring& file_path)
          Tc_Track& tc_track = i->second;
 
          const bool post_49 = stoi (is.substr (0, 2)) > 49;
-         const Dtime dtime ((post_49 ? "19" : "20") + is.substr (0, 2));
+         const Dtime dtime (Dstring (post_49 ? "19" : "20") + is.substr (0, 8));
          const Real latitude = stof (is.substr (15, 3)) * 0.1;
          const Real longitude = stof (is.substr (19, 4)) * 0.1;
          const Real pressure = stof (is.substr (24, 4));
