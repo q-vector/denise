@@ -26,30 +26,6 @@ using namespace std;
 using namespace denise;
 
 void
-Gshhs::Point::swap_endian ()
-{
-   denise::swap_endian (&x, sizeof (int32_t));
-   denise::swap_endian (&y, sizeof (int32_t));
-}
-
-void
-Gshhs::Point::read (igzstream& file)
-{
-
-   file.read ((char*)&x, sizeof (int32_t));
-   file.read ((char*)&y, sizeof (int32_t));
-
-#ifndef WORDS_BIGENDIAN
-   denise::swap_endian (&x, sizeof (int32_t));
-   denise::swap_endian (&y, sizeof (int32_t));
-#endif
-
-   if (x % 100000 == 0) { x += 1; }
-   if (y % 100000 == 0) { y += 1; }
-   
-}
-
-void
 Gshhs::Header::swap_endian ()
 {
 
@@ -272,33 +248,41 @@ Gshhs::get_header_ptr () const
 void
 Gshhs::add_polygon (igzstream& file,
                     const Header& header,
-                    const Real max_longitude)
+                    const Real max_longitude,
+                    const bool fantom)
 {
 
-   Point point;
    Point_2D p;
-   Real last_y;
-
    const uint32_t n = header.get_int32_t (4);
+   const size_t buffer_size = sizeof (int32_t) * 2 * n;
+   uint8_t* buffer = new uint8_t[buffer_size];
+   file.read ((char*)buffer, buffer_size);
+   if (fantom) { return; }
+
    const bool antartica = (header.get_int32_t (20) * 1e-6 < -89);
    const bool cross_greenwich = header.is_cross_greenwich ();
    const bool western = header.is_western ();
 
-   if (antartica)
-   {
-//      add (Point_2D (-68.9257, 0), true);
-//      add (Point_2D (-89, 0), false);
-//      add (Point_2D (-89, 360), false);
-//      add (Point_2D (-68.9257, 360), false);
-   }
+   Real last_y;
 
    for (Integer i = 0; i < n; i++)
    {
 
-      point.read (file);
+      const size_t address = i * 2 * sizeof (int32_t);
+      int32_t x_32 = *((int32_t*)(buffer + address));
+      int32_t y_32 = *((int32_t*)(buffer + address + sizeof (int32_t)));
 
-      p.x = point.y * 1e-6;
-      p.y = point.x * 1e-6;
+#ifndef WORDS_BIGENDIAN
+      denise::swap_endian (&x_32, sizeof (int32_t));
+      denise::swap_endian (&y_32, sizeof (int32_t));
+#endif
+
+      if (x_32 % 100000 == 0) { x_32 += 1; }
+      if (y_32 % 100000 == 0) { y_32 += 1; }
+
+      // x-y swap is intentional here
+      p.x = y_32 * 1e-6;
+      p.y = x_32 * 1e-6;
 
       if (cross_greenwich && p.y > max_longitude) { p.y -= 360; }
       if ((antartica || western) && p.y > 180) { p.y -= 360; }
@@ -329,7 +313,6 @@ Gshhs::write_simple_polygon (ofstream& file,
                              const Polygon::Vertex* handle_ptr) const
 {
 
-   Point point;
    Integer n = handle_ptr->n;
    Polygon::Vertex* current_ptr = (Polygon::Vertex*)handle_ptr;
 
@@ -338,14 +321,17 @@ Gshhs::write_simple_polygon (ofstream& file,
 
       const Point_2D& p = (const Point_2D&)(*current_ptr);
 
-      point.x = int32_t (point.y * 1e6);
-      point.y = int32_t (point.x * 1e6);
+      // x-y swapping is intentional here
+      int32_t x_32 = int32_t (p.y * 1e6);
+      int32_t y_32 = int32_t (p.x * 1e6);
 
 #ifndef WORDS_BIGENDIAN
-      point.swap_endian ();
+      denise::swap_endian (&x_32, sizeof (int32_t));
+      denise::swap_endian (&y_32, sizeof (int32_t));
 #endif
 
-      file.write ((char*)&point, sizeof (class Point));
+      file.write ((char*)&x_32, sizeof (int32_t));
+      file.write ((char*)&y_32, sizeof (int32_t));
 
       current_ptr = current_ptr->next_ptr;
 
@@ -361,28 +347,16 @@ Gshhs::Gshhs (const Dstring& file_path,
               const Integer level)
 {
 
-   Real max_longitude = 270;
-   size_t point_size = sizeof (class Point);
+   igzstream file (file_path);
+   if (!file.is_open ()) { throw IO_Exception ("Can't open " + file_path); }
 
    Header* header_ptr = get_header_ptr ();
    Header& header = *header_ptr;
 
-   igzstream file (file_path);
-   if (!file.is_open ()) { throw IO_Exception ("Can't open " + file_path); }
-
-   while (true)
+   for (Real max_longitude = 270; header.read (file); max_longitude = 180)
    {
-
-      if (!header.read (file)) { break; }
-
-      const int32_t n = header.get_int32_t (4);
       const bool fail_level = (header.get_level () > level);
-      //if (fail_level) { fseek (file, point_size * n, SEEK_CUR); continue; }
-      if (fail_level) { file.seekg (point_size * n, ios::cur); continue; }
-
-      add_polygon (file, header, max_longitude);
-      max_longitude = 180;
-
+      add_polygon (file, header, max_longitude, fail_level);
    }
 
    delete header_ptr;

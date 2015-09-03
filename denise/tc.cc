@@ -212,13 +212,14 @@ Jma_Best_Tracks::ingest (const Dstring& file_path)
       {
 
          Tc_Track& tc_track = i->second;
+         const Integer n = is.get_trimmed ().length ();
 
          const bool post_49 = stoi (is.substr (0, 2)) > 49;
          const Dtime dtime (Dstring (post_49 ? "19" : "20") + is.substr (0, 8));
          const Real latitude = stof (is.substr (15, 3)) * 0.1;
          const Real longitude = stof (is.substr (19, 4)) * 0.1;
-         const Real pressure = stof (is.substr (24, 4));
-         const Real max_wind = stof (is.substr (33, 3));
+         const Real pressure = (n < 28) ? 0 : stof (is.substr (24, 4));
+         const Real max_wind = (n < 36) ? 0 : stof (is.substr (33, 3));
 
          tc_track.add ("latitude", dtime.t, latitude);
          tc_track.add ("longitude", dtime.t, longitude);

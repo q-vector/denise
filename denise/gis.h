@@ -40,25 +40,6 @@ namespace denise
 
       protected:
 
-         class Point
-         {
-
-            public:
-
-               int32_t
-               x;
-
-               int32_t
-               y;
-
-               void
-               swap_endian ();
-
-               void
-               read (igzstream& file);
-
-         };
-
          class Header
          {
 
@@ -132,7 +113,8 @@ namespace denise
          void
          add_polygon (igzstream& file,
                       const Header& header,
-                      const Real max_longitude);
+                      const Real max_longitude,
+                      const bool fantom = false);
 
          void
          write_simple_polygon (ofstream& file,
