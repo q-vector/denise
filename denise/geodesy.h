@@ -1503,7 +1503,7 @@ namespace denise
       protected:
 
          Dtime
-         dtime;
+         epoch;
 
          set<Dstring>
          element_set;
@@ -1513,15 +1513,15 @@ namespace denise
 
       public:
 
-         Track (const Dtime& dtime = Dtime (0.0));
+         Track (const Dtime& epoch = Dtime (0.0));
 
          ~Track ();
 
          void
-         set_dtime (const Dtime& dtime);
+         set_epoch (const Dtime& epoch);
 
          const Dtime&
-         get_dtime () const;
+         get_epoch () const;
 
          Dtime
          get_dtime (const Real tau) const;
@@ -1593,8 +1593,12 @@ namespace denise
          trespass (const Domain_2D& domain_2d,
                    const Real dt = 0.1) const; 
 
+         void
+         write (ostream& o,
+                const Dstring& id) const;
+
          friend ostream&
-         operator<< (ostream &o,
+         operator<< (ostream& o,
                      const Track& track);
 
    };
@@ -1602,6 +1606,23 @@ namespace denise
    ostream&
    operator<< (ostream &out,
                const Track& track);
+
+   class Track_Map : public map<Dstring, Track>
+   {
+
+      public:
+
+         Track_Map ();
+
+         Track_Map (igzstream& i);
+
+         void
+         ingest (igzstream& i);
+
+         void
+         write (ostream& o) const;
+
+   };
 
    class Geodetic_Cairoable
    {

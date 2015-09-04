@@ -46,7 +46,7 @@ namespace denise
       public:
 
          Tc_Track (const Dstring& name = "",
-                   const Dtime& dtime = Dtime (0.0));
+                   const Dtime& epoch = Dtime (0.0));
 
          const Dstring&
          get_name () const;

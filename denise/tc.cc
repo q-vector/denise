@@ -26,8 +26,8 @@ using namespace Cairo;
 using namespace denise;
 
 Tc_Track::Tc_Track (const Dstring& name,
-                    const Dtime& dtime)
-   : Track (dtime),
+                    const Dtime& epoch)
+   : Track (epoch),
      name (name)
 {
 }
@@ -196,7 +196,8 @@ Hko_Best_Tracks::ingest (const Dstring& file_path)
    Tc_Track_Map::iterator i = end ();
 
    Dstring this_name ("");
-   Integer year_id = 1;
+   Integer this_year = 0;
+   Integer year_id;
 
    for (Dstring is; getline (file, is); )
    {
@@ -204,13 +205,21 @@ Hko_Best_Tracks::ingest (const Dstring& file_path)
       const Tokens tokens (is, ":");
       const Dstring& name = tokens[0];
       const Dtime dtime (tokens[1]);
+      const Integer yyyy = dtime.get_year ();
+
+      if (yyyy != this_year)
+      {
+         this_year = yyyy;
+         year_id = 1;
+      }
 
       if (name != this_name)
       {
          if (i != end ()) { i->second.okay (); }
-         const Integer yyyy = dtime.get_yeaer ();
          const Dstring& id = Dstring::render ("%04d%02d", yyyy, year_id);
          i = insert (id, Tc_Track (name));
+         this_name = name;
+         year_id++;
       }
 
       Tc_Track& tc_track = i->second;
@@ -373,7 +382,7 @@ void
 Advisory::make_track ()
 {
 
-   track.set_dtime (initial_time);
+   track.set_epoch (initial_time);
 
    for (Advisory::const_iterator iterator = begin ();
         iterator != end (); iterator++)

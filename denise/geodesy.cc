@@ -18,6 +18,7 @@
 // You should have received a copy of the GNU General Public License
 // along with libdenise.  If not, see <http://www.gnu.org/licenses/>.
 
+#include <iomanip>
 #include "geodesy.h"
 
 using namespace std;
@@ -3915,8 +3916,8 @@ denise::operator<< (ostream &o,
 
 }
 
-Track::Track (const Dtime& dtime)
-   : dtime (dtime),
+Track::Track (const Dtime& epoch)
+   : epoch (epoch),
      cubic_tokens ("latitude:longitude", ":")
 {
 }
@@ -3926,35 +3927,35 @@ Track::~Track ()
 }
 
 void
-Track::set_dtime (const Dtime& dtime)
+Track::set_epoch (const Dtime& epoch)
 {
-   this->dtime = dtime;
+   this->epoch = epoch;
 }
 
 const Dtime&
-Track::get_dtime () const
+Track::get_epoch () const
 {
-   return dtime;
+   return epoch;
 }
 
 Dtime
 Track::get_dtime (const Real tau) const
 {
-   return Dtime (dtime.t + tau);
+   return Dtime (epoch.t + tau);
 }
 
 Dtime
 Track::get_start_time () const
 {
    const Real start_tau = get_start_tau ();
-   return Dtime (dtime.t + start_tau);
+   return Dtime (epoch.t + start_tau);
 }
 
 Dtime
 Track::get_end_time () const
 {
    const Real end_tau = get_end_tau ();
-   return Dtime (dtime.t + end_tau);
+   return Dtime (epoch.t + end_tau);
 }
 
 Real
@@ -3990,7 +3991,7 @@ Track::get_dtime_set (const Dstring& element) const
         iterator != tau_set.end (); iterator++)
    {
       const Real tau = *(iterator);
-      const Dtime dt (dtime.t + tau, false);
+      const Dtime dt (epoch.t + tau, false);
       dtime_set.insert (dt);
    }
    return dtime_set;
@@ -4024,7 +4025,7 @@ void
 Track::add (const Dtime& dtime,
             const Lat_Long& lat_long)
 {
-   const Real tau = (dtime.t - this->dtime.t);
+   const Real tau = (dtime.t - epoch.t);
    return add (tau, lat_long);
 }
 
@@ -4033,7 +4034,7 @@ Track::add (const Dstring& element,
             const Dtime& dtime,
             const Real datum)
 {
-   const Real tau = (dtime.t - this->dtime.t);
+   const Real tau = (dtime.t - epoch.t);
    return add (element, tau, datum);
 }
 
@@ -4053,7 +4054,7 @@ Lat_Long
 Track::get_lat_long (const Dtime& dtime,
                      const bool forbid_extrapolate) const
 {
-   const Real tau = (dtime.t - this->dtime.t);
+   const Real tau = (dtime.t - epoch.t);
    return get_lat_long (tau, forbid_extrapolate);
 }
 
@@ -4071,7 +4072,7 @@ Track::get_datum (const Dstring& element,
                   const Dtime& dtime,
                   const bool forbid_extrapolate) const
 {
-   const Real tau = (dtime.t - this->dtime.t);
+   const Real tau = (dtime.t - epoch.t);
    return get_datum (element, tau, forbid_extrapolate);
 }
 
@@ -4113,8 +4114,44 @@ Track::trespass (const Domain_2D& domain_2d,
 
 }
 
+void
+Track::write (ostream& o,
+              const Dstring& id) const
+{
+
+   ios_base::fmtflags orig_flags = o.flags ();
+   const Dstring& time_str = epoch.get_string ("%Y%m%d%H%M%S");
+
+   o << "TRACK " << id << " epoch " << time_str << endl;
+
+   for (auto i = begin (); i != end (); i++)
+   {
+
+      const Dstring& element = i->first;
+      const Track_Data& track_data = i->second;
+
+      const bool is_lat = (element == "latitude");
+      const bool is_long = (element == "longitude");
+      const bool is_lat_long = (is_lat || is_long);
+      if (is_lat_long) { o << std::setprecision (4) << std::fixed; }
+
+      for (auto j = track_data.begin (); j != track_data.end (); j++)
+      {
+         const Real tau = j->first;
+         const Real datum = j->second;
+         const Dtime t (epoch.t + tau);
+         o << "TRACK " << id << " " << tau << " "
+           << element << " " << datum << endl;
+      }   
+
+   }   
+
+   o.flags (orig_flags);
+
+}
+
 ostream&
-denise::operator<< (ostream &o,
+denise::operator<< (ostream& o,
                     const Track& track)
 {
 
@@ -4131,7 +4168,7 @@ denise::operator<< (ostream &o,
          if (j != track_data.begin ()) { o << ", "; }
          const Real tau = j->first;
          const Real datum = j->second;
-         o << Dtime (track.dtime.t + tau) << ":" << datum;
+         o << Dtime (track.epoch.t + tau) << ":" << datum;
       }   
 
       o << " }";
@@ -4142,6 +4179,64 @@ denise::operator<< (ostream &o,
 
 }
 
+Track_Map::Track_Map ()
+{
+}
+
+Track_Map::Track_Map (igzstream& i)
+{
+   ingest (i);
+}
+
+void
+Track_Map::ingest (igzstream& i)
+{
+
+   for (Dstring is; getline (i, is); )
+   {
+
+      const Tokens tokens (is, " ");
+      const Dstring& id = tokens[1];
+
+      if (tokens[0].get_upper_case () != "TRACK") { continue; }
+
+      Track_Map::iterator iter = find (id);
+      if (iter == end ()) { iter = insert (make_pair (id, Track ())).first; }
+      Track& track = iter->second;
+      
+      if (tokens[2] == "epoch")
+      {
+         const Dtime epoch (tokens[3]);
+         track.set_epoch (epoch);
+      }
+      else
+      {
+         const Real tau = stof (tokens[2]);
+         const Dstring& element = tokens[3];
+         const Real datum = stof (tokens[4]);
+         track.add (element, tau, datum);
+      }
+
+   }
+
+   for (auto iterator = begin (); iterator != end (); iterator++)
+   {
+      Track& track = iterator->second;
+      track.okay ();
+   }
+
+}
+
+void
+Track_Map::write (ostream& o) const
+{
+   for (auto iterator = begin (); iterator != end (); iterator++)
+   {
+      const Dstring& id = iterator->first;
+      const Track& track = iterator->second;
+      track.write (o, id);
+   }
+}
 
 Geodetic_Mesh::Geodetic_Mesh (const Size_2D& size_2d,
                               const Domain_2D& domain_2d)
