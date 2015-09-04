@@ -122,6 +122,16 @@ namespace denise
 
    };
 
+   class Hko_Best_Tracks : public Tc_Track_Map
+   {
+
+      public:
+
+         void
+         ingest (const Dstring& file_path);
+
+   };
+
    class Jma_Best_Tracks : public Tc_Track_Map
    {
 

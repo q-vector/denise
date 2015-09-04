@@ -189,6 +189,49 @@ Tc_Track_Map::insert (const Dstring& id,
 }
 
 void
+Hko_Best_Tracks::ingest (const Dstring& file_path)
+{
+
+   igzstream file (file_path);
+   Tc_Track_Map::iterator i = end ();
+
+   Dstring this_name ("");
+   Integer year_id = 1;
+
+   for (Dstring is; getline (file, is); )
+   {
+
+      const Tokens tokens (is, ":");
+      const Dstring& name = tokens[0];
+      const Dtime dtime (tokens[1]);
+
+      if (name != this_name)
+      {
+         if (i != end ()) { i->second.okay (); }
+         const Integer yyyy = dtime.get_yeaer ();
+         const Dstring& id = Dstring::render ("%04d%02d", yyyy, year_id);
+         i = insert (id, Tc_Track (name));
+      }
+
+      Tc_Track& tc_track = i->second;
+
+      const Real latitude = stof (tokens[2]);
+      const Real longitude = stof (tokens[3]);
+      const Real max_wind = stof (tokens[4]);
+      const Real pressure = stof (tokens[5]);
+
+      tc_track.add ("latitude", dtime.t, latitude);
+      tc_track.add ("longitude", dtime.t, longitude);
+      tc_track.add ("pressure", dtime.t, pressure);
+      tc_track.add ("max_wind", dtime.t, max_wind);
+
+   }
+
+   file.close ();
+
+}
+
+void
 Jma_Best_Tracks::ingest (const Dstring& file_path)
 {
 

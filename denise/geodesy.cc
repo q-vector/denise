@@ -4041,9 +4041,9 @@ void
 Track::okay ()
 {
    const set<Dstring>& s = cubic_tokens.get_set ();
-   for (auto iterator = s.begin (); iterator != s.end (); iterator++)
+   for (auto iterator = begin (); iterator != end (); iterator++)
    {
-      const Dstring& element = *(iterator);
+      const Dstring& element = iterator->first;
       const bool cubic = (s.find (element) != s.end ());
       at (element).okay (cubic);
    }
