@@ -382,15 +382,13 @@ Octa::Octa (const Octa::Number octa_number,
 
 Wind::Wind (const Real u,
             const Real v)
+   : Motion (u, v)
 {
-   this->u = u;
-   this->v = v;
 }
 
 Wind::Wind (const Wind& wind)
+   : Motion (wind)
 {
-   this->u = wind.u;
-   this->v = wind.v;
 }
 
 Wind
@@ -413,9 +411,9 @@ Wind::set_from_direction_speed (const Real direction,
 void
 Wind::normalize (const Real magnitude)
 {
-   Real speed = get_speed ();
-   this->u *= (magnitude / speed);
-   this->v *= (magnitude / speed);
+   const Real multiplier = magnitude / get_speed ();
+   this->u *= multiplier;
+   this->v *= multiplier;
 }
 
 void
@@ -567,12 +565,6 @@ Wind::get_direction_string (const Integer n,
 
 }
 
-Real
-Wind::get_speed () const
-{
-   return sqrt (u*u + v*v);
-}
-
 bool
 Wind::is_naw () const
 {
@@ -615,58 +607,6 @@ Wind::get_category_string (const Wind::Category category)
       case STORM:     return "Storm";     break;
       case HURRICANE: return "Hurricane"; break;
    }
-}
-
-Wind
-Wind::operator + (const Wind& wind) const
-{
-   return Wind (u + wind.u, v + wind.v);
-}
-
-void
-Wind::operator += (const Wind& wind)
-{
-   u += wind.u;
-   v += wind.v;
-}
-
-Wind
-Wind::operator - (const Wind& wind) const
-{
-   return Wind (u - wind.u, v - wind.v);
-}
-
-void
-Wind::operator -= (const Wind& wind)
-{
-   u -= wind.u;
-   v -= wind.v;
-}
-
-Wind
-Wind::operator * (const Real a) const
-{
-   return Wind (a * u, a * v);
-}
-
-void
-Wind::operator *= (const Real a)
-{
-   u *= a;
-   v *= a;
-}
-
-Wind
-Wind::operator / (const Real a) const
-{
-   return Wind (a / u, a / v);
-}
-
-void
-Wind::operator /= (const Real a)
-{
-   u /= a;
-   v /= a;
 }
 
 void

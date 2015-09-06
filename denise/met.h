@@ -234,7 +234,7 @@ namespace denise
    };
 
    /// Wind with m/s as unit
-   class Wind
+   class Wind : public Motion
    {
 
       public:
@@ -251,14 +251,6 @@ namespace denise
             STORM,
             HURRICANE
          };
-
-         /// u-component
-         Real
-         u;
-
-         /// v-component
-         Real
-         v;
 
          /// Constructor
          Wind (const Real u = 0,
@@ -307,10 +299,6 @@ namespace denise
          Dstring
          get_direction_string (const Integer n = 16,
                                const Dstring& format = "") const;
-
-         /// Returns speed of Wind
-         Real
-         get_speed () const;
 
          bool
          is_naw () const;

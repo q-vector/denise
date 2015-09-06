@@ -60,6 +60,61 @@ namespace denise
       LAT_LONG_PACIFIC
    };
 
+   class Motion
+   {
+
+      public:
+
+         Real
+         u;
+
+         Real
+         v;
+
+         Motion (const Real u = 0,
+                 const Real v = 0);
+
+         Motion (const Motion& motion);
+
+         static Motion
+         direction_speed (const Real direction,
+                          const Real speed);
+
+         virtual void
+         set_from_direction_speed (const Real direction,
+                                   const Real speed);
+         virtual Real
+         get_direction () const;
+
+         Real
+         get_speed () const;
+
+         Motion
+         operator+ (const Motion& motion) const;
+
+         void
+         operator+= (const Motion& motion);
+
+         Motion
+         operator- (const Motion& motion) const;
+
+         void
+         operator-= (const Motion& motion);
+
+         Motion
+         operator* (const Real a) const;
+
+         void
+         operator*= (const Real a);
+
+         Motion
+         operator/ (const Real a) const;
+
+         void
+         operator/= (const Real a);
+
+   };
+
    /// Represents the Geodesy.
    ///
    /// This is an ellipsoidal geodesy model.  The calculations
@@ -1484,6 +1539,10 @@ namespace denise
          get_datum (const Real tau,
                     const bool forbid_extrapolate) const;
 
+         Real
+         get_dt (const Real tau,
+                 const bool forbid_extrapolate) const;
+
          Domain_1D
          get_domain_1d (const Real dt = 0.1) const;
 
@@ -1568,6 +1627,9 @@ namespace denise
          void
          okay ();
 
+         void
+         okay (const Dstring& element);
+
          Lat_Long
          get_lat_long (const Dtime& dtime,
                        const bool forbid_extrapolate = true) const;
@@ -1575,6 +1637,14 @@ namespace denise
          Lat_Long
          get_lat_long (const Real tau,
                        const bool forbid_extrapolate = true) const;
+
+         Motion
+         get_motion (const Dtime& dtime,
+                     const bool forbid_extrapolate = true) const;
+
+         Motion
+         get_motion (const Real tau,
+                     const bool forbid_extrapolate = true) const;
 
          Real
          get_datum (const Dstring& element,

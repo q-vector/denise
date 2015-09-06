@@ -24,6 +24,101 @@
 using namespace std;
 using namespace denise;
 
+Motion::Motion (const Real u,
+                const Real v)
+   : u (u),
+     v (v)
+{
+}
+
+Motion::Motion (const Motion& motion)
+   : u (motion.u),
+     v (motion.v)
+{
+}
+
+Motion
+Motion::direction_speed (const Real direction,
+                         const Real speed)
+{
+   const Real u = speed * sin (direction * DEGREE_TO_RADIAN);
+   const Real v = speed * cos (direction * DEGREE_TO_RADIAN);
+   return Motion (u, v);
+}
+
+void
+Motion::set_from_direction_speed (const Real direction,
+                                  const Real speed)
+{
+   u = speed * sin (direction * DEGREE_TO_RADIAN);
+   v = speed * cos (direction * DEGREE_TO_RADIAN);
+}
+
+Real
+Motion::get_direction () const
+{
+   if (u == 0 && v == 0) { return 0; }
+   return fmod (atan2 (u, v) * RADIAN_TO_DEGREE + 360, 360);
+}
+
+Real
+Motion::get_speed () const
+{
+   return sqrt (u*u + v*v);
+}
+
+Motion
+Motion::operator+ (const Motion& motion) const
+{
+   return Motion (u + motion.u, v + motion.v);
+}
+
+void
+Motion::operator+= (const Motion& motion)
+{
+   u += motion.u;
+   v += motion.v;
+}
+
+Motion
+Motion::operator- (const Motion& motion) const
+{
+   return Motion (u - motion.u, v - motion.v);
+}
+
+void
+Motion::operator-= (const Motion& motion)
+{
+   u -= motion.u;
+   v -= motion.v;
+}
+
+Motion
+Motion::operator* (const Real a) const
+{
+   return Motion (u * a, v * a);
+}
+
+void
+Motion::operator*= (const Real a)
+{
+   u *= a;
+   v *= a;
+}
+
+Motion
+Motion::operator/ (const Real a) const
+{
+   return Motion (u * a, v * a);
+}
+
+void
+Motion::operator/= (const Real a)
+{
+   u /= a;
+   v /= a;
+}
+
 Real
 Geodesy::asin (const Real sine)
 {
@@ -3873,6 +3968,22 @@ Track_Data::get_datum (const Real tau,
 
 }
 
+Real
+Track_Data::get_dt (const Real tau,
+                    const bool forbid_extrapolate) const
+{
+
+   if (forbid_extrapolate)
+   {
+      const Real start_tau = begin ()->first;
+      const Real end_tau = rbegin ()->first;
+      if (tau < start_tau || tau > end_tau) { return GSL_NAN; }
+   }
+
+   return spline_ptr->evaluate (tau, DX) / 3600;
+
+}
+
 Domain_1D
 Track_Data::get_domain_1d (const Real dt) const
 {
@@ -4041,13 +4152,19 @@ Track::add (const Dstring& element,
 void
 Track::okay ()
 {
-   const set<Dstring>& s = cubic_tokens.get_set ();
    for (auto iterator = begin (); iterator != end (); iterator++)
    {
       const Dstring& element = iterator->first;
-      const bool cubic = (s.find (element) != s.end ());
-      at (element).okay (cubic);
+      okay (element);
    }
+}
+
+void
+Track::okay (const Dstring& element)
+{
+   const set<Dstring>& s = cubic_tokens.get_set ();
+   const bool cubic = (s.find (element) != s.end ());
+   at (element).okay (cubic);
 }
 
 Lat_Long
@@ -4065,6 +4182,23 @@ Track::get_lat_long (const Real tau,
    const Real latitude = at ("latitude").get_datum (tau, forbid_extrapolate);
    const Real longitude = at ("longitude").get_datum (tau, forbid_extrapolate);
    return Lat_Long (latitude, longitude);
+}
+
+Motion
+Track::get_motion (const Dtime& dtime,
+                   const bool forbid_extrapolate) const
+{
+   const Real tau = (dtime.t - epoch.t);
+   return get_motion (tau, forbid_extrapolate);
+}
+
+Motion
+Track::get_motion (const Real tau,
+                   const bool forbid_extrapolate) const
+{
+   const Real u = at ("latitude").get_dt (tau, forbid_extrapolate);
+   const Real v = at ("longitude").get_dt (tau, forbid_extrapolate);
+   return Motion (u * LATITUDE_LENGTH, v * LATITUDE_LENGTH);
 }
 
 Real
