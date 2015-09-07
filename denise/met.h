@@ -100,6 +100,7 @@ namespace denise
       BRUNT_VAISALA,
       SCORER_PARAMETER,
       Q_TENDENCY,
+      Q_L_TENDENCY,
       Q_ADVECTION,
       Q_H_ADVECTION,
       Q_V_ADVECTION,
