@@ -4313,17 +4313,17 @@ denise::operator<< (ostream& o,
 
 }
 
-Track_Map::Track_Map ()
+Track::Map::Map ()
 {
 }
 
-Track_Map::Track_Map (igzstream& i)
+Track::Map::Map (igzstream& i)
 {
    ingest (i);
 }
 
 void
-Track_Map::ingest (igzstream& i)
+Track::Map::ingest (igzstream& i)
 {
 
    for (Dstring is; getline (i, is); )
@@ -4334,7 +4334,7 @@ Track_Map::ingest (igzstream& i)
 
       if (tokens[0].get_upper_case () != "TRACK") { continue; }
 
-      Track_Map::iterator iter = find (id);
+      Track::Map::iterator iter = find (id);
       if (iter == end ()) { iter = insert (make_pair (id, Track ())).first; }
       Track& track = iter->second;
       
@@ -4362,7 +4362,7 @@ Track_Map::ingest (igzstream& i)
 }
 
 void
-Track_Map::write (ostream& o) const
+Track::Map::write (ostream& o) const
 {
    for (auto iterator = begin (); iterator != end (); iterator++)
    {

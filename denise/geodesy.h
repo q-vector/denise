@@ -1671,28 +1671,28 @@ namespace denise
          operator<< (ostream& o,
                      const Track& track);
 
+         class Map : public map<Dstring, Track>
+         {
+
+            public:
+
+               Map ();
+
+               Map (igzstream& i);
+
+               void
+               ingest (igzstream& i);
+
+               void
+               write (ostream& o) const;
+
+         };
+
    };
 
    ostream&
    operator<< (ostream &out,
                const Track& track);
-
-   class Track_Map : public map<Dstring, Track>
-   {
-
-      public:
-
-         Track_Map ();
-
-         Track_Map (igzstream& i);
-
-         void
-         ingest (igzstream& i);
-
-         void
-         write (ostream& o) const;
-
-   };
 
    class Geodetic_Cairoable
    {
