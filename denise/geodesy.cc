@@ -4196,8 +4196,8 @@ Motion
 Track::get_motion (const Real tau,
                    const bool forbid_extrapolate) const
 {
-   const Real u = at ("latitude").get_dt (tau, forbid_extrapolate);
-   const Real v = at ("longitude").get_dt (tau, forbid_extrapolate);
+   const Real v = at ("latitude").get_dt (tau, forbid_extrapolate);
+   const Real u = at ("longitude").get_dt (tau, forbid_extrapolate);
    return Motion (u * LATITUDE_LENGTH, v * LATITUDE_LENGTH);
 }
 
