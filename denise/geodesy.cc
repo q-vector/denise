@@ -4052,21 +4052,21 @@ Track::get_epoch () const
 Dtime
 Track::get_dtime (const Real tau) const
 {
-   return Dtime (epoch.t + tau);
+   return Dtime (epoch.t + tau, false);
 }
 
 Dtime
 Track::get_start_time () const
 {
    const Real start_tau = get_start_tau ();
-   return Dtime (epoch.t + start_tau);
+   return Dtime (epoch.t + start_tau, false);
 }
 
 Dtime
 Track::get_end_time () const
 {
    const Real end_tau = get_end_tau ();
-   return Dtime (epoch.t + end_tau);
+   return Dtime (epoch.t + end_tau, false);
 }
 
 Real
