@@ -4198,7 +4198,9 @@ Track::get_motion (const Real tau,
 {
    const Real v = at ("latitude").get_dt (tau, forbid_extrapolate);
    const Real u = at ("longitude").get_dt (tau, forbid_extrapolate);
-   return Motion (u * LATITUDE_LENGTH, v * LATITUDE_LENGTH);
+   const Real latitude = at ("latitude").get_datum (tau, forbid_extrapolate);
+   const Real c = cos (latitude * DEGREE_TO_RADIAN);
+   return Motion (u * LATITUDE_LENGTH * c, v * LATITUDE_LENGTH);
 }
 
 Real
