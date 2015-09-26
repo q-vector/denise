@@ -1335,9 +1335,10 @@ namespace denise
 
       public:
 
-         Symbol ();
+	 Symbol (const Real size = GSL_NAN);
 
-         Symbol (const Real size);
+         static Symbol
+         instance (const Dstring& str);
 
          void
          add_circle (const bool new_handle,
@@ -1376,7 +1377,7 @@ namespace denise
 
       public:
 
-         Ring (const Real size);
+         Ring (const Real size = GSL_NAN);
 
    };
 
@@ -1392,8 +1393,8 @@ namespace denise
 
       public:
 
-         Arrow (const Real theta,
-                const Real size,
+         Arrow (const Real theta = GSL_NAN,
+                const Real size = GSL_NAN,
                 const Real width_ratio = GSL_NAN);
 
          Arrow (const Point_2D& point_from,
@@ -1423,8 +1424,8 @@ namespace denise
 
       public:
 
-         Cross (const Real size,
-                const Real width = 1);
+         Cross (const Real size = GSL_NAN,
+                const Real width = GSL_NAN);
 
    };
 
@@ -1433,8 +1434,8 @@ namespace denise
 
       public:
 
-         Plus (const Real size,
-               const Real width = 1);
+         Plus (const Real size = GSL_NAN,
+               const Real width = GSL_NAN);
 
    };
 
@@ -1443,8 +1444,8 @@ namespace denise
 
       public:
 
-         Tee (const Real size,
-              const Real width = 1);
+         Tee (const Real size = GSL_NAN,
+              const Real width = GSL_NAN);
 
    };
 
@@ -1453,7 +1454,7 @@ namespace denise
 
       public:
 
-         Square (const Real size);
+         Square (const Real size = GSL_NAN);
 
    };
 
@@ -1462,8 +1463,8 @@ namespace denise
 
       public:
 
-         Triangle (const Real size,
-                   const Real angle = 0);
+         Triangle (const Real size = GSL_NAN,
+                   const Real angle = GSL_NAN);
 
    };
 
@@ -1472,7 +1473,7 @@ namespace denise
 
       public:
 
-         Star (const Real size);
+         Star (const Real size = GSL_NAN);
 
    };
 
@@ -1481,7 +1482,7 @@ namespace denise
 
       public:
 
-         Bowtie (const Real size);
+         Bowtie (const Real size = GSL_NAN);
 
    };
 
@@ -1490,7 +1491,7 @@ namespace denise
 
       public:
 
-         Cat_Head (const Real size);
+         Cat_Head (const Real size = GSL_NAN);
 
    };
 

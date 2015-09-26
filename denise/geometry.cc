@@ -3995,14 +3995,84 @@ Segment::Segment (const Point_2D& point,
 
 }
 
-Symbol::Symbol ()
-        : size (0)
+Symbol::Symbol (const Real size)
+   : size (gsl_finite (size) ? size : 4)
 {
 }
 
-Symbol::Symbol (const Real size)
-        : size (size)
+Symbol
+Symbol::instance (const Dstring& str)
 {
+
+   const Tokens tokens (str.get_lower_case (), ":");
+   const Integer n = tokens.size ();
+
+   if (tokens[0] == "ring")
+   {
+      const Real size = (n > 1 ? stof (tokens[1]) : GSL_NAN);
+      return Ring (size);
+   }
+   else
+   if (tokens[0] == "arrow")
+   {
+      const Real theta       = (n > 1 ? stof (tokens[1]) : GSL_NAN);
+      const Real size        = (n > 2 ? stof (tokens[2]) : GSL_NAN);
+      const Real width_ratio = (n > 3 ? stof (tokens[3]) : GSL_NAN);
+      return Arrow (theta, size, width_ratio);
+   }
+   else
+   if (tokens[0] == "cross")
+   {
+      const Real size  = (n > 1 ? stof (tokens[1]) : GSL_NAN);
+      const Real width = (n > 2 ? stof (tokens[2]) : GSL_NAN);
+      return Cross (size, width);
+   }
+   else
+   if (tokens[0] == "plus")
+   {
+      const Real size  = (n > 1 ? stof (tokens[1]) : GSL_NAN);
+      const Real width = (n > 2 ? stof (tokens[2]) : GSL_NAN);
+      return Plus (size, width);
+   }
+   else
+   if (tokens[0] == "tee")
+   {
+      const Real size  = (n > 1 ? stof (tokens[1]) : GSL_NAN);
+      const Real width = (n > 2 ? stof (tokens[2]) : GSL_NAN);
+      return Tee (size, width);
+   }
+   else
+   if (tokens[0] == "square")
+   {
+      const Real size  = (n > 1 ? stof (tokens[1]) : GSL_NAN);
+      return Square (size);
+   }
+   else
+   if (tokens[0] == "triangle")
+   {
+      const Real size  = (n > 1 ? stof (tokens[1]) : GSL_NAN);
+      const Real angle = (n > 2 ? stof (tokens[2]) : GSL_NAN);
+      return Triangle (size, angle);
+   }
+   else
+   if (tokens[0] == "star")
+   {
+      const Real size = (n > 1 ? stof (tokens[1]) : GSL_NAN);
+      return Star (size);
+   }
+   else
+   if (tokens[0] == "bowtie")
+   {
+      const Real size = (n > 1 ? stof (tokens[1]) : GSL_NAN);
+      return Bowtie (size);
+   }
+   else
+   if (tokens[0] == "cat_head")
+   {
+      const Real size = (n > 1 ? stof (tokens[1]) : GSL_NAN);
+      return Cat_Head (size);
+   }
+
 }
 
 void
@@ -4097,7 +4167,7 @@ Arrow::init (const Real theta,
    Real thetas[7];
 
    const Real s = size / 2;
-   const Real w = (!gsl_finite (width_ratio) ? size / 6 : size * width_ratio);
+   const Real w = size * width_ratio;
 
    thetas[0] = 0;
    thetas[1] = atan2 (2 * w, s - 3 * w);
@@ -4133,7 +4203,10 @@ Arrow::Arrow (const Real theta,
               const Real width_ratio)
     : Symbol (size)
 {
-   init (theta, size, width_ratio);
+   const Real t = gsl_finite (theta) ? t : 0;
+   const Real s = this->size;
+   const Real wr = gsl_finite (width_ratio) ? width_ratio : 0.1667;
+   init (t, s, wr);
 }
 
 Arrow::Arrow (const Point_2D& point_from,
@@ -4188,8 +4261,11 @@ Cross::Cross (const Real size,
     : Symbol (size)
 {
 
-   const Real a = width / M_SQRT1_2;
-   const Real b = size / M_SQRT1_2;
+   const Real s = this->size;
+   const Real w = gsl_finite (width) ? width : 1;
+
+   const Real a = w / M_SQRT1_2;
+   const Real b = s / M_SQRT1_2 / 2;
    const Real c = a + b;
 
    add (Point_2D (0, a));
@@ -4215,8 +4291,11 @@ Plus::Plus (const Real size,
   : Symbol (size)
 {
 
-   const Real a = width / 2;
-   const Real b = size;
+   const Real s = this->size;
+   const Real w = gsl_finite (width) ? width : 1;
+
+   const Real a = w / 2;
+   const Real b = s;
 
    add (Point_2D (a, b));
    add (Point_2D (a, a));
@@ -4241,8 +4320,11 @@ Tee::Tee (const Real size,
   : Symbol (size)
 {
 
-   const Real a = width / 2;
-   const Real b = size;
+   const Real s = this->size;
+   const Real w = gsl_finite (width) ? width : 1;
+
+   const Real a = w / 2;
+   const Real b = s;
 
    add (Point_2D (a, b));
    add (Point_2D (a, a));
@@ -4260,10 +4342,11 @@ Tee::Tee (const Real size,
 Square::Square (const Real size)
       : Symbol (size)
 {
-   add (Point_2D (-size, -size));
-   add (Point_2D (-size, size));
-   add (Point_2D (size, size));
-   add (Point_2D (size, -size));
+   const Real s = this->size;
+   add (Point_2D (-s, -s));
+   add (Point_2D (-s, s));
+   add (Point_2D (s, s));
+   add (Point_2D (s, -s));
 }
 
 Triangle::Triangle (const Real size,
@@ -4271,13 +4354,16 @@ Triangle::Triangle (const Real size,
    : Symbol (size)
 {
 
+   const Real s = this->size;
+   const Real an = gsl_finite (angle) ? angle : M_PI_2;
+
    const Real d_theta = M_2_TIMES_PI / 3;
 
    for (Integer i = 0; i < 3; i++)
    {
-      const Real theta = angle + i * d_theta;
-      const Real x = size * cos (theta);
-      const Real y = size * sin (theta);
+      const Real theta = an + i * d_theta;
+      const Real x = s * cos (theta);
+      const Real y = s * sin (theta);
       add (Point_2D (x, y));
    }
 
@@ -4286,6 +4372,8 @@ Triangle::Triangle (const Real size,
 Star::Star (const Real size)
    : Symbol (size)
 {
+
+   const Real s = this->size;
 
    const Real radian_036 = 36 * DEGREE_TO_RADIAN;
    const Real radian_072 = 72 * DEGREE_TO_RADIAN;
@@ -4297,19 +4385,19 @@ Star::Star (const Real size)
    const Real O_951 = sin (radian_072);
    const Real O_788 = sin (radian_128);
 
-   const Real size_l = size;
-   const Real size_s = size * O_788 / O_309;
+   const Real size_s = s * O_309 / O_788;
+   const Real size_l = s;
 
-   add (Point_2D (0, size_l));
-   add (Point_2D (size_s * O_587, size_s * O_809));
-   add (Point_2D (size_l * O_951, size_l * O_309));
-   add (Point_2D (size_s * O_951, -size_s * O_309));
-   add (Point_2D (size_l * O_587, -size_l * O_809));
-   add (Point_2D (0, -size_s));
-   add (Point_2D (-size_l * O_587, -size_l * O_809));
-   add (Point_2D (-size_s * O_951, -size_s * O_309));
-   add (Point_2D (-size_l * O_951, size_l * O_309));
-   add (Point_2D (-size_s * O_587, size_s * O_809));
+   add (Point_2D (0, size_s));
+   add (Point_2D (size_l * O_587, size_l * O_809));
+   add (Point_2D (size_s * O_951, size_s * O_309));
+   add (Point_2D (size_l * O_951, -size_l * O_309));
+   add (Point_2D (size_s * O_587, -size_s * O_809));
+   add (Point_2D (0, -size_l));
+   add (Point_2D (-size_s * O_587, -size_s * O_809));
+   add (Point_2D (-size_l * O_951, -size_l * O_309));
+   add (Point_2D (-size_s * O_951, size_s * O_309));
+   add (Point_2D (-size_l * O_587, size_l * O_809));
 
 }
 
@@ -4317,7 +4405,7 @@ Bowtie::Bowtie (const Real size)
    : Symbol (size)
 {
 
-   const Real s = size / M_SQRT2;
+   const Real s = this->size / M_SQRT2;
 
    add (Point_2D (s, -s));
    add (Point_2D (s, s));
@@ -4336,7 +4424,8 @@ Cat_Head::Cat_Head (const Real size)
    const Real c = 10;
    const Real d = 28;
 
-   const Real scale = size / a;
+   const Real s = this->size;
+   const Real scale = s / a;
 
    const Real aa = a*a;
    const Real bb = b*b;
