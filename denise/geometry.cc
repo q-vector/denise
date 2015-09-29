@@ -4203,7 +4203,7 @@ Arrow::Arrow (const Real theta,
               const Real width_ratio)
     : Symbol (size)
 {
-   const Real t = gsl_finite (theta) ? t : 0;
+   const Real t = gsl_finite (theta) ? theta : 0;
    const Real s = this->size;
    const Real wr = gsl_finite (width_ratio) ? width_ratio : 0.1667;
    init (t, s, wr);
