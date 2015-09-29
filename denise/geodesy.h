@@ -616,7 +616,7 @@ namespace denise
          Journey::iterator
          get_iterator (const Transform_2D& transform,
                        const Point_2D& point_2d,
-                       const Geodesy& geodesy = Geodesy (),
+                       const Geodesy& geodesy,
                        const Real threshold,
                        const Real standard_longitude = 0,
                        const Real d_distance = 100e3,
@@ -625,7 +625,7 @@ namespace denise
          Journey::const_iterator
          get_iterator (const Transform_2D& transform,
                        const Point_2D& point_2d,
-                       const Geodesy& geodesy = Geodesy (),
+                       const Geodesy& geodesy,
                        const Real threshold,
                        const Real standard_longitude = 0,
                        const Real d_distance = 100e3,
@@ -634,7 +634,7 @@ namespace denise
          Journey::iterator
          implant (const Transform_2D& transform,
                   const Point_2D& point_2d,
-                  const Geodesy& geodesy = Geodesy (),
+                  const Geodesy& geodesy,
                   const Real threshold,
                   const Real standard_longitude = 0,
                   const Real d_distance = 100e3,
