@@ -2594,6 +2594,10 @@ namespace denise
                       const Point_2D& point_b,
                       const Real node_size = 8);
 
+               Route (const Integer id,
+                      const Simple_Polyline& simple_polyline,
+                      const Real node_size = 8);
+
                virtual bool
                is_too_short () const;
 
@@ -2821,6 +2825,11 @@ namespace denise
                               const Point_2D& point_b,
                               const Real node_size = 8);
 
+               virtual Console_2D::Route*
+               new_route_ptr (const Integer id,
+                              const Simple_Polyline& simple_polyline,
+                              const Real node_size = 8);
+
             public:
 
                Route_Store ();
@@ -2846,6 +2855,9 @@ namespace denise
                virtual Integer
                insert (const Point_2D& point_a,
                        const Point_2D& point_b);
+
+               virtual Integer
+               insert (const Simple_Polyline& simple_polyline);
 
                virtual bool
                button_1_pressed (Console_2D& console_2d,
@@ -3303,6 +3315,11 @@ namespace denise
                               const Point_2D& point_b,
                               const Real node_size = 8);
 
+               Console_2D::Route*
+               new_route_ptr (const Integer id,
+                              const Simple_Polyline& simple_polyline,
+                              const Real node_size = 8);
+
          };
 
       protected:
@@ -3363,6 +3380,10 @@ namespace denise
                Route (const Integer id,
                       const Point_2D& point_a,
                       const Point_2D& point_b,
+                      const Real node_size = 8);
+
+               Route (const Integer id,
+                      const Simple_Polyline& simple_polyline,
                       const Real node_size = 8);
 
                virtual bool

@@ -519,23 +519,23 @@ namespace denise
                get_azimuth_backward () const;
 
                Lat_Long
-               get_middle_lat_long (const Geodesy& geodesy);
+               get_middle_lat_long (const Geodesy& geodesy = Geodesy ());
 
                Lat_Long
                get_lat_long (const Real fraction,
-                             const Geodesy& geodesy);
+                             const Geodesy& geodesy = Geodesy ());
 
                void
                fill_lat_long_list (list<Lat_Long>& lat_long_list,
                                    const Real approx_d,
                                    const Integer max_n_per_leg,
                                    const bool first_leg,
-                                   const Geodesy& geodesy) const;
+                                   const Geodesy& geodesy = Geodesy ()) const;
 
                list<Lat_Long>*
                get_lat_long_list_ptr (const Real approx_d,
                                       const Integer max_n_per_leg,
-                                      const Geodesy& geodesy) const;
+                                      const Geodesy& geodesy = Geodesy ()) const;
 
          };
 
@@ -574,7 +574,7 @@ namespace denise
 
          Journey::Simple
          get_simple_journey (const Real x,
-                             const Geodesy& geodesy) const;
+                             const Geodesy& geodesy = Geodesy ()) const;
 
          Journey::Simple
          get_simple_journey (Journey::iterator iterator) const;
@@ -583,31 +583,31 @@ namespace denise
          get_simple_journey (Journey::const_iterator iterator) const;
 
          Real
-         get_distance (const Geodesy& geodesy) const;
+         get_distance (const Geodesy& geodesy = Geodesy ()) const;
 
          Tuple
-         get_tuple_x (const Geodesy& geodesy) const;
+         get_tuple_x (const Geodesy& geodesy = Geodesy ()) const;
 
          Lat_Long
          get_lat_long (const Real x,
-                       const Geodesy& geodesy) const;
+                       const Geodesy& geodesy = Geodesy ()) const;
 
          Lat_Long::List
-         get_lat_long_list (const Geodesy& geodesy,
+         get_lat_long_list (const Geodesy& geodesy = Geodesy (),
                             const Real d_distance = 100e3,
                             const Integer max_n = 50) const;
 
          Real
          get_azimuth_forward (const Real x,
-                              const Geodesy& geodesy) const;
+                              const Geodesy& geodesy = Geodesy ()) const;
 
          Real
          get_azimuth_forward (Journey::const_iterator iterator,
-                              const Geodesy& geodesy) const;
+                              const Geodesy& geodesy = Geodesy ()) const;
 
          Real
          get_azimuth_forward (Journey::iterator iterator,
-                              const Geodesy& geodesy) const;
+                              const Geodesy& geodesy = Geodesy ()) const;
 
          void
          cairo (const RefPtr<Context> cr,
