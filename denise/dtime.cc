@@ -30,6 +30,7 @@ Dtime::init (const Dstring& time_string,
              bool is_local)
 {
 
+   if (time_string == "") { this->t = Real (time (NULL)) / 3600; return; }
    if (time_string == "big_bang") { this->t = GSL_NEGINF; return; }
    if (time_string == "big_crunch") { this->t = GSL_POSINF; return; }
    if (time_string == "nat") { this->t = GSL_NAN; return; }
