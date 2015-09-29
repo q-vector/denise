@@ -6220,6 +6220,20 @@ Console_2D::Route::Route (const Integer id,
    push_back (point_b);
 }
 
+Console_2D::Route::Route (const Integer id,
+                          const Simple_Polyline& simple_polyline,
+                          const Real node_size)
+   : Hud (id, node_size),
+     origin (GSL_NAN, GSL_NAN)
+{
+   for (auto iterator = simple_polyline.begin ();
+        iterator != simple_polyline.end (); iterator++)
+   {
+      const Point_2D& point = *(iterator);
+      push_back (point);
+   }
+}
+
 bool
 Console_2D::Route::is_too_short () const
 {
@@ -6793,6 +6807,14 @@ Console_2D::Route_Store::new_route_ptr (const Integer id,
    return new Console_2D::Route (id, point_a, point_b, node_size);
 }
 
+Console_2D::Route*
+Console_2D::Route_Store::new_route_ptr (const Integer id,
+                                        const Simple_Polyline& simple_polyline,
+                                        const Real node_size)
+{
+   return new Console_2D::Route (id, simple_polyline, node_size);
+}
+
 Console_2D::Route_Store::Route_Store ()
    : dummy (-2),
      node (dummy.end ())
@@ -6863,7 +6885,19 @@ Console_2D::Route_Store::insert (const Point_2D& point_a,
    Hud_Store::insert (id, route_ptr);
 
    // node should still be dummy.end () becasue the node is inserted already
+   return id;
 
+}
+
+Integer
+Console_2D::Route_Store::insert (const Simple_Polyline& simple_polyline)
+{
+
+   const Integer& id = get_first_available_id ();
+   Route* route_ptr = this->new_route_ptr (id, simple_polyline);
+   Hud_Store::insert (id, route_ptr);
+
+   // node should still be dummy.end () becasue the node is inserted already
    return id;
 
 }
@@ -8456,6 +8490,14 @@ Map_Console::Route_Store::new_route_ptr (const Integer id,
    return new Map_Console::Route (id, point_a, point_b, node_size);
 }
 
+Console_2D::Route*
+Map_Console::Route_Store::new_route_ptr (const Integer id,
+                                         const Simple_Polyline& simple_polyline,
+                                         const Real node_size)
+{
+   return new Map_Console::Route (id, simple_polyline, node_size);
+}
+
 Map_Console::Route::Route (const Integer id,
                            const Point_2D& point,
                            const Real node_size)
@@ -8468,6 +8510,13 @@ Map_Console::Route::Route (const Integer id,
                            const Point_2D& point_b,
                            const Real node_size)
    : Console_2D::Route (id, point_a, point_b, node_size)
+{
+}
+
+Map_Console::Route::Route (const Integer id,
+                           const Simple_Polyline& simple_polyline,
+                           const Real node_size)
+   : Console_2D::Route (id, simple_polyline, node_size)
 {
 }
 
