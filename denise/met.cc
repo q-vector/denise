@@ -2487,7 +2487,7 @@ Fire::get_gfdi_si (const Real temperature,
                    const Real curing)
 {
    const Real t = temperature - K;
-   const Real rh = Moisture::get_rh (t, dew_point - denise::K);
+   const Real rh = Moisture::get_rh (t, dew_point - denise::K) * 100;
    const Real kph = speed * 3.6;
    return get_gfdi (t, rh, kph, curing);
 }
@@ -2513,7 +2513,7 @@ Fire::get_ffdi_si (const Real temperature,
                    const Real df)
 {
    const Real t = temperature - K;
-   const Real rh = Moisture::get_rh (t, dew_point - denise::K);
+   const Real rh = Moisture::get_rh (t, dew_point - denise::K) * 100;
    const Real kph = speed * 3.6;
    return get_ffdi (t, rh, kph, df);
 }
