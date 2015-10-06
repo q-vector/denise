@@ -450,7 +450,8 @@ namespace denise
                Simple ();
 
                Simple (const Lat_Long& origin,
-                       const Lat_Long& destination);
+                       const Lat_Long& destination,
+                       const bool complete = true);
 
                Simple (const Lat_Long& origin,
                        const Real distance,
@@ -458,12 +459,13 @@ namespace denise
                        const Geodesy& geodesy);
 
                Simple (const Lat_Long& origin,
-                       const Lat_Long& destination,
-                       const Geodesy& geodesy);
+                       const Real distance,
+                       const Real azimuth_forward,
+                       const bool complete = true);
 
                Simple (const Lat_Long& origin,
-                       const Real distance,
-                       const Real azimuth_forward);
+                       const Lat_Long& destination,
+                       const Geodesy& geodesy);
 
                Simple (const Simple& simple_journey);
 

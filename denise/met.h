@@ -1030,10 +1030,22 @@ namespace denise
                    const Real curing = 100);
 
          static Real
+         get_gfdi_si (const Real temperature,
+                      const Real dew_point,
+                      const Real speed,
+                      const Real curing = 100);
+
+         static Real
          get_ffdi (const Real t,
                    const Real rh,
                    const Real kph,
                    const Real df = 10);
+
+         static Real
+         get_ffdi_si (const Real temperature,
+                      const Real dew_point,
+                      const Real speed,
+                      const Real df = 10);
 
    };
 

@@ -940,12 +940,14 @@ Journey::Simple::Simple ()
 }
 
 Journey::Simple::Simple (const Lat_Long& origin,
-                         const Lat_Long& destination)
+                         const Lat_Long& destination,
+                         const bool complete)
    : Edge (origin, destination),
      distance (GSL_NAN),
      azimuth_forward (GSL_NAN),
      azimuth_backward (GSL_NAN)
 {
+   if (complete) { this->complete (); }
 }
 
 Journey::Simple::Simple (const Lat_Long& origin,
@@ -961,12 +963,14 @@ Journey::Simple::Simple (const Lat_Long& origin,
 
 Journey::Simple::Simple (const Lat_Long& origin,
                          const Real distance,
-                         const Real azimuth_forward)
+                         const Real azimuth_forward,
+                         const bool complete)
    : Edge (origin, Point_2D (GSL_NAN, GSL_NAN)),
      distance (distance),
      azimuth_forward (azimuth_forward),
      azimuth_backward (GSL_NAN)
 {
+   if (complete) { this->complete (); }
 }
 
 Journey::Simple::Simple (const Lat_Long& origin,

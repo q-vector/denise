@@ -2480,6 +2480,18 @@ Fire::get_gfdi (const Real t,
 }
 
 Real
+Fire::get_gfdi_si (const Real temperature,
+                   const Real dew_point,
+                   const Real speed,
+                   const Real curing)
+{
+   const Real t = temperature - K;
+   const Real rh = Moisture::get_rh (t, dew_point - K);
+   const Real kph = speed * 3.6;
+   return get_gfdi (t, rh, kph, curing);
+}
+
+Real
 Fire::get_ffdi (const Real t,
                 const Real rh,
                 const Real kph,
@@ -2491,6 +2503,18 @@ Fire::get_ffdi (const Real t,
    const Real d = 0.0338 * t;
    const Real e = 0.0234 * kph;
    return 2 * exp (a + b + c + d + e);
+}
+
+Real
+Fire::get_ffdi_si (const Real temperature,
+                   const Real dew_point,
+                   const Real speed,
+                   const Real df)
+{
+   const Real t = temperature - K;
+   const Real rh = Moisture::get_rh (t, dew_point - K);
+   const Real kph = speed * 3.6;
+   return get_ffdi (t, rh, kph, df);
 }
 
 Level::Level ()
