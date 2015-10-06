@@ -127,7 +127,7 @@ Moisture::get_q_s (const Real t,
                    const Real p,
                    const Thermo_Medium thermo_medium)
 {
-   const Real e_s = get_e_s (thermo_medium);
+   const Real e_s = get_e_s (t, p, thermo_medium);
    const Real epsilon_e_s = epsilon * e_s;
    return (epsilon_e_s) / (p - e_s + epsilon_e_s);
 }
