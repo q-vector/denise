@@ -1240,6 +1240,9 @@ namespace denise
          ~Raster ();
 
          void
+         paint (const Color& color);
+
+         void
          blend_pixel (const Integer i,
                       const Integer j,
                       const Color& color);

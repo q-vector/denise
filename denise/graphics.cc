@@ -2155,6 +2155,19 @@ Raster::~Raster ()
 }
 
 void
+Raster::paint (const Color& color)
+{
+   for (Integer i = 0; i < size_2d.i; i++)
+   {
+      for (Integer j = 0; j < size_2d.j; j++)
+      {
+         set_pixel (i, j, color);
+      }
+   }
+
+}
+
+void
 Raster::blend_pixel (const Integer i,
                      const Integer j,
                      const Color& color)
