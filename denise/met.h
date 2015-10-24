@@ -1067,6 +1067,7 @@ namespace denise
             NIL,
             SURFACE,
             MODEL,
+            MAGL,
             NAL
          };
 

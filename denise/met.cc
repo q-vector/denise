@@ -2572,6 +2572,12 @@ Level::Level (const Dstring& str)
       value = stof (str);
    }
    else
+   if (str.find ("magl") != Dstring::npos)
+   {
+      type = MAGL;
+      value = stof (str);
+   }
+   else
    if (str.find ("hPa") != Dstring::npos)
    {
       type = PRESSURE;
