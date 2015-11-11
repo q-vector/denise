@@ -2566,15 +2566,15 @@ Level::Level (const Dstring& str)
       type = SURFACE;
    }
    else
-   if (str.find ("m") != Dstring::npos)
-   {
-      type = HEIGHT;
-      value = stof (str);
-   }
-   else
    if (str.find ("magl") != Dstring::npos)
    {
       type = MAGL;
+      value = stof (str);
+   }
+   else
+   if (str.find ("m") != Dstring::npos)
+   {
+      type = HEIGHT;
       value = stof (str);
    }
    else
@@ -2796,6 +2796,8 @@ Level::get_string () const
             return Dstring::render ("%.0fhPa", round (value * 1e-2));
          case HEIGHT:
             return Dstring::render ("%.0fm", round (value));
+         case MAGL:
+            return Dstring::render ("%.0fmagl", round (value));
          case MODEL:
             return Dstring::render ("M%.0f", round (value));
          case SCREEN:
