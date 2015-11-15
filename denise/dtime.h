@@ -256,10 +256,18 @@ namespace denise
 
             public: 
 
-               Set (const Dstring& str);
+               Set (const Dstring& str = "");
+
+               Set (const Span& span);
 
                Set (const Dtime& start,
                     const Dtime& end);
+
+               Dtime
+               get_start (const bool snap_to_minute = false) const; 
+
+               Dtime
+               get_end (const bool snap_to_minute = false) const; 
 
                virtual bool
                match (const Dtime& dtime) const;

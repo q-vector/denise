@@ -618,18 +618,6 @@ Dtime::Span::operator > (const Dtime::Span& span) const
    else                         { return start_t > span.start_t; }
 }
 
-bool
-Dtime::Set::match (const Dtime& dtime) const
-{
-   if (size () == 0) { return true; }
-   for (auto iterator = begin (); iterator != end (); iterator++)
-   {
-      const Dtime::Span& span = *(iterator);
-      if (span.match (dtime)) { return true; }
-   }
-   return false;
-}
-
 Dtime::Set::Set (const Dstring& str)
 {
 
@@ -643,10 +631,61 @@ Dtime::Set::Set (const Dstring& str)
 
 }
 
+Dtime::Set::Set (const Dtime::Span& time_span)
+{
+   insert (time_span);
+}
+
 Dtime::Set::Set (const Dtime& start,
                  const Dtime& end)
 {
    insert (Dtime::Span (start, end));
+}
+
+Dtime
+Dtime::Set::get_start (const bool snap_to_minute) const
+{
+
+   Dtime start_time (GSL_POSINF);
+
+   for (auto iterator = begin (); iterator != end (); iterator++)
+   {
+      const Dtime::Span& span = *(iterator);
+      const Dtime& st = span.get_start (snap_to_minute);
+      if (st < start_time) { start_time = st; }
+   }
+
+   return start_time;
+
+}
+
+Dtime
+Dtime::Set::get_end (const bool snap_to_minute) const
+{
+
+   Dtime end_time (GSL_NEGINF);
+
+   for (auto iterator = begin (); iterator != end (); iterator++)
+   {
+      const Dtime::Span& span = *(iterator);
+      const Dtime& et = span.get_end (snap_to_minute);
+      if (et > end_time) { end_time = et; }
+   }
+
+   return end_time;
+
+}
+
+bool
+Dtime::Set::match (const Dtime& dtime) const
+{
+   if (size () == 0) { return true; }
+   for (auto iterator = begin (); iterator != end (); iterator++)
+   {
+      const Dtime::Span& span = *(iterator);
+      if (span.match (dtime)) { return true; }
+   }
+   return false;
 }
 
 namespace denise
