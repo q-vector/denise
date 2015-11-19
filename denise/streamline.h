@@ -41,12 +41,6 @@ namespace denise
       SOURCE_SINK
    };
 
-   enum Integration_Scheme
-   {
-      EULER,
-      RUNGA_KUTTA
-   };
-
 /*
    class Duple_Field_2D
    {
@@ -95,50 +89,6 @@ namespace denise
    };
 
 */
-
-   class Streamliner : public Box_2D
-   {
-
-      protected:
-
-         const Integration_Scheme
-         integration_scheme;
-
-         const Transform_2D&
-         transform;
-
-         const Vector_Data_2D&
-         vector_data_2d;
-
-         const Integer
-         u_index;
-
-         const Integer
-         v_index;
-
-         const Real
-         aspect;
-
-         void
-         step (Point_2D& rk,
-               const Real x,
-               const Real y,
-               const Real h) const;
-
-         void
-         integrate (Point_2D& rk,
-                    const Point_2D& point_2d,
-                    const Real h) const;
-
-         Streamliner (const Box_2D& box_2d,
-                      const Transform_2D& transform,
-                      const Vector_Data_2D& vector_data_2d,
-                      const Integer u_index,
-                      const Integer v_index,
-                      const Integration_Scheme integration_scheme,
-                      const Real aspect = 1);
-
-   };
 
    class Intensity_Data
    {
@@ -212,8 +162,52 @@ namespace denise
 
    };
 
+   class Streamliner : public Box_2D
+   {
+
+      protected:
+
+         const Integration_Scheme
+         integration_scheme;
+
+         const Transform_2D&
+         transform;
+
+         const Vector_Data_2D&
+         vector_data_2d;
+
+         const Integer
+         u_index;
+
+         const Integer
+         v_index;
+
+         const Real
+         aspect;
+
+         void
+         step (Point_2D& delta,
+               const Real x,
+               const Real y,
+               const Real h) const;
+
+         void
+         integrate (Point_2D& next_point,
+                    const Point_2D& point_2d,
+                    const Real h) const;
+
+         Streamliner (const Box_2D& box_2d,
+                      const Transform_2D& transform,
+                      const Vector_Data_2D& vector_data_2d,
+                      const Integer u_index,
+                      const Integer v_index,
+                      const Integration_Scheme integration_scheme,
+                      const Real aspect = 1);
+
+   };
+
    class Lic_Raster : public Raster,
-                      private Streamliner
+                      public Streamliner
    {
 
       private:
@@ -255,9 +249,9 @@ namespace denise
 
       public:
 
-         Lic_Raster (const Transform_2D& transform,
+         Lic_Raster (const Box_2D& box_2d,
+                     const Transform_2D& transform,
                      const Vector_Data_2D& vector_data_2d,
-                     const Box_2D& box_2d,
                      const Integer u_index,
                      const Integer v_index,
                      const bool enhance = false,

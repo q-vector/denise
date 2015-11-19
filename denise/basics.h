@@ -548,6 +548,27 @@ namespace denise
 
    };
 
+   class Vector_2D
+   {
+
+      public:
+
+         Real
+         u;
+
+         Real
+         v;
+
+         Vector_2D (const Real u = 0,
+                    const Real v = 0);
+
+         Vector_2D (const Point_2D& point_2d);
+
+         bool
+         is_nav () const;
+
+   };
+
    /// Extends an STL vector of Real
    ///
    class Tuple : public vector<Real>

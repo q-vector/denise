@@ -4873,6 +4873,91 @@ Scalar_Data_3D::evaluate (const Integer node_z,
       coordinate_x, coordinate_y, evaluate_op);
 }
 
+void
+Uv_Field::step (Point_2D& rk,
+                const Real x,
+                const Real y,
+                const Real h) const
+{
+
+   const Vector_2D& uv = evaluate (x, y);
+   const Real multiplier = h / sqrt (uv.u*uv.u + uv.v*uv.v);
+
+   rk.x = uv.u * multiplier;
+   rk.y = uv.v * multiplier;
+
+}
+
+Uv_Field::Uv_Field ()
+   : vector_data_2d_ptr (NULL),
+     u_index (-1),
+     v_index (-1)
+{
+}
+
+Uv_Field::Uv_Field (const Vector_Data_2D& vector_data_2d,
+                    const Integer u_index,
+                    const Integer v_index)
+   : vector_data_2d_ptr (&vector_data_2d),
+     u_index (u_index),
+     v_index (v_index)
+{
+}
+
+Vector_2D
+Uv_Field::evaluate (const Real x,
+                    const Real y) const
+{
+   return Vector_2D (vector_data_2d_ptr->evaluate (u_index, x, y),
+                     vector_data_2d_ptr->evaluate (v_index, x, y));
+}
+
+void
+Uv_Field::integrate (Point_2D& next_point_2d,
+                     const Point_2D& point_2d,
+                     const Real h,
+                     const Integration_Scheme integration_scheme) const
+{
+
+   switch (integration_scheme)
+   {
+
+      case RUNGA_KUTTA:
+      {
+
+         Point_2D k1, k2, k3, k4;
+
+         step (k1, point_2d.x, point_2d.y, h);
+         step (k2, point_2d.x + k1.x*0.5, point_2d.y + k1.y*0.5, h);
+         step (k3, point_2d.x + k2.x*0.5, point_2d.y + k2.y*0.5, h);
+         step (k4, point_2d.x + k3.x, point_2d.y+k3.y, h);
+
+         next_point_2d.x = (k1.x + k4.x) / 6 + (k2.x + k3.x) / 3 + point_2d.x;
+         next_point_2d.y = (k1.y + k4.y) / 6 + (k2.y + k3.y) / 3 + point_2d.y;
+
+         //Point_2D k5;
+         //step (k5, rk, 1);
+         //Real error_x = (k4.x - k5.x) / 6;
+         //Real error_y = (k4.y - k5.y) / 6;
+         //Real error_estimate = sqrt (error_x*error_x + error_y*error_y);
+
+         break;
+
+      }
+
+      default:
+      case EULER:
+      {
+         step (next_point_2d, point_2d.x, point_2d.y, h);
+         next_point_2d.x += point_2d.x;
+         next_point_2d.y += point_2d.y;
+         break;
+      }
+
+   }
+
+}
+
 Real
 Bezier_Curve::bernstein (const Real t,
                          const Integer k,

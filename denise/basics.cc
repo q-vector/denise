@@ -678,6 +678,24 @@ Point_3D::is_nap () const
    return gsl_isnan(z) || gsl_isnan (x) || gsl_isnan (y);
 }
 
+Vector_2D::Vector_2D (const Real u,
+                      const Real v)
+   : u (u),
+     v (v)
+{
+}
+
+Vector_2D::Vector_2D (const Point_2D& point_2d)
+   : u (point_2d.x),
+     v (point_2d.y)
+{
+}
+
+bool
+Vector_2D::is_nav () const
+{
+}
+
 Tuple::Tuple (const Tuple& tuple)
    : vector<Real> (tuple)
 {

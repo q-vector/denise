@@ -71,88 +71,6 @@ Duple_Field_2D::evaluate_v_at (const Point_2D& point,
 
 */
 
-void
-Streamliner::step (Point_2D& rk,
-                   const Real x,
-                   const Real y,
-                   const Real h) const
-{
-
-   const Point_2D& p = transform.reverse (x, y);
-   const Integer& ui = u_index;
-   const Integer& vi = v_index;
-
-   const Real u = vector_data_2d.evaluate_nocheck (ui, p.x, p.y, VALUE);
-   const Real v = vector_data_2d.evaluate_nocheck (vi, p.x, p.y, VALUE);
-   const Real theta = transform.get_theta (u, v * aspect, p.x, p.y);
-
-   rk.x = h * cos (theta);
-   rk.y = h * sin (theta);
-
-}
-
-void
-Streamliner::integrate (Point_2D& rk,
-                        const Point_2D& point_2d,
-                        const Real h) const
-{
-
-   switch (integration_scheme)
-   {
-
-      case RUNGA_KUTTA:
-      {
-
-         Point_2D k1, k2, k3, k4;
-
-         step (k1, point_2d.x, point_2d.y, h);
-         step (k2, point_2d.x + k1.x*0.5, point_2d.y + k1.y*0.5, h);
-         step (k3, point_2d.x + k2.x*0.5, point_2d.y + k2.y*0.5, h);
-         step (k4, point_2d.x + k3.x, point_2d.y+k3.y, h);
-
-         rk.x = (k1.x + k4.x) / 6 + (k2.x + k3.x) / 3 + point_2d.x;
-         rk.y = (k1.y + k4.y) / 6 + (k2.y + k3.y) / 3 + point_2d.y;
-
-         //Point_2D k5;
-         //step (k5, rk, 1);
-         //Real error_x = (k4.x - k5.x) / 6;
-         //Real error_y = (k4.y - k5.y) / 6;
-         //Real error_estimate = sqrt (error_x*error_x + error_y*error_y);
-
-         break;
-
-      }
-
-      default:
-      case EULER:
-      {
-         step (rk, point_2d.x, point_2d.y, h);
-         rk.x += point_2d.x;
-         rk.y += point_2d.y;
-         break;
-      }
-
-   }
-
-}
-
-Streamliner::Streamliner (const Box_2D& box_2d,
-                          const Transform_2D& transform,
-                          const Vector_Data_2D& vector_data_2d,
-                          const Integer u_index,
-                          const Integer v_index,
-                          const Integration_Scheme integration_scheme,
-                          const Real aspect)
-   : Box_2D (box_2d),
-     transform (transform),
-     vector_data_2d (vector_data_2d),
-     u_index (u_index),
-     v_index (v_index),
-     integration_scheme (integration_scheme),
-     aspect (aspect)
-{
-}
-
 Intensity_Data::Intensity_Data (const Box_2D& box_2d)
    : anchor (box_2d.index_2d),
      size_2d (box_2d.size_2d)
@@ -293,6 +211,88 @@ Hits::get (const Index_2D& index_2d) const
    return data[ii * size_2d.j + jj];
 
 }   
+
+void
+Streamliner::step (Point_2D& delta,
+                   const Real x,
+                   const Real y,
+                   const Real h) const
+{
+
+   const Point_2D& p = transform.reverse (x, y);
+   const Integer& ui = u_index;
+   const Integer& vi = v_index;
+
+   const Real u = vector_data_2d.evaluate_nocheck (ui, p.x, p.y, VALUE);
+   const Real v = vector_data_2d.evaluate_nocheck (vi, p.x, p.y, VALUE);
+   const Real theta = transform.get_theta (u, v * aspect, p.x, p.y);
+
+   rk.x = h * cos (theta);
+   rk.y = h * sin (theta);
+
+}
+
+void
+Streamliner::integrate (Point_2D& next_point,
+                        const Point_2D& point_2d,
+                        const Real h) const
+{
+
+   switch (integration_scheme)
+   {
+
+      case RUNGA_KUTTA:
+      {
+
+         Point_2D k1, k2, k3, k4;
+
+         step (k1, point_2d.x, point_2d.y, h);
+         step (k2, point_2d.x + k1.x*0.5, point_2d.y + k1.y*0.5, h);
+         step (k3, point_2d.x + k2.x*0.5, point_2d.y + k2.y*0.5, h);
+         step (k4, point_2d.x + k3.x, point_2d.y+k3.y, h);
+
+         next_point.x = (k1.x + k4.x) / 6 + (k2.x + k3.x) / 3 + point_2d.x;
+         next_point.y = (k1.y + k4.y) / 6 + (k2.y + k3.y) / 3 + point_2d.y;
+
+         //Point_2D k5;
+         //step (k5, rk, 1);
+         //Real error_x = (k4.x - k5.x) / 6;
+         //Real error_y = (k4.y - k5.y) / 6;
+         //Real error_estimate = sqrt (error_x*error_x + error_y*error_y);
+
+         break;
+
+      }
+
+      default:
+      case EULER:
+      {
+         step (next_point, point_2d.x, point_2d.y, h);
+         next_point.x += point_2d.x;
+         next_point.y += point_2d.y;
+         break;
+      }
+
+   }
+
+}
+
+Streamliner::Streamliner (const Box_2D& box_2d,
+                          const Transform_2D& transform,
+                          const Vector_Data_2D& vector_data_2d,
+                          const Integer u_index,
+                          const Integer v_index,
+                          const Integration_Scheme integration_scheme,
+                          const Real aspect)
+   : Box_2D (box_2d),
+     transform (transform),
+     vector_data_2d (vector_data_2d),
+     u_index (u_index),
+     v_index (v_index),
+     integration_scheme (integration_scheme),
+     aspect (aspect)
+{
+}
 
 void
 Lic_Raster::grow (const Point_2D& point_2d,
@@ -482,13 +482,12 @@ Lic_Raster::get_lic_intensity_data_ptr (Real& min_intensity,
                                         const Box_2D& box_2d) const
 {
 
-   Size_2D size_2d = box_2d.size_2d;
-   Index_2D anchor = box_2d.index_2d;
+   const Size_2D& size_2d = box_2d.size_2d;
 
-   Integer min_hits = 1;
-   Integer array_size = 2 * L_plus_M + 1;
-   Integer standard_streamline_length = 2*L + 1;
-   Integer sequence_size = size_2d.i * size_2d.j;
+   const Integer min_hits = 1;
+   const Integer array_size = 2 * L_plus_M + 1;
+   const Integer standard_streamline_length = 2*L + 1;
+   const Integer sequence_size = size_2d.i * size_2d.j;
 
    Real* noise_array = new Real[array_size];
    Point_2D* point_array = new Point_2D[array_size];
@@ -568,9 +567,9 @@ Lic_Raster::get_lic_intensity_data_ptr (Real& min_intensity,
 
 }
 
-Lic_Raster::Lic_Raster (const Transform_2D& transform,
+Lic_Raster::Lic_Raster (const Box_2D& box_2d,
+                        const Transform_2D& transform,
                         const Vector_Data_2D& vector_data_2d,
-                        const Box_2D& box_2d,
                         const Integer u_index,
                         const Integer v_index,
                         const bool enhance,
@@ -587,6 +586,8 @@ Lic_Raster::Lic_Raster (const Transform_2D& transform,
      h (h),
      L_plus_M (L + M)
 {
+
+   const Uv_Field uv_field (vector_data_2d, u_index, v_index);
 
    Real hue = 0.0;
    Real min_intensity, max_intensity;

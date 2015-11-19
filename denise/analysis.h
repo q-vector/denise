@@ -56,6 +56,12 @@ namespace denise
       CURVATURE_OP
    };
 
+   enum Integration_Scheme
+   {
+      EULER,
+      RUNGA_KUTTA
+   };
+
    class Differentiation
    {
 
@@ -1225,6 +1231,46 @@ namespace denise
                    const Real coordinate_x,
                    const Real coordinate_y,
                    const Evaluate_Op evaluate_op = VALUE) const;
+
+   };
+
+   class Uv_Field
+   {
+
+      private:
+
+         const Vector_Data_2D*
+         vector_data_2d_ptr;
+
+         const Integer
+         u_index;
+
+         const Integer
+         v_index;
+
+         void
+         step (Point_2D& rk,
+               const Real x,
+               const Real y,
+               const Real h) const;
+
+      public:
+
+         Uv_Field ();
+
+         Uv_Field (const Vector_Data_2D& vector_data_2d,
+                   const Integer u_index,
+                   const Integer v_index);
+
+         virtual Vector_2D
+         evaluate (const Real x,
+                   const Real y) const;
+
+         void
+         integrate (Point_2D& next_point_2d,
+                    const Point_2D& point_2d,
+                    const Real h,
+                    const Integration_Scheme integration_scheme) const;
 
    };
 
