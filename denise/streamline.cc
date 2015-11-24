@@ -227,8 +227,8 @@ Streamliner::step (Point_2D& delta,
    const Real v = vector_data_2d.evaluate_nocheck (vi, p.x, p.y, VALUE);
    const Real theta = transform.get_theta (u, v * aspect, p.x, p.y);
 
-   rk.x = h * cos (theta);
-   rk.y = h * sin (theta);
+   delta.x = h * cos (theta);
+   delta.y = h * sin (theta);
 
 }
 
