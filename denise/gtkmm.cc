@@ -8682,7 +8682,7 @@ Map_Console::set_geodetic_transform_data (const Geodetic_Transform::Data& gtd)
    delete geodetic_transform_ptr;
    geodetic_transform_ptr =
       Gt::get_transform_ptr (gtd.genre, gtd.scale, gtd.lat_long, middle);
-   cout << geodetic_transform_ptr->data.get_string () << endl;
+   cout << size_2d << " " << geodetic_transform_ptr->data.get_string () << endl;
 
    zoom_box.reset ();
    set_background_ready (false);
