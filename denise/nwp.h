@@ -89,12 +89,12 @@ namespace denise
                base_time;
 
                Integer
-               forecast_hour;
+               forecast_second;
 
                Key () { }
 
                Key (const Dtime& base_time,
-                    const Integer forecast_hour = 0);
+                    const Integer forecast_second = 0);
 
                Key (const Key& key);
 
@@ -945,7 +945,7 @@ namespace denise
 
       public:
 
-         Nwp_Exception (const Dstring& str = "");
+         Nwp_Exception (const Dstring& str);
 
    };
 

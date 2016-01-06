@@ -1299,7 +1299,7 @@ Grib2::Block_3::get_size_2d () const
       }
 
       default:
-         throw Exception ("Not implemented yet");
+         throw Nwp_Exception ("Not implemented yet");
    }
 
 }
@@ -1312,7 +1312,7 @@ Grib2::Block_3::get_scan_flag () const
 
    switch (template_number)
    {
-      default: throw Exception ("Not implemented yet");
+      default: throw Nwp_Exception ("Not implemented yet");
       case 0: return ((buffer[71] & 0xf0) >> 4);
       case 10: return ((buffer[59] & 0xf0) >> 4);
       case 20: return ((buffer[64] & 0xf0) >> 4);
@@ -1461,7 +1461,7 @@ Grib2::Block_5::get_reference_value () const
    switch (template_number)
    {
       default:
-         throw Exception ("Not implemented");
+         throw Nwp_Exception ("Not implemented");
       case 0:
       case 1:
       case 2:
@@ -1491,7 +1491,7 @@ Grib2::Block_5::get_binary_scale_factor () const
    switch (template_number)
    {
       default:
-         throw Exception ("Not implemented");
+         throw Nwp_Exception ("Not implemented");
       case 0:
       case 1:
       case 2:
@@ -1514,7 +1514,7 @@ Grib2::Block_5::get_decimal_scale_factor () const
    switch (template_number)
    {
       default:
-         throw Exception ("Not implemented");
+         throw Nwp_Exception ("Not implemented");
       case 0:
       case 1:
       case 2:
@@ -1537,7 +1537,7 @@ Grib2::Block_5::get_bits_per_datum () const
    switch (template_number)
    {
       default:
-         throw Exception ("Not implemented");
+         throw Nwp_Exception ("Not implemented");
       case 0:
       case 1:
       case 2:
@@ -1639,10 +1639,10 @@ Grib2::Data::jpeg2000 (const Block_5& block_5,
 
    char* opts = 0;
    jas_image_t* image = jpc_decode (stream, opts);
-   if (image == 0) { throw Exception ("JPEG2000 decode error"); }
+   if (image == 0) { throw Nwp_Exception ("JPEG2000 decode error"); }
    const int number_of_components = image->numcmpts_;
    const bool grayscale = (number_of_components == 1);
-   if (!grayscale) { throw Exception ("JPEG2000 Color image"); }
+   if (!grayscale) { throw Nwp_Exception ("JPEG2000 Color image"); }
 
    const Integer image_height = jas_image_height (image);
    const Integer image_width = jas_image_width (image);
@@ -1813,7 +1813,7 @@ const Dstring b3 (bit_3 ? "yes" : "no");
          //    presence of block {n}, implies presese of block_{n+1}
          switch (block_number)
          {
-            default: throw Exception ("Grib2 Coding Error");
+            default: throw Nwp_Exception ("Grib2 Coding Error");
             case 2: offset += Block::get_uint (file, offset, 4);
             case 3: b_3_ptr = new Block_3 (file, offset);
             case 4: b_4_ptr = new Block_4 (file, offset);
@@ -1906,7 +1906,7 @@ Grib2::fill_data (Geodetic_Vector_Data_3D& gvd_3d,
    Data data (n);
    switch (block_5.get_template_number ())
    {
-      default: throw Exception ("Packing Type not supported.");
+      default: throw Nwp_Exception ("Packing Type not supported.");
       case 0:  data.simple (block_5, block_7); break;
       case 40: data.jpeg2000 (block_5, block_7); break;
    }
@@ -1999,7 +1999,7 @@ Grib2::fill_data (Geodetic_Vector_Data_2D& gvd_2d,
    Data data (n);
    switch (block_5.get_template_number ())
    {
-      default: throw Exception ("Packing Type not supported.");
+      default: throw Nwp_Exception ("Packing Type not supported.");
       case 0:  data.simple (block_5, block_7); break;
       case 40: data.jpeg2000 (block_5, block_7); break;
    }
@@ -2150,10 +2150,10 @@ Access::get_grib_key (const Key& key,
 {
 
    const Dtime& base_time = key.base_time;
-   const Integer forecast_hour = key.forecast_hour;
+   const Integer forecast_second = key.forecast_second;
 
    Grib::Key grib_key;
-   set_grib_key (grib_key, met_element, base_time, forecast_hour);
+   set_grib_key (grib_key, met_element, base_time, forecast_second);
    set_grib_key (grib_key, met_element, level);
 
    return grib_key;
@@ -2164,7 +2164,7 @@ void
 Access::set_grib_key (Grib::Key& grib_key,
                       const Met_Element met_element,
                       const Dtime& base_time,
-                      const Integer forecast_hour) const
+                      const Integer forecast_second) const
 {
 
    uint8_t* buffer = grib_key.buffer;
@@ -2182,7 +2182,7 @@ Access::set_grib_key (Grib::Key& grib_key,
    buffer[4] = uint8_t (HH);
    buffer[5] = uint8_t (MM);
    buffer[6] = 1; // hour
-   buffer[7] = uint8_t (forecast_hour);
+   buffer[7] = uint8_t (forecast_second / 3600);
    buffer[8] = 0;
    buffer[9] = 0;
    buffer[10] = 0;
@@ -2191,7 +2191,7 @@ Access::set_grib_key (Grib::Key& grib_key,
    if (met_element == RAINFALL_CUMULATIVE)
    {
       buffer[7] = 0;
-      buffer[8] = uint8_t (forecast_hour);
+      buffer[8] = uint8_t (forecast_second / 3600);
       buffer[9] = 4;
       buffer[10] = 0;
       buffer[11] = 1;
@@ -2376,7 +2376,7 @@ Access::fill_rain_data (Geodetic_Vector_Data_2D& gvd_2d,
       case RAINFALL_CUMULATIVE:
       {
 
-         if (key.forecast_hour == 0)
+         if (key.forecast_second == 0)
          {
             gvd_2d.initialize (vector_index, 0);
             return;
@@ -2554,7 +2554,7 @@ Access::get_gvd_3d_ptr (const Met_Element met_element,
       Access::const_iterator iterator = find (grib_key);
       if (iterator == end ())
       {
-         cout << key.base_time << " " << key.forecast_hour << " " <<
+         cout << key.base_time << " " << key.forecast_second << " " <<
                  met_element << " " << level.get_string () <<
                  " throw exception " << endl;
          throw Nwp_Exception ("Access::gvd_3d_ptr Not Available");
@@ -2695,10 +2695,11 @@ cout << "Grib file_path " << file_path << endl;
          const Grib::Header& header = *(i->second);
          const Grib::Pds& pds = header.get_pds ();
          const Dtime base_time = pds.get_base_time ();
-         const Integer forecast_hour = pds.get_forecast_time ().get_p1 ();
+         const Integer forecast_second =
+            pds.get_forecast_time ().get_p1 () * 3600;
 
          const Grib::Key grib_key (pds);
-         const Nwp::Key key (base_time, forecast_hour);
+         const Nwp::Key key (base_time, forecast_second);
 
          key_multimap.add (key);
          insert (make_pair (grib_key, grib_ptr));
@@ -2855,10 +2856,10 @@ Ecmwf::get_grib_key (const Key& key,
 {
 
    const Dtime& base_time = key.base_time;
-   const Integer forecast_hour = key.forecast_hour;
+   const Integer forecast_second = key.forecast_second;
 
    Grib::Key grib_key;
-   set_grib_key (grib_key, met_element, base_time, forecast_hour);
+   set_grib_key (grib_key, met_element, base_time, forecast_second);
    set_grib_key (grib_key, met_element, level);
 
    return grib_key;
@@ -2869,7 +2870,7 @@ void
 Ecmwf::set_grib_key (Grib::Key& grib_key,
                      const Met_Element met_element,
                      const Dtime& base_time,
-                     const Integer forecast_hour) const
+                     const Integer forecast_second) const
 {
 
    uint8_t* buffer = grib_key.buffer;
@@ -2887,7 +2888,7 @@ Ecmwf::set_grib_key (Grib::Key& grib_key,
    buffer[4] = uint8_t (HH);
    buffer[5] = uint8_t (MM);
    buffer[6] = 1; // hour
-   buffer[7] = uint8_t (forecast_hour);
+   buffer[7] = uint8_t (forecast_second / 3600);
    buffer[8] = 0;
    buffer[9] = 0;
    buffer[10] = 0;
@@ -2896,7 +2897,7 @@ Ecmwf::set_grib_key (Grib::Key& grib_key,
    if (met_element == RAINFALL_CUMULATIVE)
    {
       buffer[7] = 0;
-      buffer[8] = uint8_t (forecast_hour);
+      buffer[8] = uint8_t (forecast_second / 3600);
       buffer[9] = 4;
       buffer[10] = 0;
       buffer[11] = 1;
@@ -3085,7 +3086,7 @@ Ecmwf::fill_rain_data (Geodetic_Vector_Data_2D& gvd_2d,
       case RAINFALL_CUMULATIVE:
       {
 
-         if (key.forecast_hour == 0)
+         if (key.forecast_second == 0)
          {
             gvd_2d.initialize (vector_index, 0);
             return;
@@ -3268,7 +3269,7 @@ cout << "GVD 3D " << size_2d << " " << tuple_p << " " << met_element << endl;
       Ecmwf::const_iterator iterator = find (grib_key);
       if (iterator == end ())
       {
-         //cout << key.base_time << " " << key.forecast_hour << " " <<
+         //cout << key.base_time << " " << key.forecast_second << " " <<
          //        met_element << " " << level.get_string () <<
          //        " throw exception " << endl;
          throw Nwp_Exception ("Ecmwf::gvd_3d_ptr Not Available");
@@ -3421,10 +3422,11 @@ Ecmwf::survey ()
          const Grib::Header& header = *(i->second);
          const Grib::Pds& pds = header.get_pds ();
          const Dtime base_time = pds.get_base_time ();
-         const Integer forecast_hour = pds.get_forecast_time ().get_p1 ();
+         const Integer forecast_second =
+            pds.get_forecast_time ().get_p1 () * 3600;
 
          const Grib::Key grib_key (pds);
-         const Nwp::Key key (base_time, forecast_hour);
+         const Nwp::Key key (base_time, forecast_second);
 
          key_multimap.add (key);
          insert (make_pair (grib_key, grib_ptr));
@@ -3592,11 +3594,11 @@ Gfs3::get_grib_key (const Key& key,
 {
 
    const Dtime& base_time = key.base_time;
-   const Integer forecast_hour = key.forecast_hour;
+   const Integer forecast_second = key.forecast_second;
 
    Grib::Key grib_key;
    set_grib_key (grib_key, base_time);
-   set_grib_key (grib_key, met_element, forecast_hour);
+   set_grib_key (grib_key, met_element, forecast_second);
    set_grib_key (grib_key, met_element);
    set_grib_key (grib_key, met_element, level);
 
@@ -3629,7 +3631,7 @@ Gfs3::set_grib_key (Grib::Key& grib_key,
 void
 Gfs3::set_grib_key (Grib::Key& grib_key,
                     const Met_Element met_element,
-                    const Integer forecast_hour) const
+                    const Integer forecast_second) const
 {
 
    uint8_t* buffer = grib_key.buffer;
@@ -3642,52 +3644,52 @@ Gfs3::set_grib_key (Grib::Key& grib_key,
    {
 
       default:
-         buffer[7] = uint8_t (forecast_hour >> 8);
-         buffer[8] = uint8_t (forecast_hour % 256);
+         buffer[7] = uint8_t (forecast_second >> 8);
+         buffer[8] = uint8_t ((forecast_second / 3600) % 256);
          buffer[9] = 10;
          buffer[10] = 0;
          buffer[11] = 0;
          break;
 
       case PPT3:
-         buffer[7] = uint8_t (forecast_hour - 3);
-         buffer[8] = uint8_t (forecast_hour);
+         buffer[7] = uint8_t (forecast_second / 3600 - 3);
+         buffer[8] = uint8_t (forecast_second / 3600);
          buffer[9] = 4;
          break;
 
       case PPT6:
-         buffer[7] = uint8_t (forecast_hour - 6);
-         buffer[8] = uint8_t (forecast_hour);
+         buffer[7] = uint8_t (forecast_second / 3600 - 6);
+         buffer[8] = uint8_t (forecast_second / 3600);
          buffer[9] = 4;
          break;
 
       case PPTN:
          buffer[7] = 0;
-         buffer[8] = uint8_t (forecast_hour);
+         buffer[8] = uint8_t (forecast_second / 3600);
          buffer[9] = 4;
          break;
 
       case TOTAL_CLOUD:
-         buffer[7] = uint8_t (forecast_hour - 6);
-         buffer[8] = uint8_t (forecast_hour);
+         buffer[7] = uint8_t (forecast_second / 3600 - 6);
+         buffer[8] = uint8_t (forecast_second / 3600);
          buffer[9] = 3;
          break;
 
       case HIGH_CLOUD:
-         buffer[7] = uint8_t (forecast_hour - 6);
-         buffer[8] = uint8_t (forecast_hour);
+         buffer[7] = uint8_t (forecast_second / 3600 - 6);
+         buffer[8] = uint8_t (forecast_second / 3600);
          buffer[9] = 3;
          break;
 
       case MIDDLE_CLOUD:
-         buffer[7] = uint8_t (forecast_hour - 6);
-         buffer[8] = uint8_t (forecast_hour);
+         buffer[7] = uint8_t (forecast_second / 3600 - 6);
+         buffer[8] = uint8_t (forecast_second / 3600);
          buffer[9] = 3;
          break;
 
       case LOW_CLOUD:
-         buffer[7] = uint8_t (forecast_hour - 6);
-         buffer[8] = uint8_t (forecast_hour);
+         buffer[7] = uint8_t (forecast_second / 3600 - 6);
+         buffer[8] = uint8_t (forecast_second / 3600);
          buffer[9] = 3;
          break;
 
@@ -3948,7 +3950,7 @@ Gfs3::initialize_3d_data (const Key& key)
    typedef Gfs3::Data_3D G3d_3d;
    G3d_3d* g3d_3d_ptr = new G3d_3d (met_element_vector, key);
    data_3d_ptr_map.insert (make_pair (key, g3d_3d_ptr));
-cout << "data_3d_ptr_map.size () = " << &data_3d_ptr_map << ": " << data_3d_ptr_map.size () << "  key = " << key.base_time.get_string () << " " << key.forecast_hour << endl;
+cout << "data_3d_ptr_map.size () = " << &data_3d_ptr_map << ": " << data_3d_ptr_map.size () << "  key = " << key.base_time.get_string () << " " << key.forecast_second << endl;
 }
 
 void          
@@ -4014,16 +4016,16 @@ Gfs3::fill_cumulative_rain_data (Geodetic_Vector_Data_2D& gvd_2d,
                                  const Key& key)
 {
 
-   const Integer forecast_hour = key.forecast_hour;
+   const Integer forecast_second = key.forecast_second;
 
-   if (forecast_hour < 0)
+   if (forecast_second < 0)
    {
-      throw Nwp_Exception ("Forecast Hour < 0");
+      throw Nwp_Exception ("Forecast Second < 0");
       return;
    }
 
    gvd_2d.initialize (vector_index, 0);
-   if (forecast_hour == 0) { return; }
+   if (forecast_second == 0) { return; }
 
    const Size_2D& size_2d = gvd_2d.get_size_2d ();
    const Level& surface_level = Level::surface_level ();
@@ -4031,7 +4033,7 @@ Gfs3::fill_cumulative_rain_data (Geodetic_Vector_Data_2D& gvd_2d,
    Geodetic_Vector_Data_2D* precip_data_ptr = get_initialized_vd_2d (1);
    Geodetic_Vector_Data_2D& precip_data = *precip_data_ptr;
 
-   for (Integer fh = 0; fh < forecast_hour; fh += 6)
+   for (Integer fs = 0; fs < forecast_second; fs += 21600)
    {
       fill_grib_data (precip_data, 0, PPT6, key, surface_level);
       #pragma omp parallel for
@@ -4045,7 +4047,7 @@ Gfs3::fill_cumulative_rain_data (Geodetic_Vector_Data_2D& gvd_2d,
       }
    }
 
-   if (forecast_hour % 6 != 0)
+   if (forecast_second % 21600 != 0)
    {
       fill_grib_data (precip_data, 0, PPT3, key, surface_level);
       #pragma omp parallel for
@@ -4071,15 +4073,15 @@ Gfs3::fill_step_rain_data (Geodetic_Vector_Data_2D& gvd_2d,
 
    const Size_2D& size_2d = gvd_2d.get_size_2d ();
    const Level& surface_level = Level::surface_level ();
-   const Integer forecast_hour = key.forecast_hour;
+   const Integer forecast_second = key.forecast_second;
 
-   if (forecast_hour == 0)
+   if (forecast_second == 0)
    {
       gvd_2d.initialize (vector_index, 0);
       return;
    }
 
-   if (forecast_hour % 6 != 0)
+   if (forecast_second % 21600 != 0)
    {
       fill_grib_data (gvd_2d, vector_index, PPT3, key, surface_level);
    }
@@ -4094,8 +4096,8 @@ Gfs3::fill_step_rain_data (Geodetic_Vector_Data_2D& gvd_2d,
       try
       {
          const Dtime& base_time = key.base_time;
-         const Integer forecast_hour = key.forecast_hour;
-         const Key prev_key (base_time, forecast_hour - 3);
+         const Integer forecast_second = key.forecast_second;
+         const Key prev_key (base_time, forecast_second - 10800);
          fill_grib_data (precip_data, 0, PPT3, prev_key, surface_level);
          #pragma omp parallel for
          for (Integer i = 0; i < size_2d.i; i++)
@@ -4473,8 +4475,8 @@ Gfs3::survey ()
             const Dstring& fh_str = fn.substr (20, 3);
 
             const Dtime base_time (bt_str, Dstring ("%Y%m%d%H"));
-            const Integer forecast_hour = stoi (fh_str);
-            const Key key (base_time, forecast_hour);
+            const Integer forecast_second = stoi (fh_str) * 3600;
+            const Key key (base_time, forecast_second);
 
             key_multimap.add (key);
             Grib* grib_ptr = new Grib (file_path);
@@ -4564,7 +4566,7 @@ Gfs3::get_valid_time_vector () const
    {
       const Key& key = iterator->first;
       const Dtime& bt = key.base_time;
-      const Integer fh = key.forecast_hour;
+      const Real fh = key.forecast_second / 3600.0;
       const Dtime dtime (bt.t + fh);
       valid_time_vector.push_back (dtime);
    }
@@ -4596,7 +4598,7 @@ Gfs3::get_key (const Dtime& dtime) const
 
       const Key& key = iterator->first;
       const Dtime& bt = key.base_time;
-      const Integer fh = key.forecast_hour;
+      const Real fh = key.forecast_second / 3600.0;
       const Dtime t (bt.t + fh);
 
       if (fabs (t.t - dtime.t) < 0.5)
@@ -4614,16 +4616,17 @@ Gfs3::get_key (const Dtime& dtime) const
    sort (base_time_vector.begin (), base_time_vector.end ());
 
    const Dtime& base_time = base_time_vector.back ();
-   const Integer forecast_hour = Integer (round (dtime.t - base_time.t));
+   const Real forecast_hour = dtime.t - base_time.t;
+   const Integer forecast_second = Integer (round (forecast_hour / 3600));
 
-   return Key (base_time, forecast_hour);
+   return Key (base_time, forecast_second);
 
 }
 
 void
-Gfs3::acquire_base_time_forecast_hour (Dtime& base_time,
-                                       Integer& forecast_hour,
-                                       const Dtime& dtime) const
+Gfs3::acquire_base_time_forecast_second (Dtime& base_time,
+                                         Integer& forecast_second,
+                                         const Dtime& dtime) const
 {
 
    vector<Dtime> base_time_vector;
@@ -4634,7 +4637,7 @@ Gfs3::acquire_base_time_forecast_hour (Dtime& base_time,
 
       const Key& key = iterator->first;
       const Dtime& bt = key.base_time;
-      const Integer fh = key.forecast_hour;
+      const Integer fh = key.forecast_second * 3600;
       const Dtime t (bt.t + fh);
 
       if (fabs (t.t - dtime.t) < 0.5)
@@ -4651,7 +4654,7 @@ Gfs3::acquire_base_time_forecast_hour (Dtime& base_time,
 
    sort (base_time_vector.begin (), base_time_vector.end ());
    base_time.t = base_time_vector.back ().t;
-   forecast_hour = Integer (round (dtime.t - base_time.t));
+   forecast_second = Integer (round ((dtime.t - base_time.t) / 3600));
 
 }
 
@@ -4724,11 +4727,11 @@ Gfs4::get_grib_key (const Key& key,
 {
 
    const Dtime& base_time = key.base_time;
-   const Integer forecast_hour = key.forecast_hour;
+   const Integer forecast_second = key.forecast_second;
 
    Grib2::Key grib_key;
    set_grib_key (grib_key, base_time);
-   set_grib_key (grib_key, met_element, forecast_hour);
+   set_grib_key (grib_key, met_element, forecast_second);
    set_grib_key (grib_key, met_element);
    set_grib_key (grib_key, met_element, level);
    return grib_key;
@@ -4762,7 +4765,7 @@ Gfs4::set_grib_key (Grib2::Key& grib_key,
 void
 Gfs4::set_grib_key (Grib2::Key& grib_key,
                     const Met_Element met_element,
-                    const Integer forecast_hour) const
+                    const Integer forecast_second) const
 {
 
    uint8_t* buffer = grib_key.buffer;
@@ -4773,7 +4776,7 @@ Gfs4::set_grib_key (Grib2::Key& grib_key,
 
       default:
       {
-         uint32_t value = forecast_hour;
+         uint32_t value = forecast_second / 3600;
 #ifndef WORDS_BIGENDIAN
          swap_endian (&value, sizeof (uint32_t));
 #endif
@@ -4784,8 +4787,8 @@ Gfs4::set_grib_key (Grib2::Key& grib_key,
       case PPT3:
       {
          throw Nwp_Exception ("Not Available");
-         buffer[7] = uint8_t (forecast_hour - 3);
-         buffer[8] = uint8_t (forecast_hour);
+         buffer[7] = uint8_t (forecast_second / 3600 - 3);
+         buffer[8] = uint8_t (forecast_second / 3600);
          buffer[9] = 4;
          break;
       }
@@ -4793,8 +4796,8 @@ Gfs4::set_grib_key (Grib2::Key& grib_key,
       case PPT6:
       {
          throw Nwp_Exception ("Not Available");
-         buffer[7] = uint8_t (forecast_hour - 6);
-         buffer[8] = uint8_t (forecast_hour);
+         buffer[7] = uint8_t (forecast_second / 3600 - 6);
+         buffer[8] = uint8_t (forecast_second / 3600);
          buffer[9] = 4;
          break;
       }
@@ -4803,7 +4806,7 @@ Gfs4::set_grib_key (Grib2::Key& grib_key,
       {
          throw Nwp_Exception ("Not Available");
          buffer[7] = 0;
-         buffer[8] = uint8_t (forecast_hour);
+         buffer[8] = uint8_t (forecast_second / 3600);
          buffer[9] = 4;
          break;
       }
@@ -4811,8 +4814,8 @@ Gfs4::set_grib_key (Grib2::Key& grib_key,
       case TOTAL_CLOUD:
       {
          throw Nwp_Exception ("Not Available");
-         buffer[7] = uint8_t (forecast_hour - 6);
-         buffer[8] = uint8_t (forecast_hour);
+         buffer[7] = uint8_t (forecast_second / 3600 - 6);
+         buffer[8] = uint8_t (forecast_second / 3600);
          buffer[9] = 3;
          break;
       }
@@ -4820,8 +4823,8 @@ Gfs4::set_grib_key (Grib2::Key& grib_key,
       case HIGH_CLOUD:
       {
          throw Nwp_Exception ("Not Available");
-         buffer[7] = uint8_t (forecast_hour - 6);
-         buffer[8] = uint8_t (forecast_hour);
+         buffer[7] = uint8_t (forecast_second / 3600 - 6);
+         buffer[8] = uint8_t (forecast_second / 3600);
          buffer[9] = 3;
          break;
       }
@@ -4829,8 +4832,8 @@ Gfs4::set_grib_key (Grib2::Key& grib_key,
       case MIDDLE_CLOUD:
       {
          throw Nwp_Exception ("Not Available");
-         buffer[7] = uint8_t (forecast_hour - 6);
-         buffer[8] = uint8_t (forecast_hour);
+         buffer[7] = uint8_t (forecast_second / 3600 - 6);
+         buffer[8] = uint8_t (forecast_second / 3600);
          buffer[9] = 3;
          break;
       }
@@ -4838,8 +4841,8 @@ Gfs4::set_grib_key (Grib2::Key& grib_key,
       case LOW_CLOUD:
       {
          throw Nwp_Exception ("Not Available");
-         buffer[7] = uint8_t (forecast_hour - 6);
-         buffer[8] = uint8_t (forecast_hour);
+         buffer[7] = uint8_t (forecast_second / 3600 - 6);
+         buffer[8] = uint8_t (forecast_second / 3600);
          buffer[9] = 3;
          break;
       }
@@ -5315,16 +5318,16 @@ Gfs4::fill_cumulative_rain_data (Geodetic_Vector_Data_2D& gvd_2d,
                                  const Key& key)
 {
 
-   const Integer forecast_hour = key.forecast_hour;
+   const Integer forecast_second = key.forecast_second;
 
-   if (forecast_hour < 0)
+   if (forecast_second < 0)
    {
-      throw Nwp_Exception ("Forecast Hour < 0");
+      throw Nwp_Exception ("Forecast Second < 0");
       return;
    }
 
    gvd_2d.initialize (vector_index, 0);
-   if (forecast_hour == 0) { return; }
+   if (forecast_second == 0) { return; }
 
    const Size_2D& size_2d = gvd_2d.get_size_2d ();
    const Level& surface_level = Level::surface_level ();
@@ -5332,7 +5335,7 @@ Gfs4::fill_cumulative_rain_data (Geodetic_Vector_Data_2D& gvd_2d,
    Geodetic_Vector_Data_2D* precip_data_ptr = get_initialized_vd_2d (1);
    Geodetic_Vector_Data_2D& precip_data = *precip_data_ptr;
 
-   for (Integer fh = 0; fh < forecast_hour; fh += 6)
+   for (Integer fs = 0; fs < forecast_second; fs += 21600)
    {
       fill_grib_data (precip_data, 0, PPT6, key, surface_level);
       #pragma omp parallel for
@@ -5346,7 +5349,7 @@ Gfs4::fill_cumulative_rain_data (Geodetic_Vector_Data_2D& gvd_2d,
       }
    }
 
-   if (forecast_hour % 6 != 0)
+   if (forecast_second % 21600 != 0)
    {
       fill_grib_data (precip_data, 0, PPT3, key, surface_level);
       #pragma omp parallel for
@@ -5372,15 +5375,15 @@ Gfs4::fill_step_rain_data (Geodetic_Vector_Data_2D& gvd_2d,
 
    const Size_2D& size_2d = gvd_2d.get_size_2d ();
    const Level& surface_level = Level::surface_level ();
-   const Integer forecast_hour = key.forecast_hour;
+   const Integer forecast_second = key.forecast_second;
 
-   if (forecast_hour == 0)
+   if (forecast_second == 0)
    {
       gvd_2d.initialize (vector_index, 0);
       return;
    }
 
-   if (forecast_hour % 6 != 0)
+   if (forecast_second % 21600 != 0)
    {
       fill_grib_data (gvd_2d, vector_index, PPT3, key, surface_level);
    }
@@ -5396,8 +5399,8 @@ Gfs4::fill_step_rain_data (Geodetic_Vector_Data_2D& gvd_2d,
       {
 
          const Dtime& base_time = key.base_time;
-         const Integer forecast_hour = key.forecast_hour;
-         const Key prev_key (base_time, forecast_hour - 3);
+         const Integer forecast_second = key.forecast_second;
+         const Key prev_key (base_time, forecast_second - 10800);
 
          fill_grib_data (precip_data, 0, PPT3, prev_key, surface_level);
          #pragma omp parallel for
@@ -5780,9 +5783,9 @@ Gfs4::survey ()
             const Dstring& fh_str = fn.substr (20, 3);
 
             const Dtime base_time (bt_str, "%Y%m%d%H");
-            const Integer forecast_hour = stoi (fh_str);
+            const Integer forecast_second = stoi (fh_str) * 3600;
 
-            const Key key (base_time, forecast_hour);
+            const Key key (base_time, forecast_second);
             key_multimap.add (key);
             Grib2* grib_ptr = new Grib2 (file_path);
             insert (make_pair (key, grib_ptr));
@@ -5879,7 +5882,7 @@ Gfs4::get_valid_time_vector () const
    {
       const Key& key = iterator->first;
       const Dtime& bt = key.base_time;
-      const Integer fh = key.forecast_hour;
+      const Integer fh = key.forecast_second * 3600;
       const Dtime dtime (bt.t + fh);
       valid_time_vector.push_back (dtime);
    }
@@ -5911,7 +5914,7 @@ Gfs4::get_key (const Dtime& dtime) const
 
       const Key& key = iterator->first;
       const Dtime& bt = key.base_time;
-      const Integer fh = key.forecast_hour;
+      const Integer fh = key.forecast_second * 3600;
       const Dtime t (bt.t + fh);
 
       if (fabs (t.t - dtime.t) < 0.5)
@@ -5931,14 +5934,14 @@ Gfs4::get_key (const Dtime& dtime) const
    const Dtime& base_time = base_time_vector.back ();
    const Integer forecast_hour = Integer (round (dtime.t - base_time.t));
 
-   return Key (base_time, forecast_hour);
+   return Key (base_time, forecast_hour * 3600);
 
 }
 
 void
-Gfs4::acquire_base_time_forecast_hour (Dtime& base_time,
-                                       Integer& forecast_hour,
-                                       const Dtime& dtime) const
+Gfs4::acquire_base_time_forecast_second (Dtime& base_time,
+                                         Integer& forecast_second,
+                                         const Dtime& dtime) const
 {
 
    vector<Dtime> base_time_vector;
@@ -5949,7 +5952,7 @@ Gfs4::acquire_base_time_forecast_hour (Dtime& base_time,
 
       const Key& key = iterator->first;
       const Dtime& bt = key.base_time;
-      const Integer fh = key.forecast_hour;
+      const Integer fh = key.forecast_second * 3600;
       const Dtime t (bt.t + fh);
 
       if (fabs (t.t - dtime.t) < 0.5)
@@ -5966,7 +5969,7 @@ Gfs4::acquire_base_time_forecast_hour (Dtime& base_time,
 
    sort (base_time_vector.begin (), base_time_vector.end ());
    base_time.t = base_time_vector.back ().t;
-   forecast_hour = Integer (round (dtime.t - base_time.t));
+   forecast_second = Integer (round ((dtime.t - base_time.t) * 3600));
 
 }
 
@@ -6039,11 +6042,11 @@ Gfs::get_grib_key (const Key& key,
 {
 
    const Dtime& base_time = key.base_time;
-   const Integer forecast_hour = key.forecast_hour;
+   const Integer forecast_second = key.forecast_second;
 
    Grib2::Key grib_key;
    set_grib_key (grib_key, base_time);
-   set_grib_key (grib_key, met_element, forecast_hour);
+   set_grib_key (grib_key, met_element, forecast_second);
    set_grib_key (grib_key, met_element);
    set_grib_key (grib_key, met_element, level);
    return grib_key;
@@ -6077,7 +6080,7 @@ Gfs::set_grib_key (Grib2::Key& grib_key,
 void
 Gfs::set_grib_key (Grib2::Key& grib_key,
                    const Met_Element met_element,
-                   const Integer forecast_hour) const
+                   const Integer forecast_second) const
 {
 
    uint8_t* buffer = grib_key.buffer;
@@ -6088,7 +6091,7 @@ Gfs::set_grib_key (Grib2::Key& grib_key,
 
       default:
       {
-         uint32_t value = forecast_hour;
+         uint32_t value = forecast_second / 3600;
 #ifndef WORDS_BIGENDIAN
          swap_endian (&value, sizeof (uint32_t));
 #endif
@@ -6099,8 +6102,8 @@ Gfs::set_grib_key (Grib2::Key& grib_key,
       case PPT3:
       {
          throw Nwp_Exception ("Not Available");
-         buffer[7] = uint8_t (forecast_hour - 3);
-         buffer[8] = uint8_t (forecast_hour);
+         buffer[7] = uint8_t (forecast_second / 3600 - 3);
+         buffer[8] = uint8_t (forecast_second / 3600);
          buffer[9] = 4;
          break;
       }
@@ -6108,8 +6111,8 @@ Gfs::set_grib_key (Grib2::Key& grib_key,
       case PPT6:
       {
          throw Nwp_Exception ("Not Available");
-         buffer[7] = uint8_t (forecast_hour - 6);
-         buffer[8] = uint8_t (forecast_hour);
+         buffer[7] = uint8_t (forecast_second / 3600 - 6);
+         buffer[8] = uint8_t (forecast_second / 3600);
          buffer[9] = 4;
          break;
       }
@@ -6118,7 +6121,7 @@ Gfs::set_grib_key (Grib2::Key& grib_key,
       {
          throw Nwp_Exception ("Not Available");
          buffer[7] = 0;
-         buffer[8] = uint8_t (forecast_hour);
+         buffer[8] = uint8_t (forecast_second / 3600);
          buffer[9] = 4;
          break;
       }
@@ -6126,8 +6129,8 @@ Gfs::set_grib_key (Grib2::Key& grib_key,
       case TOTAL_CLOUD:
       {
          throw Nwp_Exception ("Not Available");
-         buffer[7] = uint8_t (forecast_hour - 6);
-         buffer[8] = uint8_t (forecast_hour);
+         buffer[7] = uint8_t (forecast_second / 3600 - 6);
+         buffer[8] = uint8_t (forecast_second / 3600);
          buffer[9] = 3;
          break;
       }
@@ -6135,8 +6138,8 @@ Gfs::set_grib_key (Grib2::Key& grib_key,
       case HIGH_CLOUD:
       {
          throw Nwp_Exception ("Not Available");
-         buffer[7] = uint8_t (forecast_hour - 6);
-         buffer[8] = uint8_t (forecast_hour);
+         buffer[7] = uint8_t (forecast_second / 3600 - 6);
+         buffer[8] = uint8_t (forecast_second / 3600);
          buffer[9] = 3;
          break;
       }
@@ -6144,8 +6147,8 @@ Gfs::set_grib_key (Grib2::Key& grib_key,
       case MIDDLE_CLOUD:
       {
          throw Nwp_Exception ("Not Available");
-         buffer[7] = uint8_t (forecast_hour - 6);
-         buffer[8] = uint8_t (forecast_hour);
+         buffer[7] = uint8_t (forecast_second / 3600 - 6);
+         buffer[8] = uint8_t (forecast_second / 3600);
          buffer[9] = 3;
          break;
       }
@@ -6153,8 +6156,8 @@ Gfs::set_grib_key (Grib2::Key& grib_key,
       case LOW_CLOUD:
       {
          throw Nwp_Exception ("Not Available");
-         buffer[7] = uint8_t (forecast_hour - 6);
-         buffer[8] = uint8_t (forecast_hour);
+         buffer[7] = uint8_t (forecast_second / 3600 - 6);
+         buffer[8] = uint8_t (forecast_second / 3600);
          buffer[9] = 3;
          break;
       }
@@ -6630,16 +6633,16 @@ Gfs::fill_cumulative_rain_data (Geodetic_Vector_Data_2D& gvd_2d,
                                  const Key& key)
 {
 
-   const Integer forecast_hour = key.forecast_hour;
+   const Integer forecast_second = key.forecast_second;
 
-   if (forecast_hour < 0)
+   if (forecast_second < 0)
    {
-      throw Nwp_Exception ("Forecast Hour < 0");
+      throw Nwp_Exception ("Forecast Second < 0");
       return;
    }
 
    gvd_2d.initialize (vector_index, 0);
-   if (forecast_hour == 0) { return; }
+   if (forecast_second == 0) { return; }
 
    const Size_2D& size_2d = gvd_2d.get_size_2d ();
    const Level& surface_level = Level::surface_level ();
@@ -6647,7 +6650,7 @@ Gfs::fill_cumulative_rain_data (Geodetic_Vector_Data_2D& gvd_2d,
    Geodetic_Vector_Data_2D* precip_data_ptr = get_initialized_vd_2d (1);
    Geodetic_Vector_Data_2D& precip_data = *precip_data_ptr;
 
-   for (Integer fh = 0; fh < forecast_hour; fh += 6)
+   for (Integer fh = 0; fh < forecast_second; fh += 21600)
    {
       fill_grib_data (precip_data, 0, PPT6, key, surface_level);
       #pragma omp parallel for
@@ -6661,7 +6664,7 @@ Gfs::fill_cumulative_rain_data (Geodetic_Vector_Data_2D& gvd_2d,
       }
    }
 
-   if (forecast_hour % 6 != 0)
+   if (forecast_second % 21600 != 0)
    {
       fill_grib_data (precip_data, 0, PPT3, key, surface_level);
       #pragma omp parallel for
@@ -6687,15 +6690,15 @@ Gfs::fill_step_rain_data (Geodetic_Vector_Data_2D& gvd_2d,
 
    const Size_2D& size_2d = gvd_2d.get_size_2d ();
    const Level& surface_level = Level::surface_level ();
-   const Integer forecast_hour = key.forecast_hour;
+   const Integer forecast_second = key.forecast_second;
 
-   if (forecast_hour == 0)
+   if (forecast_second == 0)
    {
       gvd_2d.initialize (vector_index, 0);
       return;
    }
 
-   if (forecast_hour % 6 != 0)
+   if (forecast_second % 21600 != 0)
    {
       fill_grib_data (gvd_2d, vector_index, PPT3, key, surface_level);
    }
@@ -6711,8 +6714,8 @@ Gfs::fill_step_rain_data (Geodetic_Vector_Data_2D& gvd_2d,
       {
 
          const Dtime& base_time = key.base_time;
-         const Integer forecast_hour = key.forecast_hour;
-         const Key prev_key (base_time, forecast_hour - 3);
+         const Integer forecast_second = key.forecast_second;
+         const Key prev_key (base_time, forecast_second - 10800);
 
          fill_grib_data (precip_data, 0, PPT3, prev_key, surface_level);
          #pragma omp parallel for
@@ -7095,9 +7098,9 @@ Gfs::survey ()
             const Dstring& fh_str = fn.substr (20, 3);
 
             const Dtime base_time (bt_str, Dstring ("%Y%m%d%H"));
-            const Integer forecast_hour = stoi (fh_str);
+            const Integer forecast_second = stoi (fh_str) * 3600;
 
-            const Key key (base_time, forecast_hour);
+            const Key key (base_time, forecast_second);
             key_multimap.add (key);
             Grib2* grib_ptr = new Grib2 (file_path);
             insert (make_pair (key, grib_ptr));
@@ -7194,7 +7197,7 @@ Gfs::get_valid_time_vector () const
    {
       const Key& key = iterator->first;
       const Dtime& bt = key.base_time;
-      const Integer fh = key.forecast_hour;
+      const Integer fh = key.forecast_second * 3600;
       const Dtime dtime (bt.t + fh);
       valid_time_vector.push_back (dtime);
    }
@@ -7226,7 +7229,7 @@ Gfs::get_key (const Dtime& dtime) const
 
       const Key& key = iterator->first;
       const Dtime& bt = key.base_time;
-      const Integer fh = key.forecast_hour;
+      const Integer fh = key.forecast_second * 3600;
       const Dtime t (bt.t + fh);
 
       if (fabs (t.t - dtime.t) < 0.5)
@@ -7246,14 +7249,14 @@ Gfs::get_key (const Dtime& dtime) const
    const Dtime& base_time = base_time_vector.back ();
    const Integer forecast_hour = Integer (round (dtime.t - base_time.t));
 
-   return Key (base_time, forecast_hour);
+   return Key (base_time, forecast_hour * 3600);
 
 }
 
 void
-Gfs::acquire_base_time_forecast_hour (Dtime& base_time,
-                                      Integer& forecast_hour,
-                                      const Dtime& dtime) const
+Gfs::acquire_base_time_forecast_second (Dtime& base_time,
+                                        Integer& forecast_second,
+                                        const Dtime& dtime) const
 {
 
    vector<Dtime> base_time_vector;
@@ -7264,7 +7267,7 @@ Gfs::acquire_base_time_forecast_hour (Dtime& base_time,
 
       const Key& key = iterator->first;
       const Dtime& bt = key.base_time;
-      const Integer fh = key.forecast_hour;
+      const Integer fh = key.forecast_second * 3600;
       const Dtime t (bt.t + fh);
 
       if (fabs (t.t - dtime.t) < 0.5)
@@ -7281,7 +7284,7 @@ Gfs::acquire_base_time_forecast_hour (Dtime& base_time,
 
    sort (base_time_vector.begin (), base_time_vector.end ());
    base_time.t = base_time_vector.back ().t;
-   forecast_hour = Integer (round (dtime.t - base_time.t));
+   forecast_second = Integer (round ((dtime.t - base_time.t) * 3600));
 
 }
 
