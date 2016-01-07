@@ -750,8 +750,8 @@ Ncep_Ncar::fill_nc_data (Geodetic_Vector_Data_3D& gvd_3d,
       case denise::Q:
       case denise::Z:
       {
-         //const Ncep_Ncar_3d_File file (file_path);
-         //file.fill_data (gvd_3d, vector_index, element_string, time_index);
+         const Ncep_Ncar::File_3D file (file_path);
+         file.fill_data (gvd_3d, vector_index, element_string, time_index);
          break;
       }
 
@@ -783,9 +783,9 @@ Ncep_Ncar::fill_nc_data (Geodetic_Vector_Data_2D& gvd_2d,
       case denise::Q:
       case denise::Z:
       {
-         //const Ncep_Ncar_3d_File file (file_path);
-         //const Integer pi = get_p_index (element, p);
-         //file.fill_data (gvd_2d, vector_index, element_string, time_index, pi);
+         const Ncep_Ncar::File_3D file (file_path);
+         const Integer pi = get_p_index (met_element, p);
+         file.fill_data (gvd_2d, vector_index, element_string, time_index, pi);
          break;
       }
 
@@ -986,12 +986,12 @@ Ncep_Ncar::get_key (const Dtime& dtime) const
 }
 
 void
-Ncep_Ncar::acquire_base_time_forecast_hour (Dtime& base_time,
-                                            Integer& forecast_hour,
-                                            const Dtime& dtime) const
+Ncep_Ncar::acquire_base_time_forecast_second (Dtime& base_time,
+                                              Integer& forecast_second,
+                                              const Dtime& dtime) const
 {
    base_time.t = dtime.t;
-   forecast_hour = 0;
+   forecast_second = 0;
 }
 
 Geodetic_Vector_Data_2D*

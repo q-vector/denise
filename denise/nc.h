@@ -263,9 +263,9 @@ namespace denise
          get_key (const Dtime& dtime) const;
 
          void
-         acquire_base_time_forecast_hour (Dtime& base_time,
-                                          Integer& forecast_hour,
-                                          const Dtime& dtime) const;
+         acquire_base_time_forecast_second (Dtime& base_time,
+                                            Integer& forecast_second,
+                                            const Dtime& dtime) const;
 
          Geodetic_Vector_Data_2D*
          get_surface_data_2d_ptr (const Key& key);
