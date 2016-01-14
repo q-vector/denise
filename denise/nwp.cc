@@ -111,15 +111,15 @@ Level_Element::Level_Element (const Level& level,
 }
 
 Nwp::Key::Key (const Dtime& base_time,
-               const Integer forecast_hour)
+               const Integer forecast_second)
    : base_time (base_time),
-     forecast_hour (forecast_hour)
+     forecast_second (forecast_second)
 {
 }
 
 Nwp::Key::Key (const Key& key)
    : base_time (key.base_time),
-     forecast_hour (key.forecast_hour)
+     forecast_second (key.forecast_second)
 {
 }
 
@@ -127,7 +127,7 @@ bool
 Nwp::Key::operator == (const Key& key) const
 {
    const bool a = fabs (base_time.t - key.base_time.t) <= TIME_TOLERANCE;
-   const bool b = (forecast_hour == key.forecast_hour);
+   const bool b = (forecast_second == key.forecast_second);
    return (a && b);
 }
 
@@ -140,7 +140,7 @@ Nwp::Key::operator > (const Key& key) const
    }
    else
    {
-      return forecast_hour > key.forecast_hour;
+      return forecast_second > key.forecast_second;
    }
 }
 
@@ -153,14 +153,14 @@ Nwp::Key::operator < (const Key& key) const
    }
    else
    {
-      return forecast_hour < key.forecast_hour;
+      return forecast_second < key.forecast_second;
    }
 }
 
 Nwp::Sounding::Sounding (const Key& key)
    : key (key)
 {
-   time.t = key.base_time.t + key.forecast_hour;
+   time.t = key.base_time.t + key.forecast_second;
 }
 
 Nwp::Element_Vector::Element_Vector (const vector<Met_Element>& met_element_vector)
@@ -766,7 +766,7 @@ Nwp::Key_Multimap::add (const Key& key)
    {
       key_set.insert (key);
       const Dtime& bt = key.base_time;
-      const Integer fh = key.forecast_hour;
+      const Integer fh = key.forecast_second;
       insert (make_pair (bt, fh));
    }
 }
@@ -776,7 +776,7 @@ Nwp::Key_Multimap::is_no_match (const Key& key) const
 {
 
    const Dtime& base_time = key.base_time;
-   const Integer forecast_hour = key.forecast_hour;
+   const Integer forecast_second = key.forecast_second;
 
    try
    {
@@ -788,7 +788,7 @@ Nwp::Key_Multimap::is_no_match (const Key& key) const
            iterator != range.second; iterator++)
       {
          const Integer fh = iterator->second;
-         if (forecast_hour == fh) { return false; }
+         if (forecast_second == fh) { return false; }
       }
 
    }
@@ -805,7 +805,7 @@ Nwp::Key_Multimap::is_first_step (const Key& key) const
 {
 
    const Dtime& base_time = key.base_time;
-   const Integer forecast_hour = key.forecast_hour;
+   const Integer forecast_second = key.forecast_second;
 
    try
    {
@@ -814,7 +814,7 @@ Nwp::Key_Multimap::is_first_step (const Key& key) const
       pair<Iterator, Iterator> range = equal_range (base_time);
 
       const Integer first_fh = range.first->second;
-      return (forecast_hour == first_fh);
+      return (forecast_second == first_fh);
 
    }
    catch (const std::exception& se)
@@ -830,7 +830,7 @@ Nwp::Key_Multimap::get_previous_key (const Key& key) const
 {
 
    const Dtime& base_time = key.base_time;
-   const Integer forecast_hour = key.forecast_hour;
+   const Integer forecast_second = key.forecast_second;
 
    typedef Key_Multimap::const_iterator Iterator;
    pair<Iterator, Iterator> range = equal_range (base_time);
@@ -839,7 +839,7 @@ Nwp::Key_Multimap::get_previous_key (const Key& key) const
         iterator != range.second; iterator++)
    {
       const Integer fh = iterator->second;
-      if (forecast_hour == fh)
+      if (forecast_second == fh)
       {
          const Integer prev_fh = (--iterator)->second;
          const Key prev_key (base_time, prev_fh);
@@ -936,7 +936,7 @@ Nwp::Key_Multimap::get_key (const Dtime& dtime,
    else
    {
       const Nwp::Key& last_key = *(key_set.rbegin ());
-      if (last_key.forecast_hour != 0 || n == 1) { return last_key; }
+      if (last_key.forecast_second != 0 || n == 1) { return last_key; }
       else
       {
          const Nwp::Key& second_last_key = *(++key_set.rbegin ());
@@ -988,15 +988,15 @@ Nwp::fill_rain_data (Geodetic_Vector_Data_2D& gvd_2d,
 
    const Level& nil = Level::nil_level ();
 
-   if (hours == key.forecast_hour)
+   if (hours == key.forecast_second)
    {
       fill_data (gvd_2d, vector_index, key, nil, RAINFALL_CUMULATIVE);
       return;
    }
 
    Geodetic_Vector_Data_2D* data_ptr = get_initialized_vd_2d (2);
-   const Integer prev_forecast_hour = key.forecast_hour - hours;
-   const Key prev_key (key.base_time, prev_forecast_hour);
+   const Integer prev_forecast_second = key.forecast_second - hours;
+   const Key prev_key (key.base_time, prev_forecast_second);
 
    try
    {
@@ -2763,9 +2763,9 @@ Nwp::get_3d_data (const Key& key)
    {
       Dstring error_str = "Nwp::get_3d_data get_3d_data failed  ";
       const Dtime& base_time = key.base_time;
-      const Integer forecast_hour = key.forecast_hour;
+      const Integer forecast_second = key.forecast_second;
       error_str += base_time.get_string ();
-      error_str += Dstring::render (" +%d hr", forecast_hour);
+      error_str += Dstring::render (" +%d hr", forecast_second);
       throw Nwp_Exception (error_str);
    }
 
@@ -3723,8 +3723,8 @@ Nwp::get_temperature_24hr_data_ptr (const Key& key,
    typedef Geodetic_Vector_Data_2D Gvd_2d;
 
    const Dtime& base_time = key.base_time;
-   const Integer forecast_hour = key.forecast_hour;
-   const Key prev_key (base_time, forecast_hour - 24);
+   const Integer forecast_second = key.forecast_second;
+   const Key prev_key (base_time, forecast_second - 86400);
 
    Gvd_2d* this_data_ptr = get_temperature_data_ptr (key, level);
    Gvd_2d* prev_data_ptr = get_temperature_data_ptr (prev_key, level);

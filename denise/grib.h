@@ -844,7 +844,7 @@ namespace denise
          set_grib_key (Grib::Key& grib_key,
                        const Met_Element met_element,
                        const Dtime& base_time,
-                       const Integer forecast_hour) const;
+                       const Integer forecast_second) const;
 
          void
          set_grib_key (Grib::Key& grib_key,
@@ -986,7 +986,7 @@ namespace denise
          set_grib_key (Grib::Key& grib_key,
                        const Met_Element met_element,
                        const Dtime& base_time,
-                       const Integer forecast_hour) const;
+                       const Integer forecast_second) const;
 
          void
          set_grib_key (Grib::Key& grib_key,
@@ -1122,7 +1122,7 @@ namespace denise
          void
          set_grib_key (Grib::Key& grib_key,
                        const Met_Element met_element,
-                       const Integer forecast_hour) const;
+                       const Integer forecast_second) const;
 
          void
          set_grib_key (Grib::Key& grib_key,
@@ -1239,9 +1239,9 @@ namespace denise
          get_key (const Dtime& dtime) const;
 
          void
-         acquire_base_time_forecast_hour (Dtime& base_time,
-                                          Integer& forecast_hour,
-                                          const Dtime& dtime) const;
+         acquire_base_time_forecast_second (Dtime& base_time,
+                                            Integer& forecast_second,
+                                            const Dtime& dtime) const;
 
    };
 
@@ -1296,7 +1296,7 @@ namespace denise
          void
          set_grib_key (Grib2::Key& grib_key,
                        const Met_Element met_element,
-                       const Integer forecast_hour) const;
+                       const Integer forecast_second) const;
 
          void
          set_grib_key (Grib2::Key& grib_key,
@@ -1414,9 +1414,9 @@ namespace denise
          get_key (const Dtime& dtime) const;
 
          void
-         acquire_base_time_forecast_hour (Dtime& base_time,
-                                          Integer& forecast_hour,
-                                          const Dtime& dtime) const;
+         acquire_base_time_forecast_second (Dtime& base_time,
+                                            Integer& forecast_second,
+                                            const Dtime& dtime) const;
 
    };
 
@@ -1471,7 +1471,7 @@ namespace denise
          void
          set_grib_key (Grib2::Key& grib_key,
                        const Met_Element met_element,
-                       const Integer forecast_hour) const;
+                       const Integer forecast_second) const;
 
          void
          set_grib_key (Grib2::Key& grib_key,
@@ -1589,9 +1589,9 @@ namespace denise
          get_key (const Dtime& dtime) const;
 
          void
-         acquire_base_time_forecast_hour (Dtime& base_time,
-                                          Integer& forecast_hour,
-                                          const Dtime& dtime) const;
+         acquire_base_time_forecast_second (Dtime& base_time,
+                                            Integer& forecast_second,
+                                            const Dtime& dtime) const;
 
    };
 
