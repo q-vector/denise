@@ -902,7 +902,7 @@ void
 Ncep_Ncar::survey ()
 {
 
-   for (Real t = 0; t <= time_span; t += time_interval)
+   for (Real t = 0; t <= time_span; t += time_interval / 3600)
    {
       const Dtime dtime (start_time.t + t);
       const Key key (dtime, 0);
