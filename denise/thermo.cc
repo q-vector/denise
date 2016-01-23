@@ -3002,12 +3002,12 @@ Sounding::load (const Dstring& file_path)
 {
 
    ifstream file (file_path);
-   string input_string;
+   Dstring input_string;
 
    while (getline (file, input_string))
    {
 
-      const Tokens tokens (input_string);
+      const Tokens tokens (input_string, Dstring (" "));
 
       if (tokens[0] == "time")
       {
