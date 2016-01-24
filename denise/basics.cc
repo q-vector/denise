@@ -969,6 +969,29 @@ Real_Profile::get_ordinate_tuple () const
    return tuple;
 }
 
+Real
+Real_Profile::get_ordinate (const Real abscissa) const
+{
+
+   Real ordinate = GSL_NAN;
+   Real delta = GSL_POSINF;
+
+   for (auto iterator = begin (); iterator != end (); iterator++)
+   {
+      const Real a = iterator->first;
+      const Real o = iterator->second;
+      const Real d = fabs (abscissa - a);
+      if (d < delta)
+      {
+         delta = d;
+         ordinate = o;
+      }
+   }
+
+   return ordinate;
+
+}
+
 Domain_1D::Domain_1D (const Real start,
                       const Real end)
    : start (start),
