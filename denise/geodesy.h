@@ -613,7 +613,8 @@ namespace denise
 
          void
          cairo (const RefPtr<Context> cr,
-                const Transform_2D& transform) const;
+                const Transform_2D& transform,
+                const Real annotated = true) const;
 
          Journey::iterator
          get_iterator (const Transform_2D& transform,
@@ -853,6 +854,9 @@ namespace denise
 
          Geodetic_Mesh
          get_mesh (const Size_2D& size_2d) const;
+
+         Polygon
+         get_polygon (const Size_2D& size_2d) const;
 
    };
 

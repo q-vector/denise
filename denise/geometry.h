@@ -777,6 +777,8 @@ namespace denise
 
          Polygon ();
 
+         Polygon (const Dstring& str);
+
          Polygon (const Polygon& polygon);
 
          Polygon (const Circle& circle,
