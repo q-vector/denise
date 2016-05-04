@@ -1374,6 +1374,14 @@ namespace denise
          get_scorer_profile_ptr (const Real azimuth,
                                  const Real c = 0.0) const;
 
+         Real_Profile*
+         get_scorer_a_profile_ptr (const Real azimuth,
+                                   const Real c = 0.0) const;
+
+         Real_Profile*
+         get_scorer_b_profile_ptr (const Real azimuth,
+                                   const Real c = 0.0) const;
+
          set<Real>
          get_p_set () const;
 

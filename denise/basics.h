@@ -721,6 +721,9 @@ namespace denise
          Tuple
          get_ordinate_tuple () const;
 
+         Real
+         get_ordinate (const Real abscissa) const;
+
    };
 
    class Domain_1D

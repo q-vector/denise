@@ -263,6 +263,9 @@ namespace denise
                Set (const Dtime& start,
                     const Dtime& end);
 
+               Span
+               get_span (const bool snap_to_minute = false) const;
+
                Dtime
                get_start (const bool snap_to_minute = false) const; 
 

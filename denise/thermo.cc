@@ -3002,12 +3002,12 @@ Sounding::load (const Dstring& file_path)
 {
 
    ifstream file (file_path);
-   string input_string;
+   Dstring input_string;
 
    while (getline (file, input_string))
    {
 
-      const Tokens tokens (input_string);
+      const Tokens tokens (input_string, Dstring (" "));
 
       if (tokens[0] == "time")
       {
@@ -3355,7 +3355,7 @@ Sounding::get_scorer_profile_ptr (const Real azimuth,
 {
 
    Real_Profile* scorer_profile_ptr = new Real_Profile ();
-   const Real theta = azimuth * M_PI/180;
+   const Real theta = azimuth * DEGREE_TO_RADIAN;
    const Real min_p = std::max (get_start_p (), wind_profile.begin ()->first);
    const Real max_p = std::min (get_end_p (), wind_profile.rbegin ()->first);
 
@@ -3412,6 +3412,128 @@ Sounding::get_scorer_profile_ptr (const Real azimuth,
    }
 
    return scorer_profile_ptr;
+
+}
+
+Real_Profile*
+Sounding::get_scorer_a_profile_ptr (const Real azimuth,
+                                    const Real c) const
+{
+
+   Real_Profile* scorer_a_profile_ptr = new Real_Profile ();
+   const Real theta = azimuth * DEGREE_TO_RADIAN;
+   const Real min_p = std::max (get_start_p (), wind_profile.begin ()->first);
+   const Real max_p = std::min (get_end_p (), wind_profile.rbegin ()->first);
+
+   for (auto iterator = t_line.begin ();
+        iterator != t_line.end (); iterator++)
+   {
+
+      if (iterator == t_line.begin ()) { continue; }
+      Thermo_Line::const_iterator prev = iterator; prev--;
+      Thermo_Line::const_iterator next = iterator; next++;
+      if (next == t_line.end ()) { continue; }
+
+      const Real p_0 = prev->first;
+      if (p_0 < min_p) { continue; }
+      const Real p_1 = iterator->first;
+      const Real p_2 = next->first;
+      if (p_2 > max_p) { continue; }
+
+      const Real t_0 = prev->second;
+      const Real t_1 = iterator->second;
+      const Real t_2 = next->second;
+
+      const Wind& wind_0 = wind_profile.get_wind (p_0);
+      const Wind& wind_1 = wind_profile.get_wind (p_1);
+      const Wind& wind_2 = wind_profile.get_wind (p_2);
+
+      const Real u_0 = wind_0.u; const Real v_0 = wind_0.v;
+      const Real u_1 = wind_1.u; const Real v_1 = wind_1.v;
+      const Real u_2 = wind_2.u; const Real v_2 = wind_2.v;
+
+      const Real along_0 = u_0 * sin (theta) + v_0 * cos (theta);
+      const Real along_1 = u_1 * sin (theta) + v_1 * cos (theta);
+      const Real along_2 = u_2 * sin (theta) + v_2 * cos (theta);
+
+      const Real theta_0 = Thermo_Point::t_p (t_0, p_0).get_theta ();
+      const Real theta_1 = Thermo_Point::t_p (t_1, p_1).get_theta ();
+      const Real theta_2 = Thermo_Point::t_p (t_2, p_2).get_theta ();
+
+      const Real z_0 = height_profile.get_height (p_0);
+      const Real z_1 = height_profile.get_height (p_1);
+      const Real z_2 = height_profile.get_height (p_2);
+
+      typedef Differentiation D;
+      const Real dtheta_dz = D::d_1 (theta_0, theta_1, theta_2, z_0, z_1, z_2);
+
+      const Real relative_u = (along_1 - c);
+      const Real A = (g / theta_1 * dtheta_dz) / (relative_u * relative_u);
+
+      scorer_a_profile_ptr->insert (make_pair (p_1, A));
+
+   }
+
+   return scorer_a_profile_ptr;
+
+}
+
+Real_Profile*
+Sounding::get_scorer_b_profile_ptr (const Real azimuth,
+                                    const Real c) const
+{
+
+   Real_Profile* scorer_b_profile_ptr = new Real_Profile ();
+   const Real theta = azimuth * DEGREE_TO_RADIAN;
+   const Real min_p = std::max (get_start_p (), wind_profile.begin ()->first);
+   const Real max_p = std::min (get_end_p (), wind_profile.rbegin ()->first);
+
+   for (auto iterator = t_line.begin ();
+        iterator != t_line.end (); iterator++)
+   {
+
+      if (iterator == t_line.begin ()) { continue; }
+      Thermo_Line::const_iterator prev = iterator; prev--;
+      Thermo_Line::const_iterator next = iterator; next++;
+      if (next == t_line.end ()) { continue; }
+
+      const Real p_0 = prev->first;
+      if (p_0 < min_p) { continue; }
+      const Real p_1 = iterator->first;
+      const Real p_2 = next->first;
+      if (p_2 > max_p) { continue; }
+
+      const Real t_0 = prev->second;
+      const Real t_1 = iterator->second;
+      const Real t_2 = next->second;
+
+      const Wind& wind_0 = wind_profile.get_wind (p_0);
+      const Wind& wind_1 = wind_profile.get_wind (p_1);
+      const Wind& wind_2 = wind_profile.get_wind (p_2);
+
+      const Real u_0 = wind_0.u; const Real v_0 = wind_0.v;
+      const Real u_1 = wind_1.u; const Real v_1 = wind_1.v;
+      const Real u_2 = wind_2.u; const Real v_2 = wind_2.v;
+
+      const Real along_0 = u_0 * sin (theta) + v_0 * cos (theta);
+      const Real along_1 = u_1 * sin (theta) + v_1 * cos (theta);
+      const Real along_2 = u_2 * sin (theta) + v_2 * cos (theta);
+
+      const Real z_0 = height_profile.get_height (p_0);
+      const Real z_1 = height_profile.get_height (p_1);
+      const Real z_2 = height_profile.get_height (p_2);
+
+      typedef Differentiation D;
+      const Real d2along_dz2 = D::d2 (along_0, along_1, along_2, z_0, z_1, z_2);
+
+      const Real relative_u = (along_1 - c);
+      const Real B = -d2along_dz2 / relative_u;
+
+      scorer_b_profile_ptr->insert (make_pair (p_1, B));
+
+   }
+
+   return scorer_b_profile_ptr;
 
 }
 

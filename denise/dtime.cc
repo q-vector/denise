@@ -642,6 +642,14 @@ Dtime::Set::Set (const Dtime& start,
    insert (Dtime::Span (start, end));
 }
 
+Dtime::Span
+Dtime::Set::get_span (const bool snap_to_minute) const
+{
+   const Dtime start = get_start (snap_to_minute);
+   const Dtime end = get_end (snap_to_minute);
+   return Dtime::Span (start, end);
+}
+
 Dtime
 Dtime::Set::get_start (const bool snap_to_minute) const
 {

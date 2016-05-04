@@ -1631,7 +1631,8 @@ Journey::get_azimuth_forward (Journey::iterator iterator,
 
 void
 Journey::cairo (const RefPtr<Context> cr,
-                const Transform_2D& transform) const
+                const Transform_2D& transform,
+                const Real annotated) const
 {
 
    const Geodesy geodesy;
@@ -1645,7 +1646,7 @@ Journey::cairo (const RefPtr<Context> cr,
    Journey fine_journey = Journey::fine_journey (*this, geodesy, d_distance);
    fine_journey.standardize (LAT_LONG_PACIFIC);
 
-   const Real node_size = 16;
+   const Real node_size = (annotated ? 16 : 4);
    const Color& bg_color = Color::hsb (0.167, 0.2, 0.5, 0.7);
    const Color& fg_color = Color::hsb (0.167, 0.2, 1.0, 1.0);
 
@@ -1671,62 +1672,67 @@ Journey::cairo (const RefPtr<Context> cr,
    cr->set_font_size (7);
    fg_color.cairo (cr);
 
-   // draw the nominal numbers
-   for (auto iterator = simple_polyline.begin ();
-        iterator != simple_polyline.end (); iterator++)
-   {
-      const Point_2D& p = *(iterator);
-      const Integer d = std::distance (simple_polyline.begin (), iterator);
-      const Dstring& str = Dstring::render ("%d", d);
-      Label (str, p, 'c', 'c').cairo (cr);
-   }
-
-   // Two things:
-   // - draw dotted circles at each stop
-   // - draw the distances of each leg
-   for (auto i = begin (); i != end (); i++)
+   if (annotated)
    {
 
-      const Lat_Long& lat_long = *(i);
-      const Point_2D& point = transform.transform (lat_long);
+      // draw the nominal numbers
+      for (auto iterator = simple_polyline.begin ();
+           iterator != simple_polyline.end (); iterator++)
+      {
+         const Point_2D& p = *(iterator);
+         const Integer d = std::distance (simple_polyline.begin (), iterator);
+         const Dstring& str = Dstring::render ("%d", d);
+         Label (str, p, 'c', 'c').cairo (cr);
+      }
 
-      cr->save ();
-      Dashes ("1:2").cairo (cr);
-      cr->set_line_width (1);
-      Ring (node_size / 2).cairo (cr, point);
-      fg_color.cairo (cr);
-      cr->stroke ();
-      cr->restore ();
+      // Two things:
+      // - draw dotted circles at each stop
+      // - draw the distances of each leg
+      for (auto i = begin (); i != end (); i++)
+      {
 
-      if (!closed && is_last (i)) { continue; }
+         const Lat_Long& lat_long = *(i);
+         const Point_2D& point = transform.transform (lat_long);
 
-      cr->save ();
-      cr->set_font_size (12);
+         cr->save ();
+         Dashes ("1:2").cairo (cr);
+         cr->set_line_width (1);
+         Ring (node_size / 2).cairo (cr, point);
+         fg_color.cairo (cr);
+         cr->stroke ();
+         cr->restore ();
 
-      Journey::Simple simple_journey = this->get_simple_journey (i);
-      simple_journey.complete (geodesy);
+         if (!closed && is_last (i)) { continue; }
 
-      const Real distance = simple_journey.get_distance ();
-      const Lat_Long& origin = simple_journey.get_origin ();
-      const Lat_Long& destination = simple_journey.get_destination ();
-      const Point_2D& origin_point = transform.transform (origin);
-      const Point_2D& destination_point = transform.transform (destination);
-      const Real dx = destination_point.x - origin_point.x;
-      const Real dy = destination_point.y - origin_point.y;
-      const Real theta = atan (dy / dx);
+         cr->save ();
+         cr->set_font_size (12);
 
-      Lat_Long ll = simple_journey.get_middle_lat_long (geodesy);
-      ll.standardize (LAT_LONG_PACIFIC);
+         Journey::Simple simple_journey = this->get_simple_journey (i);
+         simple_journey.complete (geodesy);
 
-      const Point_2D& p = transform.transform (ll);
-      const Dstring& str = Dstring::render ("%.0fkm", distance / 1e3);
+         const Real distance = simple_journey.get_distance ();
+         const Lat_Long& origin = simple_journey.get_origin ();
+         const Lat_Long& destination = simple_journey.get_destination ();
+         const Point_2D& origin_point = transform.transform (origin);
+         const Point_2D& destination_point = transform.transform (destination);
+         const Real dx = destination_point.x - origin_point.x;
+         const Real dy = destination_point.y - origin_point.y;
+         const Real theta = atan (dy / dx);
 
-      Label label (str, p, 'c', 'b', 12);
-      label.set_text_angle (theta);
-      //label.cairo (cr, fg_color, bg_color, Point_2D (-2, 2));
-      label.cairo (cr, bg_color, fg_color, Point_2D (-2, 2));
+         Lat_Long ll = simple_journey.get_middle_lat_long (geodesy);
+         ll.standardize (LAT_LONG_PACIFIC);
 
-      cr->restore ();
+         const Point_2D& p = transform.transform (ll);
+         const Dstring& str = Dstring::render ("%.0fkm", distance / 1e3);
+
+         Label label (str, p, 'c', 'b', 12);
+         label.set_text_angle (theta);
+         //label.cairo (cr, fg_color, bg_color, Point_2D (-2, 2));
+         label.cairo (cr, bg_color, fg_color, Point_2D (-2, 2));
+
+         cr->restore ();
+
+      }
 
    }
 
@@ -2381,6 +2387,21 @@ Geodetic_Transform::get_mesh (const Size_2D& size_2d) const
    const Real major = (span > 72 ? 30 : span > 22 ? 10 : span > 9 ? 5 : span > 4 ? 2   : 1);
 
    return Geodetic_Mesh (minor, color_n, major, color_j, size_2d, domain_2d);
+
+}
+
+Polygon
+Geodetic_Transform::get_polygon (const Size_2D& size_2d) const
+{
+
+   Polygon polygon;
+
+   polygon.add (Transform_2D::reverse (Point_2D (0, 0)));
+   polygon.add (Transform_2D::reverse (Point_2D (0, size_2d.j)));
+   polygon.add (Transform_2D::reverse (Point_2D (size_2d.i, size_2d.j)));
+   polygon.add (Transform_2D::reverse (Point_2D (size_2d.i, 0)));
+
+   return polygon;
 
 }
 

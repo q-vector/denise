@@ -20,6 +20,7 @@
 
 #include "cairoable.h"
 #include "geometry.h"
+#include "geodesy.h"
 #include "transform.h"
 
 using namespace denise;
@@ -2428,6 +2429,41 @@ Polygon::Polygon ()
      domain_y (GSL_POSINF, GSL_NEGINF),
      min_edge_length (GSL_POSINF)
 {
+}
+
+Polygon::Polygon (const Dstring& str)
+   : first_handle_ptr (NULL),
+     domain_x (GSL_POSINF, GSL_NEGINF),
+     domain_y (GSL_POSINF, GSL_NEGINF),
+     min_edge_length (GSL_POSINF)
+{
+
+   const Tokens tokens (str.get_lower_case (), "@");
+
+   if (tokens.size () < 2)
+   {
+   }
+   else
+   if (tokens.size () == 2)
+   {
+      typedef Geodetic_Transform Gt;
+      const Size_2D size_2d (tokens[1]);
+      const Point_2D point (Real (size_2d.i) / 2, Real (size_2d.j) / 2);
+      const Gt* gt_ptr = Gt::get_transform_ptr (tokens[0], point);
+      add (gt_ptr->get_polygon (size_2d));
+      delete gt_ptr;
+   }
+   else
+   {
+      for (auto iterator = tokens.begin ();
+           iterator != tokens.end (); iterator++)
+      {
+         const Dstring& token = *(iterator);
+         const Point_2D point (token);
+         add (point);
+      }
+   }
+
 }
 
 Polygon::Polygon (const Polygon& polygon)
