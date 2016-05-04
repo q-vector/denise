@@ -1798,7 +1798,10 @@ Simple_Mesh_2D::render_label_x (const RefPtr<Context>& cr,
    const Real o_x = (non_regular ? 1 : offset_x);
 
    cr->save ();
-   color.cairo (cr);
+   if (label_number == Label::LATITUDE || label_number == Label::LONGITUDE)
+   {
+      color.cairo (cr);
+   }
 
    for (Tuple::const_iterator iterator = tuple.begin ();
         iterator != tuple.end (); iterator++)
@@ -1841,7 +1844,10 @@ Simple_Mesh_2D::render_label_y (const RefPtr<Context>& cr,
    const Real o_y = (non_regular ? 1 : offset_y);
 
    cr->save ();
-   color.cairo (cr);
+   if (label_number == Label::LATITUDE || label_number == Label::LONGITUDE)
+   {
+      color.cairo (cr);
+   }
 
    for (Tuple::const_iterator iterator = tuple.begin ();
         iterator != tuple.end (); iterator++)
