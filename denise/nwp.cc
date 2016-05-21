@@ -24,6 +24,242 @@
 using namespace std;
 using namespace denise;
 
+Nwp::Nwp (const Dstring& description,
+          const Dstring& path)
+   : description (description),
+     path (path)
+{
+}
+
+Nwp::Key::Key (const Dtime& base_time,
+               const Integer forecast_second)
+   : base_time (base_time),
+     forecast_second (forecast_second)
+{
+}
+
+Nwp::Key::Key (const Key& key)
+   : base_time (key.base_time),
+     forecast_second (key.forecast_second)
+{
+}
+
+Dtime
+Nwp::Key::get_dtime () const
+{
+   return Dtime (base_time.t + Real (forecast_second / 60.0));
+}
+
+bool
+Nwp::Key::operator == (const Key& key) const
+{
+   const bool a = fabs (base_time.t - key.base_time.t) <= TIME_TOLERANCE;
+   const bool b = (forecast_second == key.forecast_second);
+   return (a && b);
+}
+
+bool
+Nwp::Key::operator > (const Key& key) const
+{
+   if (fabs (base_time.t - key.base_time.t) > TIME_TOLERANCE)
+   {
+      return (base_time > key.base_time);
+   }
+   else
+   {
+      return forecast_second > key.forecast_second;
+   }
+}
+
+bool
+Nwp::Key::operator < (const Key& key) const
+{
+   if (fabs (base_time.t - key.base_time.t) > TIME_TOLERANCE)
+   {
+      return (base_time < key.base_time);
+   }
+   else
+   {
+      return forecast_second < key.forecast_second;
+   }
+}
+
+Sparse_Nwp::Data_3D::Data_3D (const vector<Met_Element>& met_element_vector,
+                              const Key& key)
+  : key (key),
+    available (false),
+    met_element_vector (met_element_vector)
+{
+   for (auto iterator = met_element_vector.begin ();
+        iterator != met_element_vector.end (); iterator++)
+   {
+      const Met_Element& met_element = *(iterator);
+      Geodetic_Data_3D* gd_3d_ptr = NULL;
+      insert (make_pair (met_element, gd_3d_ptr));
+   }
+
+}
+
+Sparse_Nwp::Data_3D::~Data_3D ()
+{
+   for (auto iterator = begin (); iterator != end (); iterator++)
+   {
+      Geodetic_Data_3D* gd_3d_ptr = iterator->second;
+      if (gd_3d_ptr != NULL) { delete gd_3d_ptr; }
+   }
+}
+
+Real
+Sparse_Nwp::Data_3D::evaluate (const Met_Element element,
+                               const Lat_Long& lat_long,
+                               const Real p,
+                               const Evaluate_Op evaluate_op) const
+{
+
+   switch (element)
+   {
+
+      case WIND_SPEED:
+      {
+         const Real u = evaluate (U, lat_long, p);
+         const Real v = evaluate (V, lat_long, p);
+         return sqrt (u*u + v*v);
+      }
+
+      case WIND_DIRECTION:
+      {
+         const Real u = evaluate (U, lat_long, p);
+         const Real v = evaluate (V, lat_long, p);
+         return Wind (u, v).get_direction ();
+      }
+
+      case DEW_POINT_DEPRESSION:
+      {
+         const Real t = evaluate (T, lat_long, p);
+         const Real t_d = evaluate (TD, lat_long, p);
+         return t - t_d;
+      }
+
+      case THETA:
+      {
+         const Real t = evaluate (T, lat_long, p);
+         return Thermo_Point::t_p (t - K, p).get_theta () + K;
+      }
+
+      case THETA_E:
+      {
+         const Real t = evaluate (T, lat_long, p);
+         const Real t_d = evaluate (TD, lat_long, p);
+         return Thermo_Point::normand (t - K, t_d - K, p).get_theta_e () + K;
+      }
+
+      case THETA_W:
+      {
+         const Real t = evaluate (T, lat_long, p);
+         const Real t_d = evaluate (TD, lat_long, p);
+         return Thermo_Point::normand (t - K, t_d - K, p).get_theta_w () + K;
+      }
+
+      case TEMPERATURE_ADVECTION:
+      {
+         const Real t_x = evaluate (T, lat_long, p, DX);
+         const Real t_y = evaluate (T, lat_long, p, DY);
+         const Real u = evaluate (U, lat_long, p);
+         const Real v = evaluate (V, lat_long, p);
+         return -(t_x * u + t_y * v);
+      }
+
+      case ADIABATIC_HEATING:
+      {
+         const Real t = evaluate (T, lat_long, p);
+         const Real omega = evaluate (OMEGA, lat_long, p);
+         const Real alpha = (R_d * t) / p;
+         return alpha / c_p * omega;
+      }
+
+      case LATENT_HEATING:
+      {
+         const Real rh = evaluate (RH, lat_long, p);
+         if (rh < 0.9) { return 0; }
+         const Real t = evaluate (T, lat_long, p);
+         const Real omega = evaluate (OMEGA, lat_long, p);
+         const Thermo_Point& tp = Thermo_Point::t_p (t, p);
+         return tp.get_saturated_Q_dot (omega) * rh;
+      }
+
+      case MONTGOMERY:
+      {
+         const Real t = evaluate (T, lat_long, p);
+         const Real z = evaluate (Z, lat_long, p);
+         return g * z + c_p * t;
+      }
+
+      case ABSOLUTE_VORTICITY:
+      {
+         const Real f = Geodetic_Data_2D::get_f (lat_long.latitude);
+         const Real dv_dx = evaluate (V, lat_long, p, DX);
+         const Real du_dy = evaluate (U, lat_long, p, DY);
+         const Real zeta = dv_dx - du_dy + f;
+         return zeta;
+      }
+
+      case POTENTIAL_VORTICITY:
+      {
+
+         const Real exner = pow (Real (p / 1000e2), Real (kappa));
+         const Real f = Geodetic_Data_2D::get_f (lat_long.latitude);
+         const Real f_hat = Geodetic_Data_2D::get_f_hat (lat_long.latitude);
+
+         const Real t = evaluate (T, lat_long, p);
+         const Real dt_dx = evaluate (T, lat_long, p, DX);
+         const Real dt_dy = evaluate (T, lat_long, p, DY);
+         const Real dt_dp = evaluate (T, lat_long, p, DZ);
+         const Real dv_dx = evaluate (V, lat_long, p, DX);
+         const Real dv_dp = evaluate (V, lat_long, p, DZ);
+         const Real du_dy = evaluate (U, lat_long, p, DY);
+         const Real du_dp = evaluate (U, lat_long, p, DZ);
+         const Real dz_dp = evaluate (Z, lat_long, p, DZ);
+
+         const Real rho = p / (R_d * t);
+         const Real rho_g = rho * g;
+
+         const Real dw_dx = evaluate (W, lat_long, p, DX);
+         const Real dw_dy = evaluate (W, lat_long, p, DY);
+
+         const Real dt_dz = (dt_dp - (kappa * t / p)) / dz_dp;
+
+         const Real xi = dw_dy - dv_dp / dz_dp;
+         const Real eta = du_dp / dz_dp - dw_dx + f_hat;
+         const Real zeta = dv_dx - du_dy + f;
+
+         const Real pv_x = xi * dt_dx;
+         const Real pv_y = eta * dt_dy;
+         const Real pv_z = zeta * dt_dz;
+         const Real pv = (pv_x + pv_y + pv_z) / (exner * rho);
+
+         return pv;
+
+      }
+
+   }
+   
+   Data_3D::const_iterator iterator = find (element);
+   if (iterator == end ()) { return GSL_NAN; }
+
+   const Geodetic_Data_3D* gd_3d_ptr = iterator->second;
+   if (gd_3d_ptr == NULL) { return GSL_NAN; }
+
+   const Geodetic_Data_3D& gd_3d = *gd_3d_ptr;
+   const Real latitude = lat_long.latitude;
+   const Real longitude = lat_long.longitude;
+   return gd_3d.evaluate (0, p, latitude, longitude, evaluate_op);
+
+}
+
+
+
+
+
 //Level_Tuple::Level_Vector ()
 //{
 //}
@@ -70,7 +306,7 @@ Level_Tuple::get_next_up (const Real value) const
 
    }
 
-   throw Nwp_Exception ("Level_Vector::get_next_up confused");
+   throw Old_Nwp_Exception ("Level_Vector::get_next_up confused");
 
 }
 
@@ -99,7 +335,7 @@ Level_Tuple::get_next_down (const Real value) const
 
    }
 
-   throw Nwp_Exception ("Level_Vector::get_next_up confused");
+   throw Old_Nwp_Exception ("Level_Vector::get_next_up confused");
 
 }
 
@@ -110,60 +346,7 @@ Level_Element::Level_Element (const Level& level,
 {
 }
 
-Nwp::Key::Key (const Dtime& base_time,
-               const Integer forecast_second)
-   : base_time (base_time),
-     forecast_second (forecast_second)
-{
-}
-
-Nwp::Key::Key (const Key& key)
-   : base_time (key.base_time),
-     forecast_second (key.forecast_second)
-{
-}
-
-bool
-Nwp::Key::operator == (const Key& key) const
-{
-   const bool a = fabs (base_time.t - key.base_time.t) <= TIME_TOLERANCE;
-   const bool b = (forecast_second == key.forecast_second);
-   return (a && b);
-}
-
-bool
-Nwp::Key::operator > (const Key& key) const
-{
-   if (fabs (base_time.t - key.base_time.t) > TIME_TOLERANCE)
-   {
-      return (base_time > key.base_time);
-   }
-   else
-   {
-      return forecast_second > key.forecast_second;
-   }
-}
-
-bool
-Nwp::Key::operator < (const Key& key) const
-{
-   if (fabs (base_time.t - key.base_time.t) > TIME_TOLERANCE)
-   {
-      return (base_time < key.base_time);
-   }
-   else
-   {
-      return forecast_second < key.forecast_second;
-   }
-}
-
-Nwp::Sounding::Sounding (const Key& key)
-   : key (key)
-{
-   time.t = key.base_time.t + key.forecast_second;
-}
-
-Nwp::Element_Vector::Element_Vector (const vector<Met_Element>& met_element_vector)
+Old_Nwp::Element_Vector::Element_Vector (const vector<Met_Element>& met_element_vector)
    : vector<Met_Element> (met_element_vector)
 {
 
@@ -176,7 +359,7 @@ Nwp::Element_Vector::Element_Vector (const vector<Met_Element>& met_element_vect
 }
 
 Integer
-Nwp::Element_Vector::get_index (const Met_Element met_element) const
+Old_Nwp::Element_Vector::get_index (const Met_Element met_element) const
 {
 
    return reverse_map.at (met_element);
@@ -186,17 +369,17 @@ Nwp::Element_Vector::get_index (const Met_Element met_element) const
       if (at (i) == met_element) { return i; }
    }
 
-   throw Nwp_Exception ("met_element not available.");
+   throw Old_Nwp_Exception ("met_element not available.");
 
 }
 
 Met_Element
-Nwp::Element_Vector::get_met_element (const Integer element_index) const
+Old_Nwp::Element_Vector::get_met_element (const Integer element_index) const
 {
    return at (element_index);
 }
 
-Nwp::Data_3D::Data_3D (const vector<Met_Element>& met_element_vector,
+Old_Nwp::Data_3D::Data_3D (const vector<Met_Element>& met_element_vector,
                        const Key& key)
   : key (key),
     available (false),
@@ -209,24 +392,24 @@ Nwp::Data_3D::Data_3D (const vector<Met_Element>& met_element_vector,
         iterator != met_element_vector.end (); iterator++)
    {
       const Met_Element& met_element = *(iterator);
-      Geodetic_Vector_Data_3D* gvd_3d_ptr = NULL;
-      insert (make_pair (met_element, gvd_3d_ptr));
+      Geodetic_Data_3D* gd_3d_ptr = NULL;
+      insert (make_pair (met_element, gd_3d_ptr));
    }
 
 }
 
-Nwp::Data_3D::~Data_3D ()
+Old_Nwp::Data_3D::~Data_3D ()
 {
-   for (Nwp::Data_3D::iterator iterator = begin ();
+   for (Old_Nwp::Data_3D::iterator iterator = begin ();
         iterator != end (); iterator++)
    {
-      Geodetic_Vector_Data_3D* gvd_3d_ptr = iterator->second;
-      if (gvd_3d_ptr != NULL) { delete gvd_3d_ptr; }
+      Geodetic_Data_3D* gd_3d_ptr = iterator->second;
+      if (gd_3d_ptr != NULL) { delete gd_3d_ptr; }
    }
 }
 
 void
-Nwp::Data_3D::read (igzstream& file,
+Old_Nwp::Data_3D::read (igzstream& file,
                     const bool float_length)
 {
 
@@ -235,14 +418,14 @@ Nwp::Data_3D::read (igzstream& file,
         iterator != met_element_vector.end (); iterator++)
    {
       const Met_Element met_element = *(iterator);
-      Geodetic_Vector_Data_3D* gvd_3d_ptr = at (met_element);
-      if (gvd_3d_ptr == NULL) { continue; }
-      gvd_3d_ptr->read (file, float_length);
+      Geodetic_Data_3D* gd_3d_ptr = at (met_element);
+      if (gd_3d_ptr == NULL) { continue; }
+      gd_3d_ptr->read (file, float_length);
    }
 }
 
 void
-Nwp::Data_3D::write (ogzstream& file,
+Old_Nwp::Data_3D::write (ogzstream& file,
                      const bool float_length) const
 {
    typedef vector<Met_Element>::const_iterator Iterator;
@@ -250,91 +433,91 @@ Nwp::Data_3D::write (ogzstream& file,
         iterator != met_element_vector.end (); iterator++)
    {
       const Met_Element met_element = *(iterator);
-      const Geodetic_Vector_Data_3D* gvd_3d_ptr = at (met_element);
-      if (gvd_3d_ptr == NULL) { continue; }
-      gvd_3d_ptr->write (file, float_length);
+      const Geodetic_Data_3D* gd_3d_ptr = at (met_element);
+      if (gd_3d_ptr == NULL) { continue; }
+      gd_3d_ptr->write (file, float_length);
    }
 }
 
 void
-Nwp::Data_3D::unload ()
+Old_Nwp::Data_3D::unload ()
 {
-   for (Nwp::Data_3D::iterator iterator = begin ();
+   for (Old_Nwp::Data_3D::iterator iterator = begin ();
         iterator != end (); iterator++)
    {
-      Geodetic_Vector_Data_3D* gvd_3d_ptr = iterator->second;
-      if (gvd_3d_ptr != NULL) { delete gvd_3d_ptr; iterator->second = NULL; }
+      Geodetic_Data_3D* gd_3d_ptr = iterator->second;
+      if (gd_3d_ptr != NULL) { delete gd_3d_ptr; iterator->second = NULL; }
    }
 }
 
 void
-Nwp::Data_3D::unload (const Met_Element met_element)
+Old_Nwp::Data_3D::unload (const Met_Element met_element)
 {
-   Geodetic_Vector_Data_3D* gvd_3d_ptr = at (met_element);
-   if (gvd_3d_ptr != NULL) { delete gvd_3d_ptr; at (met_element) = NULL; }
+   Geodetic_Data_3D* gd_3d_ptr = at (met_element);
+   if (gd_3d_ptr != NULL) { delete gd_3d_ptr; at (met_element) = NULL; }
 }
 
 void
-Nwp::Data_3D::set_gvd_3d_ptr (const Met_Element met_element,
-                              Geodetic_Vector_Data_3D* gvd_3d_ptr)
+Old_Nwp::Data_3D::set_gd_3d_ptr (const Met_Element met_element,
+                              Geodetic_Data_3D* gd_3d_ptr)
 {
-   at (met_element) = gvd_3d_ptr;
+   at (met_element) = gd_3d_ptr;
 }
 
-const Geodetic_Vector_Data_3D&
-Nwp::Data_3D::get_gvd_3d (const Met_Element met_element) const
+const Geodetic_Data_3D&
+Old_Nwp::Data_3D::get_gd_3d (const Met_Element met_element) const
 {
    try
    {
-      const Geodetic_Vector_Data_3D* gvd_3d_ptr = at (met_element);
-      if (gvd_3d_ptr == NULL)
+      const Geodetic_Data_3D* gd_3d_ptr = at (met_element);
+      if (gd_3d_ptr == NULL)
       {
-         throw Nwp_Exception ("Nwp::Data_3D gvd_3d_ptr is NUL");
+         throw Old_Nwp_Exception ("Old_Nwp::Data_3D gd_3d_ptr is NUL");
       }
-      return *gvd_3d_ptr;
+      return *gd_3d_ptr;
    }
    catch (const std::exception& se)
    {
-      throw Nwp_Exception ("Nwp::Data_3D has no such met_element");
+      throw Old_Nwp_Exception ("Old_Nwp::Data_3D has no such met_element");
    }
 }
 
-Geodetic_Vector_Data_3D&
-Nwp::Data_3D::get_gvd_3d (const Met_Element met_element)
+Geodetic_Data_3D&
+Old_Nwp::Data_3D::get_gd_3d (const Met_Element met_element)
 {
-   Geodetic_Vector_Data_3D* gvd_3d_ptr = at (met_element);
+   Geodetic_Data_3D* gd_3d_ptr = at (met_element);
    try
    {
-      Geodetic_Vector_Data_3D* gvd_3d_ptr = at (met_element);
-      if (gvd_3d_ptr == NULL)
+      Geodetic_Data_3D* gd_3d_ptr = at (met_element);
+      if (gd_3d_ptr == NULL)
       {
-         throw Nwp_Exception ("Nwp::Data_3D gvd_3d_ptr is NUL");
+         throw Old_Nwp_Exception ("Old_Nwp::Data_3D gd_3d_ptr is NUL");
       }
-      return *gvd_3d_ptr;
+      return *gd_3d_ptr;
    }
    catch (const std::exception& se)
    {
-      throw Nwp_Exception ("Nwp::Data_3D has no such met_element");
+      throw Old_Nwp_Exception ("Old_Nwp::Data_3D has no such met_element");
    }
 }
 
 const Tuple&
-Nwp::Data_3D::get_tuple_p (const Met_Element met_element) const
+Old_Nwp::Data_3D::get_tuple_p (const Met_Element met_element) const
 {
    try
    {
-      const Geodetic_Vector_Data_3D& gvd_3d = get_gvd_3d (met_element);
-      return gvd_3d.get_coordinate_tuple (0);
+      const Geodetic_Data_3D& gd_3d = get_gd_3d (met_element);
+      return gd_3d.get_coordinate_tuple (0);
    }
-   catch (const Nwp_Exception& ne)
+   catch (const Old_Nwp_Exception& ne)
    {
-      const Geodetic_Vector_Data_3D& gvd_3d = *(begin ()->second);
-      return gvd_3d.get_coordinate_tuple (0);
+      const Geodetic_Data_3D& gd_3d = *(begin ()->second);
+      return gd_3d.get_coordinate_tuple (0);
    }
 }
 
 Real
-Nwp::Data_3D::get_p (const Met_Element met_element,
+Old_Nwp::Data_3D::get_p (const Met_Element met_element,
                      const Integer k) const
 {
    const Tuple& tuple_p = get_tuple_p (met_element);
@@ -342,50 +525,50 @@ Nwp::Data_3D::get_p (const Met_Element met_element,
 }
 
 Lat_Long
-Nwp::Data_3D::get_lat_long (const Met_Element met_element,
+Old_Nwp::Data_3D::get_lat_long (const Met_Element met_element,
                             const Integer i,
                             const Integer j) const
 {
-   const Geodetic_Vector_Data_3D& gvd_3d = get_gvd_3d (met_element);
-   const Real latitude = gvd_3d.get_coordinate (1, i);
-   const Real longitude = gvd_3d.get_coordinate (2, j);
+   const Geodetic_Data_3D& gd_3d = get_gd_3d (met_element);
+   const Real latitude = gd_3d.get_coordinate (1, i);
+   const Real longitude = gd_3d.get_coordinate (2, j);
    return Lat_Long (latitude, longitude);
 }
 
 bool
-Nwp::Data_3D::is_available () const
+Old_Nwp::Data_3D::is_available () const
 {
    return available;
 }
 
 void
-Nwp::Data_3D::set_available ()
+Old_Nwp::Data_3D::set_available ()
 {
    available = true;
 }
 
 void
-Nwp::Data_3D::initialize (const Real datum)
+Old_Nwp::Data_3D::initialize (const Real datum)
 {
-   for (Nwp::Data_3D::iterator iterator = begin ();
+   for (Old_Nwp::Data_3D::iterator iterator = begin ();
         iterator != end (); iterator++)
    {
-      Geodetic_Vector_Data_3D* gvd_3d_ptr = iterator->second;
-      if (gvd_3d_ptr == NULL) { continue; }
-      gvd_3d_ptr->initialize_all (datum);
+      Geodetic_Data_3D* gd_3d_ptr = iterator->second;
+      if (gd_3d_ptr == NULL) { continue; }
+      gd_3d_ptr->initialize_all (datum);
    }
 }
 
 Real
-Nwp::Data_3D::get_p_from_element (const Met_Element met_element,
+Old_Nwp::Data_3D::get_p_from_element (const Met_Element met_element,
                                   const Real latitude,
                                   const Real longitude,
                                   const Real element_value) const
 {
 
-   const Geodetic_Vector_Data_3D* gvd_3d_ptr = at (met_element);
-   if (gvd_3d_ptr == NULL) { return GSL_NAN; }
-   const Geodetic_Vector_Data_3D& gvd_3d = *gvd_3d_ptr;
+   const Geodetic_Data_3D* gd_3d_ptr = at (met_element);
+   if (gd_3d_ptr == NULL) { return GSL_NAN; }
+   const Geodetic_Data_3D& gd_3d = *gd_3d_ptr;
 
    Real p = GSL_NAN;
    const Real x = element_value;
@@ -416,7 +599,7 @@ Nwp::Data_3D::get_p_from_element (const Met_Element met_element,
 }
 
 Real
-Nwp::Data_3D::evaluate (const Met_Element element,
+Old_Nwp::Data_3D::evaluate (const Met_Element element,
                         const Real p,
                         const Real latitude,
                         const Real longitude,
@@ -510,7 +693,7 @@ Nwp::Data_3D::evaluate (const Met_Element element,
       case ABSOLUTE_VORTICITY:
       {
 
-         const Real f = Geodetic_Vector_Data_2D::get_f (latitude);
+         const Real f = Geodetic_Data_2D::get_f (latitude);
 
          const Met_Element U = ZONAL_WIND;
          const Met_Element V = MERIDIONAL_WIND;
@@ -526,8 +709,8 @@ Nwp::Data_3D::evaluate (const Met_Element element,
       {
 
          const Real exner = pow (Real (p / 1000e2), Real (kappa));
-         const Real f = Geodetic_Vector_Data_2D::get_f (latitude);
-         const Real f_hat = Geodetic_Vector_Data_2D::get_f_hat (latitude);
+         const Real f = Geodetic_Data_2D::get_f (latitude);
+         const Real f_hat = Geodetic_Data_2D::get_f_hat (latitude);
 
          const Met_Element T = TEMPERATURE;
          const Met_Element U = ZONAL_WIND;
@@ -572,16 +755,16 @@ Nwp::Data_3D::evaluate (const Met_Element element,
    Data_3D::const_iterator iterator = find (element);
    if (iterator == end ()) { return GSL_NAN; }
 
-   const Geodetic_Vector_Data_3D* gvd_3d_ptr = iterator->second;
-   if (gvd_3d_ptr == NULL) { return GSL_NAN; }
+   const Geodetic_Data_3D* gd_3d_ptr = iterator->second;
+   if (gd_3d_ptr == NULL) { return GSL_NAN; }
 
-   const Geodetic_Vector_Data_3D& gvd_3d = *gvd_3d_ptr;
-   return gvd_3d.evaluate (0, p, latitude, longitude, evaluate_op);
+   const Geodetic_Data_3D& gd_3d = *gd_3d_ptr;
+   return gd_3d.evaluate (0, p, latitude, longitude, evaluate_op);
 
 }
 
 Real
-Nwp::Data_3D::evaluate (const Met_Element element,
+Old_Nwp::Data_3D::evaluate (const Met_Element element,
                         const Real p,
                         const Lat_Long& lat_long,
                         const Evaluate_Op evaluate_op) const
@@ -592,7 +775,7 @@ Nwp::Data_3D::evaluate (const Met_Element element,
 }
 
 Real
-Nwp::Data_3D::get_li_thunder (const Real p,
+Old_Nwp::Data_3D::get_li_thunder (const Real p,
                               const Real latitude,
                               const Real longitude,
                               const Real thunder_p,
@@ -605,7 +788,7 @@ Nwp::Data_3D::get_li_thunder (const Real p,
 }
 
 Real
-Nwp::Data_3D::get_li_thunder (const Real p,
+Old_Nwp::Data_3D::get_li_thunder (const Real p,
                               const Lat_Long& lat_long,
                               const Real thunder_p,
                               const Real thunder_t) const
@@ -616,151 +799,157 @@ Nwp::Data_3D::get_li_thunder (const Real p,
    return Instability::get_lifted_index (p, t, td, thunder_p, thunder_t-K) + K;
 }
 
-Nwp::Cross_Section::Cross_Section ()
+Old_Nwp::Sounding::Sounding (const Key& key)
+   : key (key)
+{
+   time.t = key.base_time.t + key.forecast_second;
+}
+
+Old_Nwp::Cross_Section::Cross_Section ()
    : terrain_profile_ptr (NULL),
      rainfall_profile_ptr (NULL)
 {
 }
 
-Nwp::Cross_Section::~Cross_Section ()
+Old_Nwp::Cross_Section::~Cross_Section ()
 {
-   for (Nwp::Cross_Section::iterator iterator = begin ();
+   for (Old_Nwp::Cross_Section::iterator iterator = begin ();
         iterator != end (); iterator++)
    {
-      Scalar_Data_2D* sd_2d_ptr = iterator->second;
-      if (sd_2d_ptr != NULL) { delete sd_2d_ptr; }
+      Data_2D* d2d_ptr = iterator->second;
+      if (d2d_ptr != NULL) { delete d2d_ptr; }
    }
    if (terrain_profile_ptr != NULL) { delete terrain_profile_ptr; }
    if (rainfall_profile_ptr != NULL) { delete rainfall_profile_ptr; }
 }
 
 void
-Nwp::Cross_Section::set_profile_ptrs (Scalar_Data_1D* terrain_profile_ptr,
-                                      Scalar_Data_1D* rainfall_profile_ptr)
+Old_Nwp::Cross_Section::set_profile_ptrs (Data_1D* terrain_profile_ptr,
+                                          Data_1D* rainfall_profile_ptr)
 {
    this->terrain_profile_ptr = terrain_profile_ptr;
    this->rainfall_profile_ptr = rainfall_profile_ptr;
 }
 
 void
-Nwp::Cross_Section::insert_met_element_if_needed (const Met_Element met_element,
-                                                  const Tuple& tuple_x,
-                                                  const Tuple& tuple_p)
+Old_Nwp::Cross_Section::insert_met_element_if_needed (const Met_Element met_element,
+                                                      const Tuple& tuple_x,
+                                                      const Tuple& tuple_p)
 {
    if (find (met_element) == end ())
    {
-      Scalar_Data_2D* sd_2d_ptr = new Scalar_Data_2D (tuple_x, tuple_p);
-      insert (make_pair (met_element, sd_2d_ptr));
+      Data_2D* d2d_ptr = new Data_2D (1, tuple_x, tuple_p);
+      insert (make_pair (met_element, d2d_ptr));
    }
 }
 
-const Scalar_Data_1D&
-Nwp::Cross_Section::get_terrain_profile () const
+const Data_1D&
+Old_Nwp::Cross_Section::get_terrain_profile () const
 {
    return *terrain_profile_ptr;
 }
 
-const Scalar_Data_1D&
-Nwp::Cross_Section::get_rainfall_profile () const
+const Data_1D&
+Old_Nwp::Cross_Section::get_rainfall_profile () const
 {
    return *rainfall_profile_ptr;
 }
 
-const Scalar_Data_2D&
-Nwp::Cross_Section::get_sd_2d (const Met_Element met_element) const
+const Data_2D&
+Old_Nwp::Cross_Section::get_d2d (const Met_Element met_element) const
 {
    return *at (met_element);
 }
 
-Scalar_Data_2D&
-Nwp::Cross_Section::get_sd_2d (const Met_Element met_element)
+Data_2D&
+Old_Nwp::Cross_Section::get_d2d (const Met_Element met_element)
 {
    return *at (met_element);
 }
 
 const Tuple&
-Nwp::Cross_Section::get_tuple_p (const Met_Element met_element) const
+Old_Nwp::Cross_Section::get_tuple_p (const Met_Element met_element) const
 {
    return at (met_element)->get_coordinate_tuple (1);
 }
 
-Nwp::Time_Cross::Time_Cross ()
+Old_Nwp::Time_Cross::Time_Cross ()
    : terrain_profile_ptr (NULL),
      rainfall_profile_ptr (NULL)
 {
 }
 
-Nwp::Time_Cross::~Time_Cross ()
+Old_Nwp::Time_Cross::~Time_Cross ()
 {
-   for (Nwp::Cross_Section::iterator iterator = begin ();
+   for (Old_Nwp::Cross_Section::iterator iterator = begin ();
         iterator != end (); iterator++)
    {
-      Scalar_Data_2D* sd_2d_ptr = iterator->second;
-      if (sd_2d_ptr != NULL) { delete sd_2d_ptr; }
+      Data_2D* d2d_ptr = iterator->second;
+      if (d2d_ptr != NULL) { delete d2d_ptr; }
    }
    if (terrain_profile_ptr != NULL) { delete terrain_profile_ptr; }
    if (rainfall_profile_ptr != NULL) { delete rainfall_profile_ptr; }
 }
 
 void
-Nwp::Time_Cross::set_profile_ptrs (Scalar_Data_1D* terrain_profile_ptr,
-                                   Scalar_Data_1D* rainfall_profile_ptr)
+Old_Nwp::Time_Cross::set_profile_ptrs (Data_1D* terrain_profile_ptr,
+                                       Data_1D* rainfall_profile_ptr)
 {
    this->terrain_profile_ptr = terrain_profile_ptr;
    this->rainfall_profile_ptr = rainfall_profile_ptr;
 }
 
 void
-Nwp::Time_Cross::insert_met_element_if_needed (const Met_Element met_element,
-                                               const Tuple& tuple_t,
-                                               const Tuple& tuple_p)
+Old_Nwp::Time_Cross::insert_met_element_if_needed (const Met_Element met_element,
+                                                   const Tuple& tuple_t,
+                                                   const Tuple& tuple_p)
 {
    if (find (met_element) == end ())
    {
-      Scalar_Data_2D* sd_2d_ptr = new Scalar_Data_2D (tuple_t, tuple_p);
-      insert (make_pair (met_element, sd_2d_ptr));
+      Data_2D* d2d_ptr = new Data_2D (1, tuple_t, tuple_p);
+      insert (make_pair (met_element, d2d_ptr));
    }
 }
 
-const Scalar_Data_1D&
-Nwp::Time_Cross::get_terrain_profile () const
+const Data_1D&
+Old_Nwp::Time_Cross::get_terrain_profile () const
 {
    return *terrain_profile_ptr;
 }
 
-const Scalar_Data_1D&
-Nwp::Time_Cross::get_rainfall_profile () const
+const Data_1D&
+Old_Nwp::Time_Cross::get_rainfall_profile () const
 {
    return *rainfall_profile_ptr;
 }
 
-const Scalar_Data_2D&
-Nwp::Time_Cross::get_sd_2d (const Met_Element met_element) const
+const Data_2D&
+Old_Nwp::Time_Cross::get_d2d (const Met_Element met_element) const
 {
    return *at (met_element);
 }
 
-Scalar_Data_2D&
-Nwp::Time_Cross::get_sd_2d (const Met_Element met_element)
+Data_2D&
+Old_Nwp::Time_Cross::get_d2d (const Met_Element met_element)
 {
    return *at (met_element);
 }
 
 const Tuple&
-Nwp::Time_Cross::get_tuple_p (const Met_Element met_element) const
+Old_Nwp::Time_Cross::get_tuple_p (const Met_Element met_element) const
 {
    return at (met_element)->get_coordinate_tuple (1);
 }
 
 void
-Nwp::Key_Multimap::clear ()
+Old_Nwp::Key_Multimap::clear ()
 {
    multimap<Dtime, Integer>::clear ();
    key_set.clear ();
 }
 
 void
-Nwp::Key_Multimap::add (const Key& key)
+Old_Nwp::Key_Multimap::add (const Key& key)
 {
    if (key_set.find (key) == key_set.end ())
    {
@@ -772,7 +961,7 @@ Nwp::Key_Multimap::add (const Key& key)
 }
 
 bool
-Nwp::Key_Multimap::is_no_match (const Key& key) const
+Old_Nwp::Key_Multimap::is_no_match (const Key& key) const
 {
 
    const Dtime& base_time = key.base_time;
@@ -801,7 +990,7 @@ Nwp::Key_Multimap::is_no_match (const Key& key) const
 }
 
 bool
-Nwp::Key_Multimap::is_first_step (const Key& key) const
+Old_Nwp::Key_Multimap::is_first_step (const Key& key) const
 {
 
    const Dtime& base_time = key.base_time;
@@ -825,8 +1014,8 @@ Nwp::Key_Multimap::is_first_step (const Key& key) const
 
 }
 
-Nwp::Key
-Nwp::Key_Multimap::get_previous_key (const Key& key) const
+Old_Nwp::Key
+Old_Nwp::Key_Multimap::get_previous_key (const Key& key) const
 {
 
    const Dtime& base_time = key.base_time;
@@ -847,12 +1036,12 @@ Nwp::Key_Multimap::get_previous_key (const Key& key) const
       }
    }
 
-   throw Nwp_Exception ("There is no previous key");
+   throw Old_Nwp_Exception ("There is no previous key");
 
 }
 
 set<Dtime>
-Nwp::Key_Multimap::get_base_time_set () const
+Old_Nwp::Key_Multimap::get_base_time_set () const
 {
 
    set<Dtime> base_time_set;
@@ -869,7 +1058,7 @@ Nwp::Key_Multimap::get_base_time_set () const
 }
 
 set<Dtime>
-Nwp::Key_Multimap::get_valid_time_set (const Dtime& base_time) const
+Old_Nwp::Key_Multimap::get_valid_time_set (const Dtime& base_time) const
 {
 
    set<Dtime> valid_time_set;
@@ -907,12 +1096,12 @@ Nwp::Key_Multimap::get_valid_time_set (const Dtime& base_time) const
 
 }
 
-Nwp::Key
-Nwp::Key_Multimap::get_key (const Dtime& dtime,
-                            const Dtime& base_time) const
+Old_Nwp::Key
+Old_Nwp::Key_Multimap::get_key (const Dtime& dtime,
+                                const Dtime& base_time) const
 {
 
-   if (size () == 0) { throw Nwp_Exception ("Nwp is empty."); }
+   if (size () == 0) { throw Old_Nwp_Exception ("Old_Nwp is empty."); }
 
    if (!base_time.is_nat ())
    {
@@ -922,7 +1111,7 @@ Nwp::Key_Multimap::get_key (const Dtime& dtime,
    }
 
    typedef Key_Multimap::const_iterator Iterator;
-   set<Nwp::Key> key_set;
+   set<Old_Nwp::Key> key_set;
    for (Iterator iterator = begin (); iterator != end (); iterator++)
    {
       const Dtime& bt = iterator->first;
@@ -932,14 +1121,14 @@ Nwp::Key_Multimap::get_key (const Dtime& dtime,
 
    // Return the key with latest base_time, except when it's fh = 0
    const Integer n = key_set.size ();
-   if (n == 0) { throw Nwp_Exception ("No Match Key"); }
+   if (n == 0) { throw Old_Nwp_Exception ("No Match Key"); }
    else
    {
-      const Nwp::Key& last_key = *(key_set.rbegin ());
+      const Old_Nwp::Key& last_key = *(key_set.rbegin ());
       if (last_key.forecast_second != 0 || n == 1) { return last_key; }
       else
       {
-         const Nwp::Key& second_last_key = *(++key_set.rbegin ());
+         const Old_Nwp::Key& second_last_key = *(++key_set.rbegin ());
          return second_last_key;
       }
    }
@@ -947,30 +1136,30 @@ Nwp::Key_Multimap::get_key (const Dtime& dtime,
 }
  
 void
-Nwp::fill_lapse_data (Geodetic_Vector_Data_2D& gvd_2d,
-                      const Integer vector_index,
-                      const Key& key,
-                      const Level& level)
+Old_Nwp::fill_lapse_data (Geodetic_Data_2D& gd_2d,
+                          const Integer vector_index,
+                          const Key& key,
+                          const Level& level)
 {
 
-   typedef Geodetic_Vector_Data_2D Gvd_2d;
-   Gvd_2d* next_p_data_ptr = get_next_p_up_data_ptr (key, level);
-   Gvd_2d* this_t_data_ptr = get_temperature_data_ptr (key, level);
-   const Size_2D& size_2d = gvd_2d.get_size_2d ();
+   typedef Geodetic_Data_2D Gd_2d;
+   Gd_2d* next_p_data_ptr = get_next_p_up_data_ptr (key, level);
+   Gd_2d* this_t_data_ptr = get_temperature_data_ptr (key, level);
+   const Size_2D& size_2d = gd_2d.get_size_2d ();
 
    const Data_3D& data_3d = get_3d_data (key);
    const Met_Element T = TEMPERATURE;
 
    for (Integer i = 0; i < size_2d.i; i++)
    {
-      const Real latitude = gvd_2d.get_coordinate (0, i);
+      const Real latitude = gd_2d.get_coordinate (0, i);
       for (Integer j = 0; j < size_2d.j; j++)
       {
-         const Real longitude = gvd_2d.get_coordinate (1, j);
+         const Real longitude = gd_2d.get_coordinate (1, j);
          Real next_p = next_p_data_ptr->get_datum (0, latitude, longitude);
          Real next_t = data_3d.evaluate (T, next_p, latitude, longitude);
          Real this_t = this_t_data_ptr->get_datum (0, latitude, longitude);
-         gvd_2d.set_datum (vector_index, i, j, next_t - this_t);
+         gd_2d.set_datum (vector_index, i, j, next_t - this_t);
       }
    }
 
@@ -980,21 +1169,21 @@ Nwp::fill_lapse_data (Geodetic_Vector_Data_2D& gvd_2d,
 }
 
 void
-Nwp::fill_rain_data (Geodetic_Vector_Data_2D& gvd_2d,
-                     const Integer vector_index,
-                     const Key& key,
-                     const Integer hours)
+Old_Nwp::fill_rain_data (Geodetic_Data_2D& gd_2d,
+                         const Integer vector_index,
+                         const Key& key,
+                         const Integer hours)
 {
 
    const Level& nil = Level::nil_level ();
 
    if (hours == key.forecast_second)
    {
-      fill_data (gvd_2d, vector_index, key, nil, RAINFALL_CUMULATIVE);
+      fill_data (gd_2d, vector_index, key, nil, RAINFALL_CUMULATIVE);
       return;
    }
 
-   Geodetic_Vector_Data_2D* data_ptr = get_initialized_vd_2d (2);
+   Geodetic_Data_2D* data_ptr = get_initialized_vd_2d (2);
    const Integer prev_forecast_second = key.forecast_second - hours;
    const Key prev_key (key.base_time, prev_forecast_second);
 
@@ -1004,7 +1193,7 @@ Nwp::fill_rain_data (Geodetic_Vector_Data_2D& gvd_2d,
       fill_data (*data_ptr, 0, key, nil, RAINFALL_CUMULATIVE);
       fill_data (*data_ptr, 1, prev_key, nil, RAINFALL_CUMULATIVE);
 
-      const Size_2D& size_2d = gvd_2d.get_size_2d ();
+      const Size_2D& size_2d = gd_2d.get_size_2d ();
 
       for (Integer i = 0; i < size_2d.i; i++)
       {
@@ -1013,15 +1202,15 @@ Nwp::fill_rain_data (Geodetic_Vector_Data_2D& gvd_2d,
             const Real c_datum = data_ptr->get_datum (0, i, j);
             const Real p_datum = data_ptr->get_datum (1, i, j);
             const Real precipitation = c_datum - p_datum;
-            gvd_2d.set_datum (vector_index, i, j, precipitation);
+            gd_2d.set_datum (vector_index, i, j, precipitation);
          }
       }
 
    }
-   catch (const Nwp_Exception& ne)
+   catch (const Old_Nwp_Exception& ne)
    {
       delete data_ptr;
-      throw Nwp_Exception ("Time Span Not Valid");
+      throw Old_Nwp_Exception ("Time Span Not Valid");
    }
 
    delete data_ptr;
@@ -1029,10 +1218,10 @@ Nwp::fill_rain_data (Geodetic_Vector_Data_2D& gvd_2d,
 }
 
 void
-Nwp::fill_rain_data (Geodetic_Vector_Data_2D& gvd_2d,
-                     const Integer vector_index,
-                     const Key& key,
-                     const Met_Element met_element)
+Old_Nwp::fill_rain_data (Geodetic_Data_2D& gd_2d,
+                         const Integer vector_index,
+                         const Key& key,
+                         const Met_Element met_element)
 {
 
    switch (met_element)
@@ -1043,23 +1232,23 @@ Nwp::fill_rain_data (Geodetic_Vector_Data_2D& gvd_2d,
 
          if (key_multimap.is_no_match (key))
          {
-            gvd_2d.initialize (vector_index, GSL_NAN);
+            gd_2d.initialize (vector_index, GSL_NAN);
             return;
          }
 
          if (key_multimap.is_first_step (key))
          {
-            gvd_2d.initialize (vector_index, 0);
+            gd_2d.initialize (vector_index, 0);
             return;
          }
 
          const Key& prev_key = key_multimap.get_previous_key (key);
 
-         Geodetic_Vector_Data_2D* data_ptr = get_initialized_vd_2d (2);
+         Geodetic_Data_2D* data_ptr = get_initialized_vd_2d (2);
          fill_rain_data (*data_ptr, 0, prev_key, RAINFALL_CUMULATIVE);
          fill_rain_data (*data_ptr, 1, key, RAINFALL_CUMULATIVE);
 
-         const Size_2D& size_2d = gvd_2d.get_size_2d ();
+         const Size_2D& size_2d = gd_2d.get_size_2d ();
 
          for (Integer i = 0; i < size_2d.i; i++)
          {
@@ -1068,7 +1257,7 @@ Nwp::fill_rain_data (Geodetic_Vector_Data_2D& gvd_2d,
                const Real& prev_rf = data_ptr->get_datum (0, i, j);
                const Real& this_rf = data_ptr->get_datum (1, i, j);
                const Real& step_rf = this_rf - prev_rf;
-               gvd_2d.set_datum (vector_index, i, j, step_rf);
+               gd_2d.set_datum (vector_index, i, j, step_rf);
             }
          }
 
@@ -1079,53 +1268,53 @@ Nwp::fill_rain_data (Geodetic_Vector_Data_2D& gvd_2d,
 
    }
 
-   throw Nwp_Exception ("Nwp::fill_rain_data N/A");
+   throw Old_Nwp_Exception ("Old_Nwp::fill_rain_data N/A");
 
 }
 
 void
-Nwp::fill_p_potential_vorticity_data (Geodetic_Vector_Data_2D& gvd_2d,
-                                      const Integer vector_index,
-                                      const Key& key,
-                                      const Real p)
+Old_Nwp::fill_p_potential_vorticity_data (Geodetic_Data_2D& gd_2d,
+                                          const Integer vector_index,
+                                          const Key& key,
+                                          const Real p)
 {
 
-   const Size_2D& size_2d = gvd_2d.get_size_2d ();
-   Nwp::Data_3D& data_3d = get_3d_data (key);
+   const Size_2D& size_2d = gd_2d.get_size_2d ();
+   Old_Nwp::Data_3D& data_3d = get_3d_data (key);
    const Met_Element PV = POTENTIAL_VORTICITY;
 
    for (Integer i = 0; i < size_2d.i; i++)
    { 
-      const Real latitude = gvd_2d.get_coordinate (0, i);
+      const Real latitude = gd_2d.get_coordinate (0, i);
       for (Integer j = 0; j < size_2d.j; j++)
       {
-         const Real longitude = gvd_2d.get_coordinate (1, j);
+         const Real longitude = gd_2d.get_coordinate (1, j);
          const Real pv = data_3d.evaluate (PV, p, latitude, longitude);
-         gvd_2d.set_datum (vector_index, i, j, pv);
+         gd_2d.set_datum (vector_index, i, j, pv);
       }
    }
 
 }
 
 void
-Nwp::fill_theta_potential_vorticity_data (Geodetic_Vector_Data_2D& gvd_2d,
-                                          const Integer vector_index,
-                                          const Key& key,
-                                          const Real theta)
+Old_Nwp::fill_theta_potential_vorticity_data (Geodetic_Data_2D& gd_2d,
+                                              const Integer vector_index,
+                                              const Key& key,
+                                              const Real theta)
 {
 
-   typedef Geodetic_Vector_Data_2D Gvd_2d;
-   const Size_2D& size_2d = gvd_2d.get_size_2d ();
+   typedef Geodetic_Data_2D Gd_2d;
+   const Size_2D& size_2d = gd_2d.get_size_2d ();
 
    vector<Met_Element> ev;
-   Gvd_2d* data_ptr = get_theta_level_data_ptr (key, theta, ev, true);
+   Gd_2d* data_ptr = get_theta_level_data_ptr (key, theta, ev, true);
 
    for (Integer i = 0; i < size_2d.i; i++)
    { 
       for (Integer j = 0; j < size_2d.j; j++)
       {
          const Real datum = data_ptr->get_datum (0, i, j);
-         gvd_2d.set_datum (vector_index, i, j, datum);
+         gd_2d.set_datum (vector_index, i, j, datum);
       }
    }
 
@@ -1134,10 +1323,10 @@ Nwp::fill_theta_potential_vorticity_data (Geodetic_Vector_Data_2D& gvd_2d,
 }
 
 void
-Nwp::fill_potential_vorticity_data (Geodetic_Vector_Data_2D& gvd_2d,
-                                    const Integer vector_index,
-                                    const Key& key,
-                                    const Level& level)
+Old_Nwp::fill_potential_vorticity_data (Geodetic_Data_2D& gd_2d,
+                                        const Integer vector_index,
+                                        const Key& key,
+                                        const Level& level)
 {
 
    const Integer vi = vector_index;
@@ -1148,67 +1337,67 @@ Nwp::fill_potential_vorticity_data (Geodetic_Vector_Data_2D& gvd_2d,
       case Level::PRESSURE:
       {
          const Real p = level.value;
-         fill_p_potential_vorticity_data (gvd_2d, vi, key, p);
+         fill_p_potential_vorticity_data (gd_2d, vi, key, p);
          return;
       }
 
       case Level::THETA:
       {
          const Real theta = level.value;
-         fill_theta_potential_vorticity_data (gvd_2d, vi, key, theta);
+         fill_theta_potential_vorticity_data (gd_2d, vi, key, theta);
          return;
       }
 
    }
 
-   throw Nwp_Exception ("Nwp::fill_potential_vorticity_data N/A");
+   throw Old_Nwp_Exception ("Old_Nwp::fill_potential_vorticity_data N/A");
 
 }
 
 void
-Nwp::fill_p_temperature_advection_data (Geodetic_Vector_Data_2D& gvd_2d,
-                                        const Integer vector_index,
-                                        const Key& key,
-                                        const Real p)
+Old_Nwp::fill_p_temperature_advection_data (Geodetic_Data_2D& gd_2d,
+                                            const Integer vector_index,
+                                            const Key& key,
+                                            const Real p)
 {
 
    const Met_Element TA = TEMPERATURE_ADVECTION;
-   const Size_2D& size_2d = gvd_2d.get_size_2d ();
-   Nwp::Data_3D& data_3d = get_3d_data (key);
+   const Size_2D& size_2d = gd_2d.get_size_2d ();
+   Old_Nwp::Data_3D& data_3d = get_3d_data (key);
 
    for (Integer i = 0; i < size_2d.i; i++)
    { 
-      const Real latitude = gvd_2d.get_coordinate (0, i);
+      const Real latitude = gd_2d.get_coordinate (0, i);
       for (Integer j = 0; j < size_2d.j; j++)
       {
-         const Real longitude = gvd_2d.get_coordinate (1, j);
+         const Real longitude = gd_2d.get_coordinate (1, j);
          const Real ta = data_3d.evaluate (TA, p, latitude, longitude);
-         gvd_2d.set_datum (vector_index, i, j, ta);
+         gd_2d.set_datum (vector_index, i, j, ta);
       }
    }
 
 }
 
 void
-Nwp::fill_theta_temperature_advection_data (Geodetic_Vector_Data_2D& gvd_2d,
-                                            const Integer vector_index,
-                                            const Key& key,
-                                            const Real theta)
+Old_Nwp::fill_theta_temperature_advection_data (Geodetic_Data_2D& gd_2d,
+                                                const Integer vector_index,
+                                                const Key& key,
+                                                const Real theta)
 {
 
-   typedef Geodetic_Vector_Data_2D Gvd_2d;
-   const Size_2D& size_2d = gvd_2d.get_size_2d ();
+   typedef Geodetic_Data_2D Gd_2d;
+   const Size_2D& size_2d = gd_2d.get_size_2d ();
 
    vector<Met_Element> ev;
    ev.push_back (TEMPERATURE_ADVECTION);
-   Gvd_2d* data_ptr = get_theta_level_data_ptr (key, theta, ev, false);
+   Gd_2d* data_ptr = get_theta_level_data_ptr (key, theta, ev, false);
 
    for (Integer i = 0; i < size_2d.i; i++)
    { 
       for (Integer j = 0; j < size_2d.j; j++)
       {
          const Real datum = data_ptr->get_datum (0, i, j);
-         gvd_2d.set_datum (vector_index, i, j, datum);
+         gd_2d.set_datum (vector_index, i, j, datum);
       }
    }
 
@@ -1217,7 +1406,91 @@ Nwp::fill_theta_temperature_advection_data (Geodetic_Vector_Data_2D& gvd_2d,
 }
 
 void
-Nwp::fill_temperature_advection_data (Geodetic_Vector_Data_2D& gvd_2d,
+Old_Nwp::fill_temperature_advection_data (Geodetic_Data_2D& gd_2d,
+                                          const Integer vector_index,
+                                          const Key& key,
+                                          const Level& level)
+{
+
+   const Integer vi = vector_index;
+
+   switch (level.type)
+   {
+
+      case Level::PRESSURE:
+      {
+         const Real p = level.value;
+         fill_p_temperature_advection_data (gd_2d, vi, key, p);
+         return;
+      }
+
+      case Level::THETA:
+      {
+         const Real theta = level.value;
+         fill_theta_temperature_advection_data (gd_2d, vi, key, theta);
+         return;
+      }
+
+   }
+
+   throw Old_Nwp_Exception ("Old_Nwp::fill_potential_vorticity_data N/A");
+
+}
+
+void
+Old_Nwp::fill_p_adiabatic_heating_data (Geodetic_Data_2D& gd_2d,
+                                        const Integer vector_index,
+                                        const Key& key,
+                                        const Real p)
+{
+
+   const Met_Element AH = ADIABATIC_HEATING;
+   const Size_2D& size_2d = gd_2d.get_size_2d ();
+   Old_Nwp::Data_3D& data_3d = get_3d_data (key);
+
+   for (Integer i = 0; i < size_2d.i; i++)
+   { 
+      const Real latitude = gd_2d.get_coordinate (0, i);
+      for (Integer j = 0; j < size_2d.j; j++)
+      {
+         const Real longitude = gd_2d.get_coordinate (1, j);
+         const Real pv = data_3d.evaluate (AH, p, latitude, longitude);
+         gd_2d.set_datum (vector_index, i, j, pv);
+      }
+   }
+
+}
+
+void
+Old_Nwp::fill_theta_adiabatic_heating_data (Geodetic_Data_2D& gd_2d,
+                                            const Integer vector_index,
+                                            const Key& key,
+                                            const Real theta)
+{
+
+   typedef Geodetic_Data_2D Gd_2d;
+
+   const Size_2D& size_2d = gd_2d.get_size_2d ();
+
+   vector<Met_Element> ev;
+   ev.push_back (ADIABATIC_HEATING);
+   Gd_2d* data_ptr = get_theta_level_data_ptr (key, theta, ev, false);
+
+   for (Integer i = 0; i < size_2d.i; i++)
+   { 
+      for (Integer j = 0; j < size_2d.j; j++)
+      {
+         const Real datum = data_ptr->get_datum (0, i, j);
+         gd_2d.set_datum (vector_index, i, j, datum);
+      }
+   }
+
+   delete data_ptr;
+
+}
+
+void
+Old_Nwp::fill_adiabatic_heating_data (Geodetic_Data_2D& gd_2d,
                                       const Integer vector_index,
                                       const Key& key,
                                       const Level& level)
@@ -1231,151 +1504,67 @@ Nwp::fill_temperature_advection_data (Geodetic_Vector_Data_2D& gvd_2d,
       case Level::PRESSURE:
       {
          const Real p = level.value;
-         fill_p_temperature_advection_data (gvd_2d, vi, key, p);
+         fill_p_adiabatic_heating_data (gd_2d, vi, key, p);
          return;
       }
 
       case Level::THETA:
       {
          const Real theta = level.value;
-         fill_theta_temperature_advection_data (gvd_2d, vi, key, theta);
+         fill_theta_adiabatic_heating_data (gd_2d, vi, key, theta);
          return;
       }
 
    }
 
-   throw Nwp_Exception ("Nwp::fill_potential_vorticity_data N/A");
+   throw Old_Nwp_Exception ("Old_Nwp::fill_adiabatic_heating_data N/A");
 
 }
 
 void
-Nwp::fill_p_adiabatic_heating_data (Geodetic_Vector_Data_2D& gvd_2d,
-                                    const Integer vector_index,
-                                    const Key& key,
-                                    const Real p)
-{
-
-   const Met_Element AH = ADIABATIC_HEATING;
-   const Size_2D& size_2d = gvd_2d.get_size_2d ();
-   Nwp::Data_3D& data_3d = get_3d_data (key);
-
-   for (Integer i = 0; i < size_2d.i; i++)
-   { 
-      const Real latitude = gvd_2d.get_coordinate (0, i);
-      for (Integer j = 0; j < size_2d.j; j++)
-      {
-         const Real longitude = gvd_2d.get_coordinate (1, j);
-         const Real pv = data_3d.evaluate (AH, p, latitude, longitude);
-         gvd_2d.set_datum (vector_index, i, j, pv);
-      }
-   }
-
-}
-
-void
-Nwp::fill_theta_adiabatic_heating_data (Geodetic_Vector_Data_2D& gvd_2d,
-                                        const Integer vector_index,
-                                        const Key& key,
-                                        const Real theta)
-{
-
-   typedef Geodetic_Vector_Data_2D Gvd_2d;
-
-   const Size_2D& size_2d = gvd_2d.get_size_2d ();
-
-   vector<Met_Element> ev;
-   ev.push_back (ADIABATIC_HEATING);
-   Gvd_2d* data_ptr = get_theta_level_data_ptr (key, theta, ev, false);
-
-   for (Integer i = 0; i < size_2d.i; i++)
-   { 
-      for (Integer j = 0; j < size_2d.j; j++)
-      {
-         const Real datum = data_ptr->get_datum (0, i, j);
-         gvd_2d.set_datum (vector_index, i, j, datum);
-      }
-   }
-
-   delete data_ptr;
-
-}
-
-void
-Nwp::fill_adiabatic_heating_data (Geodetic_Vector_Data_2D& gvd_2d,
-                                  const Integer vector_index,
-                                  const Key& key,
-                                  const Level& level)
-{
-
-   const Integer vi = vector_index;
-
-   switch (level.type)
-   {
-
-      case Level::PRESSURE:
-      {
-         const Real p = level.value;
-         fill_p_adiabatic_heating_data (gvd_2d, vi, key, p);
-         return;
-      }
-
-      case Level::THETA:
-      {
-         const Real theta = level.value;
-         fill_theta_adiabatic_heating_data (gvd_2d, vi, key, theta);
-         return;
-      }
-
-   }
-
-   throw Nwp_Exception ("Nwp::fill_adiabatic_heating_data N/A");
-
-}
-
-void
-Nwp::fill_p_latent_heating_data (Geodetic_Vector_Data_2D& gvd_2d,
-                                 const Integer vector_index,
-                                 const Key& key,
-                                 const Real p)
+Old_Nwp::fill_p_latent_heating_data (Geodetic_Data_2D& gd_2d,
+                                     const Integer vector_index,
+                                     const Key& key,
+                                     const Real p)
 {
 
    const Met_Element LH = LATENT_HEATING;
-   const Size_2D& size_2d = gvd_2d.get_size_2d ();
-   Nwp::Data_3D& data_3d = get_3d_data (key);
+   const Size_2D& size_2d = gd_2d.get_size_2d ();
+   Old_Nwp::Data_3D& data_3d = get_3d_data (key);
 
    for (Integer i = 0; i < size_2d.i; i++)
    { 
-      const Real latitude = gvd_2d.get_coordinate (0, i);
+      const Real latitude = gd_2d.get_coordinate (0, i);
       for (Integer j = 0; j < size_2d.j; j++)
       {
-         const Real longitude = gvd_2d.get_coordinate (1, j);
+         const Real longitude = gd_2d.get_coordinate (1, j);
          const Real pv = data_3d.evaluate (LH, p, latitude, longitude);
-         gvd_2d.set_datum (vector_index, i, j, pv);
+         gd_2d.set_datum (vector_index, i, j, pv);
       }
    }
 
 }
 
 void
-Nwp::fill_theta_latent_heating_data (Geodetic_Vector_Data_2D& gvd_2d,
-                                     const Integer vector_index,
-                                     const Key& key,
-                                     const Real theta)
+Old_Nwp::fill_theta_latent_heating_data (Geodetic_Data_2D& gd_2d,
+                                         const Integer vector_index,
+                                         const Key& key,
+                                         const Real theta)
 {
 
-   typedef Geodetic_Vector_Data_2D Gvd_2d;
-   const Size_2D& size_2d = gvd_2d.get_size_2d ();
+   typedef Geodetic_Data_2D Gd_2d;
+   const Size_2D& size_2d = gd_2d.get_size_2d ();
 
    vector<Met_Element> ev;
    ev.push_back (LATENT_HEATING);
-   Gvd_2d* data_ptr = get_theta_level_data_ptr (key, theta, ev, false);
+   Gd_2d* data_ptr = get_theta_level_data_ptr (key, theta, ev, false);
 
    for (Integer i = 0; i < size_2d.i; i++)
    { 
       for (Integer j = 0; j < size_2d.j; j++)
       {
          const Real datum = data_ptr->get_datum (0, i, j);
-         gvd_2d.set_datum (vector_index, i, j, datum);
+         gd_2d.set_datum (vector_index, i, j, datum);
       }
    }
 
@@ -1384,10 +1573,10 @@ Nwp::fill_theta_latent_heating_data (Geodetic_Vector_Data_2D& gvd_2d,
 }
 
 void
-Nwp::fill_latent_heating_data (Geodetic_Vector_Data_2D& gvd_2d,
-                               const Integer vector_index,
-                               const Key& key,
-                               const Level& level)
+Old_Nwp::fill_latent_heating_data (Geodetic_Data_2D& gd_2d,
+                                   const Integer vector_index,
+                                   const Key& key,
+                                   const Level& level)
 {
 
    const Integer vi = vector_index;
@@ -1401,14 +1590,14 @@ Nwp::fill_latent_heating_data (Geodetic_Vector_Data_2D& gvd_2d,
          case Level::PRESSURE:
          {
             const Real p = level.value;
-            fill_p_latent_heating_data (gvd_2d, vi, key, p);
+            fill_p_latent_heating_data (gd_2d, vi, key, p);
             return;
          }
 
          case Level::THETA:
          {
             const Real theta = level.value;
-            fill_theta_latent_heating_data (gvd_2d, vi, key, theta);
+            fill_theta_latent_heating_data (gd_2d, vi, key, theta);
             return;
          }
 
@@ -1419,15 +1608,15 @@ Nwp::fill_latent_heating_data (Geodetic_Vector_Data_2D& gvd_2d,
    {
    }
 
-   throw Nwp_Exception ("Nwp::latent_heating_data N/A");
+   throw Old_Nwp_Exception ("Old_Nwp::latent_heating_data N/A");
 
 }
 
 void
-Nwp::fill_pv_p_data (Geodetic_Vector_Data_2D& gvd_2d,
-                     const Integer vector_index,
-                     const Key& key,
-                     const Real pv_threshold)
+Old_Nwp::fill_pv_p_data (Geodetic_Data_2D& gd_2d,
+                         const Integer vector_index,
+                         const Key& key,
+                         const Real pv_threshold)
 {
 
 
@@ -1438,21 +1627,21 @@ Nwp::fill_pv_p_data (Geodetic_Vector_Data_2D& gvd_2d,
    const Integer nk = tuple_p.size ();
 
    const Level& surface = Level::surface_level ();
-   fill_data (gvd_2d, vector_index, key, surface, PRESSURE);
+   fill_data (gd_2d, vector_index, key, surface, PRESSURE);
 
-   const Size_2D& size_2d = gvd_2d.get_size_2d ();
+   const Size_2D& size_2d = gd_2d.get_size_2d ();
    const Real lowest_p = 500e2;
 
    for (Integer i = 0; i < size_2d.i; i++)
    {
 
-      const Real latitude = gvd_2d.get_coordinate (0, i);
+      const Real latitude = gd_2d.get_coordinate (0, i);
 
       for (Integer j = 0; j < size_2d.j; j++)
       {
 
          Real p = tuple_p.front ();
-         const Real longitude = gvd_2d.get_coordinate (1, j);
+         const Real longitude = gd_2d.get_coordinate (1, j);
 
          for (Integer k = 0; k < tuple_p.size () - 1; k++)
          {
@@ -1487,7 +1676,7 @@ Nwp::fill_pv_p_data (Geodetic_Vector_Data_2D& gvd_2d,
 
          }
 
-         gvd_2d.set_datum (vector_index, i, j, p);
+         gd_2d.set_datum (vector_index, i, j, p);
 
       }
    }
@@ -1495,27 +1684,27 @@ Nwp::fill_pv_p_data (Geodetic_Vector_Data_2D& gvd_2d,
 }
 
 void
-Nwp::fill_absolute_vorticity_data (Geodetic_Vector_Data_2D& gvd_2d,
-                                   const Integer vector_index,
-                                   const Key& key,
-                                   const Level& level)
+Old_Nwp::fill_absolute_vorticity_data (Geodetic_Data_2D& gd_2d,
+                                       const Integer vector_index,
+                                       const Key& key,
+                                       const Level& level)
 {
 
-   typedef Geodetic_Vector_Data_2D Gvd_2d;
-   Gvd_2d* wind_ptr = get_wind_data_ptr (key, level);
+   typedef Geodetic_Data_2D Gd_2d;
+   Gd_2d* wind_ptr = get_wind_data_ptr (key, level);
 
-   const Size_2D& size_2d = gvd_2d.get_size_2d ();
+   const Size_2D& size_2d = gd_2d.get_size_2d ();
 
    for (Integer i = 0; i < size_2d.i; i++)
    {
 
-      const Real latitude = gvd_2d.get_coordinate (0, i);
-      const Real f = Geodetic_Vector_Data_2D::get_f (latitude);
+      const Real latitude = gd_2d.get_coordinate (0, i);
+      const Real f = Geodetic_Data_2D::get_f (latitude);
 
       for (Integer j = 0; j < size_2d.j; j++)
       {
          const Real zeta = wind_ptr->evaluate_2d (0, 1, i, j, VORTICITY_OP);
-         gvd_2d.set_datum (vector_index, i, j, zeta + f);
+         gd_2d.set_datum (vector_index, i, j, zeta + f);
       }
 
    }
@@ -1525,23 +1714,23 @@ Nwp::fill_absolute_vorticity_data (Geodetic_Vector_Data_2D& gvd_2d,
 }
 
 void
-Nwp::fill_shear_vorticity_data (Geodetic_Vector_Data_2D& gvd_2d,
-                                const Integer vector_index,
-                                const Key& key,
-                                const Level& level)
+Old_Nwp::fill_shear_vorticity_data (Geodetic_Data_2D& gd_2d,
+                                    const Integer vector_index,
+                                    const Key& key,
+                                    const Level& level)
 {
 
-   typedef Geodetic_Vector_Data_2D Gvd_2d;
-   Gvd_2d* wind_ptr = get_wind_data_ptr (key, level);
+   typedef Geodetic_Data_2D Gd_2d;
+   Gd_2d* wind_ptr = get_wind_data_ptr (key, level);
 
-   const Size_2D& size_2d = gvd_2d.get_size_2d ();
+   const Size_2D& size_2d = gd_2d.get_size_2d ();
 
    for (Integer i = 0; i < size_2d.i; i++)
    {
       for (Integer j = 0; j < size_2d.j; j++)
       {
          const Real shear = wind_ptr->evaluate_2d (0, 1, i, j, SHEAR_OP);
-         gvd_2d.set_datum (vector_index, i, j, shear);
+         gd_2d.set_datum (vector_index, i, j, shear);
       }
    }
 
@@ -1550,23 +1739,23 @@ Nwp::fill_shear_vorticity_data (Geodetic_Vector_Data_2D& gvd_2d,
 }
 
 void
-Nwp::fill_curvature_vorticity_data (Geodetic_Vector_Data_2D& gvd_2d,
-                                    const Integer vector_index,
-                                    const Key& key,
-                                    const Level& level)
+Old_Nwp::fill_curvature_vorticity_data (Geodetic_Data_2D& gd_2d,
+                                        const Integer vector_index,
+                                        const Key& key,
+                                        const Level& level)
 {
 
-   typedef Geodetic_Vector_Data_2D Gvd_2d;
-   Gvd_2d* wind_ptr = get_wind_data_ptr (key, level);
+   typedef Geodetic_Data_2D Gd_2d;
+   Gd_2d* wind_ptr = get_wind_data_ptr (key, level);
 
-   const Size_2D& size_2d = gvd_2d.get_size_2d ();
+   const Size_2D& size_2d = gd_2d.get_size_2d ();
 
    for (Integer i = 0; i < size_2d.i; i++)
    {
       for (Integer j = 0; j < size_2d.j; j++)
       {
          const Real datum = wind_ptr->evaluate_2d (0, 1, i, j, CURVATURE_OP);
-         gvd_2d.set_datum (vector_index, i, j, datum);
+         gd_2d.set_datum (vector_index, i, j, datum);
       }
    }
 
@@ -1575,27 +1764,27 @@ Nwp::fill_curvature_vorticity_data (Geodetic_Vector_Data_2D& gvd_2d,
 }
 
 void
-Nwp::fill_wind_data (Geodetic_Vector_Data_2D& gvd_2d,
-                     const Integer vector_index_u,
-                     const Integer vector_index_v,
-                     const Key& key,
-                     const Level& level)
+Old_Nwp::fill_wind_data (Geodetic_Data_2D& gd_2d,
+                         const Integer vector_index_u,
+                         const Integer vector_index_v,
+                         const Key& key,
+                         const Level& level)
 {
-   fill_data (gvd_2d, vector_index_u, key, level, ZONAL_WIND);
-   fill_data (gvd_2d, vector_index_v, key, level, MERIDIONAL_WIND);
+   fill_data (gd_2d, vector_index_u, key, level, ZONAL_WIND);
+   fill_data (gd_2d, vector_index_v, key, level, MERIDIONAL_WIND);
 }
 
 void
-Nwp::fill_mix_down_temperature_data (Geodetic_Vector_Data_2D& gvd_2d,
-                                     const Integer vector_index,
-                                     const Key& key,
-                                     const Level& level)
+Old_Nwp::fill_mix_down_temperature_data (Geodetic_Data_2D& gd_2d,
+                                         const Integer vector_index,
+                                         const Key& key,
+                                         const Level& level)
 {
 
-   typedef Geodetic_Vector_Data_2D Gvd_2d;
-   Gvd_2d* data_ptr = get_initialized_vd_2d (2);
+   typedef Geodetic_Data_2D Gd_2d;
+   Gd_2d* data_ptr = get_initialized_vd_2d (2);
 
-   const Size_2D& size_2d = gvd_2d.get_size_2d ();
+   const Size_2D& size_2d = gd_2d.get_size_2d ();
    const Level& surface = Level::surface_level ();
 
    fill_data (*data_ptr, 0, key, level, THETA);
@@ -1608,7 +1797,7 @@ Nwp::fill_mix_down_temperature_data (Geodetic_Vector_Data_2D& gvd_2d,
          const Real theta = data_ptr->get_datum (0, i, j);
          const Real surface_p = data_ptr->get_datum (1, i, j);
          const Real t = Thermo_Point::theta_p (theta, surface_p).get_t ();
-         gvd_2d.set_datum (vector_index, i, j, t);
+         gd_2d.set_datum (vector_index, i, j, t);
       }
    }
 
@@ -1617,15 +1806,15 @@ Nwp::fill_mix_down_temperature_data (Geodetic_Vector_Data_2D& gvd_2d,
 }
 
 void
-Nwp::fill_snow_probability_data (Geodetic_Vector_Data_2D& gvd_2d,
-                                 const Integer vector_index,
-                                 const Key& key)
+Old_Nwp::fill_snow_probability_data (Geodetic_Data_2D& gd_2d,
+                                     const Integer vector_index,
+                                     const Key& key)
 {
 
-   typedef Geodetic_Vector_Data_2D Gvd_2d;
-   Gvd_2d* data_ptr = get_initialized_vd_2d (2);
+   typedef Geodetic_Data_2D Gd_2d;
+   Gd_2d* data_ptr = get_initialized_vd_2d (2);
 
-   Nwp::Data_3D& data_3d = get_3d_data (key);
+   Old_Nwp::Data_3D& data_3d = get_3d_data (key);
    const Level& surface = Level::surface_level ();
    fill_nil_level_data (*data_ptr, 0, key, THICKNESS);
    fill_data (*data_ptr, 1, key, surface, PRESSURE);
@@ -1639,20 +1828,20 @@ Nwp::fill_snow_probability_data (Geodetic_Vector_Data_2D& gvd_2d,
    const Met_Element T = TEMPERATURE;
    const Met_Element Z = GEOPOTENTIAL_HEIGHT;
 
-   const Size_2D& size_2d = gvd_2d.get_size_2d ();
+   const Size_2D& size_2d = gd_2d.get_size_2d ();
    for (Integer i = 0; i < size_2d.i; i++)
    {
-      const Real latitude = gvd_2d.get_coordinate (0, i);
+      const Real latitude = gd_2d.get_coordinate (0, i);
       for (Integer j = 0; j < size_2d.j; j++)
       {
-         const Real longitude = gvd_2d.get_coordinate (1, j);
+         const Real longitude = gd_2d.get_coordinate (1, j);
          const Real t = data_3d.evaluate (T, p_850, latitude, longitude) - K;
          const Real z = data_3d.evaluate (Z, p_850, latitude, longitude);
          const Real thick = data_ptr->get_datum (0, i, j);
          const Real surface_p = data_ptr->get_datum (1, i, j);
          const Real e = data_3d.evaluate (Z, surface_p, latitude, longitude);
          const Real p = 1 / (1 + exp (b0 + b1*e + b2*t + b3*z + b4*thick));
-         gvd_2d.set_datum (vector_index, i, j, p);
+         gd_2d.set_datum (vector_index, i, j, p);
       }
    }
 
@@ -1662,14 +1851,14 @@ Nwp::fill_snow_probability_data (Geodetic_Vector_Data_2D& gvd_2d,
 
 
 void
-Nwp::fill_snow_level_data (Geodetic_Vector_Data_2D& gvd_2d,
-                           const Integer vector_index,
-                           const Key& key,
-                           const Real probability)
+Old_Nwp::fill_snow_level_data (Geodetic_Data_2D& gd_2d,
+                               const Integer vector_index,
+                               const Key& key,
+                               const Real probability)
 {
 
-   typedef Geodetic_Vector_Data_2D Gvd_2d;
-   Gvd_2d* data_ptr = get_initialized_vd_2d (3);
+   typedef Geodetic_Data_2D Gd_2d;
+   Gd_2d* data_ptr = get_initialized_vd_2d (3);
 
    fill_pressure_level_data (*data_ptr, 0, key, 850e2, TEMPERATURE);
    fill_pressure_level_data (*data_ptr, 1, key, 850e2, GEOPOTENTIAL_HEIGHT);
@@ -1682,7 +1871,7 @@ Nwp::fill_snow_level_data (Geodetic_Vector_Data_2D& gvd_2d,
    const Real b4 = 0.02552;
    const Real k = log ((1 - probability) / probability);
 
-   const Size_2D& size_2d = gvd_2d.get_size_2d ();
+   const Size_2D& size_2d = gd_2d.get_size_2d ();
    for (Integer i = 0; i < size_2d.i; i++)
    {
       for (Integer j = 0; j < size_2d.j; j++)
@@ -1691,7 +1880,7 @@ Nwp::fill_snow_level_data (Geodetic_Vector_Data_2D& gvd_2d,
          const Real z = data_ptr->get_datum (1, i, j);
          const Real thick = data_ptr->get_datum (2, i, j);
          const Real snow_level = (k - (b0 + b2*t + b3*z + b4*thick)) / b1;
-         gvd_2d.set_datum (vector_index, i, j, snow_level);
+         gd_2d.set_datum (vector_index, i, j, snow_level);
       }
    }
 
@@ -1700,21 +1889,21 @@ Nwp::fill_snow_level_data (Geodetic_Vector_Data_2D& gvd_2d,
 }
 
 void
-Nwp::fill_fdi_data (Geodetic_Vector_Data_2D& gvd_2d,
-                    const Integer vector_index,
-                    const Key& key,
-                    const Level& level,
-                    const Met_Element met_element)
+Old_Nwp::fill_fdi_data (Geodetic_Data_2D& gd_2d,
+                        const Integer vector_index,
+                        const Key& key,
+                        const Level& level,
+                        const Met_Element met_element)
 {
 
    if (met_element != FFDI && met_element != GFDI)
    {
-      throw Nwp_Exception ("Nwp::fill_fdi_data N/A");
+      throw Old_Nwp_Exception ("Old_Nwp::fill_fdi_data N/A");
    }
 
-   typedef Geodetic_Vector_Data_2D Gvd_2d;
+   typedef Geodetic_Data_2D Gd_2d;
    const Level& screen = Level::screen_level ();
-   Gvd_2d* data_ptr = get_initialized_vd_2d (4);
+   Gd_2d* data_ptr = get_initialized_vd_2d (4);
 
    fill_data (*data_ptr, 0, key, screen, TEMPERATURE);
    fill_data (*data_ptr, 1, key, screen, RELATIVE_HUMIDITY);
@@ -1723,7 +1912,7 @@ Nwp::fill_fdi_data (Geodetic_Vector_Data_2D& gvd_2d,
 
    const Real df = 10;
    const Real curing = 100;
-   const Size_2D& size_2d = gvd_2d.get_size_2d ();
+   const Size_2D& size_2d = gd_2d.get_size_2d ();
 
    for (Integer i = 0; i < size_2d.i; i++)
    {
@@ -1755,7 +1944,7 @@ Nwp::fill_fdi_data (Geodetic_Vector_Data_2D& gvd_2d,
 
          }
 
-         gvd_2d.set_datum (vector_index, i, j, fdi);
+         gd_2d.set_datum (vector_index, i, j, fdi);
       
       }
    }
@@ -1765,20 +1954,20 @@ Nwp::fill_fdi_data (Geodetic_Vector_Data_2D& gvd_2d,
 }
 
 void
-Nwp::fill_total_totals_data (Geodetic_Vector_Data_2D& gvd_2d,
-                             const Integer vector_index,
-                             const Key& key)
+Old_Nwp::fill_total_totals_data (Geodetic_Data_2D& gd_2d,
+                                 const Integer vector_index,
+                                 const Key& key)
 {
 
    const Met_Element T = TEMPERATURE;
    const Met_Element TD = DEW_POINT;
 
-   Geodetic_Vector_Data_2D* temp_data_ptr = get_initialized_vd_2d (3);
+   Geodetic_Data_2D* temp_data_ptr = get_initialized_vd_2d (3);
    fill_pressure_level_data (*temp_data_ptr, 0, key, 850e2, TD);
    fill_pressure_level_data (*temp_data_ptr, 1, key, 850e2, T);
    fill_pressure_level_data (*temp_data_ptr, 2, key, 500e2, T);
 
-   const Size_2D& size_2d = gvd_2d.get_size_2d ();
+   const Size_2D& size_2d = gd_2d.get_size_2d ();
 
    for (Integer i = 0; i < size_2d.i; i++)
    {
@@ -1791,7 +1980,7 @@ Nwp::fill_total_totals_data (Geodetic_Vector_Data_2D& gvd_2d,
 
          const Real datum = Instability::get_total_totals (
             t_850, t_500, td_850);
-         gvd_2d.set_datum (vector_index, i, j, datum);
+         gd_2d.set_datum (vector_index, i, j, datum);
 
       }
    }
@@ -1801,20 +1990,20 @@ Nwp::fill_total_totals_data (Geodetic_Vector_Data_2D& gvd_2d,
 }
 
 void
-Nwp::fill_continuous_haines_data (Geodetic_Vector_Data_2D& gvd_2d,
-                                  const Integer vector_index,
-                                  const Key& key)
+Old_Nwp::fill_continuous_haines_data (Geodetic_Data_2D& gd_2d,
+                                      const Integer vector_index,
+                                      const Key& key)
 {
 
    const Met_Element T = TEMPERATURE;
    const Met_Element TD = DEW_POINT;
 
-   Geodetic_Vector_Data_2D* temp_data_ptr = get_initialized_vd_2d (3);
+   Geodetic_Data_2D* temp_data_ptr = get_initialized_vd_2d (3);
    fill_pressure_level_data (*temp_data_ptr, 0, key, 850e2, TD);
    fill_pressure_level_data (*temp_data_ptr, 1, key, 850e2, T);
    fill_pressure_level_data (*temp_data_ptr, 2, key, 700e2, T);
 
-   const Size_2D& size_2d = gvd_2d.get_size_2d ();
+   const Size_2D& size_2d = gd_2d.get_size_2d ();
 
    for (Integer i = 0; i < size_2d.i; i++)
    {
@@ -1829,7 +2018,7 @@ Nwp::fill_continuous_haines_data (Geodetic_Vector_Data_2D& gvd_2d,
          const Real cb = std::min ((t_850 - td_850), Real (30.0)) / 3 - 1;
          const Real datum = ca + (cb > 5 ? (cb - 5) / 2 + 5 : cb);
 
-         gvd_2d.set_datum (vector_index, i, j, datum);
+         gd_2d.set_datum (vector_index, i, j, datum);
 
       }
    }
@@ -1839,22 +2028,22 @@ Nwp::fill_continuous_haines_data (Geodetic_Vector_Data_2D& gvd_2d,
 }
 
 void
-Nwp::fill_k_index_data (Geodetic_Vector_Data_2D& gvd_2d,
-                        const Integer vector_index,
-                        const Key& key)
+Old_Nwp::fill_k_index_data (Geodetic_Data_2D& gd_2d,
+                            const Integer vector_index,
+                            const Key& key)
 {
 
    const Met_Element T = TEMPERATURE;
    const Met_Element TD = DEW_POINT;
 
-   Geodetic_Vector_Data_2D* temp_data_ptr = get_initialized_vd_2d (5);
+   Geodetic_Data_2D* temp_data_ptr = get_initialized_vd_2d (5);
    fill_pressure_level_data (*temp_data_ptr, 0, key, 850e2, TD);
    fill_pressure_level_data (*temp_data_ptr, 1, key, 700e2, TD);
    fill_pressure_level_data (*temp_data_ptr, 2, key, 850e2, T);
    fill_pressure_level_data (*temp_data_ptr, 3, key, 700e2, T);
    fill_pressure_level_data (*temp_data_ptr, 4, key, 500e2, T);
 
-   const Size_2D& size_2d = gvd_2d.get_size_2d ();
+   const Size_2D& size_2d = gd_2d.get_size_2d ();
 
    for (Integer i = 0; i < size_2d.i; i++)
    {
@@ -1868,7 +2057,7 @@ Nwp::fill_k_index_data (Geodetic_Vector_Data_2D& gvd_2d,
 
          const Real datum = Instability::get_k_index (
             t_850, t_700, t_500, td_850, td_700);
-         gvd_2d.set_datum (vector_index, i, j, datum);
+         gd_2d.set_datum (vector_index, i, j, datum);
 
       }
    }
@@ -1878,22 +2067,22 @@ Nwp::fill_k_index_data (Geodetic_Vector_Data_2D& gvd_2d,
 }
 
 void
-Nwp::fill_lifted_index_data (Geodetic_Vector_Data_2D& gvd_2d,
-                             const Integer vector_index,
-                             const Key& key,
-                             const Real start_p,
-                             const Real end_p)
+Old_Nwp::fill_lifted_index_data (Geodetic_Data_2D& gd_2d,
+                                 const Integer vector_index,
+                                 const Key& key,
+                                 const Real start_p,
+                                 const Real end_p)
 {
 
    const Met_Element T = TEMPERATURE;
    const Met_Element TD = DEW_POINT;
 
-   Geodetic_Vector_Data_2D* temp_data_ptr = get_initialized_vd_2d (3);
+   Geodetic_Data_2D* temp_data_ptr = get_initialized_vd_2d (3);
    fill_pressure_level_data (*temp_data_ptr, 0, key, start_p, T);
    fill_pressure_level_data (*temp_data_ptr, 1, key, start_p, TD);
    fill_pressure_level_data (*temp_data_ptr, 2, key, end_p, T);
 
-   const Size_2D& size_2d = gvd_2d.get_size_2d ();
+   const Size_2D& size_2d = gd_2d.get_size_2d ();
 
    for (Integer i = 0; i < size_2d.i; i++)
    {
@@ -1907,7 +2096,7 @@ Nwp::fill_lifted_index_data (Geodetic_Vector_Data_2D& gvd_2d,
          const Real datum = Instability::get_lifted_index (
             start_p, start_t, start_td, end_p, end_t);
 
-         gvd_2d.set_datum (vector_index, i, j, datum);
+         gd_2d.set_datum (vector_index, i, j, datum);
 
       }
    }
@@ -1917,23 +2106,23 @@ Nwp::fill_lifted_index_data (Geodetic_Vector_Data_2D& gvd_2d,
 }
 
 void
-Nwp::fill_surface_lifted_index_data (Geodetic_Vector_Data_2D& gvd_2d,
-                                     const Integer vector_index,
-                                     const Key& key,
-                                     const Real top_p)
+Old_Nwp::fill_surface_lifted_index_data (Geodetic_Data_2D& gd_2d,
+                                         const Integer vector_index,
+                                         const Key& key,
+                                         const Real top_p)
 {
 
    const Level& screen = Level::screen_level ();
    const Level& surface = Level::surface_level ();
    const Level& top_p_level = Level::pressure_level (top_p);
 
-   Geodetic_Vector_Data_2D* temp_data_ptr = get_initialized_vd_2d (4);
+   Geodetic_Data_2D* temp_data_ptr = get_initialized_vd_2d (4);
    fill_data (*temp_data_ptr, 0, key, screen, TEMPERATURE);
    fill_data (*temp_data_ptr, 1, key, screen, DEW_POINT);
    fill_data (*temp_data_ptr, 2, key, surface, PRESSURE);
    fill_data (*temp_data_ptr, 3, key, top_p_level, TEMPERATURE);
 
-   const Size_2D& size_2d = gvd_2d.get_size_2d ();
+   const Size_2D& size_2d = gd_2d.get_size_2d ();
 
    for (Integer i = 0; i < size_2d.i; i++)
    {
@@ -1947,7 +2136,7 @@ Nwp::fill_surface_lifted_index_data (Geodetic_Vector_Data_2D& gvd_2d,
 
          const Real datum = Instability::get_lifted_index (
             surface_p, screen_t, screen_t_d, top_p, top_t);
-         gvd_2d.set_datum (vector_index, i, j, datum);
+         gd_2d.set_datum (vector_index, i, j, datum);
 
       }
    }
@@ -1957,25 +2146,25 @@ Nwp::fill_surface_lifted_index_data (Geodetic_Vector_Data_2D& gvd_2d,
 }
 
 void
-Nwp::fill_li_thunder_data (Geodetic_Vector_Data_2D& gvd_2d,
+Old_Nwp::fill_li_thunder_data (Geodetic_Data_2D& gd_2d,
                            const Integer vector_index,
                            const Key& key,
                            const Level& level,
                            const Real thunder_t)
 {
 
-   typedef Geodetic_Vector_Data_2D Gvd_2d;
+   typedef Geodetic_Data_2D Gd_2d;
    const Level& surface = Level::surface_level ();
 
-   Gvd_2d* t_data_ptr = get_temperature_data_ptr (key, level);
-   Gvd_2d* td_data_ptr = get_dew_point_data_ptr (key, level);
-   Gvd_2d* p_data_ptr = get_temperature_p_data_ptr (key, thunder_t);
+   Gd_2d* t_data_ptr = get_temperature_data_ptr (key, level);
+   Gd_2d* td_data_ptr = get_dew_point_data_ptr (key, level);
+   Gd_2d* p_data_ptr = get_temperature_p_data_ptr (key, thunder_t);
 
-   Gvd_2d* surface_p_data_ptr = get_initialized_vd_2d (1);
+   Gd_2d* surface_p_data_ptr = get_initialized_vd_2d (1);
    fill_data (*surface_p_data_ptr, 0, key, surface, PRESSURE);
 
    Real start_p;
-   const Size_2D& size_2d = gvd_2d.get_size_2d ();
+   const Size_2D& size_2d = gd_2d.get_size_2d ();
 
    for (Integer i = 0; i < size_2d.i; i++)
    {
@@ -1997,9 +2186,9 @@ Nwp::fill_li_thunder_data (Geodetic_Vector_Data_2D& gvd_2d,
                break;
  
             default:
-               Dstring error_str = "Nwp::fill_thunder_li_data ";
+               Dstring error_str = "Old_Nwp::fill_thunder_li_data ";
                error_str += level.get_string () + " invalid";
-               throw Nwp_Exception (error_str);
+               throw Old_Nwp_Exception (error_str);
                break;
 
          }
@@ -2014,7 +2203,7 @@ Nwp::fill_li_thunder_data (Geodetic_Vector_Data_2D& gvd_2d,
             Instability::get_lifted_index (start_p, start_t,
                start_td, end_p, thunder_t - K) + K);
 
-         gvd_2d.set_datum (vector_index, i, j, datum);
+         gd_2d.set_datum (vector_index, i, j, datum);
 
       }
    }
@@ -2027,7 +2216,7 @@ Nwp::fill_li_thunder_data (Geodetic_Vector_Data_2D& gvd_2d,
 }
 
 void
-Nwp::fill_ts_diagnosis_data (Geodetic_Vector_Data_2D& gvd_2d,
+Old_Nwp::fill_ts_diagnosis_data (Geodetic_Data_2D& gd_2d,
                              const Integer vector_index,
                              const Key& key,
                              const Level& level,
@@ -2041,58 +2230,58 @@ Nwp::fill_ts_diagnosis_data (Geodetic_Vector_Data_2D& gvd_2d,
 
       case SLI:
       {
-         fill_surface_lifted_index_data (gvd_2d, vi, key, 500e2);
+         fill_surface_lifted_index_data (gd_2d, vi, key, 500e2);
          return;
       }
 
       case SHOWALTER:
       {
-         fill_lifted_index_data (gvd_2d, vi, key, 850e2, 500e2);
+         fill_lifted_index_data (gd_2d, vi, key, 850e2, 500e2);
          return;
       }
 
       case LI_700:
       {
-         fill_lifted_index_data (gvd_2d, vi, key, 700e2, 400e2);
+         fill_lifted_index_data (gd_2d, vi, key, 700e2, 400e2);
          return;
       }
 
       case K_INDEX:
       {
-         fill_k_index_data (gvd_2d, vi, key);
+         fill_k_index_data (gd_2d, vi, key);
          return;
       }
 
       case TOTAL_TOTALS:
       {
-         fill_total_totals_data (gvd_2d, vi, key);
+         fill_total_totals_data (gd_2d, vi, key);
          return;
       }
 
       case LI_THUNDER:
       {
          // thunder_t is always -20°C
-         fill_li_thunder_data (gvd_2d, vi, key, level/*,-20 + K*/);
+         fill_li_thunder_data (gd_2d, vi, key, level/*,-20 + K*/);
          return;
       }
 
    }
 
-   throw Nwp_Exception ("Nwp::fill_ts_diagnosis_data N/A");
+   throw Old_Nwp_Exception ("Old_Nwp::fill_ts_diagnosis_data N/A");
 
 }
 
 void
-Nwp::fill_cloud_data (Geodetic_Vector_Data_2D& gvd_2d,
+Old_Nwp::fill_cloud_data (Geodetic_Data_2D& gd_2d,
                       const Integer vector_index,
                       const Key& key,
                       const Met_Element met_element)
 {
-   throw Nwp_Exception ("Nwp::fill_cloud_data N/A");
+   throw Old_Nwp_Exception ("Old_Nwp::fill_cloud_data N/A");
 }
 
 void
-Nwp::fill_pressure_level_data (Geodetic_Vector_Data_2D& gvd_2d,
+Old_Nwp::fill_pressure_level_data (Geodetic_Data_2D& gd_2d,
                                const Integer vector_index,
                                const Key& key,
                                const Real p,
@@ -2105,19 +2294,19 @@ Nwp::fill_pressure_level_data (Geodetic_Vector_Data_2D& gvd_2d,
       case denise::MIX_DOWN_TEMPERATURE:
       {
          const Level& level = Level::pressure_level (p);
-         fill_mix_down_temperature_data (gvd_2d, vector_index, key, level);
+         fill_mix_down_temperature_data (gd_2d, vector_index, key, level);
          return;
       }
 
       case denise::POTENTIAL_VORTICITY:
       {
-         fill_p_potential_vorticity_data (gvd_2d, vector_index, key, p);
+         fill_p_potential_vorticity_data (gd_2d, vector_index, key, p);
          return;
       }
 
       case denise::ADIABATIC_HEATING:
       {
-         fill_p_adiabatic_heating_data (gvd_2d, vector_index, key, p);
+         fill_p_adiabatic_heating_data (gd_2d, vector_index, key, p);
          return;
       }
 
@@ -2125,30 +2314,30 @@ Nwp::fill_pressure_level_data (Geodetic_Vector_Data_2D& gvd_2d,
 
    //if ((p - tuple_p.front ()) * (p - tuple_p.back ()) > 0)
    //{
-   //   Dstring error_str = "Nwp::fill_pressure_level_data_ptr ";
+   //   Dstring error_str = "Old_Nwp::fill_pressure_level_data_ptr ";
    //   error_str += string_render (" %f", p);
-   //   throw Nwp_Exception (error_str);
+   //   throw Old_Nwp_Exception (error_str);
    //}
 
-   Nwp::Data_3D& data_3d = get_3d_data (key);
+   Old_Nwp::Data_3D& data_3d = get_3d_data (key);
    const Met_Element element = met_element;
-   const Size_2D& size_2d = gvd_2d.get_size_2d ();
+   const Size_2D& size_2d = gd_2d.get_size_2d ();
 
    for (Integer i = 0; i < size_2d.i; i++)
    {
-      const Real latitude = gvd_2d.get_coordinate (0, i);
+      const Real latitude = gd_2d.get_coordinate (0, i);
       for (Integer j = 0; j < size_2d.j; j++)
       {
-         const Real longitude = gvd_2d.get_coordinate (1, j);
+         const Real longitude = gd_2d.get_coordinate (1, j);
          const Real datum = data_3d.evaluate (element, p, latitude, longitude);
-         gvd_2d.set_datum (vector_index, i, j, datum);
+         gd_2d.set_datum (vector_index, i, j, datum);
       }
    }
 
 }
 
 void
-Nwp::fill_theta_level_data (Geodetic_Vector_Data_2D& gvd_2d,
+Old_Nwp::fill_theta_level_data (Geodetic_Data_2D& gd_2d,
                             const Integer vector_index,
                             const Key& key,
                             const Real theta,
@@ -2162,29 +2351,29 @@ Nwp::fill_theta_level_data (Geodetic_Vector_Data_2D& gvd_2d,
 
       case denise::POTENTIAL_VORTICITY:
       {
-         fill_theta_potential_vorticity_data (gvd_2d, vi, key, theta);
+         fill_theta_potential_vorticity_data (gd_2d, vi, key, theta);
          return;
       }
 
       case denise::ADIABATIC_HEATING:
       {
-         fill_theta_adiabatic_heating_data (gvd_2d, vi, key, theta);
+         fill_theta_adiabatic_heating_data (gd_2d, vi, key, theta);
          return;
       }
 
    }
 
-   throw Nwp_Exception ("Nwp::fill_theta_level_data N/A");
+   throw Old_Nwp_Exception ("Old_Nwp::fill_theta_level_data N/A");
 
 }
 
 void
-Nwp::fill_sigma_level_data (Geodetic_Vector_Data_2D& gvd_2d,
+Old_Nwp::fill_sigma_level_data (Geodetic_Data_2D& gd_2d,
                             const Integer vector_index,
                             const Key& key,
                             const Real sigma,
                             const Met_Element met_element,
-                            const Geodetic_Vector_Data_2D& surface_p_data)
+                            const Geodetic_Data_2D& surface_p_data)
 {
 
    const Data_3D& data_3d = get_3d_data (key);
@@ -2193,29 +2382,29 @@ Nwp::fill_sigma_level_data (Geodetic_Vector_Data_2D& gvd_2d,
    const Real& end_p = tuple_p.back ();
 
    const Met_Element& ne = met_element;
-   const Size_2D& size_2d = gvd_2d.get_size_2d ();
+   const Size_2D& size_2d = gd_2d.get_size_2d ();
 
    for (Integer i = 0; i < size_2d.i; i++)
    { 
 
-      const Real latitude = gvd_2d.get_coordinate (0, i);
+      const Real latitude = gd_2d.get_coordinate (0, i);
 
       for (Integer j = 0; j < size_2d.j; j++)
       {
 
-         const Real longitude = gvd_2d.get_coordinate (1, j);
+         const Real longitude = gd_2d.get_coordinate (1, j);
          const Real surface_p = surface_p_data.get_datum (0, i, j);
          const Real p = sigma * surface_p;
          const bool nan = ((p - start_p) * (p - end_p)) > 0;
 
          if (nan)
          {
-            gvd_2d.set_datum (vector_index, i, j, GSL_NAN);
+            gd_2d.set_datum (vector_index, i, j, GSL_NAN);
          }
          else
          {
             const Real datum = data_3d.evaluate (ne, p, latitude, longitude);
-            gvd_2d.set_datum (vector_index, i, j, datum);
+            gd_2d.set_datum (vector_index, i, j, datum);
          }
 
       }
@@ -2225,7 +2414,7 @@ Nwp::fill_sigma_level_data (Geodetic_Vector_Data_2D& gvd_2d,
 }
 
 void
-Nwp::fill_screen_level_data (Geodetic_Vector_Data_2D& gvd_2d,
+Old_Nwp::fill_screen_level_data (Geodetic_Data_2D& gd_2d,
                              const Integer vector_index,
                              const Key& key,
                              const Met_Element met_element)
@@ -2239,11 +2428,11 @@ Nwp::fill_screen_level_data (Geodetic_Vector_Data_2D& gvd_2d,
 
          const Level& screen = Level::screen_level ();
 
-         typedef Geodetic_Vector_Data_2D Gvd_2d;
-         Gvd_2d* data_ptr = get_initialized_vd_2d (2);
+         typedef Geodetic_Data_2D Gd_2d;
+         Gd_2d* data_ptr = get_initialized_vd_2d (2);
          fill_data (*data_ptr, 0, key, screen, TEMPERATURE);
          fill_data (*data_ptr, 1, key, screen, DEW_POINT);
-         const Size_2D& size_2d = gvd_2d.get_size_2d ();
+         const Size_2D& size_2d = gd_2d.get_size_2d ();
 
          for (Integer i = 0; i < size_2d.i; i++)
          {
@@ -2252,7 +2441,7 @@ Nwp::fill_screen_level_data (Geodetic_Vector_Data_2D& gvd_2d,
                const Real t = data_ptr->get_datum (0, i, j);
                const Real t_d = data_ptr->get_datum (1, i, j);
                const Real dew_point_depression = t - t_d;
-               gvd_2d.set_datum (vector_index, i, j, dew_point_depression);
+               gd_2d.set_datum (vector_index, i, j, dew_point_depression);
             }
          }
 
@@ -2267,12 +2456,12 @@ Nwp::fill_screen_level_data (Geodetic_Vector_Data_2D& gvd_2d,
          const Level& screen = Level::screen_level ();
          const Level& surface = Level::surface_level ();
 
-         typedef Geodetic_Vector_Data_2D Gvd_2d;
-         Gvd_2d* data_ptr = get_initialized_vd_2d (3);
+         typedef Geodetic_Data_2D Gd_2d;
+         Gd_2d* data_ptr = get_initialized_vd_2d (3);
          fill_data (*data_ptr, 0, key, screen, TEMPERATURE);
          fill_data (*data_ptr, 1, key, screen, DEW_POINT);
          fill_data (*data_ptr, 2, key, surface, PRESSURE);
-         const Size_2D& size_2d = gvd_2d.get_size_2d ();
+         const Size_2D& size_2d = gd_2d.get_size_2d ();
 
          for (Integer i = 0; i < size_2d.i; i++)
          {
@@ -2285,7 +2474,7 @@ Nwp::fill_screen_level_data (Geodetic_Vector_Data_2D& gvd_2d,
 
                thermo_point.set_normand (t - K, t_d - K, p);
                const Real theta_e = thermo_point.get_theta_e () + K;
-               gvd_2d.set_datum (vector_index, i, j, theta_e);
+               gd_2d.set_datum (vector_index, i, j, theta_e);
 
             }
          }
@@ -2301,12 +2490,12 @@ Nwp::fill_screen_level_data (Geodetic_Vector_Data_2D& gvd_2d,
          const Level& screen = Level::screen_level ();
          const Level& surface = Level::surface_level ();
 
-         typedef Geodetic_Vector_Data_2D Gvd_2d;
-         Gvd_2d* data_ptr = get_initialized_vd_2d (3);
+         typedef Geodetic_Data_2D Gd_2d;
+         Gd_2d* data_ptr = get_initialized_vd_2d (3);
          fill_data (*data_ptr, 0, key, screen, TEMPERATURE);
          fill_data (*data_ptr, 1, key, screen, DEW_POINT);
          fill_data (*data_ptr, 2, key, surface, PRESSURE);
-         const Size_2D& size_2d = gvd_2d.get_size_2d ();
+         const Size_2D& size_2d = gd_2d.get_size_2d ();
 
          for (Integer i = 0; i < size_2d.i; i++)
          {
@@ -2319,7 +2508,7 @@ Nwp::fill_screen_level_data (Geodetic_Vector_Data_2D& gvd_2d,
 
                thermo_point.set_normand (t - K, t_d - K, p);
                const Real theta_w = thermo_point.get_theta_w () + K;
-               gvd_2d.set_datum (vector_index, i, j, theta_w);
+               gd_2d.set_datum (vector_index, i, j, theta_w);
 
             }
          }
@@ -2331,39 +2520,39 @@ Nwp::fill_screen_level_data (Geodetic_Vector_Data_2D& gvd_2d,
 
    }
 
-   throw Nwp_Exception ("Nwp::fill_screen_data N/A");
+   throw Old_Nwp_Exception ("Old_Nwp::fill_screen_data N/A");
 
 }
 
 void
-Nwp::fill_50m_level_data (Geodetic_Vector_Data_2D& gvd_2d,
+Old_Nwp::fill_50m_level_data (Geodetic_Data_2D& gd_2d,
                           const Integer vector_index,
                           const Key& key,
                           const Met_Element met_element)
 {  
-   throw Nwp_Exception ("Nwp::fill_50m_level_data N/A");
+   throw Old_Nwp_Exception ("Old_Nwp::fill_50m_level_data N/A");
 }
 
 void
-Nwp::fill_10m_level_data (Geodetic_Vector_Data_2D& gvd_2d,
+Old_Nwp::fill_10m_level_data (Geodetic_Data_2D& gd_2d,
                           const Integer vector_index,
                           const Key& key,
                           const Met_Element met_element)
 {  
-   throw Nwp_Exception ("Nwp::fill_10m_level_data N/A");
+   throw Old_Nwp_Exception ("Old_Nwp::fill_10m_level_data N/A");
 }
 
 void
-Nwp::fill_msl_data (Geodetic_Vector_Data_2D& gvd_2d,
+Old_Nwp::fill_msl_data (Geodetic_Data_2D& gd_2d,
                     const Integer vector_index,
                     const Key& key,
                     const Met_Element met_element)
 {
-   throw Nwp_Exception ("Nwp::fill_msl_data N/A");
+   throw Old_Nwp_Exception ("Old_Nwp::fill_msl_data N/A");
 }
 
 void
-Nwp::fill_nil_level_data (Geodetic_Vector_Data_2D& gvd_2d,
+Old_Nwp::fill_nil_level_data (Geodetic_Data_2D& gd_2d,
                           const Integer vector_index,
                           const Key& key,
                           const Met_Element met_element)
@@ -2376,7 +2565,7 @@ Nwp::fill_nil_level_data (Geodetic_Vector_Data_2D& gvd_2d,
 
       case CONTINUOUS_HAINES:
       {
-         fill_continuous_haines_data (gvd_2d, vector_index, key);
+         fill_continuous_haines_data (gd_2d, vector_index, key);
          return;
       };
 
@@ -2389,19 +2578,19 @@ Nwp::fill_nil_level_data (Geodetic_Vector_Data_2D& gvd_2d,
       case PRECIPITABLE_WATER:
       {
          const Level& level = Level ();
-         fill_ts_diagnosis_data (gvd_2d, vi, key, level, met_element);
+         fill_ts_diagnosis_data (gd_2d, vi, key, level, met_element);
          return;
       }
 
       case THICKNESS:
       {
 
-         const Size_2D& size_2d = gvd_2d.get_size_2d ();
+         const Size_2D& size_2d = gd_2d.get_size_2d ();
          const Level& p500 = Level::pressure_level (500e2);
          const Level& p1000 = Level::pressure_level (1000e2);
 
-         Geodetic_Vector_Data_2D* temp_data_ptr = get_initialized_vd_2d (2);
-         Geodetic_Vector_Data_2D& temp_data = *temp_data_ptr;
+         Geodetic_Data_2D* temp_data_ptr = get_initialized_vd_2d (2);
+         Geodetic_Data_2D& temp_data = *temp_data_ptr;
          fill_data (temp_data, 0, key, p500, GEOPOTENTIAL_HEIGHT);
          fill_data (temp_data, 1, key, p1000, GEOPOTENTIAL_HEIGHT);
 
@@ -2411,7 +2600,7 @@ Nwp::fill_nil_level_data (Geodetic_Vector_Data_2D& gvd_2d,
             {
                const Real z500 = temp_data.get_datum (0, i, j);
                const Real z1000 = temp_data.get_datum (1, i, j);
-               gvd_2d.set_datum (vector_index, i, j, z500 - z1000);
+               gd_2d.set_datum (vector_index, i, j, z500 - z1000);
             }
          }
 
@@ -2425,33 +2614,33 @@ Nwp::fill_nil_level_data (Geodetic_Vector_Data_2D& gvd_2d,
       case LOW_CLOUD:
       case TOTAL_CLOUD:
       {
-         fill_cloud_data (gvd_2d, vi, key, met_element);
+         fill_cloud_data (gd_2d, vi, key, met_element);
          return;
       }
 
       case PV1_5_PRESSURE:
       {
-         fill_pv_p_data (gvd_2d, vi, key);
+         fill_pv_p_data (gd_2d, vi, key);
          return;
       }
 
    }
 
-   throw Nwp_Exception ("Nwp::fill_nil_data N/A");
+   throw Old_Nwp_Exception ("Old_Nwp::fill_nil_data N/A");
 
 }
 
 void
-Nwp::fill_surface_level_data (Geodetic_Vector_Data_2D& gvd_2d,
+Old_Nwp::fill_surface_level_data (Geodetic_Data_2D& gd_2d,
                               const Integer vector_index,
                               const Key& key,
                               const Met_Element met_element)
 {
-   throw Nwp_Exception ("Nwp::fill_surface_data N/A");
+   throw Old_Nwp_Exception ("Old_Nwp::fill_surface_data N/A");
 }
 
 void
-Nwp::fill_data (Geodetic_Vector_Data_2D& gvd_2d,
+Old_Nwp::fill_data (Geodetic_Data_2D& gd_2d,
                 const Integer vector_index,
                 const Key& key,
                 const Level& level,
@@ -2463,76 +2652,76 @@ Nwp::fill_data (Geodetic_Vector_Data_2D& gvd_2d,
 
       case SNOW_LEVEL:
       {
-         fill_snow_level_data (gvd_2d, vector_index, key, 0.5);
+         fill_snow_level_data (gd_2d, vector_index, key, 0.5);
          return;
       };
 
       case LAPSE:
       {
-         fill_lapse_data (gvd_2d, vector_index, key, level);
+         fill_lapse_data (gd_2d, vector_index, key, level);
          return;
       };
 
       case RAINFALL_STEP:
       case RAINFALL_CUMULATIVE:
       {
-         fill_rain_data (gvd_2d, vector_index, key, met_element);
+         fill_rain_data (gd_2d, vector_index, key, met_element);
          return;
       };
 
       case GFDI:
       case FFDI:
       {
-         fill_fdi_data (gvd_2d, vector_index, key, level, met_element);
+         fill_fdi_data (gd_2d, vector_index, key, level, met_element);
          return;
       };
 
       case ADIABATIC_HEATING:
       {
-         fill_adiabatic_heating_data (gvd_2d, vector_index, key, level);
+         fill_adiabatic_heating_data (gd_2d, vector_index, key, level);
          return;
       };
 
       case LATENT_HEATING:
       {
-         fill_latent_heating_data (gvd_2d, vector_index, key, level);
+         fill_latent_heating_data (gd_2d, vector_index, key, level);
          return;
       };
 
       case POTENTIAL_VORTICITY:
       {
-         fill_potential_vorticity_data (gvd_2d, vector_index, key, level);
+         fill_potential_vorticity_data (gd_2d, vector_index, key, level);
          return;
       };
 
       case ABSOLUTE_VORTICITY:
       {
-         fill_absolute_vorticity_data (gvd_2d, vector_index, key, level);
+         fill_absolute_vorticity_data (gd_2d, vector_index, key, level);
          return;
       };
 
       case SHEAR_VORTICITY:
       {
-         fill_shear_vorticity_data (gvd_2d, vector_index, key, level);
+         fill_shear_vorticity_data (gd_2d, vector_index, key, level);
          return;
       };
 
       case CURVATURE_VORTICITY:
       {
-         fill_curvature_vorticity_data (gvd_2d, vector_index, key, level);
+         fill_curvature_vorticity_data (gd_2d, vector_index, key, level);
          return;
       };
 
       case LI_THUNDER:
       {
-         fill_li_thunder_data (gvd_2d, vector_index, key, level);
+         fill_li_thunder_data (gd_2d, vector_index, key, level);
          return;
       };
 
       case WIND_SPEED:
       {
 
-         Geodetic_Vector_Data_2D* data_ptr = get_initialized_vd_2d (2);
+         Geodetic_Data_2D* data_ptr = get_initialized_vd_2d (2);
          fill_wind_data (*data_ptr, 0, 1, key, level);
          const Size_2D& size_2d = data_ptr->get_size_2d ();
 
@@ -2543,7 +2732,7 @@ Nwp::fill_data (Geodetic_Vector_Data_2D& gvd_2d,
                const Real u = data_ptr->get_datum (0, i, j);
                const Real v = data_ptr->get_datum (1, i, j);
                const Real speed = sqrt (u*u + v*v);
-               gvd_2d.set_datum (vector_index, i, j, speed);
+               gd_2d.set_datum (vector_index, i, j, speed);
             }
          }
 
@@ -2555,7 +2744,7 @@ Nwp::fill_data (Geodetic_Vector_Data_2D& gvd_2d,
       case WIND_DIRECTION:
       {
 
-         Geodetic_Vector_Data_2D* data_ptr = get_initialized_vd_2d (2);
+         Geodetic_Data_2D* data_ptr = get_initialized_vd_2d (2);
          fill_wind_data (*data_ptr, 0, 1, key, level);
          const Size_2D& size_2d = data_ptr->get_size_2d ();
 
@@ -2566,7 +2755,7 @@ Nwp::fill_data (Geodetic_Vector_Data_2D& gvd_2d,
                const Real u = data_ptr->get_datum (0, i, j);
                const Real v = data_ptr->get_datum (1, i, j);
                const Real direction = Wind (u, v).get_direction ();
-               gvd_2d.set_datum (vector_index, i, j, direction);
+               gd_2d.set_datum (vector_index, i, j, direction);
             }
          }
 
@@ -2584,7 +2773,7 @@ Nwp::fill_data (Geodetic_Vector_Data_2D& gvd_2d,
       {
          const Real v = level.value;
          const Integer vi = vector_index;
-         fill_pressure_level_data (gvd_2d, vi, key, v, met_element);
+         fill_pressure_level_data (gd_2d, vi, key, v, met_element);
          return;
       }
 
@@ -2592,7 +2781,7 @@ Nwp::fill_data (Geodetic_Vector_Data_2D& gvd_2d,
       {
          const Real v = level.value;
          const Integer vi = vector_index;
-         fill_theta_level_data (gvd_2d, vi, key, v, met_element);
+         fill_theta_level_data (gd_2d, vi, key, v, met_element);
          return;
       }
 
@@ -2601,70 +2790,69 @@ Nwp::fill_data (Geodetic_Vector_Data_2D& gvd_2d,
          const Real v = level.value;
          const Integer vi = vector_index;
          const Level& surface = Level::surface_level ();
-         typedef Geodetic_Vector_Data_2D Gvd_2d;
-         Gvd_2d* data_ptr = get_initialized_vd_2d (1);
+         typedef Geodetic_Data_2D Gd_2d;
+         Gd_2d* data_ptr = get_initialized_vd_2d (1);
          fill_data (*data_ptr, 0, key, surface, PRESSURE);
-         fill_sigma_level_data (gvd_2d, vi, key, v, met_element, *data_ptr);
+         fill_sigma_level_data (gd_2d, vi, key, v, met_element, *data_ptr);
          delete data_ptr;
          return;
       }
 
       case Level::SCREEN:
       {
-         fill_screen_level_data (gvd_2d, vector_index, key, met_element);
+         fill_screen_level_data (gd_2d, vector_index, key, met_element);
          return;
       }
 
       case Level::FIFTY_METRE:
       {
-         fill_50m_level_data (gvd_2d, vector_index, key, met_element);
+         fill_50m_level_data (gd_2d, vector_index, key, met_element);
          return;
       }
 
       case Level::TEN_METRE:
       {
-         fill_10m_level_data (gvd_2d, vector_index, key, met_element);
+         fill_10m_level_data (gd_2d, vector_index, key, met_element);
          return;
       }
 
       case Level::MEAN_SEA:
       {
-         fill_msl_data (gvd_2d, vector_index, key, met_element);
+         fill_msl_data (gd_2d, vector_index, key, met_element);
          return;
       }
 
       case Level::NIL:
       {
-         fill_nil_level_data (gvd_2d, vector_index, key, met_element);
+         fill_nil_level_data (gd_2d, vector_index, key, met_element);
          return;
       }
 
       case Level::SURFACE:
       {
-         fill_surface_level_data (gvd_2d, vector_index, key, met_element);
+         fill_surface_level_data (gd_2d, vector_index, key, met_element);
          return;
       }
 
    }
 
-   throw Nwp_Exception ("Nwp::fill_data N/A");
+   throw Old_Nwp_Exception ("Old_Nwp::fill_data N/A");
 
 }
 
-Nwp::Nwp (const Dstring& description,
-          const Dstring& path)
-   : description (description),
-     path (path)
+Old_Nwp::Old_Nwp (const Dstring& description,
+                        const Dstring& path)
+   : Nwp (description, path)
 {
 }
 
-Nwp::~Nwp ()
+Old_Nwp::~Old_Nwp ()
 {
    clear_data_3d_ptr_map ();
 }
 
 void
-Nwp::clear_data_3d_ptr_map ()
+Old_Nwp::clear_data_3d_ptr_map ()
 {
 
    typedef map<Key, Data_3D*>::iterator Iterator;
@@ -2681,30 +2869,30 @@ Nwp::clear_data_3d_ptr_map ()
 }
 
 void
-Nwp::set_domain_2d (const Domain_2D& domain_2d)
+Old_Nwp::set_domain_2d (const Domain_2D& domain_2d)
 {
 }
 
 const Dstring&
-Nwp::get_description () const
+Old_Nwp::get_description () const
 {
    return description;
 }
 
 const Dstring&
-Nwp::get_status () const
+Old_Nwp::get_status () const
 {
    return status;
 }
 
 set<Dtime>
-Nwp::get_valid_time_set (const Dtime& base_time) const
+Old_Nwp::get_valid_time_set (const Dtime& base_time) const
 {
    return key_multimap.get_valid_time_set (base_time);
 }
 
 Tuple
-Nwp::get_valid_t_tuple (const Dtime& base_time,
+Old_Nwp::get_valid_t_tuple (const Dtime& base_time,
                         const Dtime& start_time,
                         const Dtime& end_time) const
 {
@@ -2738,20 +2926,20 @@ Nwp::get_valid_t_tuple (const Dtime& base_time,
 }
 
 set<Dtime>
-Nwp::get_base_time_set () const
+Old_Nwp::get_base_time_set () const
 {
    return key_multimap.get_base_time_set ();
 }
 
-Nwp::Key
-Nwp::get_key (const Dtime& dtime,
+Old_Nwp::Key
+Old_Nwp::get_key (const Dtime& dtime,
               const Dtime& base_time) const
 {
    return key_multimap.get_key (dtime, base_time);
 }
 
-Nwp::Data_3D&
-Nwp::get_3d_data (const Key& key)
+Old_Nwp::Data_3D&
+Old_Nwp::get_3d_data (const Key& key)
 {
 
    typedef Data_3D Nd_3d;
@@ -2761,12 +2949,12 @@ Nwp::get_3d_data (const Key& key)
 
    if (iterator == data_3d_ptr_map.end ())
    {
-      Dstring error_str = "Nwp::get_3d_data get_3d_data failed  ";
+      Dstring error_str = "Old_Nwp::get_3d_data get_3d_data failed  ";
       const Dtime& base_time = key.base_time;
       const Integer forecast_second = key.forecast_second;
       error_str += base_time.get_string ();
       error_str += Dstring::render (" +%d hr", forecast_second);
-      throw Nwp_Exception (error_str);
+      throw Old_Nwp_Exception (error_str);
    }
 
    Data_3D& data_3d = *(iterator->second);
@@ -2775,21 +2963,21 @@ Nwp::get_3d_data (const Key& key)
 
 }
 
-Geodetic_Vector_Data_2D*
-Nwp::get_ts_steering_data_ptr (const Key& key)
+Geodetic_Data_2D*
+Old_Nwp::get_ts_steering_data_ptr (const Key& key)
 {
    const Level level (Level::PRESSURE, 600e2, 800e2);
    return get_steering_data_ptr (key, level);
 }
 
-Geodetic_Vector_Data_2D*
-Nwp::get_steering_data_ptr (const Key& key,
+Geodetic_Data_2D*
+Old_Nwp::get_steering_data_ptr (const Key& key,
                             const Level& level)
 {
 
    if (level.type != Level::PRESSURE)
    {
-      throw Nwp_Exception ("Can't do non-P Level");
+      throw Old_Nwp_Exception ("Can't do non-P Level");
    }
 
    const Met_Element& U = ZONAL_WIND;
@@ -2797,7 +2985,7 @@ Nwp::get_steering_data_ptr (const Key& key,
    const Data_3D& data_3d = get_3d_data (key);
 
    Integer n = 0;
-   Geodetic_Vector_Data_2D* data_ptr = get_initialized_vd_2d (2);
+   Geodetic_Data_2D* data_ptr = get_initialized_vd_2d (2);
    data_ptr->initialize (0, 0);
    data_ptr->initialize (1, 0);
 
@@ -2850,16 +3038,16 @@ Nwp::get_steering_data_ptr (const Key& key,
 
 }
 
-Geodetic_Vector_Data_2D*
-Nwp::get_vertical_shear_data_ptr (const Key& key,
+Geodetic_Data_2D*
+Old_Nwp::get_vertical_shear_data_ptr (const Key& key,
                                   const Level& level)
 {
 
    const Level& level_a = level.get_level_0 ();
    const Level& level_b = level.get_level_1 ();
 
-   Geodetic_Vector_Data_2D* data_ptr = get_initialized_vd_2d (2);
-   Geodetic_Vector_Data_2D* temp_data_ptr = get_initialized_vd_2d (2);
+   Geodetic_Data_2D* data_ptr = get_initialized_vd_2d (2);
+   Geodetic_Data_2D* temp_data_ptr = get_initialized_vd_2d (2);
 
    fill_wind_data (*data_ptr, 0, 1, key, level_a);
    fill_wind_data (*temp_data_ptr, 0, 1, key, level_b);
@@ -2885,22 +3073,22 @@ Nwp::get_vertical_shear_data_ptr (const Key& key,
 
 }
 
-Geodetic_Vector_Data_2D*
-Nwp::get_min_li_thunder_data_ptr (const Key& key,
+Geodetic_Data_2D*
+Old_Nwp::get_min_li_thunder_data_ptr (const Key& key,
                                   const Real thunder_t)
 {
 
-   typedef Geodetic_Vector_Data_2D Gvd_2d;
+   typedef Geodetic_Data_2D Gd_2d;
    const Met_Element T = TEMPERATURE;
    const Met_Element TD = DEW_POINT;
 
    const Data_3D& data_3d = get_3d_data (key);
    const Tuple& tuple_p = data_3d.get_tuple_p (T);
 
-   Gvd_2d* data_ptr = get_initialized_vd_2d (2);
+   Gd_2d* data_ptr = get_initialized_vd_2d (2);
    const Size_2D& size_2d = data_ptr->get_size_2d ();
 
-   Gvd_2d* p_data_ptr = get_temperature_p_data_ptr (key, thunder_t);
+   Gd_2d* p_data_ptr = get_temperature_p_data_ptr (key, thunder_t);
 
    #pragma omp parallel for
    for (Integer i = 0; i < size_2d.i; i++)
@@ -2948,8 +3136,8 @@ Nwp::get_min_li_thunder_data_ptr (const Key& key,
 
 }
 
-Geodetic_Vector_Data_2D*
-Nwp::get_freezing_level_data_ptr (const Key& key)
+Geodetic_Data_2D*
+Old_Nwp::get_freezing_level_data_ptr (const Key& key)
 
 {
 
@@ -2960,7 +3148,7 @@ Nwp::get_freezing_level_data_ptr (const Key& key)
    const Tuple& tuple_p = data_3d.get_tuple_p (T);
    const Integer nk = tuple_p.size ();
 
-   Geodetic_Vector_Data_2D* data_ptr = get_initialized_vd_2d (3);
+   Geodetic_Data_2D* data_ptr = get_initialized_vd_2d (3);
    const Size_2D& size_2d = data_ptr->get_size_2d ();
 
    for (Integer i = 0; i < size_2d.i; i++)
@@ -3017,8 +3205,8 @@ Nwp::get_freezing_level_data_ptr (const Key& key)
 
 }
 
-Geodetic_Vector_Data_2D*
-Nwp::get_temperature_p_data_ptr (const Key& key,
+Geodetic_Data_2D*
+Old_Nwp::get_temperature_p_data_ptr (const Key& key,
                                  const Real temperature)
 
 {
@@ -3026,9 +3214,9 @@ Nwp::get_temperature_p_data_ptr (const Key& key,
    const Data_3D& data_3d = get_3d_data (key);
 
    const Real t = temperature;
-   Geodetic_Vector_Data_2D* data_ptr = get_initialized_vd_2d (3);
+   Geodetic_Data_2D* data_ptr = get_initialized_vd_2d (3);
    const Size_2D& size_2d = data_ptr->get_size_2d ();
-   const Geodetic_Vector_Data_3D& t_data_3d = data_3d.get_gvd_3d (TEMPERATURE);
+   const Geodetic_Data_3D& t_data_3d = data_3d.get_gd_3d (TEMPERATURE);
 
    const Tuple& tuple_p = data_3d.get_tuple_p (TEMPERATURE);
    const Integer nk = tuple_p.size ();
@@ -3082,8 +3270,8 @@ Nwp::get_temperature_p_data_ptr (const Key& key,
 
 }
 
-Geodetic_Vector_Data_2D*
-Nwp::get_p_data_ptr (const Key& key,
+Geodetic_Data_2D*
+Old_Nwp::get_p_data_ptr (const Key& key,
                      const Level& level)
 {
 
@@ -3092,7 +3280,7 @@ Nwp::get_p_data_ptr (const Key& key,
 
       case Level::PRESSURE:
       {
-         Geodetic_Vector_Data_2D* data_ptr = get_initialized_vd_2d (1);
+         Geodetic_Data_2D* data_ptr = get_initialized_vd_2d (1);
          const Size_2D& size_2d = data_ptr->get_size_2d ();
          for (Integer i = 0; i < size_2d.i; i++)
          {
@@ -3107,12 +3295,12 @@ Nwp::get_p_data_ptr (const Key& key,
       case Level::THETA:
       {
 
-         Geodetic_Vector_Data_2D* data_ptr = get_initialized_vd_2d (1);
+         Geodetic_Data_2D* data_ptr = get_initialized_vd_2d (1);
          const Size_2D& size_2d = data_ptr->get_size_2d ();
          const Real theta = level.value;
          const Data_3D& data_3d = get_3d_data (key);
-         const Geodetic_Vector_Data_3D& t_data_3d =
-            data_3d.get_gvd_3d (TEMPERATURE);
+         const Geodetic_Data_3D& t_data_3d =
+            data_3d.get_gd_3d (TEMPERATURE);
          const Tuple& tuple_p = data_3d.get_tuple_p (TEMPERATURE);
 
          for (Integer i = 0; i < size_2d.i; i++)
@@ -3180,17 +3368,17 @@ Nwp::get_p_data_ptr (const Key& key,
 
 }
 
-Geodetic_Vector_Data_2D*
-Nwp::get_next_p_up_data_ptr (const Key& key,
+Geodetic_Data_2D*
+Old_Nwp::get_next_p_up_data_ptr (const Key& key,
                              const Level& level)
 {
 
-   Geodetic_Vector_Data_2D* this_p_data_ptr = get_p_data_ptr (key, level);
-   Geodetic_Vector_Data_2D* next_p_data_ptr = get_initialized_vd_2d (1);
+   Geodetic_Data_2D* this_p_data_ptr = get_p_data_ptr (key, level);
+   Geodetic_Data_2D* next_p_data_ptr = get_initialized_vd_2d (1);
    const Size_2D& size_2d = next_p_data_ptr->get_size_2d ();
 
    const Data_3D& data_3d = get_3d_data (key);
-   const Geodetic_Vector_Data_3D& t_data_3d = data_3d.get_gvd_3d (TEMPERATURE);
+   const Geodetic_Data_3D& t_data_3d = data_3d.get_gd_3d (TEMPERATURE);
    const Tuple& tuple_p = data_3d.get_tuple_p (TEMPERATURE);
 
    for (Integer i = 0; i < size_2d.i; i++)
@@ -3213,13 +3401,13 @@ Nwp::get_next_p_up_data_ptr (const Key& key,
 
 }
 
-Geodetic_Vector_Data_2D*
-Nwp::get_cloud_data_ptr (const Key& key)
+Geodetic_Data_2D*
+Old_Nwp::get_cloud_data_ptr (const Key& key)
 {
 
    const Level& nil_level = Level::nil_level ();
 
-   Geodetic_Vector_Data_2D* data_ptr = get_initialized_vd_2d (3);
+   Geodetic_Data_2D* data_ptr = get_initialized_vd_2d (3);
    fill_data (*data_ptr, 0, key, nil_level, denise::HIGH_CLOUD);
    fill_data (*data_ptr, 1, key, nil_level, denise::MIDDLE_CLOUD);
    fill_data (*data_ptr, 2, key, nil_level, denise::LOW_CLOUD);
@@ -3229,8 +3417,8 @@ Nwp::get_cloud_data_ptr (const Key& key)
 
 }
 
-Geodetic_Vector_Data_2D*
-Nwp::get_cloud_base_data_ptr (const Key& key,
+Geodetic_Data_2D*
+Old_Nwp::get_cloud_base_data_ptr (const Key& key,
                               const Level& level)
 {
 
@@ -3246,7 +3434,7 @@ Nwp::get_cloud_base_data_ptr (const Key& key,
    const Tuple& tuple_p = data_3d.get_tuple_p (Z);
    const Integer nk = tuple_p.size ();
 
-   Geodetic_Vector_Data_2D* data_ptr = get_initialized_vd_2d (3);
+   Geodetic_Data_2D* data_ptr = get_initialized_vd_2d (3);
    const Size_2D& size_2d = data_ptr->get_size_2d ();
 
    const Level& surface = Level::surface_level ();
@@ -3298,16 +3486,16 @@ Nwp::get_cloud_base_data_ptr (const Key& key,
 
 }
 
-Geodetic_Vector_Data_2D*
-Nwp::get_cloud_top_temp_data_ptr (const Key& key)
+Geodetic_Data_2D*
+Old_Nwp::get_cloud_top_temp_data_ptr (const Key& key)
 {
 
    const Data_3D& data_3d = get_3d_data (key);
 
-   Geodetic_Vector_Data_2D* data_ptr = get_initialized_vd_2d (1);
+   Geodetic_Data_2D* data_ptr = get_initialized_vd_2d (1);
    const Size_2D& size_2d = data_ptr->get_size_2d ();
 
-   const Geodetic_Vector_Data_3D& t_data_3d = data_3d.get_gvd_3d (TEMPERATURE);
+   const Geodetic_Data_3D& t_data_3d = data_3d.get_gd_3d (TEMPERATURE);
    const Tuple& tuple_p = data_3d.get_tuple_p (TEMPERATURE);
    const Integer nk = tuple_p.size ();
 
@@ -3348,27 +3536,27 @@ Nwp::get_cloud_top_temp_data_ptr (const Key& key)
 
 }
 
-Geodetic_Vector_Data_2D*
-Nwp::get_ageostrophic_wind_data_ptr (const Key& key,
+Geodetic_Data_2D*
+Old_Nwp::get_ageostrophic_wind_data_ptr (const Key& key,
                                      const Real p)
 {
 
    const Level& level = Level::pressure_level (p);
 
-   Geodetic_Vector_Data_2D* temp_data_ptr = get_initialized_vd_2d (3);
+   Geodetic_Data_2D* temp_data_ptr = get_initialized_vd_2d (3);
    fill_data (*temp_data_ptr, 0, key, level, GEOPOTENTIAL_HEIGHT);
    fill_data (*temp_data_ptr, 1, key, level, ZONAL_WIND);
    fill_data (*temp_data_ptr, 2, key, level, MERIDIONAL_WIND);
-   const Geodetic_Vector_Data_2D& temp_data = *temp_data_ptr;
+   const Geodetic_Data_2D& temp_data = *temp_data_ptr;
 
-   Geodetic_Vector_Data_2D* data_ptr = get_initialized_vd_2d (2);
+   Geodetic_Data_2D* data_ptr = get_initialized_vd_2d (2);
    const Size_2D& size_2d = data_ptr->get_size_2d ();
 
    for (Integer i = 0; i < size_2d.i; i++)
    {
 
       const Real latitude = data_ptr->get_coordinate (0, i);
-      const Real f = Geodetic_Vector_Data_2D::get_f (latitude);
+      const Real f = Geodetic_Data_2D::get_f (latitude);
 
       for (Integer j = 0; j < size_2d.j; j++)
       {
@@ -3396,29 +3584,29 @@ Nwp::get_ageostrophic_wind_data_ptr (const Key& key,
 
 }
 
-Geodetic_Vector_Data_2D*
-Nwp::get_surface_ageostrophic_wind_data_ptr (const Key& key,
+Geodetic_Data_2D*
+Old_Nwp::get_surface_ageostrophic_wind_data_ptr (const Key& key,
                                              const Level& level)
 {
 
    const Level& msl = Level::mean_sea_level ();
    const Level& screen = Level::screen_level ();
 
-   Geodetic_Vector_Data_2D* temp_data_ptr = get_initialized_vd_2d (4);
+   Geodetic_Data_2D* temp_data_ptr = get_initialized_vd_2d (4);
    fill_data (*temp_data_ptr, 0, key, msl, PRESSURE);
    fill_data (*temp_data_ptr, 1, key, screen, TEMPERATURE);
    fill_data (*temp_data_ptr, 2, key, level, ZONAL_WIND);
    fill_data (*temp_data_ptr, 3, key, level, MERIDIONAL_WIND);
-   const Geodetic_Vector_Data_2D& temp_data = *temp_data_ptr;
+   const Geodetic_Data_2D& temp_data = *temp_data_ptr;
 
-   Geodetic_Vector_Data_2D* data_ptr = get_initialized_vd_2d (2);
+   Geodetic_Data_2D* data_ptr = get_initialized_vd_2d (2);
    const Size_2D& size_2d = data_ptr->get_size_2d ();
 
    for (Integer i = 0; i < size_2d.i; i++)
    {
 
       const Real latitude = data_ptr->get_coordinate (0, i);
-      const Real f = Geodetic_Vector_Data_2D::get_f (latitude);
+      const Real f = Geodetic_Data_2D::get_f (latitude);
 
       for (Integer j = 0; j < size_2d.j; j++)
       {
@@ -3450,8 +3638,8 @@ Nwp::get_surface_ageostrophic_wind_data_ptr (const Key& key,
 
 }
 
-Geodetic_Vector_Data_2D*
-Nwp::get_ageostrophic_wind_data_ptr (const Key& key,
+Geodetic_Data_2D*
+Old_Nwp::get_ageostrophic_wind_data_ptr (const Key& key,
                                      const Level& level)
 {
 
@@ -3472,29 +3660,29 @@ Nwp::get_ageostrophic_wind_data_ptr (const Key& key,
 
    }
 
-   throw Nwp_Exception ("Ageostrophic Wind N/A for this level");
+   throw Old_Nwp_Exception ("Ageostrophic Wind N/A for this level");
 
 }
 
-Geodetic_Vector_Data_2D*
-Nwp::get_geostrophic_wind_data_ptr (const Key& key,
+Geodetic_Data_2D*
+Old_Nwp::get_geostrophic_wind_data_ptr (const Key& key,
                                     const Real p)
 {
 
    const Level& level = Level::pressure_level (p);
 
-   Geodetic_Vector_Data_2D* temp_data_ptr = get_initialized_vd_2d (1);
+   Geodetic_Data_2D* temp_data_ptr = get_initialized_vd_2d (1);
    fill_data (*temp_data_ptr, 0, key, level, GEOPOTENTIAL_HEIGHT);
-   const Geodetic_Vector_Data_2D& temp_data = *temp_data_ptr;
+   const Geodetic_Data_2D& temp_data = *temp_data_ptr;
 
-   Geodetic_Vector_Data_2D* data_ptr = get_initialized_vd_2d (2);
+   Geodetic_Data_2D* data_ptr = get_initialized_vd_2d (2);
    const Size_2D& size_2d = data_ptr->get_size_2d ();
 
    for (Integer i = 0; i < size_2d.i; i++)
    {
 
       const Real latitude = data_ptr->get_coordinate (0, i);
-      const Real f = Geodetic_Vector_Data_2D::get_f (latitude);
+      const Real f = Geodetic_Data_2D::get_f (latitude);
 
       for (Integer j = 0; j < size_2d.j; j++)
       {
@@ -3518,26 +3706,26 @@ Nwp::get_geostrophic_wind_data_ptr (const Key& key,
 
 }
 
-Geodetic_Vector_Data_2D*
-Nwp::get_surface_geostrophic_wind_data_ptr (const Key& key)
+Geodetic_Data_2D*
+Old_Nwp::get_surface_geostrophic_wind_data_ptr (const Key& key)
 {
 
    const Level& msl = Level::mean_sea_level ();
    const Level& screen = Level::screen_level ();
 
-   Geodetic_Vector_Data_2D* temp_data_ptr = get_initialized_vd_2d (4);
+   Geodetic_Data_2D* temp_data_ptr = get_initialized_vd_2d (4);
    fill_data (*temp_data_ptr, 0, key, msl, PRESSURE);
    fill_data (*temp_data_ptr, 1, key, screen, TEMPERATURE);
-   const Geodetic_Vector_Data_2D& temp_data = *temp_data_ptr;
+   const Geodetic_Data_2D& temp_data = *temp_data_ptr;
 
-   Geodetic_Vector_Data_2D* data_ptr = get_initialized_vd_2d (2);
+   Geodetic_Data_2D* data_ptr = get_initialized_vd_2d (2);
    const Size_2D& size_2d = data_ptr->get_size_2d ();
 
    for (Integer i = 0; i < size_2d.i; i++)
    {
 
       const Real latitude = data_ptr->get_coordinate (0, i);
-      const Real f = Geodetic_Vector_Data_2D::get_f (latitude);
+      const Real f = Geodetic_Data_2D::get_f (latitude);
 
       for (Integer j = 0; j < size_2d.j; j++)
       {
@@ -3564,8 +3752,8 @@ Nwp::get_surface_geostrophic_wind_data_ptr (const Key& key)
 
 }
 
-Geodetic_Vector_Data_2D*
-Nwp::get_geostrophic_wind_data_ptr (const Key& key,
+Geodetic_Data_2D*
+Old_Nwp::get_geostrophic_wind_data_ptr (const Key& key,
                                     const Level& level)
 {
 
@@ -3586,12 +3774,12 @@ Nwp::get_geostrophic_wind_data_ptr (const Key& key,
 
    }
 
-   throw Nwp_Exception ("Geostrophic Wind N/A for this level");
+   throw Old_Nwp_Exception ("Geostrophic Wind N/A for this level");
 
 }
 
-Geodetic_Vector_Data_2D*
-Nwp::get_wind_data_ptr (const Key& key,
+Geodetic_Data_2D*
+Old_Nwp::get_wind_data_ptr (const Key& key,
                         const Level& level)
 {
 
@@ -3625,7 +3813,7 @@ Nwp::get_wind_data_ptr (const Key& key,
       case Level::FIFTY_METRE:
       case Level::TEN_METRE:
       {
-         Geodetic_Vector_Data_2D* data_ptr = get_initialized_vd_2d (2);
+         Geodetic_Data_2D* data_ptr = get_initialized_vd_2d (2);
          fill_data (*data_ptr, 0, key, level, ZONAL_WIND);
          fill_data (*data_ptr, 1, key, level, MERIDIONAL_WIND);
          return data_ptr;
@@ -3633,21 +3821,21 @@ Nwp::get_wind_data_ptr (const Key& key,
 
    }
 
-   throw Nwp_Exception ("Wind N/A for this level");
+   throw Old_Nwp_Exception ("Wind N/A for this level");
 
 }
 
-Geodetic_Vector_Data_2D*
-Nwp::get_horizontal_shear_data_ptr (const Key& key,
+Geodetic_Data_2D*
+Old_Nwp::get_horizontal_shear_data_ptr (const Key& key,
                                     const Level& level,
                                     const bool with_wind)
 {
 
-   typedef Geodetic_Vector_Data_2D Gvd_2d;
-   Gvd_2d* wind_data_ptr = get_wind_data_ptr (key, level);
+   typedef Geodetic_Data_2D Gd_2d;
+   Gd_2d* wind_data_ptr = get_wind_data_ptr (key, level);
 
    const Integer n = (with_wind ? 3 : 1);
-   Gvd_2d* data_ptr = get_initialized_vd_2d (n);
+   Gd_2d* data_ptr = get_initialized_vd_2d (n);
    const Size_2D& size_2d = data_ptr->get_size_2d ();
 
    for (Integer i = 0; i < size_2d.i; i++)
@@ -3680,8 +3868,8 @@ Nwp::get_horizontal_shear_data_ptr (const Key& key,
 
 }
 
-Geodetic_Vector_Data_2D*
-Nwp::get_omega_data_ptr (const Key& key,
+Geodetic_Data_2D*
+Old_Nwp::get_omega_data_ptr (const Key& key,
                          const Level& level,
                          const bool with_wind)
 {
@@ -3692,11 +3880,11 @@ Nwp::get_omega_data_ptr (const Key& key,
       case Level::PRESSURE:
       {
 
-         typedef Geodetic_Vector_Data_2D Gvd_2d;
+         typedef Geodetic_Data_2D Gd_2d;
 
          Integer n = 1;
          if (with_wind) { n += 2; }
-         Gvd_2d* data_ptr = get_initialized_vd_2d (n);
+         Gd_2d* data_ptr = get_initialized_vd_2d (n);
          const Real p = level.value;
          fill_pressure_level_data (*data_ptr, 0, key, p, OMEGA);
 
@@ -3711,23 +3899,23 @@ Nwp::get_omega_data_ptr (const Key& key,
 
    }
 
-   throw Nwp_Exception ("Omega N/A for this level");
+   throw Old_Nwp_Exception ("Omega N/A for this level");
 
 }
 
-Geodetic_Vector_Data_2D*
-Nwp::get_temperature_24hr_data_ptr (const Key& key,
+Geodetic_Data_2D*
+Old_Nwp::get_temperature_24hr_data_ptr (const Key& key,
                                     const Level& level)
 {
 
-   typedef Geodetic_Vector_Data_2D Gvd_2d;
+   typedef Geodetic_Data_2D Gd_2d;
 
    const Dtime& base_time = key.base_time;
    const Integer forecast_second = key.forecast_second;
    const Key prev_key (base_time, forecast_second - 86400);
 
-   Gvd_2d* this_data_ptr = get_temperature_data_ptr (key, level);
-   Gvd_2d* prev_data_ptr = get_temperature_data_ptr (prev_key, level);
+   Gd_2d* this_data_ptr = get_temperature_data_ptr (key, level);
+   Gd_2d* prev_data_ptr = get_temperature_data_ptr (prev_key, level);
 
    const Size_2D& size_2d = this_data_ptr->get_size_2d ();
 
@@ -3747,8 +3935,8 @@ Nwp::get_temperature_24hr_data_ptr (const Key& key,
 
 }
 
-Geodetic_Vector_Data_2D*
-Nwp::get_mix_down_temperature_data_ptr (const Key& key,
+Geodetic_Data_2D*
+Old_Nwp::get_mix_down_temperature_data_ptr (const Key& key,
                                         const Level& level,
                                         const bool with_wind)
 {
@@ -3757,8 +3945,8 @@ Nwp::get_mix_down_temperature_data_ptr (const Key& key,
    Integer n = 1;
    if (with_wind) { n += 2; }
 
-   typedef Geodetic_Vector_Data_2D Gvd_2d;
-   Gvd_2d* data_ptr = get_initialized_vd_2d (n);
+   typedef Geodetic_Data_2D Gd_2d;
+   Gd_2d* data_ptr = get_initialized_vd_2d (n);
    fill_mix_down_temperature_data (*data_ptr, 0, key, level);
 
    if (with_wind)
@@ -3770,26 +3958,26 @@ Nwp::get_mix_down_temperature_data_ptr (const Key& key,
 
 }
 
-Geodetic_Vector_Data_2D*
-Nwp::get_stratus_data_ptr (const Key& key,
+Geodetic_Data_2D*
+Old_Nwp::get_stratus_data_ptr (const Key& key,
                            const Level& level,
                            const bool with_wind)
 {
 
-   typedef Geodetic_Vector_Data_2D Gvd_2d;
+   typedef Geodetic_Data_2D Gd_2d;
 
    Integer n = 3;
    if (with_wind) { n += 2; }
 
-   Gvd_2d* data_ptr = get_initialized_vd_2d (n);
+   Gd_2d* data_ptr = get_initialized_vd_2d (n);
    const Level& screen = Level::screen_level ();
-   Gvd_2d* next_p_data_ptr = get_next_p_up_data_ptr (key, screen);
-   Gvd_2d* this_t_data_ptr = get_temperature_data_ptr (key, screen);
-   Gvd_2d* this_td_data_ptr = get_dew_point_data_ptr (key, screen);
+   Gd_2d* next_p_data_ptr = get_next_p_up_data_ptr (key, screen);
+   Gd_2d* this_t_data_ptr = get_temperature_data_ptr (key, screen);
+   Gd_2d* this_td_data_ptr = get_dew_point_data_ptr (key, screen);
 
-   Gvd_2d& gvd_2d = *data_ptr;
+   Gd_2d& gd_2d = *data_ptr;
    const Data_3D& data_3d = get_3d_data (key);
-   const Size_2D& size_2d = gvd_2d.get_size_2d ();
+   const Size_2D& size_2d = gd_2d.get_size_2d ();
 
    for (Integer i = 0; i < size_2d.i; i++)
    {
@@ -3811,9 +3999,9 @@ Nwp::get_stratus_data_ptr (const Key& key,
          const Real next_ttd = next_t - next_td;
          const Real this_ttd = this_t - this_td;
          const Real stability = next_t - this_t;
-         gvd_2d.set_datum (0, i, j, this_ttd);
-         gvd_2d.set_datum (1, i, j, next_ttd);
-         gvd_2d.set_datum (2, i, j, stability);
+         gd_2d.set_datum (0, i, j, this_ttd);
+         gd_2d.set_datum (1, i, j, next_ttd);
+         gd_2d.set_datum (2, i, j, stability);
       }
    }
 
@@ -3830,17 +4018,17 @@ Nwp::get_stratus_data_ptr (const Key& key,
 
 }
 
-Geodetic_Vector_Data_2D*
-Nwp::get_lapse_data_ptr (const Key& key,
+Geodetic_Data_2D*
+Old_Nwp::get_lapse_data_ptr (const Key& key,
                          const Level& level,
                          const bool with_wind)
 {
 
-   typedef Geodetic_Vector_Data_2D Gvd_2d;
+   typedef Geodetic_Data_2D Gd_2d;
 
    Integer n = 1;
    if (with_wind) { n += 2; }
-   Gvd_2d* data_ptr = get_initialized_vd_2d (n);
+   Gd_2d* data_ptr = get_initialized_vd_2d (n);
    fill_lapse_data (*data_ptr, 0, key, level);
 
    if (with_wind)
@@ -3852,8 +4040,8 @@ Nwp::get_lapse_data_ptr (const Key& key,
 
 }
 
-Geodetic_Vector_Data_2D*
-Nwp::get_temperature_data_ptr (const Key& key,
+Geodetic_Data_2D*
+Old_Nwp::get_temperature_data_ptr (const Key& key,
                                const Level& level,
                                const bool with_wind)
 {
@@ -3899,7 +4087,7 @@ Nwp::get_temperature_data_ptr (const Key& key,
          {
             const Level& screen = Level::screen_level ();
             const Level& ten = Level::ten_metre_level ();
-            Geodetic_Vector_Data_2D* data_ptr = get_initialized_vd_2d (3);
+            Geodetic_Data_2D* data_ptr = get_initialized_vd_2d (3);
             fill_data (*data_ptr, 0, key, screen, TEMPERATURE);
             fill_data (*data_ptr, 1, key, ten, ZONAL_WIND);
             fill_data (*data_ptr, 2, key, ten, MERIDIONAL_WIND);
@@ -3908,7 +4096,7 @@ Nwp::get_temperature_data_ptr (const Key& key,
          else
          {
             const Level& screen = Level::screen_level ();
-            Geodetic_Vector_Data_2D* data_ptr = get_initialized_vd_2d (1);
+            Geodetic_Data_2D* data_ptr = get_initialized_vd_2d (1);
             fill_data (*data_ptr, 0, key, screen, TEMPERATURE);
             return data_ptr;
          }
@@ -3916,12 +4104,12 @@ Nwp::get_temperature_data_ptr (const Key& key,
 
    }
 
-   throw Nwp_Exception ("Temperature N/A for this level");
+   throw Old_Nwp_Exception ("Temperature N/A for this level");
 
 }
 
-Geodetic_Vector_Data_2D*
-Nwp::get_dew_point_data_ptr (const Key& key,
+Geodetic_Data_2D*
+Old_Nwp::get_dew_point_data_ptr (const Key& key,
                              const Level& level,
                              const bool with_wind)
 {
@@ -3966,7 +4154,7 @@ Nwp::get_dew_point_data_ptr (const Key& key,
          {
             const Level& screen = Level::screen_level ();
             const Level& ten = Level::ten_metre_level ();
-            Geodetic_Vector_Data_2D* data_ptr = get_initialized_vd_2d (3);
+            Geodetic_Data_2D* data_ptr = get_initialized_vd_2d (3);
             fill_data (*data_ptr, 0, key, screen, DEW_POINT);
             fill_data (*data_ptr, 1, key, ten, ZONAL_WIND);
             fill_data (*data_ptr, 2, key, ten, MERIDIONAL_WIND);
@@ -3975,7 +4163,7 @@ Nwp::get_dew_point_data_ptr (const Key& key,
          else
          {
             const Level& screen = Level::screen_level ();
-            Geodetic_Vector_Data_2D* data_ptr = get_initialized_vd_2d (1);
+            Geodetic_Data_2D* data_ptr = get_initialized_vd_2d (1);
             fill_data (*data_ptr, 0, key, screen, DEW_POINT);
             return data_ptr;
          }
@@ -3983,12 +4171,12 @@ Nwp::get_dew_point_data_ptr (const Key& key,
 
    }
 
-   throw Nwp_Exception ("Dew Point N/A for this level");
+   throw Old_Nwp_Exception ("Dew Point N/A for this level");
 
 }
 
-Geodetic_Vector_Data_2D*
-Nwp::get_rh_data_ptr (const Key& key,
+Geodetic_Data_2D*
+Old_Nwp::get_rh_data_ptr (const Key& key,
                       const Level& level,
                       const bool with_wind)
 {
@@ -4033,7 +4221,7 @@ Nwp::get_rh_data_ptr (const Key& key,
          {
             const Level& screen = Level::screen_level ();
             const Level& ten = Level::ten_metre_level ();
-            Geodetic_Vector_Data_2D* data_ptr = get_initialized_vd_2d (3);
+            Geodetic_Data_2D* data_ptr = get_initialized_vd_2d (3);
             fill_data (*data_ptr, 0, key, screen, RELATIVE_HUMIDITY);
             fill_data (*data_ptr, 1, key, ten, ZONAL_WIND);
             fill_data (*data_ptr, 2, key, ten, MERIDIONAL_WIND);
@@ -4042,7 +4230,7 @@ Nwp::get_rh_data_ptr (const Key& key,
          else
          {
             const Level& screen = Level::screen_level ();
-            Geodetic_Vector_Data_2D* data_ptr = get_initialized_vd_2d (1);
+            Geodetic_Data_2D* data_ptr = get_initialized_vd_2d (1);
             fill_data (*data_ptr, 0, key, screen, RELATIVE_HUMIDITY);
             return data_ptr;
          }
@@ -4050,12 +4238,12 @@ Nwp::get_rh_data_ptr (const Key& key,
 
    }
 
-   throw Nwp_Exception ("Relative Humidity N/A for this level");
+   throw Old_Nwp_Exception ("Relative Humidity N/A for this level");
 
 }
 
-Geodetic_Vector_Data_2D*
-Nwp::get_dew_point_depression_data_ptr (const Key& key,
+Geodetic_Data_2D*
+Old_Nwp::get_dew_point_depression_data_ptr (const Key& key,
                                         const Level& level,
                                         const bool with_wind)
 {
@@ -4100,7 +4288,7 @@ Nwp::get_dew_point_depression_data_ptr (const Key& key,
          {
             const Level& screen = Level::screen_level ();
             const Level& ten = Level::ten_metre_level ();
-            Geodetic_Vector_Data_2D* data_ptr = get_initialized_vd_2d (3);
+            Geodetic_Data_2D* data_ptr = get_initialized_vd_2d (3);
             fill_data (*data_ptr, 0, key, screen, DEW_POINT_DEPRESSION);
             fill_data (*data_ptr, 1, key, ten, ZONAL_WIND);
             fill_data (*data_ptr, 2, key, ten, MERIDIONAL_WIND);
@@ -4109,7 +4297,7 @@ Nwp::get_dew_point_depression_data_ptr (const Key& key,
          else
          {
             const Level& screen = Level::screen_level ();
-            Geodetic_Vector_Data_2D* data_ptr = get_initialized_vd_2d (1);
+            Geodetic_Data_2D* data_ptr = get_initialized_vd_2d (1);
             fill_data (*data_ptr, 0, key, screen, DEW_POINT_DEPRESSION);
             return data_ptr;
          }
@@ -4117,12 +4305,12 @@ Nwp::get_dew_point_depression_data_ptr (const Key& key,
 
    }
 
-   throw Nwp_Exception ("Dew Point Depression N/A for this level");
+   throw Old_Nwp_Exception ("Dew Point Depression N/A for this level");
 
 }
 
-Geodetic_Vector_Data_2D*
-Nwp::get_theta_e_data_ptr (const Key& key,
+Geodetic_Data_2D*
+Old_Nwp::get_theta_e_data_ptr (const Key& key,
                            const Level& level,
                            const bool with_wind)
 {
@@ -4167,7 +4355,7 @@ Nwp::get_theta_e_data_ptr (const Key& key,
          {
             const Level& screen = Level::screen_level ();
             const Level& ten = Level::ten_metre_level ();
-            Geodetic_Vector_Data_2D* data_ptr = get_initialized_vd_2d (3);
+            Geodetic_Data_2D* data_ptr = get_initialized_vd_2d (3);
             fill_data (*data_ptr, 0, key, screen, THETA_E);
             fill_data (*data_ptr, 1, key, ten, ZONAL_WIND);
             fill_data (*data_ptr, 2, key, ten, MERIDIONAL_WIND);
@@ -4176,7 +4364,7 @@ Nwp::get_theta_e_data_ptr (const Key& key,
          else
          {
             const Level& screen = Level::screen_level ();
-            Geodetic_Vector_Data_2D* data_ptr = get_initialized_vd_2d (1);
+            Geodetic_Data_2D* data_ptr = get_initialized_vd_2d (1);
             fill_data (*data_ptr, 0, key, screen, THETA_E);
             return data_ptr;
          }
@@ -4184,12 +4372,12 @@ Nwp::get_theta_e_data_ptr (const Key& key,
 
    }
 
-   throw Nwp_Exception ("Theta_e N/A for this level");
+   throw Old_Nwp_Exception ("Theta_e N/A for this level");
 
 }
 
-Geodetic_Vector_Data_2D*
-Nwp::get_theta_w_data_ptr (const Key& key,
+Geodetic_Data_2D*
+Old_Nwp::get_theta_w_data_ptr (const Key& key,
                            const Level& level,
                            const bool with_wind)
 {
@@ -4234,7 +4422,7 @@ Nwp::get_theta_w_data_ptr (const Key& key,
          {
             const Level& screen = Level::screen_level ();
             const Level& ten = Level::ten_metre_level ();
-            Geodetic_Vector_Data_2D* data_ptr = get_initialized_vd_2d (3);
+            Geodetic_Data_2D* data_ptr = get_initialized_vd_2d (3);
             fill_data (*data_ptr, 0, key, screen, THETA_W);
             fill_data (*data_ptr, 1, key, ten, ZONAL_WIND);
             fill_data (*data_ptr, 2, key, ten, MERIDIONAL_WIND);
@@ -4243,7 +4431,7 @@ Nwp::get_theta_w_data_ptr (const Key& key,
          else
          {
             const Level& screen = Level::screen_level ();
-            Geodetic_Vector_Data_2D* data_ptr = get_initialized_vd_2d (1);
+            Geodetic_Data_2D* data_ptr = get_initialized_vd_2d (1);
             fill_data (*data_ptr, 0, key, screen, THETA_W);
             return data_ptr;
          }
@@ -4251,27 +4439,27 @@ Nwp::get_theta_w_data_ptr (const Key& key,
 
    }
 
-   throw Nwp_Exception ("Theta_w N/A for this level");
+   throw Old_Nwp_Exception ("Theta_w N/A for this level");
 
 }
 
-Geodetic_Vector_Data_2D*
-Nwp::get_q_vector_data_ptr (const Key& key,
+Geodetic_Data_2D*
+Old_Nwp::get_q_vector_data_ptr (const Key& key,
                             const Level& level)
 {
 
    if (level.type != Level::PRESSURE)
    {
-      throw Nwp_Exception ("Q Vector only available for pressure levels");
+      throw Old_Nwp_Exception ("Q Vector only available for pressure levels");
    }
 
    const Real p = level.value;
 
-   Geodetic_Vector_Data_2D* temp_data_ptr = get_initialized_vd_2d (2);
+   Geodetic_Data_2D* temp_data_ptr = get_initialized_vd_2d (2);
    fill_data (*temp_data_ptr, 0, key, level, TEMPERATURE);
    fill_data (*temp_data_ptr, 1, key, level, GEOPOTENTIAL_HEIGHT);
 
-   Geodetic_Vector_Data_2D* data_ptr = get_initialized_vd_2d (2);
+   Geodetic_Data_2D* data_ptr = get_initialized_vd_2d (2);
    const Size_2D& size_2d = data_ptr->get_size_2d ();
    const Real Rg_p = R * g / p;
 
@@ -4279,7 +4467,7 @@ Nwp::get_q_vector_data_ptr (const Key& key,
    {
 
       const Real latitude = data_ptr->get_coordinate (0, i);
-      const Real f = Geodetic_Vector_Data_2D::get_f (latitude);
+      const Real f = Geodetic_Data_2D::get_f (latitude);
       const Real Rg_pf = Rg_p / f;
 
       for (Integer j = 0; j < size_2d.j; j++)
@@ -4305,15 +4493,15 @@ Nwp::get_q_vector_data_ptr (const Key& key,
 
 }
 
-Geodetic_Vector_Data_2D*
-Nwp::get_temperature_advection_data_ptr (const Key& key,
+Geodetic_Data_2D*
+Old_Nwp::get_temperature_advection_data_ptr (const Key& key,
                                          const Level& level)
 {
 
-   Geodetic_Vector_Data_2D* temp_data_ptr = get_initialized_vd_2d (1);
+   Geodetic_Data_2D* temp_data_ptr = get_initialized_vd_2d (1);
    fill_data (*temp_data_ptr, 0, key, level, TEMPERATURE);
 
-   Geodetic_Vector_Data_2D* data_ptr = get_initialized_vd_2d (3);
+   Geodetic_Data_2D* data_ptr = get_initialized_vd_2d (3);
    fill_data (*data_ptr, 1, key, level, ZONAL_WIND);
    fill_data (*data_ptr, 2, key, level, MERIDIONAL_WIND);
 
@@ -4340,8 +4528,8 @@ Nwp::get_temperature_advection_data_ptr (const Key& key,
 
 }
 
-Geodetic_Vector_Data_2D*
-Nwp::get_gd_sea_wave_data_ptr (const Key& key,
+Geodetic_Data_2D*
+Old_Nwp::get_gd_sea_wave_data_ptr (const Key& key,
                                const Level& level,
                                const Fetch& fetch,
                                const Real max_fetch)
@@ -4350,10 +4538,10 @@ Nwp::get_gd_sea_wave_data_ptr (const Key& key,
 
    const Real bearing = 90;
 
-   Geodetic_Vector_Data_2D* data_ptr = get_initialized_vd_2d (3);
+   Geodetic_Data_2D* data_ptr = get_initialized_vd_2d (3);
    const Size_2D& size_2d = data_ptr->get_size_2d ();
 
-   Geodetic_Vector_Data_2D* wind_data_ptr = get_wind_data_ptr (key, level);
+   Geodetic_Data_2D* wind_data_ptr = get_wind_data_ptr (key, level);
 
    Lat_Long lat_long;
    Real& latitude = lat_long.latitude;
@@ -4403,16 +4591,16 @@ Nwp::get_gd_sea_wave_data_ptr (const Key& key,
 
 }
 
-Geodetic_Vector_Data_2D*
-Nwp::get_step_rainfall_data_ptr (const Key& key)
+Geodetic_Data_2D*
+Old_Nwp::get_step_rainfall_data_ptr (const Key& key)
 {
-   Geodetic_Vector_Data_2D* data_ptr = get_initialized_vd_2d (1);
+   Geodetic_Data_2D* data_ptr = get_initialized_vd_2d (1);
    fill_rain_data (*data_ptr, 0, key, RAINFALL_STEP);
    return data_ptr;
 }
 
-Geodetic_Vector_Data_2D*
-Nwp::get_rainfall_data_ptr (const Key& key,
+Geodetic_Data_2D*
+Old_Nwp::get_rainfall_data_ptr (const Key& key,
                             const Integer hours)
 {
 
@@ -4422,7 +4610,7 @@ Nwp::get_rainfall_data_ptr (const Key& key,
    }
    else
    {
-      Geodetic_Vector_Data_2D* data_ptr = get_initialized_vd_2d (1);
+      Geodetic_Data_2D* data_ptr = get_initialized_vd_2d (1);
       fill_rain_data (*data_ptr, 0, key, hours);
       return data_ptr;
    }
@@ -4430,13 +4618,13 @@ Nwp::get_rainfall_data_ptr (const Key& key,
 
 }
 
-Geodetic_Vector_Data_2D*
-Nwp::get_isallobar_data_ptr (const Key& key)
+Geodetic_Data_2D*
+Old_Nwp::get_isallobar_data_ptr (const Key& key)
 {
 
-   Geodetic_Vector_Data_2D* data_ptr = get_initialized_vd_2d (1);
+   Geodetic_Data_2D* data_ptr = get_initialized_vd_2d (1);
 
-   Geodetic_Vector_Data_2D* mslp_data_ptr = get_initialized_vd_2d (2);
+   Geodetic_Data_2D* mslp_data_ptr = get_initialized_vd_2d (2);
    const Level& msl = Level::mean_sea_level ();
    const Key& prev_key = key_multimap.get_previous_key (key);
 
@@ -4460,13 +4648,13 @@ Nwp::get_isallobar_data_ptr (const Key& key)
 
 }
 
-Geodetic_Vector_Data_2D*
-Nwp::get_sutcliffe_data_ptr (const Key& key)
+Geodetic_Data_2D*
+Old_Nwp::get_sutcliffe_data_ptr (const Key& key)
 {
 
    const Level& msl = Level::mean_sea_level ();
    const Level& nil = Level::nil_level ();
-   Geodetic_Vector_Data_2D* data_ptr = get_initialized_vd_2d (3);
+   Geodetic_Data_2D* data_ptr = get_initialized_vd_2d (3);
 
    fill_data (*data_ptr, 0, key, msl, PRESSURE);
    fill_data (*data_ptr, 1, key, nil, THICKNESS);
@@ -4476,17 +4664,17 @@ Nwp::get_sutcliffe_data_ptr (const Key& key)
 
 }
 
-Geodetic_Vector_Data_2D*
-Nwp::get_pv_p_data_ptr (const Key& key,
+Geodetic_Data_2D*
+Old_Nwp::get_pv_p_data_ptr (const Key& key,
                         const Real pv_threshold)
 {
-   Geodetic_Vector_Data_2D* data_ptr = get_initialized_vd_2d (1);
+   Geodetic_Data_2D* data_ptr = get_initialized_vd_2d (1);
    fill_pv_p_data (*data_ptr, 0, key, pv_threshold);
    return data_ptr;
 }
 
-Geodetic_Vector_Data_2D*
-Nwp::get_theta_level_data_ptr (const Key& key,
+Geodetic_Data_2D*
+Old_Nwp::get_theta_level_data_ptr (const Key& key,
                                const Real theta,
                                const vector<Met_Element> element_vector,
                                const bool with_pv)
@@ -4498,10 +4686,10 @@ Nwp::get_theta_level_data_ptr (const Key& key,
 
    const Data_3D& data_3d = get_3d_data (key);
 
-   Geodetic_Vector_Data_2D* data_ptr = get_initialized_vd_2d (n);
+   Geodetic_Data_2D* data_ptr = get_initialized_vd_2d (n);
    const Size_2D& size_2d = data_ptr->get_size_2d ();
 
-   const Geodetic_Vector_Data_3D& t_data_3d = data_3d.get_gvd_3d (TEMPERATURE);
+   const Geodetic_Data_3D& t_data_3d = data_3d.get_gd_3d (TEMPERATURE);
    const Tuple& tuple_p = data_3d.get_tuple_p (TEMPERATURE);
 
    for (Integer i = 0; i < size_2d.i; i++)
@@ -4591,7 +4779,7 @@ Nwp::get_theta_level_data_ptr (const Key& key,
       {
 
          const Real latitude = data_ptr->get_coordinate (0, i);
-         const Real f = Geodetic_Vector_Data_2D::get_f (latitude);
+         const Real f = Geodetic_Data_2D::get_f (latitude);
 
          for (Integer j = 0; j < size_2d.j; j++)
          {
@@ -4619,19 +4807,19 @@ Nwp::get_theta_level_data_ptr (const Key& key,
 
 }
 
-Geodetic_Vector_Data_2D*
-Nwp::get_sigma_level_data_ptr (const Key& key,
+Geodetic_Data_2D*
+Old_Nwp::get_sigma_level_data_ptr (const Key& key,
                                const Real sigma,
                                const vector<Met_Element> element_vector)
 {
 
    const Integer n = element_vector.size ();
-   Geodetic_Vector_Data_2D* data_ptr = get_initialized_vd_2d (n);
+   Geodetic_Data_2D* data_ptr = get_initialized_vd_2d (n);
 
    const Level& surface = Level::surface_level ();
-   Geodetic_Vector_Data_2D* surface_p_data_ptr = get_initialized_vd_2d (1);
+   Geodetic_Data_2D* surface_p_data_ptr = get_initialized_vd_2d (1);
    fill_data (*surface_p_data_ptr, 0, key, surface, PRESSURE);
-   const Geodetic_Vector_Data_2D& surf_p_data = *surface_p_data_ptr;
+   const Geodetic_Data_2D& surf_p_data = *surface_p_data_ptr;
 
    for (Integer e = 0; e < n; e++)
    {
@@ -4644,15 +4832,15 @@ Nwp::get_sigma_level_data_ptr (const Key& key,
 
 }
 
-Geodetic_Vector_Data_2D*
-Nwp::get_pressure_level_data_ptr (const Key& key,
+Geodetic_Data_2D*
+Old_Nwp::get_pressure_level_data_ptr (const Key& key,
                                   const Real p,
                                   const vector<Met_Element> element_vector)
 {
 
    const Integer n = element_vector.size ();
 
-   Geodetic_Vector_Data_2D* data_ptr = get_initialized_vd_2d (n);
+   Geodetic_Data_2D* data_ptr = get_initialized_vd_2d (n);
 
    for (Integer e = 0; e < n; e++)
    {
@@ -4664,24 +4852,24 @@ Nwp::get_pressure_level_data_ptr (const Key& key,
 
 }
 
-Geodetic_Vector_Data_2D*
-Nwp::get_data_ptr (const Key& key,
+Geodetic_Data_2D*
+Old_Nwp::get_data_ptr (const Key& key,
                    const Level& level,
                    const Met_Element met_element)
 {
-   Geodetic_Vector_Data_2D* data_ptr = get_initialized_vd_2d (1);
+   Geodetic_Data_2D* data_ptr = get_initialized_vd_2d (1);
    fill_data (*data_ptr, 0, key, level, met_element);
    return data_ptr;
 }
 
-Geodetic_Vector_Data_2D*
-Nwp::get_data_ptr (const Key& key,
+Geodetic_Data_2D*
+Old_Nwp::get_data_ptr (const Key& key,
                    const Level& level,
                    const vector<Met_Element>& met_element_vector)
 {
 
    const Integer n = met_element_vector.size ();
-   Geodetic_Vector_Data_2D* data_ptr = get_initialized_vd_2d (n);
+   Geodetic_Data_2D* data_ptr = get_initialized_vd_2d (n);
 
    for (Integer i = 0; i < n; i++)
    {
@@ -4693,8 +4881,8 @@ Nwp::get_data_ptr (const Key& key,
 
 }
 
-Scalar_Data_1D*
-Nwp::get_terrain_profile_ptr (const Key& key,
+Data_1D*
+Old_Nwp::get_terrain_profile_ptr (const Key& key,
                               const Journey& journey)
 {
 
@@ -4703,14 +4891,14 @@ Nwp::get_terrain_profile_ptr (const Key& key,
    const Real distance = tuple_x.back ();
    const Level& surface = Level::surface_level ();
 
-   if (tuple_x.size () < 2) { throw Nwp_Exception ("Invalid journey"); }
-   if (gsl_isnan (distance)) { throw Nwp_Exception ("Invalid journey"); }
-   if (distance < 1) { throw Nwp_Exception ("journey too short"); }
+   if (tuple_x.size () < 2) { throw Old_Nwp_Exception ("Invalid journey"); }
+   if (gsl_isnan (distance)) { throw Old_Nwp_Exception ("Invalid journey"); }
+   if (distance < 1) { throw Old_Nwp_Exception ("journey too short"); }
 
-   Geodetic_Vector_Data_2D* temp_data_ptr = get_initialized_vd_2d (1);
+   Geodetic_Data_2D* temp_data_ptr = get_initialized_vd_2d (1);
    fill_data (*temp_data_ptr, 0, key, surface, PRESSURE);
 
-   Scalar_Data_1D* data_ptr = new Scalar_Data_1D (tuple_x);
+   Data_1D* data_ptr = new Data_1D (1, tuple_x);
 
    for (Journey::const_iterator iterator = journey.begin ();
         iterator != journey.end (); iterator++)
@@ -4721,7 +4909,7 @@ Nwp::get_terrain_profile_ptr (const Key& key,
       const Real longitude = iterator->y;
 
       const Real datum = temp_data_ptr->evaluate (0, latitude, longitude);
-      data_ptr->set_datum (i, datum);
+      data_ptr->set_datum (0, i, datum);
 
    }
 
@@ -4732,8 +4920,8 @@ Nwp::get_terrain_profile_ptr (const Key& key,
 
 }
 
-Scalar_Data_1D*
-Nwp::get_rainfall_profile_ptr (const Key& key,
+Data_1D*
+Old_Nwp::get_rainfall_profile_ptr (const Key& key,
                                const Journey& journey)
 {
 
@@ -4741,15 +4929,15 @@ Nwp::get_rainfall_profile_ptr (const Key& key,
    const Tuple& tuple_x = journey.get_tuple_x (geodesy);
    const Real distance = tuple_x.back ();
 
-   if (tuple_x.size () < 2) { throw Nwp_Exception ("Invalid journey"); }
-   if (gsl_isnan (distance)) { throw Nwp_Exception ("Invalid journey"); }
-   if (distance < 1) { throw Nwp_Exception ("journey too short"); }
+   if (tuple_x.size () < 2) { throw Old_Nwp_Exception ("Invalid journey"); }
+   if (gsl_isnan (distance)) { throw Old_Nwp_Exception ("Invalid journey"); }
+   if (distance < 1) { throw Old_Nwp_Exception ("journey too short"); }
 
    const Level& nil = Level::nil_level ();
-   Geodetic_Vector_Data_2D* temp_data_ptr = get_initialized_vd_2d (1);
+   Geodetic_Data_2D* temp_data_ptr = get_initialized_vd_2d (1);
    fill_data (*temp_data_ptr, 0, key, nil, RAINFALL_STEP);
 
-   Scalar_Data_1D* data_ptr = new Scalar_Data_1D (tuple_x);
+   Data_1D* data_ptr = new Data_1D (1, tuple_x);
 
    for (Journey::const_iterator iterator = journey.begin ();
         iterator != journey.end (); iterator++)
@@ -4760,7 +4948,7 @@ Nwp::get_rainfall_profile_ptr (const Key& key,
       const Real longitude = iterator->y;
 
       const Real datum = temp_data_ptr->evaluate (0, latitude, longitude);
-      data_ptr->set_datum (i, datum);
+      data_ptr->set_datum (0, i, datum);
 
    }
 
@@ -4771,8 +4959,8 @@ Nwp::get_rainfall_profile_ptr (const Key& key,
 
 }
 
-Nwp::Cross_Section*
-Nwp::get_cross_section_ptr (const Key& key,
+Old_Nwp::Cross_Section*
+Old_Nwp::get_cross_section_ptr (const Key& key,
                             const Journey& journey,
                             const Met_Element met_element,
                             const bool with_wind)
@@ -4783,8 +4971,8 @@ Nwp::get_cross_section_ptr (const Key& key,
       met_element_vector, with_wind);
 }
 
-Nwp::Cross_Section*
-Nwp::get_cross_section_ptr (const Key& key,
+Old_Nwp::Cross_Section*
+Old_Nwp::get_cross_section_ptr (const Key& key,
                             const Journey& journey,
                             const vector<Met_Element>& met_element_vector,
                             const bool with_wind)
@@ -4794,9 +4982,9 @@ Nwp::get_cross_section_ptr (const Key& key,
    const Tuple& tuple_x = journey.get_tuple_x (geodesy);
    const Real distance = tuple_x.back ();
 
-   if (tuple_x.size () < 2) { throw Nwp_Exception ("Invalid journey"); }
-   if (gsl_isnan (distance)) { throw Nwp_Exception ("Invalid journey"); }
-   if (distance < 1) { throw Nwp_Exception ("journey too short"); }
+   if (tuple_x.size () < 2) { throw Old_Nwp_Exception ("Invalid journey"); }
+   if (gsl_isnan (distance)) { throw Old_Nwp_Exception ("Invalid journey"); }
+   if (distance < 1) { throw Old_Nwp_Exception ("journey too short"); }
 
    const Data_3D& data_3d = get_3d_data (key);
 
@@ -4834,7 +5022,7 @@ Nwp::get_cross_section_ptr (const Key& key,
             TEMPERATURE, latitude, longitude, thunder_t);
 
          cs_ptr->insert_met_element_if_needed (met_element, tuple_x, tuple_p);
-         Scalar_Data_2D& sd_2d = cs_ptr->get_sd_2d (met_element);
+         Data_2D& d2d = cs_ptr->get_d2d (met_element);
 
          for (Integer k = 0; k < tuple_p.size (); k++)
          {
@@ -4846,11 +5034,11 @@ Nwp::get_cross_section_ptr (const Key& key,
                const Real datum = (met_element == LI_THUNDER) ?
                   data_3d.get_li_thunder (p, lat_long, thunder_p, thunder_t) :
                   data_3d.evaluate (met_element, p, lat_long);
-               sd_2d.set_datum (ii, k, datum);
+               d2d.set_datum (0, ii, k, datum);
             }
             catch (const std::exception& se)
             {
-               sd_2d.set_datum (ii, k, GSL_NAN);
+               d2d.set_datum (0, ii, k, GSL_NAN);
             }
 
          }
@@ -4870,9 +5058,9 @@ Nwp::get_cross_section_ptr (const Key& key,
       cs_ptr->insert_met_element_if_needed (STREAMLINE_WIND, tuple_x, tuple_p);
       cs_ptr->insert_met_element_if_needed (NORMAL_WIND, tuple_x, tuple_p);
       cs_ptr->insert_met_element_if_needed (OMEGA, tuple_x, tuple_p);
-      Scalar_Data_2D& s_sd_2d = cs_ptr->get_sd_2d (STREAMLINE_WIND);
-      Scalar_Data_2D& n_sd_2d = cs_ptr->get_sd_2d (NORMAL_WIND);
-      Scalar_Data_2D& o_sd_2d = cs_ptr->get_sd_2d (OMEGA);
+      Data_2D& s_d2d = cs_ptr->get_d2d (STREAMLINE_WIND);
+      Data_2D& n_d2d = cs_ptr->get_d2d (NORMAL_WIND);
+      Data_2D& o_d2d = cs_ptr->get_d2d (OMEGA);
 
       for (Journey::const_iterator i = journey.begin ();
            i != journey.end (); i++)
@@ -4898,23 +5086,23 @@ Nwp::get_cross_section_ptr (const Key& key,
                const Real v = data_3d.evaluate (V, p, latitude, longitude);
                const Real uu = u * s + v * c;
                const Real vv = v * s - u * c;
-               s_sd_2d.set_datum (ii, k, uu);
-               n_sd_2d.set_datum (ii, k, vv);
+               s_d2d.set_datum (1, ii, k, uu);
+               n_d2d.set_datum (1, ii, k, vv);
             }
             catch (const std::exception& se)
             {
-               s_sd_2d.set_datum (ii, k, GSL_NAN);
-               n_sd_2d.set_datum (ii, k, GSL_NAN);
+               s_d2d.set_datum (1, ii, k, GSL_NAN);
+               n_d2d.set_datum (1, ii, k, GSL_NAN);
             }
 
             try
             {
                const Real o = data_3d.evaluate (O, p, latitude, longitude);
-               o_sd_2d.set_datum (ii, k, o);
+               o_d2d.set_datum (1, ii, k, o);
             }
             catch (const std::exception& se)
             {
-               o_sd_2d.set_datum (ii, k, 0);
+               o_d2d.set_datum (1, ii, k, 0);
             }
 
          }
@@ -4923,17 +5111,16 @@ Nwp::get_cross_section_ptr (const Key& key,
 
    }
 
-   typedef Scalar_Data_1D Sd_1d;
-   Sd_1d* terrain_profile_ptr = get_terrain_profile_ptr (key, journey);
-   Sd_1d* rainfall_profile_ptr = get_rainfall_profile_ptr (key, journey);
+   Data_1D* terrain_profile_ptr = get_terrain_profile_ptr (key, journey);
+   Data_1D* rainfall_profile_ptr = get_rainfall_profile_ptr (key, journey);
    cs_ptr->set_profile_ptrs (terrain_profile_ptr, rainfall_profile_ptr);
    return cs_ptr;
 
 }
 
 
-Nwp::Sounding*
-Nwp::get_sounding_ptr (const Lat_Long& lat_long,
+Old_Nwp::Sounding*
+Old_Nwp::get_sounding_ptr (const Lat_Long& lat_long,
                        const Key& key)
 {
 
@@ -4943,10 +5130,10 @@ Nwp::get_sounding_ptr (const Lat_Long& lat_long,
    const Level surface = Level::surface_level ();
    const Level ten = Level::ten_metre_level ();
 
-   Nwp::Sounding* sounding_ptr = new Nwp::Sounding (key);
+   Old_Nwp::Sounding* sounding_ptr = new Old_Nwp::Sounding (key);
 
    Real surface_p = GSL_POSINF;
-   Geodetic_Vector_Data_2D* data_ptr = get_initialized_vd_2d (5);
+   Geodetic_Data_2D* data_ptr = get_initialized_vd_2d (5);
 
    try
    {
@@ -4970,16 +5157,16 @@ Nwp::get_sounding_ptr (const Lat_Long& lat_long,
       sounding_ptr->get_wind_profile ().add (surface_p, wind);
 
    }
-   catch (const Nwp_Exception& be)
+   catch (const Old_Nwp_Exception& be)
    {
-      cerr << "Nwp::get_sounding_ptr " << be << endl;
+      cerr << "Old_Nwp::get_sounding_ptr " << be << endl;
    }
 
    delete data_ptr;
 
    const Data_3D& data_3d = get_3d_data (key);
 
-   typedef Geodetic_Vector_Data_3D Gvd_3d;
+   typedef Geodetic_Data_3D Gd_3d;
    const Tuple& t_tuple_p = data_3d.get_tuple_p (TEMPERATURE);
    const Tuple& td_tuple_p = data_3d.get_tuple_p (DEW_POINT);
    const Tuple& z_tuple_p = data_3d.get_tuple_p (GEOPOTENTIAL_HEIGHT);
@@ -5031,7 +5218,7 @@ Nwp::get_sounding_ptr (const Lat_Long& lat_long,
 }
 
 Tuple
-Nwp::get_point_tuple (const Lat_Long& lat_long,
+Old_Nwp::get_point_tuple (const Lat_Long& lat_long,
                       const Key& key)
 {
 
@@ -5041,7 +5228,7 @@ Nwp::get_point_tuple (const Lat_Long& lat_long,
    const Real& longitude = lat_long.longitude;
    const Level& msl = Level::mean_sea_level ();
 
-   Geodetic_Vector_Data_2D* data_ptr = get_initialized_vd_2d (4);
+   Geodetic_Data_2D* data_ptr = get_initialized_vd_2d (4);
 
    const Level screen = Level::screen_level ();
    const Level hPa850 = Level::pressure_level (850e2);
@@ -5067,8 +5254,8 @@ Nwp::get_point_tuple (const Lat_Long& lat_long,
 
 }
 
-Vector_Data_1D*
-Nwp::get_time_series_ptr (const Lat_Long& lat_long,
+Data_1D*
+Old_Nwp::get_time_series_ptr (const Lat_Long& lat_long,
                           const Dtime& base_time,
                           const Dtime& start_time,
                           const Dtime& end_time,
@@ -5083,8 +5270,8 @@ Nwp::get_time_series_ptr (const Lat_Long& lat_long,
 
 }
 
-Vector_Data_1D*
-Nwp::get_time_series_ptr (const Lat_Long& lat_long,
+Data_1D*
+Old_Nwp::get_time_series_ptr (const Lat_Long& lat_long,
                           const Dtime& base_time,
                           const Dtime& start_time,
                           const Dtime& end_time,
@@ -5098,8 +5285,8 @@ Nwp::get_time_series_ptr (const Lat_Long& lat_long,
 
    if (t_tuple.size () == 0) { return NULL; }
 
-   Geodetic_Vector_Data_2D* data_ptr = get_initialized_vd_2d (1);
-   Vector_Data_1D* time_series_ptr = new Vector_Data_1D (n, t_tuple);
+   Geodetic_Data_2D* data_ptr = get_initialized_vd_2d (1);
+   Data_1D* time_series_ptr = new Data_1D (n, t_tuple);
 
    for (Integer i = 0; i < t_tuple.size (); i++)
    {
@@ -5120,7 +5307,7 @@ Nwp::get_time_series_ptr (const Lat_Long& lat_long,
             const Real datum = data_ptr->evaluate (0, latitude, longitude);
             time_series_ptr->set_datum (e, i, datum);
          }
-         catch (const Nwp_Exception& ne)
+         catch (const Old_Nwp_Exception& ne)
          {
             time_series_ptr->set_datum (e, i, GSL_NAN);
          }
@@ -5146,12 +5333,12 @@ Nwp::get_time_series_ptr (const Lat_Long& lat_long,
 
 }
 
-Nwp::Time_Cross*
-Nwp::get_time_cross_data_ptr (const Lat_Long& lat_long,
-                              const Dtime& base_time,
-                              const Dtime& start_time,
-                              const Dtime& end_time,
-                              const vector<Met_Element>& met_element_vector)
+Old_Nwp::Time_Cross*
+Old_Nwp::get_time_cross_data_ptr (const Lat_Long& lat_long,
+                                  const Dtime& base_time,
+                                  const Dtime& start_time,
+                                  const Dtime& end_time,
+                                  const vector<Met_Element>& met_element_vector)
 {
 
    const Tuple& tuple_t = get_valid_t_tuple (base_time, start_time, end_time);
@@ -5160,9 +5347,8 @@ Nwp::get_time_cross_data_ptr (const Lat_Long& lat_long,
    const Real& latitude = lat_long.latitude;
    const Real& longitude = lat_long.longitude;
 
-   typedef Scalar_Data_2D Sd_2d;
    typedef vector<Met_Element>::const_iterator Iterator;
-   Nwp::Time_Cross* tc_ptr = new Time_Cross ();
+   Old_Nwp::Time_Cross* tc_ptr = new Time_Cross ();
 
    for (Integer i = 0; i < tuple_t.size (); i++)
    {
@@ -5183,7 +5369,7 @@ Nwp::get_time_cross_data_ptr (const Lat_Long& lat_long,
 
          const Tuple& tuple_p = data_3d.get_tuple_p (met_element);
          tc_ptr->insert_met_element_if_needed (met_element, tuple_t, tuple_p);
-         Scalar_Data_2D& sd_2d = tc_ptr->get_sd_2d (met_element);
+         Data_2D& d2d = tc_ptr->get_d2d (met_element);
 
          for (Integer k = 0; k < tuple_p.size (); k++)
          {
@@ -5196,11 +5382,11 @@ Nwp::get_time_cross_data_ptr (const Lat_Long& lat_long,
                const Real datum = (met_element == LI_THUNDER) ?
                   data_3d.get_li_thunder (p, lat_long, thunder_p, thunder_t) :
                   data_3d.evaluate (met_element, p, lat_long);
-               sd_2d.set_datum (i, k, datum);
+               d2d.set_datum (0, i, k, datum);
             }
             catch (const std::exception& se)
             {
-               sd_2d.set_datum (i, k, 0);
+               d2d.set_datum (0, i, k, 0);
             }
 
          }
@@ -5216,8 +5402,8 @@ Nwp::get_time_cross_data_ptr (const Lat_Long& lat_long,
 
 }
 
-Nwp_Exception::Nwp_Exception (const Dstring& str)
-   : Exception ("Nwp_Exception", str)
+Old_Nwp_Exception::Old_Nwp_Exception (const Dstring& str)
+   : Exception ("Old_Nwp_Exception", str)
 {
 }
 

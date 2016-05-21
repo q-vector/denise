@@ -58,32 +58,29 @@ Square_Contour::Segment::match (const Segment& segment) const
 }
 
 Point_2D
-Square_Contour::Segment::get_head (const Scalar_Data_2D& scalar_data_2d) const
+Square_Contour::Segment::get_head (const Grid_nD& grid_nd) const
 {
-
-   const Scalar_Data_2D& sd2d = scalar_data_2d;
 
    if (direction == Square_Contour::FORWARD)
    {
-      const Real xl = sd2d.get_coordinate (0, i == 0 ? 0 : i-1);
-      const Real yt = sd2d.get_coordinate (1, j == 0 ? 0 : j-1);
+      const Real xl = grid_nd.get_coordinate (0, i == 0 ? 0 : i-1);
+      const Real yt = grid_nd.get_coordinate (1, j == 0 ? 0 : j-1);
       return Point_2D (xl, yt);
    }
    else
    {
-      const Size_2D& size_2d = sd2d.get_size_2d ();
       if (orientation == Square_Contour::HORIZONTAL)
       {
-         const Integer n = size_2d.i;
-         const Real xr = sd2d.get_coordinate (0, i == n-1 ? n-1 : i+1);
-         const Real yt = sd2d.get_coordinate (1, j == 0   ? 0   : j-1);
+         const Integer n = grid_nd.get_coordinate_tuple (0).size ();
+         const Real xr = grid_nd.get_coordinate (0, i == n-1 ? n-1 : i+1);
+         const Real yt = grid_nd.get_coordinate (1, j == 0   ? 0   : j-1);
          return Point_2D (xr, yt);
       }
       else
       {
-         const Integer m = size_2d.j;
-         const Real xl = sd2d.get_coordinate (0, i == 0   ? 0   : i-1);
-         const Real yb = sd2d.get_coordinate (1, j == m-1 ? m-1 : j+1);
+         const Integer m = grid_nd.get_coordinate_tuple (1).size ();
+         const Real xl = grid_nd.get_coordinate (0, i == 0   ? 0   : i-1);
+         const Real yb = grid_nd.get_coordinate (1, j == m-1 ? m-1 : j+1);
          return Point_2D (xl, yb);
       }
    }
@@ -91,32 +88,29 @@ Square_Contour::Segment::get_head (const Scalar_Data_2D& scalar_data_2d) const
 }
 
 Point_2D
-Square_Contour::Segment::get_tail (const Scalar_Data_2D& scalar_data_2d) const
+Square_Contour::Segment::get_tail (const Grid_nD& grid_nd) const
 {
-
-   const Scalar_Data_2D& sd2d = scalar_data_2d;
 
    if (direction == Square_Contour::BACKWARD)
    {
-      const Real xl = sd2d.get_coordinate (0, i == 0 ? 0 : i-1);
-      const Real yt = sd2d.get_coordinate (1, j == 0 ? 0 : j-1);
+      const Real xl = grid_nd.get_coordinate (0, i == 0 ? 0 : i-1);
+      const Real yt = grid_nd.get_coordinate (1, j == 0 ? 0 : j-1);
       return Point_2D (xl, yt);
    }
    else
    {
-      const Size_2D& size_2d = sd2d.get_size_2d ();
       if (orientation == Square_Contour::HORIZONTAL)
       {
-         const Integer n = size_2d.i;
-         const Real xr = sd2d.get_coordinate (0, i == n-1 ? n-1 : i+1);
-         const Real yt = sd2d.get_coordinate (1, j == 0   ? 0   : j-1);
+         const Integer n = grid_nd.get_coordinate_tuple (0).size ();
+         const Real xr = grid_nd.get_coordinate (0, i == n-1 ? n-1 : i+1);
+         const Real yt = grid_nd.get_coordinate (1, j == 0   ? 0   : j-1);
          return Point_2D (xr, yt);
       }
       else
       {
-         const Integer m = size_2d.j;
-         const Real xl = scalar_data_2d.get_coordinate (0, i == 0   ? 0   : i-1);
-         const Real yb = scalar_data_2d.get_coordinate (1, j == m-1 ? m-1 : j+1);
+         const Integer m = grid_nd.get_coordinate_tuple (1).size ();
+         const Real xl = grid_nd.get_coordinate (0, i == 0   ? 0   : i-1);
+         const Real yb = grid_nd.get_coordinate (1, j == m-1 ? m-1 : j+1);
          return Point_2D (xl, yb);
       }
    }
@@ -124,12 +118,12 @@ Square_Contour::Segment::get_tail (const Scalar_Data_2D& scalar_data_2d) const
 }
 
 bool
-Square_Contour::Segment::is_isosegment (const Scalar_Data_2D& scalar_data_2d,
+Square_Contour::Segment::is_isosegment (const Data_2D& data_2d,
+                                        const Integer vector_element,
                                         const Real contour_value) const
 {
 
-   const Scalar_Data_2D& sd2d = scalar_data_2d;
-   const Size_2D& size_2d = sd2d.get_size_2d ();
+   const Size_2D& size_2d = data_2d.get_size_2d ();
    const Integer n = size_2d.i;
    const Integer m = size_2d.j;
 
@@ -138,15 +132,15 @@ Square_Contour::Segment::is_isosegment (const Scalar_Data_2D& scalar_data_2d,
 
       case Square_Contour::HORIZONTAL:
       {
-         const Real t = sd2d.get_datum (i, j - 1); 
-         const Real b = sd2d.get_datum (i, j + 1); 
+         const Real t = data_2d.get_datum (vector_element, i, j - 1); 
+         const Real b = data_2d.get_datum (vector_element, i, j + 1); 
          return ((contour_value - t) * (contour_value - t) < 0);
       };
 
       case Square_Contour::VERTICAL:
       {
-         const Real l = sd2d.get_datum (i - 1, j); 
-         const Real r = sd2d.get_datum (i + 1, j); 
+         const Real l = data_2d.get_datum (vector_element, i - 1, j); 
+         const Real r = data_2d.get_datum (vector_element, i + 1, j); 
          return ((contour_value - l) * (contour_value - r) < 0);
       };
 
@@ -155,13 +149,13 @@ Square_Contour::Segment::is_isosegment (const Scalar_Data_2D& scalar_data_2d,
 }
 
 bool
-Square_Contour::Segment::is_isosegment (const Scalar_Data_2D& scalar_data_2d,
+Square_Contour::Segment::is_isosegment (const Data_2D& data_2d,
+                                        const Integer vector_element,
                                         const Real lower_contour_value,
                                         const Real upper_contour_value) const
 {
 
-   const Scalar_Data_2D& sd2d = scalar_data_2d;
-   const Size_2D& size_2d = sd2d.get_size_2d ();
+   const Size_2D& size_2d = data_2d.get_size_2d ();
    const Integer n = size_2d.i;
    const Integer m = size_2d.j;
 
@@ -171,14 +165,14 @@ Square_Contour::Segment::is_isosegment (const Scalar_Data_2D& scalar_data_2d,
       case Square_Contour::HORIZONTAL:
       {
          const Integer jj = (j == 0 ? 0 : size_2d.j - 1);
-         const Real v = sd2d.get_datum (i, jj); 
+         const Real v = data_2d.get_datum (vector_element, i, jj); 
          return ((lower_contour_value - v) * (upper_contour_value - v) < 0);
       };
 
       case Square_Contour::VERTICAL:
       {
          const Integer ii = (i == 0 ? 0 : size_2d.i - 1);
-         const Real v = sd2d.get_datum (ii, j); 
+         const Real v = data_2d.get_datum (vector_element, ii, j); 
          return ((lower_contour_value - v) * (upper_contour_value - v) < 0);
       };
 
@@ -244,17 +238,17 @@ Square_Contour::Isoline::Isoline ()
 {
 }
 
-Square_Contour::Isoline::Isoline (const Scalar_Data_2D& scalar_data_2d,
+Square_Contour::Isoline::Isoline (const Grid_nD& grid_nd,
                                   const Segment& segment)
    : head_segment (segment),
      tail_segment (segment)
 {
-   Simple_Polyline::add (segment.get_head (scalar_data_2d));
-   Simple_Polyline::add (segment.get_tail (scalar_data_2d));
+   Simple_Polyline::add (segment.get_head (grid_nd));
+   Simple_Polyline::add (segment.get_tail (grid_nd));
 }
 
 void
-Square_Contour::Isoline::add (const Scalar_Data_2D& scalar_data_2d,
+Square_Contour::Isoline::add (const Grid_nD& grid_nd,
                               const Segment& segment,
                               const bool to_head)
 {
@@ -321,10 +315,9 @@ Square_Contour::Isoline::add (const Scalar_Data_2D& scalar_data_2d,
    }
 
    tip_segment = s;
-   const Scalar_Data_2D& sd2d = scalar_data_2d;
 
-   if (to_head) { push_front (s.get_head (sd2d)); }
-   else         { push_back (s.get_tail (sd2d)); }
+   if (to_head) { push_front (tip_segment.get_head (grid_nd)); }
+   else         { push_back (tip_segment.get_tail (grid_nd)); }
 
 }
 
@@ -417,7 +410,7 @@ Square_Contour::Isoline::Bag::Bag ()
 }
 
 Square_Contour::Isoline::Bag::iterator
-Square_Contour::Isoline::Bag::add (const Scalar_Data_2D& scalar_data_2d,
+Square_Contour::Isoline::Bag::add (const Data_2D& data_2d,
                                    const Segment& segment)
 {
 
@@ -425,7 +418,7 @@ Square_Contour::Isoline::Bag::add (const Scalar_Data_2D& scalar_data_2d,
    auto i = get_iterator (tip, segment);
    if (i == end ())
    {
-      push_back (Isoline (scalar_data_2d, segment));
+      push_back (Isoline (data_2d, segment));
       return end ();
    }
    else
@@ -433,7 +426,7 @@ Square_Contour::Isoline::Bag::add (const Scalar_Data_2D& scalar_data_2d,
       i = get_iterator (tip, segment);
       Isoline& isoline = *(i);
       const bool to_head = (tip == Square_Contour::HEAD);
-      isoline.add (scalar_data_2d, segment, to_head);
+      isoline.add (data_2d, segment, to_head);
 
       bred (i);
 
@@ -470,14 +463,15 @@ Square_Contour::Isoline::Bag::get_iterator (Square_Contour::Tip& tip,
 
 }
 
-Square_Contour::Square_Contour (const Vector_Data_2D& vector_data_2d,
+Square_Contour::Square_Contour (const Data_2D& data_2d,
                                 const Integer vector_element,
                                 const Tuple& contour_tuple)
-   : scalar_data_2d (vector_data_2d, vector_element),
+   : data_2d (data_2d),
+     vector_element (vector_element),
      contour_tuple (contour_tuple)
 {
 
-   const Size_2D& size_2d = vector_data_2d.get_size_2d ();
+   const Size_2D& size_2d = data_2d.get_size_2d ();
 
    for (auto iterator = contour_tuple.begin ();
         iterator != contour_tuple.end (); iterator++)
@@ -504,9 +498,9 @@ Square_Contour::Square_Contour (const Vector_Data_2D& vector_data_2d,
          Segment segment = inner_segment_bag.front ();
          inner_segment_bag.pop ();
 
-         if (segment.is_isosegment (scalar_data_2d, contour_value))
+         if (segment.is_isosegment (data_2d, vector_element, contour_value))
          {
-            auto isoline_itr = tmp_isoline_bag.add (scalar_data_2d, segment);
+            auto isoline_itr = tmp_isoline_bag.add ( data_2d, segment);
             if (isoline_itr != tmp_isoline_bag.end ())
             {
                Isoline& isoline = *(isoline_itr);
@@ -2142,7 +2136,7 @@ Contour::render_label (const RefPtr<Context>& cr,
 
 // Basically patching up "naughty" grid values
 void
-Contour::init_a (const Vector_Field_2D& vector_field_2d,
+Contour::init_a (const Field_2D& field_2d,
                  const Integer vector_element,
                  const Tuple& coordinate_tuple_x,
                  const Tuple& coordinate_tuple_y)
@@ -2162,7 +2156,7 @@ Contour::init_a (const Vector_Field_2D& vector_field_2d,
       for (Integer j = 0; j < tuple_y.size (); j++)
       {
          const Real& y = tuple_y[j];
-         datum = vector_field_2d.evaluate (vector_element, x, y, VALUE);
+         datum = field_2d.evaluate (vector_element, x, y, VALUE);
          if (gsl_finite (datum) && datum < min_value) { min_value = datum; }
          if (gsl_finite (datum) && datum > max_value) { max_value = datum; }
          scalar_data_2d_ptr->set_datum (i, j, datum);
@@ -2173,7 +2167,7 @@ Contour::init_a (const Vector_Field_2D& vector_field_2d,
 
 // Basically patching up "naughty" grid values
 void
-Contour::init_a (const Vector_Field_2D& vector_field_2d,
+Contour::init_a (const Field_2D& field_2d,
                  const Scalarization_2d scalarization_2d,
                  const Integer vector_element_0,
                  const Integer vector_element_1,
@@ -2181,7 +2175,7 @@ Contour::init_a (const Vector_Field_2D& vector_field_2d,
                  const Tuple& coordinate_tuple_y)
 {
 
-   const Vector_Field_2D& vf_2d = vector_field_2d;
+   const Field_2D& vf_2d = field_2d;
    const Tuple& tuple_x = coordinate_tuple_x;
    const Tuple& tuple_y = coordinate_tuple_y;
    scalar_data_2d_ptr = new Scalar_Data_2D (tuple_x, tuple_y);
@@ -2309,7 +2303,7 @@ Contour::init_b (const Tuple& level_tuple,
 }
 
 void
-Contour::init (const Vector_Field_2D& vector_field_2d,
+Contour::init (const Field_2D& field_2d,
                const Integer vector_element,
                const Real step,
                const Tuple& coordinate_tuple_x,
@@ -2317,7 +2311,7 @@ Contour::init (const Vector_Field_2D& vector_field_2d,
                const Real epsilon)
 {
 
-   const Vector_Field_2D& vf_2d = vector_field_2d;
+   const Field_2D& vf_2d = field_2d;
    init_a (vf_2d, vector_element, coordinate_tuple_x, coordinate_tuple_y);
 
    const Real start = min_value - modulo (min_value, step);
@@ -2339,7 +2333,7 @@ Contour::init (const Vector_Field_2D& vector_field_2d,
 }
 
 void
-Contour::init (const Vector_Field_2D& vector_field_2d,
+Contour::init (const Field_2D& field_2d,
                const Integer vector_element,
                const Tuple& level_tuple,
                const Tuple& coordinate_tuple_x,
@@ -2347,7 +2341,7 @@ Contour::init (const Vector_Field_2D& vector_field_2d,
                const Real epsilon)
 {
 
-   const Vector_Field_2D& vf_2d = vector_field_2d;
+   const Field_2D& vf_2d = field_2d;
    init_a (vf_2d, vector_element, coordinate_tuple_x, coordinate_tuple_y);
 
    const Real ep = (gsl_finite (epsilon) ? epsilon : 
@@ -2358,7 +2352,7 @@ Contour::init (const Vector_Field_2D& vector_field_2d,
 }
 
 void
-Contour::init (const Vector_Field_2D& vector_field_2d,
+Contour::init (const Field_2D& field_2d,
                const Scalarization_2d scalarization_2d,
                const Integer vector_element_0,
                const Integer vector_element_1,
@@ -2368,7 +2362,7 @@ Contour::init (const Vector_Field_2D& vector_field_2d,
                const Real epsilon)
 {
 
-   init_a (vector_field_2d, scalarization_2d, vector_element_0,
+   init_a (field_2d, scalarization_2d, vector_element_0,
       vector_element_1, coordinate_tuple_x, coordinate_tuple_y);
 
    const Real start = min_value - modulo (min_value, step);
@@ -2390,7 +2384,7 @@ Contour::init (const Vector_Field_2D& vector_field_2d,
 }
 
 void
-Contour::init (const Vector_Field_2D& vector_field_2d,
+Contour::init (const Field_2D& field_2d,
                const Scalarization_2d scalarization_2d,
                const Integer vector_element_0,
                const Integer vector_element_1,
@@ -2400,7 +2394,7 @@ Contour::init (const Vector_Field_2D& vector_field_2d,
                const Real epsilon)
 {
 
-   init_a (vector_field_2d, scalarization_2d, vector_element_0,
+   init_a (field_2d, scalarization_2d, vector_element_0,
       vector_element_1, coordinate_tuple_x, coordinate_tuple_y);
 
    const Real ep = (gsl_finite (epsilon) ? epsilon : 
@@ -2411,7 +2405,7 @@ Contour::init (const Vector_Field_2D& vector_field_2d,
 }
 
 // 1
-Contour::Contour (const Vector_Data_2D& vector_data_2d,
+Contour::Contour (const Data_2D& data_2d,
                   const Integer vector_element,
                   const Tuple& level_tuple,
                   const Real epsilon)
@@ -2424,16 +2418,16 @@ Contour::Contour (const Vector_Data_2D& vector_data_2d,
      valid_polygon_ptr (NULL)
 {
 
-   const Tuple& tuple_x = vector_data_2d.get_coordinate_tuple (0);
-   const Tuple& tuple_y = vector_data_2d.get_coordinate_tuple (1);
+   const Tuple& tuple_x = data_2d.get_coordinate_tuple (0);
+   const Tuple& tuple_y = data_2d.get_coordinate_tuple (1);
 
-   init (vector_data_2d, vector_element, level_tuple,
+   init (data_2d, vector_element, level_tuple,
       tuple_x, tuple_y, epsilon);
 
 }
 
 // 2
-Contour::Contour (const Vector_Data_2D& vector_data_2d,
+Contour::Contour (const Data_2D& data_2d,
                   const Integer vector_element,
                   const Real step,
                   const Real epsilon)
@@ -2445,15 +2439,15 @@ Contour::Contour (const Vector_Data_2D& vector_data_2d,
      valid_polygon_ptr (NULL)
 {
 
-   const Tuple& tuple_x = vector_data_2d.get_coordinate_tuple (0);
-   const Tuple& tuple_y = vector_data_2d.get_coordinate_tuple (1);
+   const Tuple& tuple_x = data_2d.get_coordinate_tuple (0);
+   const Tuple& tuple_y = data_2d.get_coordinate_tuple (1);
 
-   init (vector_data_2d, vector_element, step, tuple_x, tuple_y, epsilon);
+   init (data_2d, vector_element, step, tuple_x, tuple_y, epsilon);
 
 }
 
 // 3
-Contour::Contour (const Vector_Data_2D& vector_data_2d,
+Contour::Contour (const Data_2D& data_2d,
                   const Integer vector_element,
                   const Tuple& level_tuple,
                   const Domain_2D& domain_2d,
@@ -2475,8 +2469,8 @@ Contour::Contour (const Vector_Data_2D& vector_data_2d,
    if (start_x > end_x) { return; }
    if (start_y > end_y) { return; }
 
-   const Tuple& orig_tuple_x = vector_data_2d.get_coordinate_tuple (0);
-   const Tuple& orig_tuple_y = vector_data_2d.get_coordinate_tuple (1);
+   const Tuple& orig_tuple_x = data_2d.get_coordinate_tuple (0);
+   const Tuple& orig_tuple_y = data_2d.get_coordinate_tuple (1);
 
    Tuple tuple_x;
    Tuple tuple_y;
@@ -2501,13 +2495,13 @@ Contour::Contour (const Vector_Data_2D& vector_data_2d,
       }
    }
 
-   init (vector_data_2d, vector_element, level_tuple,
+   init (data_2d, vector_element, level_tuple,
       tuple_x, tuple_y, epsilon);
 
 }
 
 // 4
-Contour::Contour (const Vector_Data_2D& vector_data_2d,
+Contour::Contour (const Data_2D& data_2d,
                   const Integer vector_element,
                   const Real step,
                   const Domain_2D& domain_2d,
@@ -2528,8 +2522,8 @@ Contour::Contour (const Vector_Data_2D& vector_data_2d,
    if (start_x > end_x) { return; }
    if (start_y > end_y) { return; }
 
-   const Tuple& orig_tuple_x = vector_data_2d.get_coordinate_tuple (0);
-   const Tuple& orig_tuple_y = vector_data_2d.get_coordinate_tuple (1);
+   const Tuple& orig_tuple_x = data_2d.get_coordinate_tuple (0);
+   const Tuple& orig_tuple_y = data_2d.get_coordinate_tuple (1);
 
    Tuple tuple_x;
    Tuple tuple_y;
@@ -2554,12 +2548,12 @@ Contour::Contour (const Vector_Data_2D& vector_data_2d,
       }
    }
 
-   init (vector_data_2d, vector_element, step, tuple_x, tuple_y, epsilon);
+   init (data_2d, vector_element, step, tuple_x, tuple_y, epsilon);
 
 }
 
 // 5
-Contour::Contour (const Vector_Data_2D& vector_data_2d,
+Contour::Contour (const Data_2D& data_2d,
                   const Integer vector_element,
                   const Tuple& level_tuple,
                   const Tuple& coordinate_tuple_x,
@@ -2573,12 +2567,12 @@ Contour::Contour (const Vector_Data_2D& vector_data_2d,
      polygon_ptrs (NULL),
      valid_polygon_ptr (NULL)
 {
-   init (vector_data_2d, vector_element, level_tuple,
+   init (data_2d, vector_element, level_tuple,
       coordinate_tuple_x, coordinate_tuple_y, epsilon);
 }
 
 // 6
-Contour::Contour (const Vector_Data_2D& vector_data_2d,
+Contour::Contour (const Data_2D& data_2d,
                   const Integer vector_element,
                   const Real step,
                   const Tuple& coordinate_tuple_x,
@@ -2591,12 +2585,12 @@ Contour::Contour (const Vector_Data_2D& vector_data_2d,
      polygon_ptrs (NULL),
      valid_polygon_ptr (NULL)
 {
-   init (vector_data_2d, vector_element, step, coordinate_tuple_x,
+   init (data_2d, vector_element, step, coordinate_tuple_x,
       coordinate_tuple_y, epsilon);
 }
 
 // 7
-Contour::Contour (const Vector_Data_2D& vector_data_2d,
+Contour::Contour (const Data_2D& data_2d,
                   const Integer vector_element,
                   const Tuple& level_tuple,
                   const Size_2D& size_2d,
@@ -2622,13 +2616,13 @@ Contour::Contour (const Vector_Data_2D& vector_data_2d,
    const Tuple tuple_x = Tuple (size_2d.i, start_x, end_x);
    const Tuple tuple_y = Tuple (size_2d.j, start_y, end_y);
 
-   init (vector_data_2d, vector_element, level_tuple,
+   init (data_2d, vector_element, level_tuple,
       tuple_x, tuple_y, epsilon);
 
 }
 
 // 8
-Contour::Contour (const Vector_Data_2D& vector_data_2d,
+Contour::Contour (const Data_2D& data_2d,
                   const Integer vector_element,
                   const Real step,
                   const Size_2D& size_2d,
@@ -2653,13 +2647,13 @@ Contour::Contour (const Vector_Data_2D& vector_data_2d,
    const Tuple tuple_x = Tuple (size_2d.i, start_x, end_x);
    const Tuple tuple_y = Tuple (size_2d.j, start_y, end_y);
 
-   init (vector_data_2d, vector_element, step,
+   init (data_2d, vector_element, step,
       tuple_x, tuple_y, epsilon);
 
 }
 
 // 9
-Contour::Contour (const Vector_Data_2D& vector_data_2d,
+Contour::Contour (const Data_2D& data_2d,
                   const Scalarization_2d scalarization_2d,
                   const Integer vector_element_0,
                   const Integer vector_element_1,
@@ -2674,17 +2668,17 @@ Contour::Contour (const Vector_Data_2D& vector_data_2d,
      valid_polygon_ptr (NULL)
 {
 
-   const Tuple& tuple_x = vector_data_2d.get_coordinate_tuple (0);
-   const Tuple& tuple_y = vector_data_2d.get_coordinate_tuple (1);
+   const Tuple& tuple_x = data_2d.get_coordinate_tuple (0);
+   const Tuple& tuple_y = data_2d.get_coordinate_tuple (1);
 
-   init (vector_data_2d, scalarization_2d, vector_element_0,
+   init (data_2d, scalarization_2d, vector_element_0,
       vector_element_1, level_tuple, tuple_x, tuple_y,
       epsilon);
 
 }
 
 // 10
-Contour::Contour (const Vector_Data_2D& vector_data_2d,
+Contour::Contour (const Data_2D& data_2d,
                   const Scalarization_2d scalarization_2d,
                   const Integer vector_element_0,
                   const Integer vector_element_1,
@@ -2698,16 +2692,16 @@ Contour::Contour (const Vector_Data_2D& vector_data_2d,
      valid_polygon_ptr (NULL)
 {
 
-   const Tuple& tuple_x = vector_data_2d.get_coordinate_tuple (0);
-   const Tuple& tuple_y = vector_data_2d.get_coordinate_tuple (1);
+   const Tuple& tuple_x = data_2d.get_coordinate_tuple (0);
+   const Tuple& tuple_y = data_2d.get_coordinate_tuple (1);
 
-   init (vector_data_2d, scalarization_2d, vector_element_0,
+   init (data_2d, scalarization_2d, vector_element_0,
       vector_element_1, step, tuple_x, tuple_y, epsilon);
 
 }
 
 // 11
-Contour::Contour (const Vector_Data_2D& vector_data_2d,
+Contour::Contour (const Data_2D& data_2d,
                   const Scalarization_2d scalarization_2d,
                   const Integer vector_element_0,
                   const Integer vector_element_1,
@@ -2731,8 +2725,8 @@ Contour::Contour (const Vector_Data_2D& vector_data_2d,
    if (start_x > end_x) { return; }
    if (start_y > end_y) { return; }
 
-   const Tuple& orig_tuple_x = vector_data_2d.get_coordinate_tuple (0);
-   const Tuple& orig_tuple_y = vector_data_2d.get_coordinate_tuple (1);
+   const Tuple& orig_tuple_x = data_2d.get_coordinate_tuple (0);
+   const Tuple& orig_tuple_y = data_2d.get_coordinate_tuple (1);
 
    Tuple tuple_x;
    Tuple tuple_y;
@@ -2757,14 +2751,14 @@ Contour::Contour (const Vector_Data_2D& vector_data_2d,
       }
    }
 
-   init (vector_data_2d, scalarization_2d, vector_element_0,
+   init (data_2d, scalarization_2d, vector_element_0,
       vector_element_1, level_tuple, tuple_x, tuple_y,
       epsilon);
 
 }
 
 // 12
-Contour::Contour (const Vector_Data_2D& vector_data_2d,
+Contour::Contour (const Data_2D& data_2d,
                   const Scalarization_2d scalarization_2d,
                   const Integer vector_element_0,
                   const Integer vector_element_1,
@@ -2787,8 +2781,8 @@ Contour::Contour (const Vector_Data_2D& vector_data_2d,
    if (start_x > end_x) { return; }
    if (start_y > end_y) { return; }
 
-   const Tuple& orig_tuple_x = vector_data_2d.get_coordinate_tuple (0);
-   const Tuple& orig_tuple_y = vector_data_2d.get_coordinate_tuple (1);
+   const Tuple& orig_tuple_x = data_2d.get_coordinate_tuple (0);
+   const Tuple& orig_tuple_y = data_2d.get_coordinate_tuple (1);
 
    Tuple tuple_x;
    Tuple tuple_y;
@@ -2813,14 +2807,14 @@ Contour::Contour (const Vector_Data_2D& vector_data_2d,
       }
    }
 
-   init (vector_data_2d, scalarization_2d, vector_element_0,
+   init (data_2d, scalarization_2d, vector_element_0,
       vector_element_1, step, tuple_x, tuple_y,
       epsilon);
 
 }
 
 // 13
-Contour::Contour (const Vector_Data_2D& vector_data_2d,
+Contour::Contour (const Data_2D& data_2d,
                   const Scalarization_2d scalarization_2d,
                   const Integer vector_element_0,
                   const Integer vector_element_1,
@@ -2836,13 +2830,13 @@ Contour::Contour (const Vector_Data_2D& vector_data_2d,
      polygon_ptrs (NULL),
      valid_polygon_ptr (NULL)
 {
-   init (vector_data_2d, scalarization_2d, vector_element_0,
+   init (data_2d, scalarization_2d, vector_element_0,
       vector_element_1, level_tuple, coordinate_tuple_x,
       coordinate_tuple_y, epsilon);
 }
 
 // 14
-Contour::Contour (const Vector_Data_2D& vector_data_2d,
+Contour::Contour (const Data_2D& data_2d,
                   const Scalarization_2d scalarization_2d,
                   const Integer vector_element_0,
                   const Integer vector_element_1,
@@ -2857,7 +2851,7 @@ Contour::Contour (const Vector_Data_2D& vector_data_2d,
      polygon_ptrs (NULL),
      valid_polygon_ptr (NULL)
 {
-   init (vector_data_2d, scalarization_2d, vector_element_0,
+   init (data_2d, scalarization_2d, vector_element_0,
       vector_element_1, step, coordinate_tuple_x,
       coordinate_tuple_y, epsilon);
 }
@@ -2878,7 +2872,7 @@ Contour::Contour (const Scalar_Data_2D& scalar_data_2d,
    const Tuple& tuple_x = scalar_data_2d.get_coordinate_tuple (0);
    const Tuple& tuple_y = scalar_data_2d.get_coordinate_tuple (1);
 
-   init ((const Vector_Field_2D&)scalar_data_2d, 0, level_tuple, tuple_x, tuple_y, epsilon);
+   init ((const Field_2D&)scalar_data_2d, 0, level_tuple, tuple_x, tuple_y, epsilon);
 
 }
 
@@ -3040,7 +3034,7 @@ Contour::Contour (const Scalar_Data_2D& scalar_data_2d,
 }
 
 // 21
-Contour::Contour (const Vector_Field_2D& vector_field_2d,
+Contour::Contour (const Field_2D& field_2d,
                   const Integer vector_element,
                   const Tuple& level_tuple,
                   const Size_2D& size_2d,
@@ -3066,13 +3060,13 @@ Contour::Contour (const Vector_Field_2D& vector_field_2d,
    const Tuple tuple_x = Tuple (size_2d.i, start_x, end_x);
    const Tuple tuple_y = Tuple (size_2d.j, start_y, end_y);
 
-   init (vector_field_2d, vector_element, level_tuple,
+   init (field_2d, vector_element, level_tuple,
       tuple_x, tuple_y, epsilon);
 
 }
 
 // 22
-Contour::Contour (const Vector_Field_2D& vector_field_2d,
+Contour::Contour (const Field_2D& field_2d,
                   const Integer vector_element,
                   const Real step,
                   const Size_2D& size_2d,
@@ -3097,7 +3091,7 @@ Contour::Contour (const Vector_Field_2D& vector_field_2d,
    const Tuple tuple_x = Tuple (size_2d.i, start_x, end_x);
    const Tuple tuple_y = Tuple (size_2d.j, start_y, end_y);
 
-   init (vector_field_2d, vector_element, step, tuple_x, tuple_y, epsilon);
+   init (field_2d, vector_element, step, tuple_x, tuple_y, epsilon);
 
 }
 
@@ -3425,15 +3419,15 @@ Scalar_Raster::Scalar_Raster (const Transform_2D& transform,
 void
 Scalar_Renderer::render (const RefPtr<Context>& cr,
                          const Transform_2D& transform,
-                         const Vector_Data_2D& vector_data_2d,
+                         const Data_2D& data_2d,
                          const Integer vector_element,
                          const Domain_2D& domain,
                          const Color_Chooser& color_chooser)
 {
 
-   const Grid_nD& grid_nd = (const Grid_nD&)vector_data_2d;
-   const Tuple& tuple_x = vector_data_2d.get_coordinate_tuple (0);
-   const Tuple& tuple_y = vector_data_2d.get_coordinate_tuple (1);
+   const Grid_nD& grid_nd = (const Grid_nD&)data_2d;
+   const Tuple& tuple_x = data_2d.get_coordinate_tuple (0);
+   const Tuple& tuple_y = data_2d.get_coordinate_tuple (1);
 
    cr->save ();
    cr->set_antialias (ANTIALIAS_NONE);
@@ -3461,7 +3455,7 @@ Scalar_Renderer::render (const RefPtr<Context>& cr,
          if (j != 0) { yb += tuple_y[j - 1]; yb /= 2; }
          if (j != tuple_y.size () - 1) { ye += tuple_y [j + 1]; ye /= 2; }
 
-         const Real value = vector_data_2d.get_datum (ve, i, j);
+         const Real value = data_2d.get_datum (ve, i, j);
          if (gsl_isnan (value)) { continue; }
 
          const Color color = color_chooser.get_color (value);
@@ -3494,12 +3488,12 @@ Scalar_Renderer::render (const RefPtr<Context>& cr,
 void
 Scalar_Renderer::render (const RefPtr<Context>& cr,
                          const Transform_2D& transform,
-                         const Vector_Data_2D& vector_data_2d,
+                         const Data_2D& data_2d,
                          const Integer vector_element,
                          const Color_Chooser& color_chooser)
 {
-   const Domain_2D& domain = vector_data_2d.get_domain_2d ();
-   render (cr, transform, vector_data_2d, vector_element,
+   const Domain_2D& domain = data_2d.get_domain_2d ();
+   render (cr, transform, data_2d, vector_element,
       domain, color_chooser);
 }
 
@@ -3510,8 +3504,8 @@ Scalar_Renderer::render (const RefPtr<Context>& cr,
                          const Domain_2D& domain,
                          const Color_Chooser& color_chooser)
 {
-   const Vector_Data_2D& vector_data_2d = (const Vector_Data_2D&)scalar_data_2d;
-   render (cr, transform, vector_data_2d, 0, domain, color_chooser);
+   const Data_2D& data_2d = (const Data_2D&)scalar_data_2d;
+   render (cr, transform, data_2d, 0, domain, color_chooser);
 }
 
 void
@@ -3520,7 +3514,7 @@ Scalar_Renderer::render (const RefPtr<Context>& cr,
                          const Scalar_Data_2D& scalar_data_2d,
                          const Color_Chooser& color_chooser)
 {
-   const Vector_Data_2D& vector_data_2d = (const Vector_Data_2D&)scalar_data_2d;
-   render (cr, transform, vector_data_2d, 0, color_chooser);
+   const Data_2D& data_2d = (const Data_2D&)scalar_data_2d;
+   render (cr, transform, data_2d, 0, color_chooser);
 }
 

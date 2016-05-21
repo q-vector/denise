@@ -701,33 +701,33 @@ Chunk::subtract_mean (const size_t address,
 }
 
 void
-Vector_Data_nD::init (const Tuple* coordinate_tuples,
-                      const Real* spacings,
-                      const bool* periodics)
+Data_nD::init (const Tuple* coordinate_tuples,
+               const Real* spacings,
+               const bool* periodics)
 {
    Grid_nD::init (coordinate_tuples, spacings, periodics);
 }
 
-Vector_Data_nD::Vector_Data_nD (const Integer vector_size,
-                                const Integer n)
+Data_nD::Data_nD (const Integer vector_size,
+                  const Integer n)
    : Grid_nD (n),
      vector_size (vector_size)
 {
 }
 
-Vector_Data_nD::Vector_Data_nD (const Vector_Data_nD& vector_data_nd)
-   : Grid_nD (vector_data_nd),
-     Chunk (vector_data_nd),
-     vector_size (vector_data_nd.vector_size)
+Data_nD::Data_nD (const Data_nD& data_nd)
+   : Grid_nD (data_nd),
+     Chunk (data_nd),
+     vector_size (data_nd.vector_size)
 {
 }
 
-Vector_Data_nD::~Vector_Data_nD ()
+Data_nD::~Data_nD ()
 {
 }
 
 Chunk*
-Vector_Data_nD::get_chunk_ptr (const Integer vector_element) const
+Data_nD::get_chunk_ptr (const Integer vector_element) const
 {
 
    const size_t size = Grid_nD::size ();
@@ -741,13 +741,13 @@ Vector_Data_nD::get_chunk_ptr (const Integer vector_element) const
 }
 
 const Integer&
-Vector_Data_nD::get_vector_size () const
+Data_nD::get_vector_size () const
 {
    return vector_size;
 }
 
 void
-Vector_Data_nD::initialize_all (const Real datum)
+Data_nD::initialize_all (const Real datum)
 {
    for (Integer i = 0; i < vector_size; i++)
    {
@@ -756,7 +756,7 @@ Vector_Data_nD::initialize_all (const Real datum)
 }
 
 Real
-Vector_Data_nD::get_epsilon (const Integer vector_element) const
+Data_nD::get_epsilon (const Integer vector_element) const
 {
    const Domain_1D& max_min = get_max_min (vector_element);
    const Real max = max_min.start;
@@ -766,7 +766,7 @@ Vector_Data_nD::get_epsilon (const Integer vector_element) const
 }
 
 void
-Vector_Data_nD::subtract_mean (const Integer vector_element)
+Data_nD::subtract_mean (const Integer vector_element)
 {
    const size_t size = Grid_nD::size ();
    const size_t address = vector_element * size;
@@ -774,9 +774,9 @@ Vector_Data_nD::subtract_mean (const Integer vector_element)
 }
 
 void
-Vector_Data_1D::init (const Tuple& coordinate_tuple,
-                      const Real spacing,
-                      const bool periodic)
+Data_1D::init (const Tuple& coordinate_tuple,
+               const Real spacing,
+               const bool periodic)
 {
 
    Grid_nD::init ();
@@ -788,7 +788,7 @@ Vector_Data_1D::init (const Tuple& coordinate_tuple,
    gia_ptrs = new gsl_interp_accel*[vector_size];
    gs_ptrs = new gsl_spline*[vector_size];
 
-   Vector_Data_nD::init (coordinate_tuples, spacings, periodics);
+   Data_nD::init (coordinate_tuples, spacings, periodics);
    Chunk::init (vector_size * Grid_nD::size ());
 
    for (Integer i = 0; i < vector_size; i++)
@@ -799,8 +799,8 @@ Vector_Data_1D::init (const Tuple& coordinate_tuple,
 
 }
 
-Vector_Data_1D::Vector_Data_1D (const Vector_Data_1D& vector_data_1d)
-   : Vector_Data_nD (vector_data_1d)
+Data_1D::Data_1D (const Data_1D& data_1d)
+   : Data_nD (data_1d)
 {
 
    const Integer& n = Grid_nD::size ();
@@ -810,7 +810,7 @@ Vector_Data_1D::Vector_Data_1D (const Vector_Data_1D& vector_data_1d)
    for (Integer i = 0; i < vector_size; i++)
    {
 
-      const gsl_spline* s = vector_data_1d.gs_ptrs[i];
+      const gsl_spline* s = data_1d.gs_ptrs[i];
       const gsl_interp_type* interp_type = s->interp->type;
 
       //if (n < gsl_interp_min_size (interp_type)) { return; }
@@ -839,11 +839,11 @@ Vector_Data_1D::Vector_Data_1D (const Vector_Data_1D& vector_data_1d)
 
 }
 
-Vector_Data_1D::Vector_Data_1D (const Integer vector_size,
-                                const Integer size_1d,
-                                const Domain_1D& domain_1d,
-                                const bool periodic)
-   : Vector_Data_nD (vector_size, 1)
+Data_1D::Data_1D (const Integer vector_size,
+                  const Integer size_1d,
+                  const Domain_1D& domain_1d,
+                  const bool periodic)
+   : Data_nD (vector_size, 1)
 {
 
    Real spacing = domain_1d.get_span () / (size_1d - 1);
@@ -853,15 +853,15 @@ Vector_Data_1D::Vector_Data_1D (const Integer vector_size,
 
 }
 
-Vector_Data_1D::Vector_Data_1D (const Integer vector_size,
-                                const Tuple coordinate_tuple,
-                                const bool periodic)
-   : Vector_Data_nD (vector_size, 1)
+Data_1D::Data_1D (const Integer vector_size,
+                  const Tuple coordinate_tuple,
+                  const bool periodic)
+   : Data_nD (vector_size, 1)
 {
    init (coordinate_tuple, GSL_NAN, periodic);
 }
 
-Vector_Data_1D::~Vector_Data_1D ()
+Data_1D::~Data_1D ()
 {
 
    for (Integer i = 0; i < vector_size; i++)
@@ -878,15 +878,15 @@ Vector_Data_1D::~Vector_Data_1D ()
 }
 
 void
-Vector_Data_1D::modify_coordinate_tuple (const Integer node,
-                                         const Real coordinate)
+Data_1D::modify_coordinate_tuple (const Integer node,
+                                  const Real coordinate)
 {
    Tuple& tuple = get_coordinate_tuple (0);
    tuple[node] = coordinate;
 }
 
 void
-Vector_Data_1D::set_interpolation (const gsl_interp_type* interp_type)
+Data_1D::set_interpolation (const gsl_interp_type* interp_type)
 {
    for (Integer i = 0; i < vector_size; i++)
    {
@@ -895,8 +895,8 @@ Vector_Data_1D::set_interpolation (const gsl_interp_type* interp_type)
 }
 
 void
-Vector_Data_1D::set_interpolation (const Integer vector_element,
-                                   const gsl_interp_type* interp_type)
+Data_1D::set_interpolation (const Integer vector_element,
+                            const gsl_interp_type* interp_type)
 {
 
 
@@ -927,8 +927,8 @@ Vector_Data_1D::set_interpolation (const Integer vector_element,
 }
 
 void
-Vector_Data_1D::initialize (const Integer vector_element,
-                            const Real datum)
+Data_1D::initialize (const Integer vector_element,
+                     const Real datum)
 {
    const size_t size = Grid_nD::size ();
    const size_t address = vector_element * size;
@@ -936,9 +936,9 @@ Vector_Data_1D::initialize (const Integer vector_element,
 }
 
 void
-Vector_Data_1D::scale_offset (const Integer vector_element,
-                              const Real scale,
-                              const Real offset)
+Data_1D::scale_offset (const Integer vector_element,
+                       const Real scale,
+                       const Real offset)
 {
    const size_t size = Grid_nD::size ();
    const size_t address = vector_element * size;
@@ -946,7 +946,7 @@ Vector_Data_1D::scale_offset (const Integer vector_element,
 }
 
 Domain_1D
-Vector_Data_1D::get_max_min (const Integer vector_element) const
+Data_1D::get_max_min (const Integer vector_element) const
 {
    const size_t size = Grid_nD::size ();
    const size_t address = vector_element * size;
@@ -954,9 +954,9 @@ Vector_Data_1D::get_max_min (const Integer vector_element) const
 }
 
 void
-Vector_Data_1D::set_datum (const Integer vector_element,
-                           const Integer node,
-                           const Real datum)
+Data_1D::set_datum (const Integer vector_element,
+                    const Integer node,
+                    const Real datum)
 {
    const size_t size = Grid_nD::size ();
    const size_t address = vector_element * size + node;
@@ -964,8 +964,8 @@ Vector_Data_1D::set_datum (const Integer vector_element,
 }
 
 const Real&
-Vector_Data_1D::get_datum (const Integer vector_element,
-                           const Integer node) const
+Data_1D::get_datum (const Integer vector_element,
+                    const Integer node) const
 {
    const size_t size = Grid_nD::size ();
    const size_t address = vector_element * size + node;
@@ -973,8 +973,8 @@ Vector_Data_1D::get_datum (const Integer vector_element,
 }
 
 Real&
-Vector_Data_1D::get_datum (const Integer vector_element,
-                           const Integer node)
+Data_1D::get_datum (const Integer vector_element,
+                    const Integer node)
 {
    const size_t size = Grid_nD::size ();
    const size_t address = vector_element * size + node;
@@ -982,9 +982,9 @@ Vector_Data_1D::get_datum (const Integer vector_element,
 }
 
 Real
-Vector_Data_1D::evaluate (const Integer vector_element,
-                          const Real coordinate,
-                          const Evaluate_Op evaluate_op) const
+Data_1D::evaluate (const Integer vector_element,
+                   const Real coordinate,
+                   const Evaluate_Op evaluate_op) const
 {
 
    Real x = coordinate;
@@ -1016,7 +1016,7 @@ Vector_Data_1D::evaluate (const Integer vector_element,
 
       default:
       {
-         const Dstring function_str ("Vector_Data_1D::evaluate (): ");
+         const Dstring function_str ("Data_1D::evaluate (): ");
          const Dstring code_wstr = Dstring::render ("%d %f %d",
             vector_element, coordinate, evaluate_op);
          throw Exception (function_str + code_wstr);
@@ -1105,7 +1105,7 @@ Tricubic_Coefficients::get_array (const Integer node_z,
 }
 
 void
-Vector_Data_2D::init_bicubic_coefficients ()
+Data_2D::init_bicubic_coefficients ()
 {
    bicubic_coefficients_ptrs = new Bicubic_Coefficients*[vector_size];
    for (Integer v = 0; v < vector_size; v++)
@@ -1115,10 +1115,10 @@ Vector_Data_2D::init_bicubic_coefficients ()
 }
 
 Bicubic_Coefficients*
-Vector_Data_2D::get_bicubic_coefficients_ptr (const Chunk& chunk,
-                                              const Chunk& chunk_x,
-                                              const Chunk& chunk_y,
-                                              const Chunk& chunk_xy) const
+Data_2D::get_bicubic_coefficients_ptr (const Chunk& chunk,
+                                       const Chunk& chunk_x,
+                                       const Chunk& chunk_y,
+                                       const Chunk& chunk_xy) const
 {
 
    const Integer size_i = coordinate_tuples[0].size ();
@@ -1204,12 +1204,12 @@ Vector_Data_2D::get_bicubic_coefficients_ptr (const Chunk& chunk,
 }
 
 int
-Vector_Data_2D::gsl_multiroot_f (const gsl_vector* x,
-                                 void* params,
-                                 gsl_vector* f)
+Data_2D::gsl_multiroot_f (const gsl_vector* x,
+                          void* params,
+                          gsl_vector* f)
 {
 
-   const Vector_Data_2D& data_2d = *((const Vector_Data_2D*)params);
+   const Data_2D& data_2d = *((const Data_2D*)params);
 
    const Real xx = gsl_vector_get (x, 0);
    const Real yy = gsl_vector_get (x, 1);
@@ -1224,12 +1224,12 @@ Vector_Data_2D::gsl_multiroot_f (const gsl_vector* x,
 }
 
 int
-Vector_Data_2D::gsl_multiroot_df (const gsl_vector* x,
-                                  void* params,
-                                  gsl_matrix* J)
+Data_2D::gsl_multiroot_df (const gsl_vector* x,
+                           void* params,
+                           gsl_matrix* J)
 {
 
-   const Vector_Data_2D& data_2d = *((const Vector_Data_2D*)params);
+   const Data_2D& data_2d = *((const Data_2D*)params);
 
    const Real xx = gsl_vector_get (x, 0);
    const Real yy = gsl_vector_get (x, 1);
@@ -1245,13 +1245,13 @@ Vector_Data_2D::gsl_multiroot_df (const gsl_vector* x,
 }
 
 int
-Vector_Data_2D::gsl_multiroot_fdf (const gsl_vector* x,
-                                   void* params,
-                                   gsl_vector* f,
-                                   gsl_matrix* J)
+Data_2D::gsl_multiroot_fdf (const gsl_vector* x,
+                            void* params,
+                            gsl_vector* f,
+                            gsl_matrix* J)
 {
 
-   const Vector_Data_2D& data_2d = *((const Vector_Data_2D*)params);
+   const Data_2D& data_2d = *((const Data_2D*)params);
 
    const Real xx = gsl_vector_get (x, 0);
    const Real yy = gsl_vector_get (x, 1);
@@ -1268,13 +1268,12 @@ Vector_Data_2D::gsl_multiroot_fdf (const gsl_vector* x,
 }
 
 void
-Vector_Data_2D::init (const Tuple& coordinate_tuple_x,
-                      const Tuple& coordinate_tuple_y,
-                      const Real spacing_x,
-                      const Real spacing_y,
-                      const bool periodic_x,
-                      const bool periodic_y)
-
+Data_2D::init (const Tuple& coordinate_tuple_x,
+               const Tuple& coordinate_tuple_y,
+               const Real spacing_x,
+               const Real spacing_y,
+               const bool periodic_x,
+               const bool periodic_y)
 {
 
    Grid_nD::init ();
@@ -1286,13 +1285,13 @@ Vector_Data_2D::init (const Tuple& coordinate_tuple_x,
    coordinate_tuples[0] = coordinate_tuple_x;
    coordinate_tuples[1] = coordinate_tuple_y;
 
-   Vector_Data_nD::init (coordinate_tuples, spacings, periodics);
+   Data_nD::init (coordinate_tuples, spacings, periodics);
    Chunk::init (vector_size * Grid_nD::size ());
 
 }
 
 Chunk*
-Vector_Data_2D::get_chunk_x_ptr (const Chunk& chunk)
+Data_2D::get_chunk_x_ptr (const Chunk& chunk)
 {
 
    const Tuple& tuple_x = coordinate_tuples[0];
@@ -1331,7 +1330,7 @@ Vector_Data_2D::get_chunk_x_ptr (const Chunk& chunk)
 }
 
 Chunk*
-Vector_Data_2D::get_chunk_y_ptr (const Chunk& chunk)
+Data_2D::get_chunk_y_ptr (const Chunk& chunk)
 {
 
    const Tuple& tuple_x = coordinate_tuples[0];
@@ -1371,10 +1370,10 @@ Vector_Data_2D::get_chunk_y_ptr (const Chunk& chunk)
 }
 
 Real
-Vector_Data_2D::evaluate_bilinear (const Integer vector_element,
-                                   const Real coordinate_x,
-                                   const Real coordinate_y,
-                                   const Evaluate_Op evaluate_op) const
+Data_2D::evaluate_bilinear (const Integer vector_element,
+                            const Real coordinate_x,
+                            const Real coordinate_y,
+                            const Evaluate_Op evaluate_op) const
 {
 
    if (evaluate_op != VALUE && evaluate_op != DX &&
@@ -1432,10 +1431,10 @@ Vector_Data_2D::evaluate_bilinear (const Integer vector_element,
 }
 
 Real
-Vector_Data_2D::evaluate_bicubic (const Integer vector_element,
-                                  const Real coordinate_x,
-                                  const Real coordinate_y,
-                                  const Evaluate_Op evaluate_op) const
+Data_2D::evaluate_bicubic (const Integer vector_element,
+                           const Real coordinate_x,
+                           const Real coordinate_y,
+                           const Evaluate_Op evaluate_op) const
 { 
 
    const Integer i = get_node (0, coordinate_x);
@@ -1471,12 +1470,12 @@ Vector_Data_2D::evaluate_bicubic (const Integer vector_element,
 }
 
 Real
-Vector_Data_2D::evaluate_bicubic (const Real* a,
-                                  const Real u,
-                                  const Real v,
-                                  const Real dx,
-                                  const Real dy,
-                                  const Evaluate_Op evaluate_op) const
+Data_2D::evaluate_bicubic (const Real* a,
+                           const Real u,
+                           const Real v,
+                           const Real dx,
+                           const Real dy,
+                           const Evaluate_Op evaluate_op) const
 {
 
    switch (evaluate_op)
@@ -1545,11 +1544,11 @@ Vector_Data_2D::evaluate_bicubic (const Real* a,
 }
 
 Real
-Vector_Data_2D::get_dmagnitude_dx (const Integer vector_element_u,
-                                   const Integer vector_element_v,
-                                   const Integer node_x,
-                                   const Integer node_y,
-                                   const Real magnitude) const
+Data_2D::get_dmagnitude_dx (const Integer vector_element_u,
+                            const Integer vector_element_v,
+                            const Integer node_x,
+                            const Integer node_y,
+                            const Real magnitude) const
 {
 
    const Real hx = spacings[0];
@@ -1600,11 +1599,11 @@ Vector_Data_2D::get_dmagnitude_dx (const Integer vector_element_u,
 }
 
 Real
-Vector_Data_2D::get_dmagnitude_dy (const Integer vector_element_u,
-                                   const Integer vector_element_v,
-                                   const Integer node_x,
-                                   const Integer node_y,
-                                   const Real magnitude) const
+Data_2D::get_dmagnitude_dy (const Integer vector_element_u,
+                            const Integer vector_element_v,
+                            const Integer node_x,
+                            const Integer node_y,
+                            const Real magnitude) const
 {
 
    const Real hy = spacings[1];
@@ -1654,11 +1653,11 @@ Vector_Data_2D::get_dmagnitude_dy (const Integer vector_element_u,
 }
 
 Real
-Vector_Data_2D::get_dmagnitude_dx (const Integer vector_element_u,
-                                   const Integer vector_element_v,
-                                   const Real x,
-                                   const Real y,
-                                   const Real magnitude) const
+Data_2D::get_dmagnitude_dx (const Integer vector_element_u,
+                            const Integer vector_element_v,
+                            const Real x,
+                            const Real y,
+                            const Real magnitude) const
 {
    const Real u = evaluate (vector_element_u, x, y);
    const Real v = evaluate (vector_element_v, x, y);
@@ -1668,11 +1667,11 @@ Vector_Data_2D::get_dmagnitude_dx (const Integer vector_element_u,
 }
 
 Real
-Vector_Data_2D::get_dmagnitude_dy (const Integer vector_element_u,
-                                   const Integer vector_element_v,
-                                   const Real x,
-                                   const Real y,
-                                   const Real magnitude) const
+Data_2D::get_dmagnitude_dy (const Integer vector_element_u,
+                            const Integer vector_element_v,
+                            const Real x,
+                            const Real y,
+                            const Real magnitude) const
 {
    const Real u = evaluate (vector_element_u, x, y);
    const Real v = evaluate (vector_element_v, x, y);
@@ -1681,30 +1680,30 @@ Vector_Data_2D::get_dmagnitude_dy (const Integer vector_element_u,
    return 2 * (u + v) + (du_dy + dv_dy);
 }
 
-Vector_Data_2D::Vector_Data_2D (const Vector_Data_2D& vector_data_2d,
-                                const bool copy_data)
-   : Vector_Data_nD (vector_data_2d.get_vector_size (), 2)
+Data_2D::Data_2D (const Data_2D& data_2d,
+                  const bool copy_data)
+   : Data_nD (data_2d.get_vector_size (), 2)
 {
 
    init_bicubic_coefficients ();
 
-   Grid_nD::init (vector_data_2d.coordinate_tuples,
-      vector_data_2d.spacings, vector_data_2d.periodics);
+   Grid_nD::init (data_2d.coordinate_tuples,
+      data_2d.spacings, data_2d.periodics);
 
    if (copy_data)
    {
       size_t buffer_size = sizeof (Real) * vector_size * Grid_nD::size ();
-      memcpy (buffer, vector_data_2d.buffer, buffer_size);
+      memcpy (buffer, data_2d.buffer, buffer_size);
    }
 
 }
 
-Vector_Data_2D::Vector_Data_2D (const Integer vector_size,
-                                const Size_2D& size_2d,
-                                const Domain_2D& domain_2d,
-                                const bool periodic_x,
-                                const bool periodic_y)
-   : Vector_Data_nD (vector_size, 2)
+Data_2D::Data_2D (const Integer vector_size,
+                  const Size_2D& size_2d,
+                  const Domain_2D& domain_2d,
+                  const bool periodic_x,
+                  const bool periodic_y)
+   : Data_nD (vector_size, 2)
 {
 
    init_bicubic_coefficients ();
@@ -1724,19 +1723,19 @@ Vector_Data_2D::Vector_Data_2D (const Integer vector_size,
 
 }
 
-Vector_Data_2D::Vector_Data_2D (const Integer vector_size,
-                                const Tuple coordinate_tuple_x,
-                                const Tuple coordinate_tuple_y,
-                                const bool periodic_x,
-                                const bool periodic_y)
-   : Vector_Data_nD (vector_size, 2)
+Data_2D::Data_2D (const Integer vector_size,
+                  const Tuple coordinate_tuple_x,
+                  const Tuple coordinate_tuple_y,
+                  const bool periodic_x,
+                  const bool periodic_y)
+   : Data_nD (vector_size, 2)
 {
    init_bicubic_coefficients ();
    init (coordinate_tuple_x, coordinate_tuple_y, gsl_nan (),
       gsl_nan (), periodic_x, periodic_y);
 }
 
-Vector_Data_2D::~Vector_Data_2D ()
+Data_2D::~Data_2D ()
 {
 
    for (Integer v = 0; v < vector_size; v++)
@@ -1749,7 +1748,7 @@ Vector_Data_2D::~Vector_Data_2D ()
 }
 
 void
-Vector_Data_2D::set_bicubic_interpolation ()
+Data_2D::set_bicubic_interpolation ()
 {
    for (Integer i = 0; i < vector_size; i++)
    {
@@ -1758,7 +1757,7 @@ Vector_Data_2D::set_bicubic_interpolation ()
 }
 
 void
-Vector_Data_2D::set_bicubic_interpolation (const Integer vector_element)
+Data_2D::set_bicubic_interpolation (const Integer vector_element)
 {
 
    if (bicubic_coefficients_ptrs[vector_element] == NULL)
@@ -1783,29 +1782,29 @@ Vector_Data_2D::set_bicubic_interpolation (const Integer vector_element)
 }
 
 bool
-Vector_Data_2D::out_of_bounds (const Integer node_x,
-                               const Integer node_y) const
+Data_2D::out_of_bounds (const Integer node_x,
+                        const Integer node_y) const
 {
    return Grid_nD::node_out_of_bounds (0, node_x) ||
           Grid_nD::node_out_of_bounds (1, node_y);
 }
 
 bool
-Vector_Data_2D::out_of_bounds (const Real coordinate_x,
-                               const Real coordinate_y) const
+Data_2D::out_of_bounds (const Real coordinate_x,
+                        const Real coordinate_y) const
 {
    return Grid_nD::out_of_bounds (0, coordinate_x) ||
           Grid_nD::out_of_bounds (1, coordinate_y);
 }
 
 Size_2D
-Vector_Data_2D::get_size_2d () const
+Data_2D::get_size_2d () const
 {
    return Size_2D (size_nd.buffer[0], size_nd.buffer[1]);
 }
 
 Domain_2D
-Vector_Data_2D::get_domain_2d () const
+Data_2D::get_domain_2d () const
 {
 
    const Tuple& coordinate_tuple_x = get_coordinate_tuple (0);
@@ -1821,8 +1820,8 @@ Vector_Data_2D::get_domain_2d () const
 }
 
 void
-Vector_Data_2D::initialize (const Integer vector_element,
-                            const Real datum)
+Data_2D::initialize (const Integer vector_element,
+                     const Real datum)
 {
    const size_t size = Grid_nD::size ();
    const size_t address = vector_element * size;
@@ -1830,9 +1829,9 @@ Vector_Data_2D::initialize (const Integer vector_element,
 }
 
 void
-Vector_Data_2D::scale_offset (const Integer vector_element,
-                              const Real scale,
-                              const Real offset)
+Data_2D::scale_offset (const Integer vector_element,
+                       const Real scale,
+                       const Real offset)
 {
    const size_t size = Grid_nD::size ();
    const size_t address = vector_element * size;
@@ -1840,7 +1839,7 @@ Vector_Data_2D::scale_offset (const Integer vector_element,
 }
 
 Domain_1D
-Vector_Data_2D::get_max_min (const Integer vector_element) const
+Data_2D::get_max_min (const Integer vector_element) const
 {
    const size_t size = Grid_nD::size ();
    const size_t address = vector_element * size;
@@ -1848,10 +1847,10 @@ Vector_Data_2D::get_max_min (const Integer vector_element) const
 }
 
 void
-Vector_Data_2D::set_datum (const Integer vector_element,
-                           const Integer node_x,
-                           const Integer node_y,
-                           const Real datum)
+Data_2D::set_datum (const Integer vector_element,
+                    const Integer node_x,
+                    const Integer node_y,
+                    const Real datum)
 {
    const size_t index = node_x * size_nd.buffer[1] + node_y;
    const size_t size = Grid_nD::size ();
@@ -1860,9 +1859,9 @@ Vector_Data_2D::set_datum (const Integer vector_element,
 }
 
 const Real&
-Vector_Data_2D::get_datum (const Integer vector_element,
-                           const Integer node_x,
-                           const Integer node_y) const
+Data_2D::get_datum (const Integer vector_element,
+                    const Integer node_x,
+                    const Integer node_y) const
 {
    const size_t index = node_x * size_nd.buffer[1] + node_y;
    const size_t size = Grid_nD::size ();
@@ -1871,9 +1870,9 @@ Vector_Data_2D::get_datum (const Integer vector_element,
 }
 
 Real&
-Vector_Data_2D::get_datum (const Integer vector_element,
-                           const Integer node_x,
-                           const Integer node_y)
+Data_2D::get_datum (const Integer vector_element,
+                    const Integer node_x,
+                    const Integer node_y)
 {
    const size_t index = node_x * size_nd.buffer[1] + node_y;
    const size_t size = Grid_nD::size ();
@@ -1882,16 +1881,16 @@ Vector_Data_2D::get_datum (const Integer vector_element,
 }
 
 Real
-Vector_Data_2D::evaluate (const Integer vector_element,
-                          const Integer node_x,
-                          const Integer node_y,
-                          const Evaluate_Op evaluate_op) const
+Data_2D::evaluate (const Integer vector_element,
+                   const Integer node_x,
+                   const Integer node_y,
+                   const Evaluate_Op evaluate_op) const
 {
 
    if (out_of_bounds (node_x, node_y))
    {
       return GSL_NAN;
-      //throw Out_Of_Bounds_Exception ("Vector_Data_2D: out_of_bounds Integer");
+      //throw Out_Of_Bounds_Exception ("Data_2D: out_of_bounds Integer");
    }
 
    return evaluate_nocheck (vector_element, node_x, node_y, evaluate_op);
@@ -1899,16 +1898,16 @@ Vector_Data_2D::evaluate (const Integer vector_element,
 }
 
 Real
-Vector_Data_2D::evaluate (const Integer vector_element,
-                          const Real coordinate_x,
-                          const Real coordinate_y,
-                          const Evaluate_Op evaluate_op) const
+Data_2D::evaluate (const Integer vector_element,
+                   const Real coordinate_x,
+                   const Real coordinate_y,
+                   const Evaluate_Op evaluate_op) const
 {
 
    if (out_of_bounds (coordinate_x, coordinate_y))
    {
       return GSL_NAN;
-      //throw Out_Of_Bounds_Exception ("Vector_Data_2D: out_of_bounds Real");
+      //throw Out_Of_Bounds_Exception ("Data_2D: out_of_bounds Real");
    }
 
    return evaluate_nocheck (vector_element,
@@ -1917,17 +1916,17 @@ Vector_Data_2D::evaluate (const Integer vector_element,
 }
 
 Real
-Vector_Data_2D::evaluate_2d (const Integer vector_element_u,
-                             const Integer vector_element_v,
-                             const Integer node_x,
-                             const Integer node_y,
-                             const Evaluate_Op_2D evaluate_op_2d) const
+Data_2D::evaluate_2d (const Integer vector_element_u,
+                      const Integer vector_element_v,
+                      const Integer node_x,
+                      const Integer node_y,
+                      const Evaluate_Op_2D evaluate_op_2d) const
 {
 
    if (out_of_bounds (node_x, node_y))
    {
       return GSL_NAN;
-      //throw Out_Of_Bounds_Exception ("Vector_Data_2D: out_of_bounds Integer");
+      //throw Out_Of_Bounds_Exception ("Data_2D: out_of_bounds Integer");
    }
 
    switch (evaluate_op_2d)
@@ -2004,17 +2003,17 @@ Vector_Data_2D::evaluate_2d (const Integer vector_element_u,
 }
 
 Real
-Vector_Data_2D::evaluate_2d (const Integer vector_element_u,
-                             const Integer vector_element_v,
-                             const Real coordinate_x,
-                             const Real coordinate_y,
-                             const Evaluate_Op_2D evaluate_op_2d) const
+Data_2D::evaluate_2d (const Integer vector_element_u,
+                      const Integer vector_element_v,
+                      const Real coordinate_x,
+                      const Real coordinate_y,
+                      const Evaluate_Op_2D evaluate_op_2d) const
 {
 
    if (out_of_bounds (coordinate_x, coordinate_y))
    {
       return GSL_NAN;
-      //throw Out_Of_Bounds_Exception ("Vector_Data_2D: out_of_bounds Real");
+      //throw Out_Of_Bounds_Exception ("Data_2D: out_of_bounds Real");
    }
 
    const Real& x = coordinate_x;
@@ -2090,10 +2089,10 @@ Vector_Data_2D::evaluate_2d (const Integer vector_element_u,
 }
 
 Real
-Vector_Data_2D::evaluate_nocheck (const Integer vector_element,
-                                  const Integer node_x,
-                                  const Integer node_y,
-                                  const Evaluate_Op evaluate_op) const
+Data_2D::evaluate_nocheck (const Integer vector_element,
+                           const Integer node_x,
+                           const Integer node_y,
+                           const Evaluate_Op evaluate_op) const
 {
 
    Integer i = node_x;
@@ -2338,10 +2337,10 @@ Vector_Data_2D::evaluate_nocheck (const Integer vector_element,
 }
 
 Real
-Vector_Data_2D::evaluate_nocheck (const Integer vector_element,
-                                  const Real coordinate_x,
-                                  const Real coordinate_y,
-                                  const Evaluate_Op evaluate_op) const
+Data_2D::evaluate_nocheck (const Integer vector_element,
+                           const Real coordinate_x,
+                           const Real coordinate_y,
+                           const Evaluate_Op evaluate_op) const
 {
 
    Real x = coordinate_x;
@@ -2362,22 +2361,22 @@ Vector_Data_2D::evaluate_nocheck (const Integer vector_element,
 }
 
 Real
-Vector_Data_2D::evaluate_nocheck (const Integer vector_element,
-                                  const Point_2D& point_2d,
-                                  const Evaluate_Op evaluate_op) const
+Data_2D::evaluate_nocheck (const Integer vector_element,
+                           const Point_2D& point_2d,
+                           const Evaluate_Op evaluate_op) const
 {
    return evaluate_nocheck (vector_element,
       point_2d.x, point_2d.y, evaluate_op);
 }
 
 void
-Vector_Data_2D::acquire_root (Real& root_coordinate_x,
-                              Real& root_coordinate_y,
-                              const Real residual) const
+Data_2D::acquire_root (Real& root_coordinate_x,
+                       Real& root_coordinate_y,
+                       const Real residual) const
 {
 
    gsl_multiroot_function f =
-      { &Vector_Data_2D::gsl_multiroot_f, 2, (void*)this };
+      { &Data_2D::gsl_multiroot_f, 2, (void*)this };
 
    gsl_vector* x = gsl_vector_alloc (2);
    gsl_vector_set (x, 0, root_coordinate_x);
@@ -2408,9 +2407,9 @@ Vector_Data_2D::acquire_root (Real& root_coordinate_x,
 }
 
 Jacobian_2D
-Vector_Data_2D::get_jacobian (const Integer u_index,
-                              const Integer v_index,
-                              const Point_2D& point_2d) const
+Data_2D::get_jacobian (const Integer u_index,
+                       const Integer v_index,
+                       const Point_2D& point_2d) const
 {
    const Real u_x = evaluate (u_index, point_2d.x, point_2d.y, DX);
    const Real u_y = evaluate (u_index, point_2d.x, point_2d.y, DY);
@@ -2420,9 +2419,9 @@ Vector_Data_2D::get_jacobian (const Integer u_index,
 }
 
 Jacobian_2D
-Vector_Data_2D::get_jacobian_nocheck (const Integer u_index,
-                                      const Integer v_index,
-                                      const Point_2D& point_2d) const
+Data_2D::get_jacobian_nocheck (const Integer u_index,
+                               const Integer v_index,
+                               const Point_2D& point_2d) const
 {
    const Real u_x = evaluate_nocheck (u_index, point_2d.x, point_2d.y, DX);
    const Real u_y = evaluate_nocheck (u_index, point_2d.x, point_2d.y, DY);
@@ -2432,7 +2431,7 @@ Vector_Data_2D::get_jacobian_nocheck (const Integer u_index,
 }
 
 void
-Vector_Data_2D::subtract_x_mean (const Integer vector_element)
+Data_2D::subtract_x_mean (const Integer vector_element)
 {
 
    const Size_2D& size_2d = get_size_2d ();
@@ -2464,7 +2463,7 @@ Vector_Data_2D::subtract_x_mean (const Integer vector_element)
 }
 
 void
-Vector_Data_2D::subtract_y_mean (const Integer vector_element)
+Data_2D::subtract_y_mean (const Integer vector_element)
 {
 
    const Size_2D& size_2d = get_size_2d ();
@@ -2496,14 +2495,14 @@ Vector_Data_2D::subtract_y_mean (const Integer vector_element)
 }
 
 Tricubic_Coefficients*
-Vector_Data_3D::get_tricubic_coefficients_ptr (const Chunk& chunk,
-                                               const Chunk& chunk_y,
-                                               const Chunk& chunk_x,
-                                               const Chunk& chunk_xy,
-                                               const Chunk& chunk_z,
-                                               const Chunk& chunk_zy,
-                                               const Chunk& chunk_zx,
-                                               const Chunk& chunk_zxy) const
+Data_3D::get_tricubic_coefficients_ptr (const Chunk& chunk,
+                                        const Chunk& chunk_y,
+                                        const Chunk& chunk_x,
+                                        const Chunk& chunk_xy,
+                                        const Chunk& chunk_z,
+                                        const Chunk& chunk_zy,
+                                        const Chunk& chunk_zx,
+                                        const Chunk& chunk_zxy) const
 {
 
    Real f, fy, fx, fxy, fz, fzy, fzx, fzxy;
@@ -2706,25 +2705,25 @@ Vector_Data_3D::get_tricubic_coefficients_ptr (const Chunk& chunk,
 }
 
 Integer
-Vector_Data_3D::get_offset (const Integer vector_element,
-                            const Integer node_z,
-                            const Integer node_x,
-                            const Integer node_y) const
+Data_3D::get_offset (const Integer vector_element,
+                     const Integer node_z,
+                     const Integer node_x,
+                     const Integer node_y) const
 {
    return ((vector_element * size_nd.buffer[0] + node_z) *
       size_nd.buffer[1] + node_x) * size_nd.buffer[2] + node_y;
 }
 
 void
-Vector_Data_3D::init (const Tuple& coordinate_tuple_z,
-                      const Tuple& coordinate_tuple_x,
-                      const Tuple& coordinate_tuple_y,
-                      const Real spacing_z,
-                      const Real spacing_x,
-                      const Real spacing_y,
-                      const bool periodic_z,
-                      const bool periodic_x,
-                      const bool periodic_y)
+Data_3D::init (const Tuple& coordinate_tuple_z,
+               const Tuple& coordinate_tuple_x,
+               const Tuple& coordinate_tuple_y,
+               const Real spacing_z,
+               const Real spacing_x,
+               const Real spacing_y,
+               const bool periodic_z,
+               const bool periodic_x,
+               const bool periodic_y)
 {
 
    Grid_nD::init ();
@@ -2739,13 +2738,13 @@ Vector_Data_3D::init (const Tuple& coordinate_tuple_z,
    coordinate_tuples[1] = coordinate_tuple_x;
    coordinate_tuples[2] = coordinate_tuple_y;
 
-   Vector_Data_nD::init (coordinate_tuples, spacings, periodics);
+   Data_nD::init (coordinate_tuples, spacings, periodics);
    Chunk::init (vector_size * Grid_nD::size ());
 
 }
 
 Chunk*
-Vector_Data_3D::get_chunk_z_ptr (const Chunk& chunk)
+Data_3D::get_chunk_z_ptr (const Chunk& chunk)
 {
 
    const Tuple& tuple_z = coordinate_tuples[0];
@@ -2791,7 +2790,7 @@ Vector_Data_3D::get_chunk_z_ptr (const Chunk& chunk)
 }
 
 Chunk*
-Vector_Data_3D::get_chunk_x_ptr (const Chunk& chunk)
+Data_3D::get_chunk_x_ptr (const Chunk& chunk)
 {
 
    const Tuple& tuple_z = coordinate_tuples[0];
@@ -2837,7 +2836,7 @@ Vector_Data_3D::get_chunk_x_ptr (const Chunk& chunk)
 }
 
 Chunk*
-Vector_Data_3D::get_chunk_y_ptr (const Chunk& chunk)
+Data_3D::get_chunk_y_ptr (const Chunk& chunk)
 {
 
    const Tuple& tuple_z = coordinate_tuples[0];
@@ -2883,10 +2882,10 @@ Vector_Data_3D::get_chunk_y_ptr (const Chunk& chunk)
 }
 
 Real
-Vector_Data_3D::evaluate_linear_z (const Integer vector_element,
-                                   const Real coordinate_z,
-                                   const Integer node_x,
-                                   const Integer node_y) const
+Data_3D::evaluate_linear_z (const Integer vector_element,
+                            const Real coordinate_z,
+                            const Integer node_x,
+                            const Integer node_y) const
 {
 
    const Integer ak = get_node (0, coordinate_z);
@@ -2903,11 +2902,11 @@ Vector_Data_3D::evaluate_linear_z (const Integer vector_element,
 }
 
 Real
-Vector_Data_3D::evaluate_bilinear (const Integer vector_element,
-                                   const Integer node_z,
-                                   const Real coordinate_x,
-                                   const Real coordinate_y,
-                                   const Evaluate_Op evaluate_op) const
+Data_3D::evaluate_bilinear (const Integer vector_element,
+                            const Integer node_z,
+                            const Real coordinate_x,
+                            const Real coordinate_y,
+                            const Evaluate_Op evaluate_op) const
 {
 
    if (evaluate_op != VALUE && evaluate_op != DZ && evaluate_op != DX &&
@@ -3001,11 +3000,11 @@ Vector_Data_3D::evaluate_bilinear (const Integer vector_element,
 }
 
 Real
-Vector_Data_3D::evaluate_trilinear (const Integer vector_element,
-                                    const Real coordinate_z,
-                                    const Real coordinate_x,
-                                    const Real coordinate_y,
-                                    const Evaluate_Op evaluate_op) const
+Data_3D::evaluate_trilinear (const Integer vector_element,
+                             const Real coordinate_z,
+                             const Real coordinate_x,
+                             const Real coordinate_y,
+                             const Evaluate_Op evaluate_op) const
 {
 
    if (evaluate_op != VALUE && evaluate_op != DZ && evaluate_op != DX &&
@@ -3144,11 +3143,11 @@ Vector_Data_3D::evaluate_trilinear (const Integer vector_element,
 }
 
 Real
-Vector_Data_3D::evaluate_tricubic (const Integer vector_element,
-                                   const Real coordinate_z,
-                                   const Real coordinate_x,
-                                   const Real coordinate_y,
-                                   const Evaluate_Op evaluate_op) const
+Data_3D::evaluate_tricubic (const Integer vector_element,
+                            const Real coordinate_z,
+                            const Real coordinate_x,
+                            const Real coordinate_y,
+                            const Evaluate_Op evaluate_op) const
 { 
 
    const Integer k = get_node (0, coordinate_z);
@@ -3188,14 +3187,14 @@ Vector_Data_3D::evaluate_tricubic (const Integer vector_element,
 }
 
 Real
-Vector_Data_3D::evaluate_tricubic (const Real* a,
-                                   const Real w,
-                                   const Real u,
-                                   const Real v,
-                                   const Real dz,
-                                   const Real dx,
-                                   const Real dy,
-                                   const Evaluate_Op evaluate_op) const
+Data_3D::evaluate_tricubic (const Real* a,
+                            const Real w,
+                            const Real u,
+                            const Real v,
+                            const Real dz,
+                            const Real dx,
+                            const Real dy,
+                            const Evaluate_Op evaluate_op) const
 {
 
 // all wrong
@@ -3308,13 +3307,13 @@ Vector_Data_3D::evaluate_tricubic (const Real* a,
 
 
 
-Vector_Data_3D::Vector_Data_3D (const Integer vector_size,
-                                const Size_3D& size_3d,
-                                const Domain_3D& domain_3d,
-                                const bool periodic_z,
-                                const bool periodic_x,
-                                const bool periodic_y)
-              : Vector_Data_nD (vector_size, 3)
+Data_3D::Data_3D (const Integer vector_size,
+                  const Size_3D& size_3d,
+                  const Domain_3D& domain_3d,
+                  const bool periodic_z,
+                  const bool periodic_x,
+                  const bool periodic_y)
+   : Data_nD (vector_size, 3)
 {
 
    const Real& start_z = domain_3d.domain_z.start;
@@ -3342,14 +3341,14 @@ Vector_Data_3D::Vector_Data_3D (const Integer vector_size,
 
 }
 
-Vector_Data_3D::Vector_Data_3D (const Integer vector_size,
-                                const Tuple coordinate_tuple_z,
-                                const Tuple coordinate_tuple_x,
-                                const Tuple coordinate_tuple_y,
-                                const bool periodic_z,
-                                const bool periodic_x,
+Data_3D::Data_3D (const Integer vector_size,
+                  const Tuple coordinate_tuple_z,
+                  const Tuple coordinate_tuple_x,
+                  const Tuple coordinate_tuple_y,
+                  const bool periodic_z,
+                  const bool periodic_x,
                                 const bool periodic_y)
-              : Vector_Data_nD (vector_size, 3)
+   : Data_nD (vector_size, 3)
 {
 
    tricubic_coefficients_ptrs = new Tricubic_Coefficients*[vector_size];
@@ -3365,14 +3364,14 @@ Vector_Data_3D::Vector_Data_3D (const Integer vector_size,
 
 }
 
-Vector_Data_3D::Vector_Data_3D (const Integer vector_size,
-                                const Tuple coordinate_tuple_z,
-                                const Size_2D& size_2d,
-                                const Domain_2D& domain_2d,
-                                const bool periodic_z,
-                                const bool periodic_x,
-                                const bool periodic_y)
-              : Vector_Data_nD (vector_size, 3)
+Data_3D::Data_3D (const Integer vector_size,
+                         const Tuple coordinate_tuple_z,
+                         const Size_2D& size_2d,
+                         const Domain_2D& domain_2d,
+                         const bool periodic_z,
+                         const bool periodic_x,
+                         const bool periodic_y)
+   : Data_nD (vector_size, 3)
 {
 
    const Real& start_x = domain_2d.domain_x.start;
@@ -3398,7 +3397,7 @@ Vector_Data_3D::Vector_Data_3D (const Integer vector_size,
 
 }
 
-Vector_Data_3D::~Vector_Data_3D ()
+Data_3D::~Data_3D ()
 {
 
    for (Integer v = 0; v < vector_size; v++)
@@ -3411,7 +3410,7 @@ Vector_Data_3D::~Vector_Data_3D ()
 }
 
 void
-Vector_Data_3D::set_tricubic_interpolation ()
+Data_3D::set_tricubic_interpolation ()
 {
    for (Integer i = 0; i < vector_size; i++)
    {
@@ -3420,7 +3419,7 @@ Vector_Data_3D::set_tricubic_interpolation ()
 }
 
 void
-Vector_Data_3D::set_tricubic_interpolation (const Integer vector_element)
+Data_3D::set_tricubic_interpolation (const Integer vector_element)
 {
 
    if (tricubic_coefficients_ptrs[vector_element] == NULL)
@@ -3453,9 +3452,9 @@ Vector_Data_3D::set_tricubic_interpolation (const Integer vector_element)
 }
 
 bool
-Vector_Data_3D::out_of_bounds (const Integer node_z,
-                               const Integer node_x,
-                               const Integer node_y) const
+Data_3D::out_of_bounds (const Integer node_z,
+                        const Integer node_x,
+                        const Integer node_y) const
 {
    return Grid_nD::node_out_of_bounds (0, node_z) ||
           Grid_nD::node_out_of_bounds (1, node_x) ||
@@ -3463,9 +3462,9 @@ Vector_Data_3D::out_of_bounds (const Integer node_z,
 }
 
 bool
-Vector_Data_3D::out_of_bounds (const Integer node_z,
-                               const Real coordinate_x,
-                               const Real coordinate_y) const
+Data_3D::out_of_bounds (const Integer node_z,
+                        const Real coordinate_x,
+                        const Real coordinate_y) const
 {
    return Grid_nD::node_out_of_bounds (0, node_z) ||
           Grid_nD::out_of_bounds (1, coordinate_x) ||
@@ -3473,9 +3472,9 @@ Vector_Data_3D::out_of_bounds (const Integer node_z,
 }
 
 bool
-Vector_Data_3D::out_of_bounds (const Real coordinate_z,
-                               const Integer node_x,
-                               const Integer node_y) const
+Data_3D::out_of_bounds (const Real coordinate_z,
+                        const Integer node_x,
+                        const Integer node_y) const
 {
    return Grid_nD::out_of_bounds (0, coordinate_z) ||
           Grid_nD::node_out_of_bounds (1, node_x) ||
@@ -3483,9 +3482,9 @@ Vector_Data_3D::out_of_bounds (const Real coordinate_z,
 }
 
 bool
-Vector_Data_3D::out_of_bounds (const Real coordinate_z,
-                               const Real coordinate_x,
-                               const Real coordinate_y) const
+Data_3D::out_of_bounds (const Real coordinate_z,
+                        const Real coordinate_x,
+                        const Real coordinate_y) const
 {
    return Grid_nD::out_of_bounds (0, coordinate_z) ||
           Grid_nD::out_of_bounds (1, coordinate_x) ||
@@ -3493,13 +3492,13 @@ Vector_Data_3D::out_of_bounds (const Real coordinate_z,
 }
 
 Size_2D
-Vector_Data_3D::get_size_2d () const
+Data_3D::get_size_2d () const
 {
    return Size_2D (size_nd.buffer[1], size_nd.buffer[2]);
 }
 
 Domain_2D
-Vector_Data_3D::get_domain_2d () const
+Data_3D::get_domain_2d () const
 {
 
    const Tuple& coordinate_tuple_x = get_coordinate_tuple (1);
@@ -3515,14 +3514,14 @@ Vector_Data_3D::get_domain_2d () const
 }
 
 Size_3D
-Vector_Data_3D::get_size_3d () const
+Data_3D::get_size_3d () const
 {
    return Size_3D (size_nd.buffer[0], size_nd.buffer[1], size_nd.buffer[2]);
 }
 
 void
-Vector_Data_3D::initialize (const Integer vector_element,
-                            const Real datum)
+Data_3D::initialize (const Integer vector_element,
+                     const Real datum)
 {
    const size_t size = Grid_nD::size ();
    const size_t address = vector_element * size;
@@ -3530,9 +3529,9 @@ Vector_Data_3D::initialize (const Integer vector_element,
 }
 
 void
-Vector_Data_3D::scale_offset (const Integer vector_element,
-                              const Real scale,
-                              const Real offset)
+Data_3D::scale_offset (const Integer vector_element,
+                       const Real scale,
+                       const Real offset)
 {
    const size_t size = Grid_nD::size ();
    const size_t address = vector_element * size;
@@ -3541,7 +3540,7 @@ Vector_Data_3D::scale_offset (const Integer vector_element,
 
 
 Domain_1D
-Vector_Data_3D::get_max_min (const Integer vector_element) const
+Data_3D::get_max_min (const Integer vector_element) const
 {
    const size_t size = Grid_nD::size ();
    const size_t address = vector_element * size;
@@ -3549,11 +3548,11 @@ Vector_Data_3D::get_max_min (const Integer vector_element) const
 }
 
 void
-Vector_Data_3D::set_datum (const Integer vector_element,
-                           const Integer k,
-                           const Integer i,
-                           const Integer j,
-                           const Real datum)
+Data_3D::set_datum (const Integer vector_element,
+                    const Integer k,
+                    const Integer i,
+                    const Integer j,
+                    const Real datum)
 {
    const size_t ni = size_nd.buffer[1];
    const size_t nj = size_nd.buffer[2];
@@ -3564,10 +3563,10 @@ Vector_Data_3D::set_datum (const Integer vector_element,
 }
 
 const Real&
-Vector_Data_3D::get_datum (const Integer vector_element,
-                           const Integer k,
-                           const Integer i,
-                           const Integer j) const
+Data_3D::get_datum (const Integer vector_element,
+                    const Integer k,
+                    const Integer i,
+                    const Integer j) const
 {
    const size_t ni = size_nd.buffer[1];
    const size_t nj = size_nd.buffer[2];
@@ -3578,10 +3577,10 @@ Vector_Data_3D::get_datum (const Integer vector_element,
 }
 
 Real&
-Vector_Data_3D::get_datum (const Integer vector_element,
-                           const Integer k,
-                           const Integer i,
-                           const Integer j)
+Data_3D::get_datum (const Integer vector_element,
+                    const Integer k,
+                    const Integer i,
+                    const Integer j)
 {
    const size_t ni = size_nd.buffer[1];
    const size_t nj = size_nd.buffer[2];
@@ -3592,17 +3591,17 @@ Vector_Data_3D::get_datum (const Integer vector_element,
 }
 
 Real
-Vector_Data_3D::evaluate (const Integer vector_element,
-                          const Integer k,
-                          const Integer i,
-                          const Integer j,
-                          const Evaluate_Op evaluate_op) const
+Data_3D::evaluate (const Integer vector_element,
+                   const Integer k,
+                   const Integer i,
+                   const Integer j,
+                   const Evaluate_Op evaluate_op) const
 {
 
    if (out_of_bounds (k, i, j))
    {
       return GSL_NAN;
-      //throw Out_Of_Bounds_Exception ("Vector_Data_3D: out_of_bounds");
+      //throw Out_Of_Bounds_Exception ("Data_3D: out_of_bounds");
    }
 
    return evaluate_nocheck (vector_element, k, i, j, evaluate_op);
@@ -3610,17 +3609,17 @@ Vector_Data_3D::evaluate (const Integer vector_element,
 }
 
 Real
-Vector_Data_3D::evaluate (const Integer vector_element,
-                          const Integer k,
-                          const Real x,
-                          const Real y,
-                          const Evaluate_Op evaluate_op) const
+Data_3D::evaluate (const Integer vector_element,
+                   const Integer k,
+                   const Real x,
+                   const Real y,
+                   const Evaluate_Op evaluate_op) const
 {
 
    if (out_of_bounds (k, x, y))
    {
       return GSL_NAN;
-      //throw Out_Of_Bounds_Exception ("Vector_Data_3D: out_of_bounds");
+      //throw Out_Of_Bounds_Exception ("Data_3D: out_of_bounds");
    }
 
    return evaluate_nocheck (vector_element, k, x, y, evaluate_op);
@@ -3628,17 +3627,17 @@ Vector_Data_3D::evaluate (const Integer vector_element,
 }
 
 Real
-Vector_Data_3D::evaluate (const Integer vector_element,
-                          const Real z,
-                          const Integer i,
-                          const Integer j,
-                          const Evaluate_Op evaluate_op) const
+Data_3D::evaluate (const Integer vector_element,
+                   const Real z,
+                   const Integer i,
+                   const Integer j,
+                   const Evaluate_Op evaluate_op) const
 {
 
    if (out_of_bounds (z, i, j))
    {
       return GSL_NAN;
-      //throw Out_Of_Bounds_Exception ("Vector_Data_3D: out_of_bounds");
+      //throw Out_Of_Bounds_Exception ("Data_3D: out_of_bounds");
    }
 
    return evaluate_nocheck (vector_element, z, i, j, evaluate_op);
@@ -3646,17 +3645,17 @@ Vector_Data_3D::evaluate (const Integer vector_element,
 }
 
 Real
-Vector_Data_3D::evaluate (const Integer vector_element,
-                          const Real z,
-                          const Real x,
-                          const Real y,
-                          const Evaluate_Op evaluate_op) const
+Data_3D::evaluate (const Integer vector_element,
+                   const Real z,
+                   const Real x,
+                   const Real y,
+                   const Evaluate_Op evaluate_op) const
 {
 
    if (out_of_bounds (z, x, y))
    {
       return GSL_NAN;
-      //throw Out_Of_Bounds_Exception ("Vector_Data_3D: out_of_bounds");
+      //throw Out_Of_Bounds_Exception ("Data_3D: out_of_bounds");
    }
 
    return evaluate_nocheck (vector_element, z, x, y, evaluate_op);
@@ -3664,18 +3663,18 @@ Vector_Data_3D::evaluate (const Integer vector_element,
 }
 
 Real
-Vector_Data_3D::evaluate_uv (const Integer vector_element_u,
-                             const Integer vector_element_v,
-                             const Integer k,
-                             const Integer i,
-                             const Integer j,
-                             const Evaluate_Op_2D evaluate_op_2d) const
+Data_3D::evaluate_uv (const Integer vector_element_u,
+                      const Integer vector_element_v,
+                      const Integer k,
+                      const Integer i,
+                      const Integer j,
+                      const Evaluate_Op_2D evaluate_op_2d) const
 {
 
    if (out_of_bounds (k, i, j))
    {
       return GSL_NAN;
-      //throw Out_Of_Bounds_Exception ("Vector_Data_3D: out_of_bounds");
+      //throw Out_Of_Bounds_Exception ("Data_3D: out_of_bounds");
    }
 
    switch (evaluate_op_2d)
@@ -3712,18 +3711,18 @@ Vector_Data_3D::evaluate_uv (const Integer vector_element_u,
 }
 
 Real
-Vector_Data_3D::evaluate_uv (const Integer vector_element_u,
-                             const Integer vector_element_v,
-                             const Integer k,
-                             const Real x,
-                             const Real y,
-                             const Evaluate_Op_2D evaluate_op_2d) const
+Data_3D::evaluate_uv (const Integer vector_element_u,
+                      const Integer vector_element_v,
+                      const Integer k,
+                      const Real x,
+                      const Real y,
+                      const Evaluate_Op_2D evaluate_op_2d) const
 {
 
    if (out_of_bounds (k, x, y))
    {
       return GSL_NAN;
-      //throw Out_Of_Bounds_Exception ("Vector_Data_3D: out_of_bounds");
+      //throw Out_Of_Bounds_Exception ("Data_3D: out_of_bounds");
    }
 
    switch (evaluate_op_2d)
@@ -3760,18 +3759,18 @@ Vector_Data_3D::evaluate_uv (const Integer vector_element_u,
 }
 
 Real
-Vector_Data_3D::evaluate_uv (const Integer vector_element_u,
-                             const Integer vector_element_v,
-                             const Real z,
-                             const Integer i,
-                             const Integer j,
-                             const Evaluate_Op_2D evaluate_op_2d) const
+Data_3D::evaluate_uv (const Integer vector_element_u,
+                      const Integer vector_element_v,
+                      const Real z,
+                      const Integer i,
+                      const Integer j,
+                      const Evaluate_Op_2D evaluate_op_2d) const
 {
 
    if (out_of_bounds (z, i, j))
    {
       return GSL_NAN;
-      //throw Out_Of_Bounds_Exception ("Vector_Data_3D: out_of_bounds");
+      //throw Out_Of_Bounds_Exception ("Data_3D: out_of_bounds");
    }
 
    switch (evaluate_op_2d)
@@ -3808,18 +3807,18 @@ Vector_Data_3D::evaluate_uv (const Integer vector_element_u,
 }
 
 Real
-Vector_Data_3D::evaluate_uv (const Integer vector_element_u,
-                             const Integer vector_element_v,
-                             const Real z, 
-                             const Real x, 
-                             const Real y,
-                             const Evaluate_Op_2D evaluate_op_2d) const
+Data_3D::evaluate_uv (const Integer vector_element_u,
+                      const Integer vector_element_v,
+                      const Real z, 
+                      const Real x, 
+                      const Real y,
+                      const Evaluate_Op_2D evaluate_op_2d) const
 {
 
    if (out_of_bounds (z, x, y))
    {
       return GSL_NAN;
-      //throw Out_Of_Bounds_Exception ("Vector_Data_3D: out_of_bounds");
+      //throw Out_Of_Bounds_Exception ("Data_3D: out_of_bounds");
    }
 
    switch (evaluate_op_2d)
@@ -3856,11 +3855,11 @@ Vector_Data_3D::evaluate_uv (const Integer vector_element_u,
 }
 
 Real
-Vector_Data_3D::evaluate_nocheck (const Integer vector_element,
-                                  const Integer kk,
-                                  const Integer ii,
-                                  const Integer jj,
-                                  const Evaluate_Op evaluate_op) const
+Data_3D::evaluate_nocheck (const Integer vector_element,
+                           const Integer kk,
+                           const Integer ii,
+                           const Integer jj,
+                           const Evaluate_Op evaluate_op) const
 {
 
    Integer k = kk;
@@ -4228,11 +4227,11 @@ Vector_Data_3D::evaluate_nocheck (const Integer vector_element,
 }
 
 Real
-Vector_Data_3D::evaluate_nocheck (const Integer vector_element,
-                                  const Integer k,
-                                  const Real xx,
-                                  const Real yy,
-                                  const Evaluate_Op evaluate_op) const
+Data_3D::evaluate_nocheck (const Integer vector_element,
+                           const Integer k,
+                           const Real xx,
+                           const Real yy,
+                           const Evaluate_Op evaluate_op) const
 {
 
    Real x = xx;
@@ -4246,11 +4245,11 @@ Vector_Data_3D::evaluate_nocheck (const Integer vector_element,
 }
 
 Real
-Vector_Data_3D::evaluate_nocheck (const Integer vector_element,
-                                  const Real zz,
-                                  const Integer ii,
-                                  const Integer jj,
-                                  const Evaluate_Op evaluate_op) const
+Data_3D::evaluate_nocheck (const Integer vector_element,
+                           const Real zz,
+                           const Integer ii,
+                           const Integer jj,
+                           const Evaluate_Op evaluate_op) const
 {
 
    Real z = zz;
@@ -4445,11 +4444,11 @@ Vector_Data_3D::evaluate_nocheck (const Integer vector_element,
 }
 
 Real
-Vector_Data_3D::evaluate_nocheck (const Integer vector_element,
-                                  const Real zz,
-                                  const Real xx,
-                                  const Real yy,
-                                  const Evaluate_Op evaluate_op) const
+Data_3D::evaluate_nocheck (const Integer vector_element,
+                           const Real zz,
+                           const Real xx,
+                           const Real yy,
+                           const Evaluate_Op evaluate_op) const
 {
 
    Real z = zz;
@@ -4472,7 +4471,7 @@ Vector_Data_3D::evaluate_nocheck (const Integer vector_element,
 }
 
 void
-Vector_Data_3D::subtract_z_mean (const Integer vector_element)
+Data_3D::subtract_z_mean (const Integer vector_element)
 {
 
    const Size_3D& size_3d = get_size_3d ();
@@ -4508,7 +4507,7 @@ Vector_Data_3D::subtract_z_mean (const Integer vector_element)
 }
 
 void
-Vector_Data_3D::subtract_x_mean (const Integer vector_element)
+Data_3D::subtract_x_mean (const Integer vector_element)
 {
 
    const Size_3D& size_3d = get_size_3d ();
@@ -4544,7 +4543,7 @@ Vector_Data_3D::subtract_x_mean (const Integer vector_element)
 }
 
 void
-Vector_Data_3D::subtract_y_mean (const Integer vector_element)
+Data_3D::subtract_y_mean (const Integer vector_element)
 {
 
    const Size_3D& size_3d = get_size_3d ();
@@ -4580,7 +4579,7 @@ Vector_Data_3D::subtract_y_mean (const Integer vector_element)
 }
 
 void
-Vector_Data_3D::subtract_zx_mean (const Integer vector_element)
+Data_3D::subtract_zx_mean (const Integer vector_element)
 {
 
    const Size_3D& size_3d = get_size_3d ();
@@ -4618,7 +4617,7 @@ Vector_Data_3D::subtract_zx_mean (const Integer vector_element)
 }
 
 void
-Vector_Data_3D::subtract_zy_mean (const Integer vector_element)
+Data_3D::subtract_zy_mean (const Integer vector_element)
 {
 
    const Size_3D& size_3d = get_size_3d ();
@@ -4656,7 +4655,7 @@ Vector_Data_3D::subtract_zy_mean (const Integer vector_element)
 }
 
 void
-Vector_Data_3D::subtract_xy_mean (const Integer vector_element)
+Data_3D::subtract_xy_mean (const Integer vector_element)
 {
 
    const Size_3D& size_3d = get_size_3d ();
@@ -4696,13 +4695,13 @@ Vector_Data_3D::subtract_xy_mean (const Integer vector_element)
 Scalar_Data_1D::Scalar_Data_1D (const Integer size_1d,
                                 const Domain_1D& domain_1d,
                                 const bool periodic)
-   : Vector_Data_1D (1, size_1d, domain_1d)
+   : Data_1D (1, size_1d, domain_1d)
 {
 }
 
 Scalar_Data_1D::Scalar_Data_1D (const Tuple coordinate_tuple,
                                 const bool periodic)
-   : Vector_Data_1D (1, coordinate_tuple, periodic)
+   : Data_1D (1, coordinate_tuple, periodic)
 {
 }
 
@@ -4710,33 +4709,33 @@ void
 Scalar_Data_1D::set_datum (const Integer node,
                            const Real datum)
 {
-   Vector_Data_1D::set_datum (0, node, datum);
+   Data_1D::set_datum (0, node, datum);
 }
 
 const Real&
 Scalar_Data_1D::get_datum (const Integer node) const
 {
-   return Vector_Data_1D::get_datum (0, node);
+   return Data_1D::get_datum (0, node);
 }
 
 Real&
 Scalar_Data_1D::get_datum (const Integer node)
 {
-   return Vector_Data_1D::get_datum (0, node);
+   return Data_1D::get_datum (0, node);
 }
 
 Real
 Scalar_Data_1D::evaluate (const Real coordinate,
                           const Evaluate_Op evaluate_op) const
 {
-   return Vector_Data_1D::evaluate (0, coordinate, evaluate_op);
+   return Data_1D::evaluate (0, coordinate, evaluate_op);
 }
 
 Scalar_Data_2D::Scalar_Data_2D (const Size_2D& size_2d,
                                 const Domain_2D& domain_2d,
                                 const bool periodic_x,
                                 const bool periodic_y)
-   : Vector_Data_2D (1, size_2d, domain_2d, periodic_x, periodic_y)
+   : Data_2D (1, size_2d, domain_2d, periodic_x, periodic_y)
 {
 }
 
@@ -4744,26 +4743,25 @@ Scalar_Data_2D::Scalar_Data_2D (const Tuple coordinate_tuple_x,
                                 const Tuple coordinate_tuple_y,
                                 const bool periodic_x,
                                 const bool periodic_y)
-   : Vector_Data_2D (1, coordinate_tuple_x, coordinate_tuple_y,
-                     periodic_x, periodic_y)
+   : Data_2D (1, coordinate_tuple_x, coordinate_tuple_y, periodic_x, periodic_y)
 {
 }
 
-Scalar_Data_2D::Scalar_Data_2D (const Vector_Data_2D& vector_data_2d,
+Scalar_Data_2D::Scalar_Data_2D (const Data_2D& data_2d,
                                 const Integer vector_element)
-   : Vector_Data_2D (vector_data_2d, false)
+   : Data_2D (data_2d, false)
 {
    if (vector_element != -1)
    {
       const size_t address = vector_element * Grid_nD::size ();
-      copy (vector_data_2d, address);
+      copy (data_2d, address);
    }
 }
 
 Domain_1D
 Scalar_Data_2D::get_max_min () const
 {
-   return Vector_Data_2D::get_max_min (0);
+   return Data_2D::get_max_min (0);
 }
 
 void
@@ -4771,21 +4769,21 @@ Scalar_Data_2D::set_datum (const Integer node_x,
                            const Integer node_y,
                            const Real datum)
 {
-   Vector_Data_2D::set_datum (0, node_x, node_y, datum);
+   Data_2D::set_datum (0, node_x, node_y, datum);
 }
 
 const Real&
 Scalar_Data_2D::get_datum (const Integer node_x,
                            const Integer node_y) const
 {
-   return Vector_Data_2D::get_datum (0, node_x, node_y);
+   return Data_2D::get_datum (0, node_x, node_y);
 }
 
 Real&
 Scalar_Data_2D::get_datum (const Integer node_x,
                            const Integer node_y)
 {
-   return Vector_Data_2D::get_datum (0, node_x, node_y);
+   return Data_2D::get_datum (0, node_x, node_y);
 }
 
 Real
@@ -4793,7 +4791,7 @@ Scalar_Data_2D::evaluate (const Real coordinate_x,
                           const Real coordinate_y,
                           const Evaluate_Op evaluate_op) const
 {
-   return Vector_Data_2D::evaluate (0, coordinate_x, coordinate_y, evaluate_op);
+   return Data_2D::evaluate (0, coordinate_x, coordinate_y, evaluate_op);
 }
 
 
@@ -4802,7 +4800,7 @@ Scalar_Data_3D::Scalar_Data_3D (const Size_3D& size_3d,
                                 const bool periodic_z,
                                 const bool periodic_x,
                                 const bool periodic_y)
-   : Vector_Data_3D (1, size_3d, domain_3d, periodic_z, periodic_x, periodic_y)
+   : Data_3D (1, size_3d, domain_3d, periodic_z, periodic_x, periodic_y)
 {
 }
 
@@ -4812,8 +4810,8 @@ Scalar_Data_3D::Scalar_Data_3D (const Tuple coordinate_tuple_z,
                                 const bool periodic_z,
                                 const bool periodic_x,
                                 const bool periodic_y)
-   : Vector_Data_3D (1, coordinate_tuple_z, coordinate_tuple_x,
-                     coordinate_tuple_y, periodic_z, periodic_x, periodic_y)
+   : Data_3D (1, coordinate_tuple_z, coordinate_tuple_x,
+              coordinate_tuple_y, periodic_z, periodic_x, periodic_y)
 {
 }
 
@@ -4823,8 +4821,8 @@ Scalar_Data_3D::Scalar_Data_3D (const Tuple coordinate_tuple_z,
                                 const bool periodic_z,
                                 const bool periodic_x,
                                 const bool periodic_y)
-   : Vector_Data_3D (1, coordinate_tuple_z, size_2d, domain_2d,
-                     periodic_z, periodic_x, periodic_y)
+   : Data_3D (1, coordinate_tuple_z, size_2d, domain_2d,
+              periodic_z, periodic_x, periodic_y)
 {
 }
 
@@ -4834,7 +4832,7 @@ Scalar_Data_3D::set_datum (const Integer node_z,
                            const Integer node_y,
                            const Real datum)
 {
-   Vector_Data_3D::set_datum (0, node_z, node_x, node_y, datum);
+   Data_3D::set_datum (0, node_z, node_x, node_y, datum);
 }
 
 const Real&
@@ -4842,7 +4840,7 @@ Scalar_Data_3D::get_datum (const Integer node_z,
                            const Integer node_x,
                            const Integer node_y) const
 {
-   return Vector_Data_3D::get_datum (0, node_z, node_x, node_y);
+   return Data_3D::get_datum (0, node_z, node_x, node_y);
 }
 
 Real&
@@ -4850,7 +4848,7 @@ Scalar_Data_3D::get_datum (const Integer node_z,
                            const Integer node_x,
                            const Integer node_y)
 {
-   return Vector_Data_3D::get_datum (0, node_z, node_x, node_y);
+   return Data_3D::get_datum (0, node_z, node_x, node_y);
 }
 
 Real
@@ -4859,7 +4857,7 @@ Scalar_Data_3D::evaluate (const Real coordinate_z,
                           const Real coordinate_y,
                           const Evaluate_Op evaluate_op) const
 {
-   return Vector_Data_3D::evaluate (0, coordinate_z,
+   return Data_3D::evaluate (0, coordinate_z,
       coordinate_x, coordinate_y, evaluate_op);
 }
 
@@ -4869,7 +4867,7 @@ Scalar_Data_3D::evaluate (const Integer node_z,
                           const Real coordinate_y,
                           const Evaluate_Op evaluate_op) const
 {
-   return Vector_Data_3D::evaluate (0, node_z,
+   return Data_3D::evaluate (0, node_z,
       coordinate_x, coordinate_y, evaluate_op);
 }
 
@@ -4889,16 +4887,16 @@ Uv_Field::step (Point_2D& rk,
 }
 
 Uv_Field::Uv_Field ()
-   : vector_data_2d_ptr (NULL),
+   : data_2d_ptr (NULL),
      u_index (-1),
      v_index (-1)
 {
 }
 
-Uv_Field::Uv_Field (const Vector_Data_2D& vector_data_2d,
+Uv_Field::Uv_Field (const Data_2D& data_2d,
                     const Integer u_index,
                     const Integer v_index)
-   : vector_data_2d_ptr (&vector_data_2d),
+   : data_2d_ptr (&data_2d),
      u_index (u_index),
      v_index (v_index)
 {
@@ -4908,8 +4906,8 @@ Vector_2D
 Uv_Field::evaluate (const Real x,
                     const Real y) const
 {
-   return Vector_2D (vector_data_2d_ptr->evaluate (u_index, x, y),
-                     vector_data_2d_ptr->evaluate (v_index, x, y));
+   return Vector_2D (data_2d_ptr->evaluate (u_index, x, y),
+                     data_2d_ptr->evaluate (v_index, x, y));
 }
 
 void
@@ -5438,7 +5436,7 @@ Poisson_Disk::Grid::Grid (const Size_2D& size_2d,
                           const Domain_2D& domain_2d,
                           const Real r,
                           const Real h)
-   : Vector_Data_2D (2, size_2d, domain_2d),
+   : Data_2D (2, size_2d, domain_2d),
      r (r),
      h (h)
 {

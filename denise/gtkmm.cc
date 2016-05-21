@@ -4636,7 +4636,7 @@ Level_Panel::get_level_tuple () const
       case Level::THETA:    return level_tuple_theta;
    }
 
-   throw Nwp_Exception ("Level_Tuple::get_level_tuple confused");
+   throw Exception ("Level_Tuple::get_level_tuple confused");
 
 }
 
@@ -5564,7 +5564,7 @@ Level_Panel::move_level_up (const Devent& event)
             case Level::SIGMA: sigma = level.value; break;
          }
       }
-      catch (const Nwp_Exception& ne)
+      catch (const Exception& e)
       {
       }
    }
@@ -5612,7 +5612,7 @@ Level_Panel::move_level_down (const Devent& event)
                case Level::SIGMA: sigma = level.value; break;
             }
          }
-         catch (const Nwp_Exception& ne)
+         catch (const Exception& e)
          {
          }
       }
@@ -7970,10 +7970,10 @@ Map_Console::Zoom_Box::scroll (const Dmouse_Scroll_Event& event)
 }
 
 Domain_2D
-Map_Console::get_render_domain (const Geodetic_Vector_Data_2D& gvd_2d) const
+Map_Console::get_render_domain (const Geodetic_Data_2D& gd_2d) const
 {
 
-   const Domain_2D& model_domain = gvd_2d.get_domain_2d ();
+   const Domain_2D& model_domain = gd_2d.get_domain_2d ();
 
    const Geodetic_Transform& transform = get_geodetic_transform ();
    const Geodetic_Transform::Genre gtg = transform.data.genre;

@@ -223,8 +223,8 @@ Streamliner::step (Point_2D& delta,
    const Integer& ui = u_index;
    const Integer& vi = v_index;
 
-   const Real u = vector_data_2d.evaluate_nocheck (ui, p.x, p.y, VALUE);
-   const Real v = vector_data_2d.evaluate_nocheck (vi, p.x, p.y, VALUE);
+   const Real u = data_2d.evaluate_nocheck (ui, p.x, p.y, VALUE);
+   const Real v = data_2d.evaluate_nocheck (vi, p.x, p.y, VALUE);
    const Real theta = transform.get_theta (u, v * aspect, p.x, p.y);
 
    delta.x = h * cos (theta);
@@ -279,14 +279,14 @@ Streamliner::integrate (Point_2D& next_point,
 
 Streamliner::Streamliner (const Box_2D& box_2d,
                           const Transform_2D& transform,
-                          const Vector_Data_2D& vector_data_2d,
+                          const Data_2D& data_2d,
                           const Integer u_index,
                           const Integer v_index,
                           const Integration_Scheme integration_scheme,
                           const Real aspect)
    : Box_2D (box_2d),
      transform (transform),
-     vector_data_2d (vector_data_2d),
+     data_2d (data_2d),
      u_index (u_index),
      v_index (v_index),
      integration_scheme (integration_scheme),
@@ -414,8 +414,8 @@ Intensity_Data white_noise (box_2d);
          Point_2D point (i2d.i, i2d.j);
 
          const Point_2D& op = transform.reverse (point.x, point.y);
-         const Real u = vector_data_2d.evaluate (u_index, op.x, op.y, VALUE);
-         const Real v = vector_data_2d.evaluate (v_index, op.x, op.y, VALUE);
+         const Real u = data_2d.evaluate (u_index, op.x, op.y, VALUE);
+         const Real v = data_2d.evaluate (v_index, op.x, op.y, VALUE);
          const Real magnitude = sqrt (u*u + v*v);
 
 //         Integer N = Integer (rint (magnitude / magnitude_0 * NN)) + 1;
@@ -569,7 +569,7 @@ Lic_Raster::get_lic_intensity_data_ptr (Real& min_intensity,
 
 Lic_Raster::Lic_Raster (const Box_2D& box_2d,
                         const Transform_2D& transform,
-                        const Vector_Data_2D& vector_data_2d,
+                        const Data_2D& data_2d,
                         const Integer u_index,
                         const Integer v_index,
                         const bool enhance,
@@ -579,7 +579,7 @@ Lic_Raster::Lic_Raster (const Box_2D& box_2d,
                         const Integer M,
                         const Real h)
    : Raster (box_2d),
-     Streamliner (box_2d, transform, vector_data_2d, u_index,
+     Streamliner (box_2d, transform, data_2d, u_index,
                   v_index, integration_scheme, aspect),
      L (L),
      M (M),
@@ -587,7 +587,7 @@ Lic_Raster::Lic_Raster (const Box_2D& box_2d,
      L_plus_M (L + M)
 {
 
-   const Uv_Field uv_field (vector_data_2d, u_index, v_index);
+   const Uv_Field uv_field (data_2d, u_index, v_index);
 
    Real hue = 0.0;
    Real min_intensity, max_intensity;
@@ -610,10 +610,10 @@ Lic_Raster::Lic_Raster (const Box_2D& box_2d,
       {
 
          const Point_2D& p = transform.reverse (Real (i), Real (j));
-         if (vector_data_2d.out_of_bounds (p.x, p.y)) { continue; }
+         if (data_2d.out_of_bounds (p.x, p.y)) { continue; }
 
-         const Real u = vector_data_2d.evaluate (u_index, p.x, p.y, VALUE);
-         const Real v = vector_data_2d.evaluate (v_index, p.x, p.y, VALUE);
+         const Real u = data_2d.evaluate (u_index, p.x, p.y, VALUE);
+         const Real v = data_2d.evaluate (v_index, p.x, p.y, VALUE);
          const Real magnitude = sqrt (u*u + v*v);
 
          const Real saturation = rint (magnitude / 10) / 8;
@@ -632,7 +632,7 @@ Lic_Raster::Lic_Raster (const Box_2D& box_2d,
 
 }
 
-Streamlines::Uv_Data::Uv_Data (const Vector_Data_2D& data,
+Streamlines::Uv_Data::Uv_Data (const Data_2D& data,
                                const Integer u_index,
                                const Integer v_index,
                                const Real u_multiplier,
@@ -732,8 +732,8 @@ Streamlines::Singular_Points::gsl_get_value (const gsl_vector* x,
                                              gsl_vector* f)
 {
 
-   const Vector_Data_2D* data_ptr = (const Vector_Data_2D*)p;
-   const Vector_Data_2D& data = *data_ptr;
+   const Data_2D* data_ptr = (const Data_2D*)p;
+   const Data_2D& data = *data_ptr;
 
    const Real xx = gsl_vector_get (x, 0);
    const Real yy = gsl_vector_get (x, 1);
@@ -758,7 +758,7 @@ Streamlines::Singular_Points::potentially_add (const Uv_Data& uv_data,
    if (gsl_isnan (s) || gsl_isnan (t)) { return; }
    if (s < 0 || s >= 1 || t < 0 || t >= 1) { return; }
 
-   const Vector_Data_2D& data = uv_data.data;
+   const Data_2D& data = uv_data.data;
    const Integer u_index = uv_data.u_index;
    const Integer v_index = uv_data.v_index;
 
@@ -778,7 +778,7 @@ Streamlines::Singular_Points::Singular_Points (const Uv_Data& uv_data,
      epsilon (epsilon)
 {
 
-   const Vector_Data_2D& data = uv_data.data;
+   const Data_2D& data = uv_data.data;
    const Integer u_index = uv_data.u_index;
    const Integer v_index = uv_data.v_index;
 
@@ -908,7 +908,7 @@ Streamlines::Streamline::euler (Real& dx,
 
    if (gsl_isnan (x) || gsl_isnan (y)) { set_nan (dx, dy); return; }
 
-   const Vector_Data_2D& data = uv_data.data;
+   const Data_2D& data = uv_data.data;
    const Integer& ui = uv_data.u_index;
    const Integer& vi = uv_data.v_index;
 
@@ -1294,7 +1294,7 @@ Streamlines::Saddle::Saddle (const Singular_Point& saddle_point,
 {
 
    const Singular_Point& sp = saddle_point;
-   const Vector_Data_2D& data = uv_data.data;
+   const Data_2D& data = uv_data.data;
    const Integer& ui = uv_data.u_index;
    const Integer& vi = uv_data.v_index;
 
@@ -1622,7 +1622,7 @@ Streamlines::construct_sides (Sand_Box& sand_box,
                               const Real step_size)
 {
 
-   const Vector_Data_2D& data = uv_data.data;
+   const Data_2D& data = uv_data.data;
    const Integer& ui = uv_data.u_index;
    const Integer& vi = uv_data.v_index;
 
@@ -1735,7 +1735,7 @@ Streamlines::construct_streamlines (Sand_Box& sand_box,
                                     const Real step_size)
 {
 
-   const Vector_Data_2D& data = uv_data.data;
+   const Data_2D& data = uv_data.data;
    const Poisson_Disk poisson_disk (domain_2d, separation * 2);
 
    for (Poisson_Disk::const_iterator iterator = poisson_disk.begin ();

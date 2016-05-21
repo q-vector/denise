@@ -175,7 +175,7 @@ namespace denise
 
    };
 
-   class Vector_Field_1D
+   class Field_1D
    {
 
       public:
@@ -187,7 +187,7 @@ namespace denise
 
    };
 
-   class Vector_Field_2D
+   class Field_2D
    {
 
       public:
@@ -200,7 +200,7 @@ namespace denise
 
    };
 
-   class Vector_Field_3D
+   class Field_3D
    {
 
       public:
@@ -412,8 +412,8 @@ namespace denise
 
    };
 
-   class Vector_Data_nD : public Grid_nD,
-                          public Chunk
+   class Data_nD : public Grid_nD,
+                   public Chunk
    {
 
       protected:
@@ -426,12 +426,12 @@ namespace denise
                const Real* spacings,
                const bool* periodics);
 
-         Vector_Data_nD (const Integer vector_size,
-                         const Integer n);
+         Data_nD (const Integer vector_size,
+                  const Integer n);
 
-         Vector_Data_nD (const Vector_Data_nD& vector_data_nd);
+         Data_nD (const Data_nD& data_nd);
 
-         ~Vector_Data_nD ();
+         ~Data_nD ();
 
          Chunk*
          get_chunk_ptr (const Integer vector_element) const;
@@ -464,8 +464,8 @@ namespace denise
 
    };
 
-   class Vector_Data_1D : public Vector_Data_nD,
-                          public virtual Vector_Field_1D
+   class Data_1D : public Data_nD,
+                   public virtual Field_1D
    {
 
       private:
@@ -483,18 +483,18 @@ namespace denise
 
       public:
 
-         Vector_Data_1D (const Vector_Data_1D& vector_data_1d);
+         Data_1D (const Data_1D& data_1d);
 
-         Vector_Data_1D (const Integer vector_size,
-                         const Integer size_1d,
-                         const Domain_1D& domain_1d = Domain_1D (0, 1),
-                         const bool periodic = false);
+         Data_1D (const Integer vector_size,
+                  const Integer size_1d,
+                  const Domain_1D& domain_1d = Domain_1D (0, 1),
+                  const bool periodic = false);
 
-         Vector_Data_1D (const Integer vector_size,
-                         const Tuple coordinate_tuple,
-                         const bool periodic = false);
+         Data_1D (const Integer vector_size,
+                  const Tuple coordinate_tuple,
+                  const bool periodic = false);
 
-         ~Vector_Data_1D ();
+         ~Data_1D ();
 
          void
          modify_coordinate_tuple (const Integer node,
@@ -586,8 +586,8 @@ namespace denise
 
    };
 
-   class Vector_Data_2D : public Vector_Data_nD,
-                          public virtual Vector_Field_2D
+   class Data_2D : public Data_nD,
+                   public virtual Field_2D
    {
 
       private:
@@ -686,23 +686,23 @@ namespace denise
 
       public:
 
-         Vector_Data_2D (const Vector_Data_2D& vector_data_2d,
-                         const bool copy_data);
+         Data_2D (const Data_2D& data_2d,
+                  const bool copy_data);
 
-         Vector_Data_2D (const Integer vector_size,
-                         const Size_2D& size_2d,
-                         const Domain_2D& domain_2d,
-                         const bool periodic_x = false,
-                         const bool periodic_y = false);
+         Data_2D (const Integer vector_size,
+                  const Size_2D& size_2d,
+                  const Domain_2D& domain_2d,
+                  const bool periodic_x = false,
+                  const bool periodic_y = false);
 
-         Vector_Data_2D (const Integer vector_size,
-                         const Tuple coordinate_tuple_x,
-                         const Tuple coordinate_tuple_y,
-                         const bool periodic_x = false,
-                         const bool periodic_y = false);
+         Data_2D (const Integer vector_size,
+                  const Tuple coordinate_tuple_x,
+                  const Tuple coordinate_tuple_y,
+                  const bool periodic_x = false,
+                  const bool periodic_y = false);
 
          virtual
-         ~Vector_Data_2D ();
+         ~Data_2D ();
 
          void
          set_bicubic_interpolation ();
@@ -818,8 +818,8 @@ namespace denise
 
    };
 
-   class Vector_Data_3D : public Vector_Data_nD,
-                          public virtual Vector_Field_3D
+   class Data_3D : public Data_nD,
+                   public virtual Field_3D
    {
 
       private:
@@ -904,31 +904,31 @@ namespace denise
 
       public:
 
-         Vector_Data_3D (const Integer vector_size,
-                         const Size_3D& size_3d,
-                         const Domain_3D& domain_3d,
-                         const bool periodic_z = false,
-                         const bool periodic_x = false,
-                         const bool periodic_y = false);
+         Data_3D (const Integer vector_size,
+                  const Size_3D& size_3d,
+                  const Domain_3D& domain_3d,
+                  const bool periodic_z = false,
+                  const bool periodic_x = false,
+                  const bool periodic_y = false);
 
-         Vector_Data_3D (const Integer vector_size,
-                         const Tuple coordinate_tuple_z,
-                         const Tuple coordinate_tuple_x,
-                         const Tuple coordinate_tuple_y,
-                         const bool periodic_z = false,
-                         const bool periodic_x = false,
-                         const bool periodic_y = false);
+         Data_3D (const Integer vector_size,
+                  const Tuple coordinate_tuple_z,
+                  const Tuple coordinate_tuple_x,
+                  const Tuple coordinate_tuple_y,
+                  const bool periodic_z = false,
+                  const bool periodic_x = false,
+                  const bool periodic_y = false);
 
-         Vector_Data_3D (const Integer vector_size,
-                         const Tuple coordinate_tuple_z,
-                         const Size_2D& size_2d,
-                         const Domain_2D& domain_2d,
-                         const bool periodic_z = false,
-                         const bool periodic_x = false,
-                         const bool periodic_y = false);
+         Data_3D (const Integer vector_size,
+                  const Tuple coordinate_tuple_z,
+                  const Size_2D& size_2d,
+                  const Domain_2D& domain_2d,
+                  const bool periodic_z = false,
+                  const bool periodic_x = false,
+                  const bool periodic_y = false);
 
          virtual
-         ~Vector_Data_3D ();
+         ~Data_3D ();
 
          void
          set_tricubic_interpolation ();
@@ -1104,7 +1104,7 @@ namespace denise
 
    };
 
-   class Scalar_Data_1D : public virtual Vector_Data_1D,
+   class Scalar_Data_1D : public virtual Data_1D,
                           public Scalar_Field_1D
    {
 
@@ -1133,7 +1133,7 @@ namespace denise
 
    };
 
-   class Scalar_Data_2D : public virtual Vector_Data_2D,
+   class Scalar_Data_2D : public virtual Data_2D,
                           public Scalar_Field_2D
    {
 
@@ -1149,7 +1149,7 @@ namespace denise
                          const bool periodic_x = false,
                          const bool periodic_y = false);
 
-         Scalar_Data_2D (const Vector_Data_2D& vector_data_2d,
+         Scalar_Data_2D (const Data_2D& data_2d,
                          const Integer vector_element = -1);
 
          Domain_1D
@@ -1178,7 +1178,7 @@ namespace denise
 
    };
 
-   class Scalar_Data_3D : public virtual Vector_Data_3D,
+   class Scalar_Data_3D : public virtual Data_3D,
                           public Scalar_Field_3D
    {
 
@@ -1239,8 +1239,8 @@ namespace denise
 
       private:
 
-         const Vector_Data_2D*
-         vector_data_2d_ptr;
+         const Data_2D*
+         data_2d_ptr;
 
          const Integer
          u_index;
@@ -1258,7 +1258,7 @@ namespace denise
 
          Uv_Field ();
 
-         Uv_Field (const Vector_Data_2D& vector_data_2d,
+         Uv_Field (const Data_2D& data_2d,
                    const Integer u_index,
                    const Integer v_index);
 
@@ -1608,7 +1608,7 @@ namespace denise
 
          };
 
-         class Grid : public Vector_Data_2D
+         class Grid : public Data_2D
          {
 
             private:
