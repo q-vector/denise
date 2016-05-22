@@ -66,6 +66,9 @@ namespace denise
 
                Key (const Key& key);
 
+               Dstring
+               get_string () const;
+
                Dtime
                get_dtime () const;
 
@@ -81,10 +84,11 @@ namespace denise
          };
 
          virtual Real
-         evaluate (const Met_Element& met_element,
+         evaluate (const Met_Element met_element,
                    const Lat_Long& lat_long,
                    const Level& level,
-                   const Nwp::Key& nwp_key) = 0;
+                   const Nwp::Key& nwp_key,
+                   const Evaluate_Op evaluate_op = VALUE) = 0;
 
    };
 
@@ -110,12 +114,12 @@ namespace denise
                key;
 
                Data_3D (const vector<Met_Element>& met_element_vector,
-                        const Key& key);
+                        const Nwp::Key& nwp_key);
 
                ~Data_3D ();
 
                virtual Real
-               evaluate (const Met_Element element,
+               evaluate (const Met_Element met_element,
                          const Lat_Long& lat_long,
                          const Real p,
                          const Evaluate_Op evaluate_op = VALUE) const;
@@ -130,8 +134,32 @@ namespace denise
          Data_3d_Ptr_Map
          data_3d_ptr_map;
 
+         vector<Met_Element>
+         met_element_vector;
+
+         // Fill Data_3d_Ptr_Map - Map of all 3d Data
+         // Define met_element_vector - the met_elements of 3d Data
+         virtual void
+         survey () = 0;
+
+         virtual Geodetic_Data_3D*
+         get_gd_3d_ptr (const Met_Element met_element,
+                        const Nwp::Key& nwp_key) = 0;
+
+         virtual const Sparse_Nwp::Data_3D&
+         get_data_3d (const Nwp::Key& nwp_key);
+
          Sparse_Nwp (const Dstring& description,
                      const Dstring& path);
+
+      public:
+
+         virtual Real
+         evaluate (const Met_Element met_element,
+                   const Lat_Long& lat_long,
+                   const Level& level,
+                   const Nwp::Key& nwp_key,
+                   const Evaluate_Op evaluate_op);
 
    };
 

@@ -44,6 +44,12 @@ Nwp::Key::Key (const Key& key)
 {
 }
 
+Dstring
+Nwp::Key::get_string () const
+{
+   return base_time.get_string () + Dstring::render (" +%d s", forecast_second);
+}
+
 Dtime
 Nwp::Key::get_dtime () const
 {
@@ -256,6 +262,65 @@ Sparse_Nwp::Data_3D::evaluate (const Met_Element element,
 
 }
 
+const Sparse_Nwp::Data_3D&
+Sparse_Nwp::get_data_3d (const Nwp::Key& nwp_key)
+{
+
+   auto iterator = data_3d_ptr_map.find (nwp_key);
+   if (iterator != data_3d_ptr_map.end ())
+   {
+
+      Sparse_Nwp::Data_3D*& data_3d_ptr = iterator->second;
+      if (data_3d_ptr != NULL) { return *data_3d_ptr; }
+
+      // data_3d_ptr is NULL
+      data_3d_ptr = new Sparse_Nwp::Data_3D (met_element_vector, nwp_key);
+
+      for (auto& met_element : met_element_vector)
+      {
+         Geodetic_Data_3D* gd_3d_ptr = get_gd_3d_ptr (met_element, nwp_key);
+         data_3d_ptr->insert (make_pair (met_element, gd_3d_ptr));
+      }
+
+   }
+
+   const Dstring& message = "Sparse_Nwp::get_data_3d no such key ";
+   throw Exception (message + nwp_key.get_string ());
+
+}
+
+Sparse_Nwp::Sparse_Nwp (const Dstring& description,
+                        const Dstring& path)
+   : Nwp (description, path)
+{
+}
+
+Real
+Sparse_Nwp::evaluate (const Met_Element met_element,
+                      const Lat_Long& lat_long,
+                      const Level& level,
+                      const Nwp::Key& nwp_key,
+                      const Evaluate_Op evaluate_op)
+{
+
+   switch (level.type)
+   {
+
+      default:
+      {
+         return GSL_NAN;
+      }
+
+      case Level::PRESSURE:
+      {
+         const Real p = level.value;
+         const Sparse_Nwp::Data_3D& data_3d = get_data_3d (nwp_key);
+         return data_3d.evaluate (met_element, lat_long, p, evaluate_op);
+      }
+
+   }
+
+}
 
 
 
