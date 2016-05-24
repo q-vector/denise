@@ -317,6 +317,10 @@ namespace denise
          get_string (const Real speed_multiplier = 3.6/1.852,
                      const Dstring& format = "%03.0f/%02.0f") const;
 
+         Dstring
+         get_string (const Dstring& format,
+                     const Real speed_multiplier = 3.6/1.852) const;
+
          static Category
          get_category (const Real speed);
 

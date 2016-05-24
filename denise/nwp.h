@@ -92,12 +92,12 @@ namespace denise
 
    };
 
-   class Sparse_Nwp : public Nwp
+   class Cached_Nwp : public Nwp
    {
 
-      public:
+      protected:
 
-         class Data_3D : public map<Met_Element, Geodetic_Data_3D*>
+         class Cache_3D : public map<Met_Element, Geodetic_Data_3D*>
          {
 
             private:
@@ -113,10 +113,10 @@ namespace denise
                const Key
                key;
 
-               Data_3D (const vector<Met_Element>& met_element_vector,
-                        const Nwp::Key& nwp_key);
+               Cache_3D (const vector<Met_Element>& met_element_vector,
+                         const Nwp::Key& nwp_key);
 
-               ~Data_3D ();
+               ~Cache_3D ();
 
                virtual Real
                evaluate (const Met_Element met_element,
@@ -126,13 +126,11 @@ namespace denise
 
          };
 
-      protected:
+         typedef map<Nwp::Key, Cache_3D*>
+         Cache_3d_Ptr_Map;
 
-         typedef map<Nwp::Key, Data_3D*>
-         Data_3d_Ptr_Map;
-
-         Data_3d_Ptr_Map
-         data_3d_ptr_map;
+         Cache_3d_Ptr_Map
+         cache_3d_ptr_map;
 
          vector<Met_Element>
          met_element_vector;
@@ -142,14 +140,19 @@ namespace denise
          virtual void
          survey () = 0;
 
+         virtual Geodetic_Data_2D*
+         get_gd_2d_ptr (const Met_Element met_element,
+                        const Level& level,
+                        const Nwp::Key& nwp_ley) const = 0;
+
          virtual Geodetic_Data_3D*
          get_gd_3d_ptr (const Met_Element met_element,
-                        const Nwp::Key& nwp_key) = 0;
+                        const Nwp::Key& nwp_key) const = 0;
 
-         virtual const Sparse_Nwp::Data_3D&
-         get_data_3d (const Nwp::Key& nwp_key);
+         virtual const Cached_Nwp::Cache_3D&
+         get_cache_3d (const Nwp::Key& nwp_key);
 
-         Sparse_Nwp (const Dstring& description,
+         Cached_Nwp (const Dstring& description,
                      const Dstring& path);
 
       public:
