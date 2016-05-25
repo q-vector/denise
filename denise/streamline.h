@@ -173,8 +173,8 @@ namespace denise
          const Transform_2D&
          transform;
 
-         const Vector_Data_2D&
-         vector_data_2d;
+         const Data_2D&
+         data_2d;
 
          const Integer
          u_index;
@@ -198,7 +198,7 @@ namespace denise
 
          Streamliner (const Box_2D& box_2d,
                       const Transform_2D& transform,
-                      const Vector_Data_2D& vector_data_2d,
+                      const Data_2D& data_2d,
                       const Integer u_index,
                       const Integer v_index,
                       const Integration_Scheme integration_scheme,
@@ -251,7 +251,7 @@ namespace denise
 
          Lic_Raster (const Box_2D& box_2d,
                      const Transform_2D& transform,
-                     const Vector_Data_2D& vector_data_2d,
+                     const Data_2D& data_2d,
                      const Integer u_index,
                      const Integer v_index,
                      const bool enhance = false,
@@ -273,7 +273,7 @@ namespace denise
                          
             public:      
                          
-               const Vector_Data_2D&
+               const Data_2D&
                data;
                          
                const Integer
@@ -288,7 +288,7 @@ namespace denise
                const Real
                v_multiplier;
          
-               Uv_Data (const Vector_Data_2D& data,
+               Uv_Data (const Data_2D& data,
                         const Integer u_index,
                         const Integer v_index,
                         const Real u_multiplier = 1,

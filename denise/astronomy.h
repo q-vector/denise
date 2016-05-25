@@ -203,7 +203,7 @@ namespace denise
 
    };
 
-   class Zenith_Field : public Vector_Field_2D
+   class Zenith_Field : public Field_2D
    {
 
       private:

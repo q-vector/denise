@@ -1,6 +1,3 @@
-//
-// geodesy.cc
-// 
 // Copyright (C) 2005-2015 Simon E. Ching
 // 
 // This file is part of libdenise.
@@ -3167,105 +3164,105 @@ Mollweide_Transform::reverse (Real& latitude,
 }
 
 Real
-Geodetic_Vector_Data_2D::get_dmagnitude_dx (const Integer vector_element_u,
-                                            const Integer vector_element_v,
-                                            const Integer node_x,
-                                            const Integer node_y,
-                                            const Real magnitude) const
+Geodetic_Data_2D::get_dmagnitude_dx (const Integer vector_element_u,
+                                     const Integer vector_element_v,
+                                     const Integer node_x,
+                                     const Integer node_y,
+                                     const Real magnitude) const
 {
    const Real latitude = get_coordinate (0, node_y);
-   const Real eval = Vector_Data_2D::get_dmagnitude_dy (
+   const Real eval = Data_2D::get_dmagnitude_dy (
       vector_element_u, vector_element_v, node_x, node_y, magnitude);
    return eval / (LATITUDE_LENGTH * cos (latitude * DEGREE_TO_RADIAN));
 }
 
 Real
-Geodetic_Vector_Data_2D::get_dmagnitude_dy (const Integer vector_element_u,
-                                            const Integer vector_element_v,
-                                            const Integer node_x,
-                                            const Integer node_y,
-                                            const Real magnitude) const
+Geodetic_Data_2D::get_dmagnitude_dy (const Integer vector_element_u,
+                                     const Integer vector_element_v,
+                                     const Integer node_x,
+                                     const Integer node_y,
+                                     const Real magnitude) const
 {
-   const Real eval = Vector_Data_2D::get_dmagnitude_dx (
+   const Real eval = Data_2D::get_dmagnitude_dx (
       vector_element_u, vector_element_v, node_x, node_y, magnitude);
    return eval / LATITUDE_LENGTH;
 }
 
 Real
-Geodetic_Vector_Data_2D::get_dmagnitude_dx (const Integer vector_element_u,
-                                            const Integer vector_element_v,
-                                            const Real x,
-                                            const Real y,
-                                            const Real magnitude) const
+Geodetic_Data_2D::get_dmagnitude_dx (const Integer vector_element_u,
+                                     const Integer vector_element_v,
+                                     const Real x,
+                                     const Real y,
+                                     const Real magnitude) const
 {
    const Real latitude = y;
-   const Real eval = Vector_Data_2D::get_dmagnitude_dy (
+   const Real eval = Data_2D::get_dmagnitude_dy (
       vector_element_u, vector_element_v, x, y, magnitude);
    return eval / (LATITUDE_LENGTH * cos (latitude * DEGREE_TO_RADIAN));
 }
 
 Real
-Geodetic_Vector_Data_2D::get_dmagnitude_dy (const Integer vector_element_u,
-                                            const Integer vector_element_v,
-                                            const Real x,
-                                            const Real y,
-                                            const Real magnitude) const
+Geodetic_Data_2D::get_dmagnitude_dy (const Integer vector_element_u,
+                                     const Integer vector_element_v,
+                                     const Real x,
+                                     const Real y,
+                                     const Real magnitude) const
 {
-   const Real eval = Vector_Data_2D::get_dmagnitude_dx (
+   const Real eval = Data_2D::get_dmagnitude_dx (
       vector_element_u, vector_element_v, x, y, magnitude);
    return eval / LATITUDE_LENGTH;
 }
 
-Geodetic_Vector_Data_2D::Geodetic_Vector_Data_2D (const Integer vector_size,
-                                                  const Size_2D& size_2d,
-                                                  const Domain_2D& domain_2d,
-                                                  const bool periodic_longitude)
-   : Vector_Data_2D (vector_size, size_2d, domain_2d, false, periodic_longitude)
+Geodetic_Data_2D::Geodetic_Data_2D (const Integer vector_size,
+                                    const Size_2D& size_2d,
+                                    const Domain_2D& domain_2d,
+                                    const bool periodic_longitude)
+   : Data_2D (vector_size, size_2d, domain_2d, false, periodic_longitude)
 {
 }
 
-Geodetic_Vector_Data_2D::Geodetic_Vector_Data_2D (const Integer vector_size,
-                                                  const Tuple tuple_latitude,
-                                                  const Tuple tuple_longitude,
-                                                  const bool periodic_longitude)
-   : Vector_Data_2D (vector_size, tuple_latitude, tuple_longitude,
-                     false, periodic_longitude)
+Geodetic_Data_2D::Geodetic_Data_2D (const Integer vector_size,
+                                    const Tuple tuple_latitude,
+                                    const Tuple tuple_longitude,
+                                    const bool periodic_longitude)
+   : Data_2D (vector_size, tuple_latitude, tuple_longitude,
+              false, periodic_longitude)
 {
 }
 
-Geodetic_Vector_Data_2D::~Geodetic_Vector_Data_2D ()
+Geodetic_Data_2D::~Geodetic_Data_2D ()
 {
 }
 
 Real
-Geodetic_Vector_Data_2D::get_f (const Real latitude)
+Geodetic_Data_2D::get_f (const Real latitude)
 {
    return 2 * EARTH_ROTATION * sin (latitude * DEGREE_TO_RADIAN);
 }
 
 Real
-Geodetic_Vector_Data_2D::get_f_hat (const Real latitude)
+Geodetic_Data_2D::get_f_hat (const Real latitude)
 {
    return 2 * EARTH_ROTATION * cos (latitude * DEGREE_TO_RADIAN);
 }
 
 Real
-Geodetic_Vector_Data_2D::get_latitude (const Integer i) const
+Geodetic_Data_2D::get_latitude (const Integer i) const
 {
    return get_coordinate (0, i);
 }
 
 Real
-Geodetic_Vector_Data_2D::get_longitude (const Integer j) const
+Geodetic_Data_2D::get_longitude (const Integer j) const
 {
    return get_coordinate (1, j);
 }
 
 Real
-Geodetic_Vector_Data_2D::evaluate (const Integer vector_element,
-                                   const Integer i,
-                                   const Integer j,
-                                   const Evaluate_Op evaluate_op) const
+Geodetic_Data_2D::evaluate (const Integer vector_element,
+                            const Integer i,
+                            const Integer j,
+                            const Evaluate_Op evaluate_op) const
 {
 
    const Integer& ve = vector_element;
@@ -3275,19 +3272,19 @@ Geodetic_Vector_Data_2D::evaluate (const Integer vector_element,
 
       default:
       {
-         return Vector_Data_2D::evaluate (ve, i, j, VALUE);
+         return Data_2D::evaluate (ve, i, j, VALUE);
       }
 
       case DX:
       {
          const Real latitude = get_coordinate (0, i);
-         const Real eval = Vector_Data_2D::evaluate (ve, i, j, DY);
+         const Real eval = Data_2D::evaluate (ve, i, j, DY);
          return eval / (LATITUDE_LENGTH * cos (latitude * DEGREE_TO_RADIAN));
       }
 
       case DY:
       {
-         const Real eval = Vector_Data_2D::evaluate (ve, i, j, DX);
+         const Real eval = Data_2D::evaluate (ve, i, j, DX);
          return eval / LATITUDE_LENGTH;
       }
 
@@ -3296,13 +3293,13 @@ Geodetic_Vector_Data_2D::evaluate (const Integer vector_element,
          const Real latitude = get_coordinate (0, i);
          const Real c = cos (latitude * DEGREE_TO_RADIAN);
          const Real longitude_length = LATITUDE_LENGTH * c;
-         const Real eval = Vector_Data_2D::evaluate (ve, i, j, DY2);
+         const Real eval = Data_2D::evaluate (ve, i, j, DY2);
          return eval / (longitude_length * longitude_length);
       }
 
       case DY2:
       {
-         const Real eval = Vector_Data_2D::evaluate (ve, i, j, DX2);
+         const Real eval = Data_2D::evaluate (ve, i, j, DX2);
          return eval / (LATITUDE_LENGTH * LATITUDE_LENGTH);
       }
 
@@ -3310,7 +3307,7 @@ Geodetic_Vector_Data_2D::evaluate (const Integer vector_element,
       {
          const Real latitude = get_coordinate (0, i);
          const Real c = cos (latitude * DEGREE_TO_RADIAN);
-         const Real eval = Vector_Data_2D::evaluate (ve, i, j, DXY);
+         const Real eval = Data_2D::evaluate (ve, i, j, DXY);
          return eval / (LATITUDE_LENGTH * LATITUDE_LENGTH * c);
       }
 
@@ -3318,8 +3315,8 @@ Geodetic_Vector_Data_2D::evaluate (const Integer vector_element,
       {
          const Real latitude = get_coordinate (0, i);
          const Real c = cos (latitude * DEGREE_TO_RADIAN);
-         const Real dx2 = Vector_Data_2D::evaluate (ve, i, j, DY2);
-         const Real dy2 = Vector_Data_2D::evaluate (ve, i, j, DX2);
+         const Real dx2 = Data_2D::evaluate (ve, i, j, DY2);
+         const Real dy2 = Data_2D::evaluate (ve, i, j, DX2);
          return (dx2 / (c * c) + dy2) / (LATITUDE_LENGTH * LATITUDE_LENGTH);
       }
 
@@ -3328,10 +3325,10 @@ Geodetic_Vector_Data_2D::evaluate (const Integer vector_element,
 }
 
 Real
-Geodetic_Vector_Data_2D::evaluate (const Integer vector_element,
-                                   const Real latitude,
-                                   const Real longitude,
-                                   const Evaluate_Op evaluate_op) const
+Geodetic_Data_2D::evaluate (const Integer vector_element,
+                            const Real latitude,
+                            const Real longitude,
+                            const Evaluate_Op evaluate_op) const
 {
 
    const Integer& ve = vector_element;
@@ -3341,18 +3338,18 @@ Geodetic_Vector_Data_2D::evaluate (const Integer vector_element,
 
       default:
       {
-         return Vector_Data_2D::evaluate (ve, latitude, longitude, VALUE);
+         return Data_2D::evaluate (ve, latitude, longitude, VALUE);
       }
 
       case DX:
       {
-         Real eval = Vector_Data_2D::evaluate (ve, latitude, longitude, DY);
+         Real eval = Data_2D::evaluate (ve, latitude, longitude, DY);
          return eval / (LATITUDE_LENGTH * cos (latitude * DEGREE_TO_RADIAN));
       }
 
       case DY:
       {
-         Real eval = Vector_Data_2D::evaluate (ve, latitude, longitude, DX);
+         Real eval = Data_2D::evaluate (ve, latitude, longitude, DX);
          return eval / LATITUDE_LENGTH;
       }
 
@@ -3360,28 +3357,28 @@ Geodetic_Vector_Data_2D::evaluate (const Integer vector_element,
       {
          Real c = cos (latitude * DEGREE_TO_RADIAN);
          Real longitude_length = LATITUDE_LENGTH * c;
-         Real eval = Vector_Data_2D::evaluate (ve, latitude, longitude, DY2);
+         Real eval = Data_2D::evaluate (ve, latitude, longitude, DY2);
          return eval / (longitude_length * longitude_length);
       }
 
       case DY2:
       {
-         Real eval = Vector_Data_2D::evaluate (ve, latitude, longitude, DX2);
+         Real eval = Data_2D::evaluate (ve, latitude, longitude, DX2);
          return eval / (LATITUDE_LENGTH * LATITUDE_LENGTH);
       }
 
       case DXY:
       {
          Real c = cos (latitude * DEGREE_TO_RADIAN);
-         Real eval = Vector_Data_2D::evaluate (ve, latitude, longitude, DXY);
+         Real eval = Data_2D::evaluate (ve, latitude, longitude, DXY);
          return eval / (LATITUDE_LENGTH * LATITUDE_LENGTH * c);
       }
 
       case LAPLACIAN:
       {
          Real c = cos (latitude * DEGREE_TO_RADIAN);
-         Real dx2 = Vector_Data_2D::evaluate (ve, latitude, longitude, DY2);
-         Real dy2 = Vector_Data_2D::evaluate (ve, latitude, longitude, DX2);
+         Real dx2 = Data_2D::evaluate (ve, latitude, longitude, DY2);
+         Real dy2 = Data_2D::evaluate (ve, latitude, longitude, DX2);
          return (dx2 / (c * c) + dy2) / (LATITUDE_LENGTH * LATITUDE_LENGTH);
       }
 
@@ -3390,19 +3387,19 @@ Geodetic_Vector_Data_2D::evaluate (const Integer vector_element,
 }
 
 Real
-Geodetic_Vector_Data_2D::evaluate (const Integer vector_element,
-                                   const Lat_Long& lat_long,
-                                   const Evaluate_Op evaluate_op) const
+Geodetic_Data_2D::evaluate (const Integer vector_element,
+                            const Lat_Long& lat_long,
+                            const Evaluate_Op evaluate_op) const
 {
    return evaluate (vector_element, lat_long.latitude,
        lat_long.longitude, evaluate_op);
 }
 
 Real
-Geodetic_Vector_Data_2D::get_shear_vorticity (const Integer vector_element_u,
-                                              const Integer vector_element_v,
-                                              const Integer i,
-                                              const Integer j) const
+Geodetic_Data_2D::get_shear_vorticity (const Integer vector_element_u,
+                                       const Integer vector_element_v,
+                                       const Integer i,
+                                       const Integer j) const
 {
 
    return GSL_NAN;
@@ -3457,80 +3454,79 @@ Geodetic_Vector_Data_2D::get_shear_vorticity (const Integer vector_element_u,
 }
 
 void
-Geodetic_Vector_Data_2D::subtract_zonal_mean (const Integer vector_element)
+Geodetic_Data_2D::subtract_zonal_mean (const Integer vector_element)
 {
    subtract_y_mean (vector_element);
 }
 
 void
-Geodetic_Vector_Data_2D::subtract_meridional_mean (const Integer vector_element)
+Geodetic_Data_2D::subtract_meridional_mean (const Integer vector_element)
 {
    subtract_x_mean (vector_element);
 }
 
-Geodetic_Vector_Data_3D::Geodetic_Vector_Data_3D (const Integer vector_size,
-                                                  const Size_3D& size_3d,
-                                                  const Domain_3D& domain_3d,
-                                                  const bool periodic_longitude)
-   : Vector_Data_3D (vector_size, size_3d, domain_3d,
-                     false, false, periodic_longitude)
+Geodetic_Data_3D::Geodetic_Data_3D (const Integer vector_size,
+                                    const Size_3D& size_3d,
+                                    const Domain_3D& domain_3d,
+                                    const bool periodic_longitude)
+   : Data_3D (vector_size, size_3d, domain_3d, false, false, periodic_longitude)
 {
 }
 
-Geodetic_Vector_Data_3D::Geodetic_Vector_Data_3D (const Integer vector_size,
-                                                  const Tuple tuple_z,
-                                                  const Tuple tuple_latitude,
-                                                  const Tuple tuple_longitude,
+Geodetic_Data_3D::Geodetic_Data_3D (const Integer vector_size,
+                                    const Tuple tuple_z,
+                                    const Tuple tuple_latitude,
+                                    const Tuple tuple_longitude,
                                                   const bool periodic_longitude)
-   : Vector_Data_3D (vector_size, tuple_z, tuple_latitude, tuple_longitude,
-                     false, false, periodic_longitude)
+   : Data_3D (vector_size, tuple_z, tuple_latitude, tuple_longitude,
+              false, false, periodic_longitude)
 {
 }
 
-Geodetic_Vector_Data_3D::Geodetic_Vector_Data_3D (const Integer vector_size,
-                                                  const Tuple tuple_z,
-                                                  const Size_2D& size_2d,
-                                                  const Domain_2D& domain_2d,
-                                                  const bool periodic_longitude)
-   : Vector_Data_3D (vector_size, tuple_z, size_2d, domain_2d,
-                     false, false, periodic_longitude)
+Geodetic_Data_3D::Geodetic_Data_3D (const Integer vector_size,
+                                    const Tuple tuple_z,
+                                    const Size_2D& size_2d,
+                                    const Domain_2D& domain_2d,
+                                    const bool periodic_longitude)
+   : Data_3D (vector_size, tuple_z, size_2d, domain_2d,
+              false, false, periodic_longitude)
 {
 }
 
-Geodetic_Vector_Data_3D::~Geodetic_Vector_Data_3D ()
+Geodetic_Data_3D::~Geodetic_Data_3D ()
 {
 }
 
 Real
-Geodetic_Vector_Data_3D::get_f (const Real latitude)
+Geodetic_Data_3D::get_f (const Real latitude)
 {
    return 2 * EARTH_ROTATION * sin (latitude * DEGREE_TO_RADIAN);
 }
 
 Real
-Geodetic_Vector_Data_3D::get_f_hat (const Real latitude)
+Geodetic_Data_3D::get_f_hat (const Real latitude)
 {
    return 2 * EARTH_ROTATION * cos (latitude * DEGREE_TO_RADIAN);
 }
 
 Real
-Geodetic_Vector_Data_3D::get_latitude (const Integer i) const
+Geodetic_Data_3D::get_latitude (const Integer i) const
 {
    return get_coordinate (1, i);
 }
 
 Real
-Geodetic_Vector_Data_3D::get_longitude (const Integer j) const
+Geodetic_Data_3D::get_longitude (const Integer j) const
 {
    return get_coordinate (2, j);
 }
 
 Real
-Geodetic_Vector_Data_3D::evaluate (const Integer vector_element,
-                                   const Real z,
-                                   const Integer i,
-                                   const Integer j,
-                                   const Evaluate_Op evaluate_op) const
+Geodetic_Data_3D::evaluate (const Integer vector_element,
+                            const Real z,
+                            const Integer i,
+                            const Integer j,
+                            const Evaluate_Op evaluate_op) const
 {
 
    const Integer& ve = vector_element;
@@ -3541,19 +3537,19 @@ Geodetic_Vector_Data_3D::evaluate (const Integer vector_element,
       default:
       case VALUE:
       {
-         return Vector_Data_3D::evaluate (ve, z, i, j, evaluate_op);
+         return Data_3D::evaluate (ve, z, i, j, evaluate_op);
       }
 
       case DX:
       {
          const Real latitude = get_coordinate (1, i);
-         const Real eval = Vector_Data_3D::evaluate (ve, z, i, j, DY);
+         const Real eval = Data_3D::evaluate (ve, z, i, j, DY);
          return eval / (LATITUDE_LENGTH * cos (latitude * DEGREE_TO_RADIAN));
       }
 
       case DY:
       {
-         const Real eval = Vector_Data_3D::evaluate (ve, z, i, j, DX);
+         const Real eval = Data_3D::evaluate (ve, z, i, j, DX);
          return eval / LATITUDE_LENGTH;
       }
 
@@ -3562,13 +3558,13 @@ Geodetic_Vector_Data_3D::evaluate (const Integer vector_element,
          const Real latitude = get_coordinate (1, i);
          const Real c = cos (latitude * DEGREE_TO_RADIAN);
          const Real longitude_length = LATITUDE_LENGTH * c;
-         const Real eval = Vector_Data_3D::evaluate (ve, z, i, j, DY2);
+         const Real eval = Data_3D::evaluate (ve, z, i, j, DY2);
          return eval / (longitude_length * longitude_length);
       }
 
       case DY2:
       {
-         const Real eval = Vector_Data_3D::evaluate (ve, z, i, j, DX2);
+         const Real eval = Data_3D::evaluate (ve, z, i, j, DX2);
          return eval / (LATITUDE_LENGTH * LATITUDE_LENGTH);
       }
 
@@ -3576,7 +3572,7 @@ Geodetic_Vector_Data_3D::evaluate (const Integer vector_element,
       {
          const Real latitude = get_coordinate (1, i);
          const Real c = cos (latitude * DEGREE_TO_RADIAN);
-         const Real eval = Vector_Data_3D::evaluate (ve, z, i, j, DXY);
+         const Real eval = Data_3D::evaluate (ve, z, i, j, DXY);
          return eval / (LATITUDE_LENGTH * LATITUDE_LENGTH * c);
       }
 
@@ -3584,9 +3580,9 @@ Geodetic_Vector_Data_3D::evaluate (const Integer vector_element,
       {
          const Real latitude = get_coordinate (1, i);
          const Real c = cos (latitude * DEGREE_TO_RADIAN);
-         const Real dz2 = Vector_Data_3D::evaluate (ve, z, i, j, DY2);
-         const Real dx2 = Vector_Data_3D::evaluate (ve, z, i, j, DY2);
-         const Real dy2 = Vector_Data_3D::evaluate (ve, z, i, j, DX2);
+         const Real dz2 = Data_3D::evaluate (ve, z, i, j, DY2);
+         const Real dx2 = Data_3D::evaluate (ve, z, i, j, DY2);
+         const Real dy2 = Data_3D::evaluate (ve, z, i, j, DX2);
          return (dx2 / (c * c) + dy2) / (LATITUDE_LENGTH * LATITUDE_LENGTH);
       }
 
@@ -3595,11 +3591,11 @@ Geodetic_Vector_Data_3D::evaluate (const Integer vector_element,
 }
 
 Real
-Geodetic_Vector_Data_3D::evaluate (const Integer vector_element,
-                                   const Integer k,
-                                   const Integer i,
-                                   const Integer j,
-                                   const Evaluate_Op evaluate_op) const
+Geodetic_Data_3D::evaluate (const Integer vector_element,
+                            const Integer k,
+                            const Integer i,
+                            const Integer j,
+                            const Evaluate_Op evaluate_op) const
 {
 
    const Integer& ve = vector_element;
@@ -3610,19 +3606,19 @@ Geodetic_Vector_Data_3D::evaluate (const Integer vector_element,
       default:
       case VALUE:
       {
-         return Vector_Data_3D::evaluate (ve, k, i, j, evaluate_op);
+         return Data_3D::evaluate (ve, k, i, j, evaluate_op);
       }
 
       case DX:
       {
          const Real latitude = get_coordinate (1, i);
-         const Real eval = Vector_Data_3D::evaluate (ve, k, i, j, DY);
+         const Real eval = Data_3D::evaluate (ve, k, i, j, DY);
          return eval / (LATITUDE_LENGTH * cos (latitude * DEGREE_TO_RADIAN));
       }
 
       case DY:
       {
-         const Real eval = Vector_Data_3D::evaluate (ve, k, i, j, DX);
+         const Real eval = Data_3D::evaluate (ve, k, i, j, DX);
          return eval / LATITUDE_LENGTH;
       }
 
@@ -3631,13 +3627,13 @@ Geodetic_Vector_Data_3D::evaluate (const Integer vector_element,
          const Real latitude = get_coordinate (1, i);
          const Real c = cos (latitude * DEGREE_TO_RADIAN);
          const Real longitude_length = LATITUDE_LENGTH * c;
-         const Real eval = Vector_Data_3D::evaluate (ve, k, i, j, DY2);
+         const Real eval = Data_3D::evaluate (ve, k, i, j, DY2);
          return eval / (longitude_length * longitude_length);
       }
 
       case DY2:
       {
-         const Real eval = Vector_Data_3D::evaluate (ve, k, i, j, DX2);
+         const Real eval = Data_3D::evaluate (ve, k, i, j, DX2);
          return eval / (LATITUDE_LENGTH * LATITUDE_LENGTH);
       }
 
@@ -3645,7 +3641,7 @@ Geodetic_Vector_Data_3D::evaluate (const Integer vector_element,
       {
          const Real latitude = get_coordinate (1, i);
          const Real c = cos (latitude * DEGREE_TO_RADIAN);
-         const Real eval = Vector_Data_3D::evaluate (ve, k, i, j, DXY);
+         const Real eval = Data_3D::evaluate (ve, k, i, j, DXY);
          return eval / (LATITUDE_LENGTH * LATITUDE_LENGTH * c);
       }
 
@@ -3653,9 +3649,9 @@ Geodetic_Vector_Data_3D::evaluate (const Integer vector_element,
       {
          const Real latitude = get_coordinate (1, i);
          const Real c = cos (latitude * DEGREE_TO_RADIAN);
-         const Real dz2 = Vector_Data_3D::evaluate (ve, k, i, j, DY2);
-         const Real dx2 = Vector_Data_3D::evaluate (ve, k, i, j, DY2);
-         const Real dy2 = Vector_Data_3D::evaluate (ve, k, i, j, DX2);
+         const Real dz2 = Data_3D::evaluate (ve, k, i, j, DY2);
+         const Real dx2 = Data_3D::evaluate (ve, k, i, j, DY2);
+         const Real dy2 = Data_3D::evaluate (ve, k, i, j, DX2);
          return (dx2 / (c * c) + dy2) / (LATITUDE_LENGTH * LATITUDE_LENGTH);
       }
 
@@ -3664,11 +3660,11 @@ Geodetic_Vector_Data_3D::evaluate (const Integer vector_element,
 }
 
 Real
-Geodetic_Vector_Data_3D::evaluate (const Integer vector_element,
-                                   const Real z,
-                                   const Real latitude,
-                                   const Real longitude,
-                                   const Evaluate_Op evaluate_op) const
+Geodetic_Data_3D::evaluate (const Integer vector_element,
+                            const Real z,
+                            const Real latitude,
+                            const Real longitude,
+                            const Evaluate_Op evaluate_op) const
 {
 
    const Integer& ve = vector_element;
@@ -3679,18 +3675,18 @@ Geodetic_Vector_Data_3D::evaluate (const Integer vector_element,
       default:
       case VALUE:
       {
-         return Vector_Data_3D::evaluate (ve, z, latitude, longitude, evaluate_op);
+         return Data_3D::evaluate (ve, z, latitude, longitude, evaluate_op);
       }
 
       case DX:
       {
-         Real eval = Vector_Data_3D::evaluate (ve, z, latitude, longitude, DY);
+         Real eval = Data_3D::evaluate (ve, z, latitude, longitude, DY);
          return eval / (LATITUDE_LENGTH * cos (latitude * DEGREE_TO_RADIAN));
       }
 
       case DY:
       {
-         Real eval = Vector_Data_3D::evaluate (ve, z, latitude, longitude, DX);
+         Real eval = Data_3D::evaluate (ve, z, latitude, longitude, DX);
          return eval / LATITUDE_LENGTH;
       }
 
@@ -3698,29 +3694,29 @@ Geodetic_Vector_Data_3D::evaluate (const Integer vector_element,
       {
          Real c = cos (latitude * DEGREE_TO_RADIAN);
          Real longitude_length = LATITUDE_LENGTH * c;
-         Real eval = Vector_Data_3D::evaluate (ve, z, latitude, longitude, DY2);
+         Real eval = Data_3D::evaluate (ve, z, latitude, longitude, DY2);
          return eval / (longitude_length * longitude_length);
       }
 
       case DY2:
       {
-         Real eval = Vector_Data_3D::evaluate (ve, z, latitude, longitude, DX2);
+         Real eval = Data_3D::evaluate (ve, z, latitude, longitude, DX2);
          return eval / (LATITUDE_LENGTH * LATITUDE_LENGTH);
       }
 
       case DXY:
       {
          Real c = cos (latitude * DEGREE_TO_RADIAN);
-         Real eval = Vector_Data_3D::evaluate (ve, z, latitude, longitude, DXY);
+         Real eval = Data_3D::evaluate (ve, z, latitude, longitude, DXY);
          return eval / (LATITUDE_LENGTH * LATITUDE_LENGTH * c);
       }
 
       case LAPLACIAN:
       {
          Real c = cos (latitude * DEGREE_TO_RADIAN);
-         Real dz2 = Vector_Data_3D::evaluate (ve, z, latitude, longitude, DY2);
-         Real dx2 = Vector_Data_3D::evaluate (ve, z, latitude, longitude, DY2);
-         Real dy2 = Vector_Data_3D::evaluate (ve, z, latitude, longitude, DX2);
+         Real dz2 = Data_3D::evaluate (ve, z, latitude, longitude, DY2);
+         Real dx2 = Data_3D::evaluate (ve, z, latitude, longitude, DY2);
+         Real dy2 = Data_3D::evaluate (ve, z, latitude, longitude, DX2);
          return (dx2 / (c * c) + dy2) / (LATITUDE_LENGTH * LATITUDE_LENGTH);
       }
 
@@ -3729,11 +3725,11 @@ Geodetic_Vector_Data_3D::evaluate (const Integer vector_element,
 }
 
 Real
-Geodetic_Vector_Data_3D::evaluate (const Integer vector_element,
-                                   const Integer k,
-                                   const Real latitude,
-                                   const Real longitude,
-                                   const Evaluate_Op evaluate_op) const
+Geodetic_Data_3D::evaluate (const Integer vector_element,
+                            const Integer k,
+                            const Real latitude,
+                            const Real longitude,
+                            const Evaluate_Op evaluate_op) const
 {
 
    const Integer& ve = vector_element;
@@ -3744,25 +3740,25 @@ Geodetic_Vector_Data_3D::evaluate (const Integer vector_element,
       default:
       case VALUE:
       {
-         return Vector_Data_3D::evaluate (ve, k, latitude, longitude, evaluate_op);
+         return Data_3D::evaluate (ve, k, latitude, longitude, evaluate_op);
       }
 
       case DX:
       {
-         Real eval = Vector_Data_3D::evaluate (ve, k, latitude, longitude, DY);
+         Real eval = Data_3D::evaluate (ve, k, latitude, longitude, DY);
          return eval / (LATITUDE_LENGTH * cos (latitude * DEGREE_TO_RADIAN));
       }
 
       case DY:
       {
-         Real eval = Vector_Data_3D::evaluate (ve, k, latitude, longitude, DX);
+         Real eval = Data_3D::evaluate (ve, k, latitude, longitude, DX);
          return eval / LATITUDE_LENGTH;
       }
 
       case DXY:
       {
          Real c = cos (latitude * DEGREE_TO_RADIAN);
-         Real eval = Vector_Data_3D::evaluate (ve, k, latitude, longitude, DXY);
+         Real eval = Data_3D::evaluate (ve, k, latitude, longitude, DXY);
          return eval / (LATITUDE_LENGTH * LATITUDE_LENGTH * c);
       }
 
@@ -3771,149 +3767,21 @@ Geodetic_Vector_Data_3D::evaluate (const Integer vector_element,
 }
 
 void
-Geodetic_Vector_Data_3D::subtract_zonal_mean (const Integer vector_element)
+Geodetic_Data_3D::subtract_zonal_mean (const Integer vector_element)
 {
    subtract_y_mean (vector_element);
 }
 
 void
-Geodetic_Vector_Data_3D::subtract_meridional_mean (const Integer vector_element)
+Geodetic_Data_3D::subtract_meridional_mean (const Integer vector_element)
 {
    subtract_x_mean (vector_element);
 }
 
 void
-Geodetic_Vector_Data_3D::subtract_horizontal_mean (const Integer vector_element)
+Geodetic_Data_3D::subtract_horizontal_mean (const Integer vector_element)
 {
    subtract_xy_mean (vector_element);
-}
-
-Geodetic_Scalar_Data_2D::Geodetic_Scalar_Data_2D (const Size_2D& size_2d,
-                                                  const Domain_2D& domain_2d,
-                                                  const bool periodic_longitude)
-   : Vector_Data_2D (1, size_2d, domain_2d, false, periodic_longitude),
-     Scalar_Data_2D (size_2d, domain_2d, false, periodic_longitude),
-     Geodetic_Vector_Data_2D (1, size_2d, domain_2d, periodic_longitude)
-{
-}
-
-Geodetic_Scalar_Data_2D::Geodetic_Scalar_Data_2D (const Tuple tuple_latitude,
-                                                  const Tuple tuple_longitude,
-                                                  const bool periodic_longitude)
-   : Vector_Data_2D (1, tuple_latitude, tuple_longitude,
-                     false, periodic_longitude),
-     Scalar_Data_2D (tuple_latitude, tuple_longitude,
-                     false, periodic_longitude),
-     Geodetic_Vector_Data_2D (1, tuple_latitude, tuple_longitude,
-                              periodic_longitude)
-{
-}
-
-Geodetic_Scalar_Data_2D::~Geodetic_Scalar_Data_2D ()
-{
-}
-
-void
-Geodetic_Scalar_Data_2D::set_datum (const Integer node_latitude,
-                                    const Integer node_longitude,
-                                    const Real datum)
-{
-   Geodetic_Vector_Data_2D::set_datum (0, node_latitude, node_longitude, datum);
-}
-
-const Real&
-Geodetic_Scalar_Data_2D::get_datum (const Integer node_latitude,
-                                    const Integer node_longitude) const
-{
-   return Geodetic_Vector_Data_2D::get_datum (0, node_latitude, node_longitude);
-}
-
-Real
-Geodetic_Scalar_Data_2D::evaluate (const Real latitude,
-                                   const Real longitude,
-                                   const Evaluate_Op evaluate_op) const
-{
-   return Geodetic_Vector_Data_2D::evaluate (
-      0, latitude, longitude, evaluate_op);
-}
-
-Geodetic_Scalar_Data_3D::Geodetic_Scalar_Data_3D (const Size_3D& size_3d,
-                                                  const Domain_3D& domain_3d,
-                                                  const bool periodic_longitude)
-   : Vector_Data_3D (1, size_3d, domain_3d, false, false, periodic_longitude),
-     Scalar_Data_3D (size_3d, domain_3d, false, false, periodic_longitude),
-     Geodetic_Vector_Data_3D (1, size_3d, domain_3d, periodic_longitude)
-{
-}
-
-Geodetic_Scalar_Data_3D::Geodetic_Scalar_Data_3D (const Tuple tuple_z,
-                                                  const Tuple tuple_latitude,
-                                                  const Tuple tuple_longitude,
-                                                  const bool periodic_longitude)
-   : Vector_Data_3D (1, tuple_z, tuple_latitude, tuple_longitude,
-                     false, false, periodic_longitude),
-     Scalar_Data_3D (tuple_z, tuple_latitude, tuple_longitude,
-                     false, false, periodic_longitude),
-     Geodetic_Vector_Data_3D (1, tuple_z, tuple_latitude,
-                              tuple_longitude, periodic_longitude)
-{
-}
-
-Geodetic_Scalar_Data_3D::Geodetic_Scalar_Data_3D (const Tuple tuple_z,
-                                                  const Size_2D& size_2d,
-                                                  const Domain_2D& domain_2d,
-                                                  const bool periodic_longitude)
-   : Vector_Data_3D (1, tuple_z, size_2d, domain_2d,
-                     false, false, periodic_longitude),
-     Scalar_Data_3D (tuple_z, size_2d, domain_2d,
-                     false, false, periodic_longitude),
-     Geodetic_Vector_Data_3D (1, tuple_z, size_2d, domain_2d,
-                              periodic_longitude)
-{
-}
-
-Geodetic_Scalar_Data_3D::~Geodetic_Scalar_Data_3D ()
-{
-}
-
-
-void
-Geodetic_Scalar_Data_3D::set_datum (const Integer node_z,
-                                    const Integer node_latitude,
-                                    const Integer node_longitude,
-                                    const Real datum)
-{
-   Geodetic_Vector_Data_3D::set_datum (
-      0, node_z, node_latitude, node_longitude, datum);
-}
-
-const Real&
-Geodetic_Scalar_Data_3D::get_datum (const Integer node_z,
-                                    const Integer node_latitude,
-                                    const Integer node_longitude) const
-{
-   return Geodetic_Vector_Data_3D::get_datum (
-      0, node_z, node_latitude, node_longitude);
-}
-
-Real
-Geodetic_Scalar_Data_3D::evaluate (const Real z,
-                                   const Real latitude,
-                                   const Real longitude,
-                                   const Evaluate_Op evaluate_op) const
-{
-   return Geodetic_Vector_Data_3D::evaluate (
-      0, z, latitude, longitude, evaluate_op);
-}
-
-Real
-Geodetic_Scalar_Data_3D::evaluate (const Integer k,
-                                   const Real latitude,
-                                   const Real longitude,
-                                   const Evaluate_Op evaluate_op) const
-{
-   return Geodetic_Vector_Data_3D::evaluate (
-      0, k, latitude, longitude, evaluate_op);
 }
 
 Track_Data::Track_Data ()
@@ -3925,7 +3793,7 @@ Track_Data::Track_Data (const Track_Data& track_data)
    : map<Real, Real> (track_data)
 {
    if (track_data.spline_ptr == NULL) { spline_ptr = NULL; }
-   else { spline_ptr = new Scalar_Data_1D (*track_data.spline_ptr); }
+   else { spline_ptr = new Data_1D (*track_data.spline_ptr); }
 }
 
 Track_Data::~Track_Data ()
@@ -3941,7 +3809,7 @@ Track_Data::okay (const bool cubic)
    const Real last_tau = rbegin ()->first;
 
    if (spline_ptr != NULL) { delete spline_ptr; }
-   spline_ptr = new Scalar_Data_1D (n, Domain_1D (0, last_tau));
+   spline_ptr = new Data_1D (1, n, Domain_1D (0, last_tau));
 
    for (Track_Data::iterator i = begin (); i != end (); i++)
    {
@@ -3951,7 +3819,7 @@ Track_Data::okay (const bool cubic)
       const Integer node = distance (begin (), i);
 
       spline_ptr->modify_coordinate_tuple (node, tau);
-      spline_ptr->set_datum (node, datum);
+      spline_ptr->set_datum (0, node, datum);
 
    }
 
@@ -3989,7 +3857,7 @@ Track_Data::get_datum (const Real tau,
       if (tau < start_tau || tau > end_tau) { return GSL_NAN; }
    }
 
-   return spline_ptr->evaluate (tau);
+   return spline_ptr->evaluate (0, tau);
 
 }
 
@@ -4005,7 +3873,7 @@ Track_Data::get_dt (const Real tau,
       if (tau < start_tau || tau > end_tau) { return GSL_NAN; }
    }
 
-   return spline_ptr->evaluate (tau, DX) / 3600;
+   return spline_ptr->evaluate (0, tau, DX) / 3600;
 
 }
 
@@ -4025,7 +3893,7 @@ Track_Data::get_domain_1d (const Real dt) const
    for (auto iterator = tuple.begin (); iterator != tuple.end (); iterator++)
    {
       const Real tau = *(iterator);
-      const Real datum = spline_ptr->evaluate (tau);
+      const Real datum = spline_ptr->evaluate (0, tau);
       if (datum < start) { start = datum; }
       if (datum > end) { end = datum; }
    }

@@ -1273,7 +1273,7 @@ namespace denise
 
    };
 
-   class Geodetic_Vector_Data_2D : public virtual Vector_Data_2D
+   class Geodetic_Data_2D : public virtual Data_2D
    {
 
       protected:
@@ -1308,18 +1308,18 @@ namespace denise
 
       public:
 
-         Geodetic_Vector_Data_2D (const Integer vector_size,
-                                  const Size_2D& size_2d,
-                                  const Domain_2D& domain_2d,
-                                  const bool periodic_longitude = false);
+         Geodetic_Data_2D (const Integer vector_size,
+                           const Size_2D& size_2d,
+                           const Domain_2D& domain_2d,
+                           const bool periodic_longitude = false);
 
-         Geodetic_Vector_Data_2D (const Integer vector_size,
-                                  const Tuple tuple_latitude,
-                                  const Tuple tuple_longitude,
-                                  const bool periodic_longitude = false);
+         Geodetic_Data_2D (const Integer vector_size,
+                           const Tuple tuple_latitude,
+                           const Tuple tuple_longitude,
+                           const bool periodic_longitude = false);
 
          virtual
-         ~Geodetic_Vector_Data_2D ();
+         ~Geodetic_Data_2D ();
 
          static Real
          get_f (const Real latitude);
@@ -1364,30 +1364,30 @@ namespace denise
 
    };
 
-   class Geodetic_Vector_Data_3D : public virtual Vector_Data_3D
+   class Geodetic_Data_3D : public virtual Data_3D
    {
 
       public:
 
-         Geodetic_Vector_Data_3D (const Integer vector_size,
-                                  const Size_3D& size_3d,
-                                  const Domain_3D& domain_3d,
-                                  const bool periodic_longitude = false);
+         Geodetic_Data_3D (const Integer vector_size,
+                           const Size_3D& size_3d,
+                           const Domain_3D& domain_3d,
+                           const bool periodic_longitude = false);
 
-         Geodetic_Vector_Data_3D (const Integer vector_size,
-                                  const Tuple tuple_z,
-                                  const Tuple tuple_latitude,
-                                  const Tuple tuple_longitude,
-                                  const bool periodic_longitude = false);
+         Geodetic_Data_3D (const Integer vector_size,
+                           const Tuple tuple_z,
+                           const Tuple tuple_latitude,
+                           const Tuple tuple_longitude,
+                           const bool periodic_longitude = false);
 
-         Geodetic_Vector_Data_3D (const Integer vector_size,
-                                  const Tuple tuple_z,
-                                  const Size_2D& size_2d,
-                                  const Domain_2D& domain_2d,
-                                  const bool periodic_longitude = false);
+         Geodetic_Data_3D (const Integer vector_size,
+                           const Tuple tuple_z,
+                           const Size_2D& size_2d,
+                           const Domain_2D& domain_2d,
+                           const bool periodic_longitude = false);
 
          virtual
-         ~Geodetic_Vector_Data_3D ();
+         ~Geodetic_Data_3D ();
 
          static Real
          get_f (const Real latitude);
@@ -1440,91 +1440,12 @@ namespace denise
 
    };
 
-   class Geodetic_Scalar_Data_2D : public Scalar_Data_2D,
-                                   public Geodetic_Vector_Data_2D
-   {
-
-      public:
-
-         Geodetic_Scalar_Data_2D (const Size_2D& size_2d,
-                                  const Domain_2D& domain_2d,
-                                  const bool periodic_longitude = false);
-
-         Geodetic_Scalar_Data_2D (const Tuple tuple_latitude,
-                                  const Tuple tuple_longitude,
-                                  const bool periodic_longitude = false);
-
-         ~Geodetic_Scalar_Data_2D ();
-
-         void
-         set_datum (const Integer node_latitude,
-                    const Integer node_longitude,
-                    const Real datum);
-
-         const Real&
-         get_datum (const Integer node_latitude,
-                    const Integer node_longitude) const;
-
-         Real
-         evaluate (const Real latitude,
-                   const Real longitude,
-                   const Evaluate_Op evaluate_op = VALUE) const;
-
-   };
-
-   class Geodetic_Scalar_Data_3D : public Scalar_Data_3D,
-                                   public Geodetic_Vector_Data_3D
-   {
-
-      public:
-
-         Geodetic_Scalar_Data_3D (const Size_3D& size_3d,
-                                  const Domain_3D& domain_3d,
-                                  const bool periodic_longitude = false);
-
-         Geodetic_Scalar_Data_3D (const Tuple tuple_z,
-                                  const Tuple tuple_latitude,
-                                  const Tuple tuple_longitude,
-                                  const bool periodic_longitude = false);
-
-         Geodetic_Scalar_Data_3D (const Tuple tuple_z,
-                                  const Size_2D& size_2d,
-                                  const Domain_2D& domain_2d,
-                                  const bool periodic_longitude = false);
-
-         ~Geodetic_Scalar_Data_3D ();
-
-         void
-         set_datum (const Integer node_z,
-                    const Integer node_latitude,
-                    const Integer node_longitude,
-                    const Real datum);
-
-         const Real&
-         get_datum (const Integer node_z,
-                    const Integer node_latitude, 
-                    const Integer node_longitude) const;
-
-         Real
-         evaluate (const Real z,
-                   const Real latitude,
-                   const Real longitude,
-                   const Evaluate_Op evaluate_op = VALUE) const;
-
-         Real
-         evaluate (const Integer k,
-                   const Real latitude,
-                   const Real longitude,
-                   const Evaluate_Op evaluate_op = VALUE) const;
-
-   };
-
    class Track_Data : public map<Real, Real>
    {
 
       private:
 
-         Scalar_Data_1D*
+         Data_1D*
          spline_ptr;
 
       public:

@@ -91,17 +91,19 @@ namespace denise
                match (const Segment& segment) const;
 
                Point_2D
-               get_head (const Scalar_Data_2D& scalar_data_2d) const;
+               get_head (const Grid_nD& grid_nd) const;
 
                Point_2D
-               get_tail (const Scalar_Data_2D& scalar_data_2d) const;
+               get_tail (const Grid_nD& grid_nd) const;
 
                bool
-               is_isosegment (const Scalar_Data_2D& scalar_data_2d,
+               is_isosegment (const Data_2D& data_2d,
+                              const Integer vector_element,
                               const Real contour_value) const;
 
                bool
-               is_isosegment (const Scalar_Data_2D& scalar_data_2d,
+               is_isosegment (const Data_2D& data_2d,
+                              const Integer vector_element,
                               const Real lower_contour_value,
                               const Real upper_contour_value) const;
 
@@ -133,11 +135,11 @@ namespace denise
 
                Isoline ();
 
-               Isoline (const Scalar_Data_2D& scalar_data_2d,
+               Isoline (const Grid_nD& grid_nd,
                         const Segment& segment);
 
                void
-               add (const Scalar_Data_2D& scalar_data_2d,
+               add (const Grid_nD& grid_nd,
                     const Segment& segment,
                     const bool to_head);
 
@@ -157,7 +159,7 @@ namespace denise
                      Bag ();
 
                      Bag::iterator
-                     add (const Scalar_Data_2D& scalar_data_2d,
+                     add (const Data_2D& data_2d,
                           const Segment& segment);
 
                      iterator
@@ -171,15 +173,18 @@ namespace denise
          vector<Isoline::Bag>
          isoline_bag_vector;
 
-         Scalar_Data_2D
-         scalar_data_2d;
+         const Data_2D&
+         data_2d;
+
+         const Integer
+         vector_element;
 
          Tuple
          contour_tuple;
 
       public:
 
-         Square_Contour (const Vector_Data_2D& vector_data_2d,
+         Square_Contour (const Data_2D& data_2d,
                          const Integer vector_element,
                          const Tuple& contour_tuple);
 
@@ -769,13 +774,13 @@ namespace denise
                        const Integer label_stride) const;
 
          void
-         init_a (const Vector_Field_2D& vector_field_2d,
+         init_a (const Field_2D& field_2d,
                  const Integer vector_element,
                  const Tuple& coordinate_tuple_x,
                  const Tuple& coordinate_tuple_y);
 
          void
-         init_a (const Vector_Field_2D& vector_field_2d,
+         init_a (const Field_2D& field_2d,
                  const Scalarization_2d scalarization_2d,
                  const Integer vector_element_0,
                  const Integer vector_element_1,
@@ -787,7 +792,7 @@ namespace denise
                  const Real epsilon);
 
          void
-         init (const Vector_Field_2D& vector_field_2d,
+         init (const Field_2D& field_2d,
                const Integer vector_element,
                const Real step,
                const Tuple& coordinate_tuple_x,
@@ -795,7 +800,7 @@ namespace denise
                const Real epsilon);
 
          void
-         init (const Vector_Field_2D& vector_field_2d,
+         init (const Field_2D& field_2d,
                const Integer vector_element,
                const Tuple& level_tuple,
                const Tuple& coordinate_tuple_x,
@@ -803,7 +808,7 @@ namespace denise
                const Real epsilon);
 
          void
-         init (const Vector_Field_2D& vector_field_2d,
+         init (const Field_2D& field_2d,
                const Scalarization_2d scalarization_2d,
                const Integer vector_element_0,
                const Integer vector_element_1,
@@ -813,7 +818,7 @@ namespace denise
                const Real epsilon);
 
          void
-         init (const Vector_Field_2D& vector_field_2d,
+         init (const Field_2D& field_2d,
                const Scalarization_2d scalarization_2d,
                const Integer vector_element_0,
                const Integer vector_element_1,
@@ -825,33 +830,33 @@ namespace denise
       public:
 
          // 1
-         Contour (const Vector_Data_2D& vector_data_2d,
+         Contour (const Data_2D& data_2d,
                   const Integer vector_element,
                   const Tuple& level_tuple,
                   const Real epsilon = GSL_NAN);
 
          // 2
-         Contour (const Vector_Data_2D& vector_data_2d,
+         Contour (const Data_2D& data_2d,
                   const Integer vector_element,
                   const Real step,
                   const Real epsilon = GSL_NAN);
 
          // 3
-         Contour (const Vector_Data_2D& vector_data_2d,
+         Contour (const Data_2D& data_2d,
                   const Integer vector_element,
                   const Tuple& level_tuple,
                   const Domain_2D& domain_2d,
                   const Real epsilon = GSL_NAN);
 
          // 4
-         Contour (const Vector_Data_2D& vector_data_2d,
+         Contour (const Data_2D& data_2d,
                   const Integer vector_element,
                   const Real step,
                   const Domain_2D& domain_2d,
                   const Real epsilon = GSL_NAN);
 
          // 5
-         Contour (const Vector_Data_2D& vector_data_2d,
+         Contour (const Data_2D& data_2d,
                   const Integer vector_element,
                   const Tuple& level_tuple,
                   const Tuple& coordinate_tuple_x,
@@ -859,7 +864,7 @@ namespace denise
                   const Real epsilon = GSL_NAN);
 
          // 6
-         Contour (const Vector_Data_2D& vector_data_2d,
+         Contour (const Data_2D& data_2d,
                   const Integer vector_element,
                   const Real step,
                   const Tuple& coordinate_tuple_x,
@@ -867,7 +872,7 @@ namespace denise
                   const Real epsilon = GSL_NAN);
 
          // 7
-         Contour (const Vector_Data_2D& vector_data_2d,
+         Contour (const Data_2D& data_2d,
                   const Integer vector_element,
                   const Tuple& level_tuple,
                   const Size_2D& size_2d,
@@ -875,7 +880,7 @@ namespace denise
                   const Real epsilon = GSL_NAN);
 
          // 8
-         Contour (const Vector_Data_2D& vector_data_2d,
+         Contour (const Data_2D& data_2d,
                   const Integer vector_element,
                   const Real step,
                   const Size_2D& size_2d,
@@ -883,7 +888,7 @@ namespace denise
                   const Real epsilon = GSL_NAN);
 
          // 9
-         Contour (const Vector_Data_2D& vector_data_2d,
+         Contour (const Data_2D& data_2d,
                   const Scalarization_2d scalarization_2d,
                   const Integer vector_element_0,
                   const Integer vector_element_1,
@@ -891,7 +896,7 @@ namespace denise
                   const Real epsilon = GSL_NAN);
 
          // 10
-         Contour (const Vector_Data_2D& vector_data_2d,
+         Contour (const Data_2D& data_2d,
                   const Scalarization_2d scalarization_2d,
                   const Integer vector_element_0,
                   const Integer vector_element_1,
@@ -899,7 +904,7 @@ namespace denise
                   const Real epsilon = GSL_NAN);
 
          // 11
-         Contour (const Vector_Data_2D& vector_data_2d,
+         Contour (const Data_2D& data_2d,
                   const Scalarization_2d scalarization_2d,
                   const Integer vector_element_0,
                   const Integer vector_element_1,
@@ -908,7 +913,7 @@ namespace denise
                   const Real epsilon = GSL_NAN);
 
          // 12
-         Contour (const Vector_Data_2D& vector_data_2d,
+         Contour (const Data_2D& data_2d,
                   const Scalarization_2d scalarization_2d,
                   const Integer vector_element_0,
                   const Integer vector_element_1,
@@ -917,7 +922,7 @@ namespace denise
                   const Real epsilon = GSL_NAN);
 
          // 13
-         Contour (const Vector_Data_2D& vector_data_2d,
+         Contour (const Data_2D& data_2d,
                   const Scalarization_2d scalarization_2d,
                   const Integer vector_element_0,
                   const Integer vector_element_1,
@@ -927,7 +932,7 @@ namespace denise
                   const Real epsilon = GSL_NAN);
 
          // 14
-         Contour (const Vector_Data_2D& vector_data_2d,
+         Contour (const Data_2D& data_2d,
                   const Scalarization_2d scalarization_2d,
                   const Integer vector_element_0,
                   const Integer vector_element_1,
@@ -973,7 +978,7 @@ namespace denise
                   const Real epsilon = GSL_NAN);
 
          // 21
-         Contour (const Vector_Field_2D& scalar_field_2d,
+         Contour (const Field_2D& field_2d,
                   const Integer vector_element,
                   const Tuple& level_tuple,
                   const Size_2D& size_2d,
@@ -981,7 +986,7 @@ namespace denise
                   const Real epsilon = GSL_NAN);
 
          // 22
-         Contour (const Vector_Field_2D& scalar_field_2d,
+         Contour (const Field_2D& field_2d,
                   const Integer vector_element,
                   const Real step,
                   const Size_2D& size_2d,
@@ -1058,7 +1063,7 @@ namespace denise
          static void
          render (const RefPtr<Context>& cr,
                  const Transform_2D& transform,
-                 const Vector_Data_2D& vector_data_2d,
+                 const Data_2D& data_2d,
                  const Integer vector_element,
                  const Domain_2D& domain,
                  const Color_Chooser& color_chooser);
@@ -1066,7 +1071,7 @@ namespace denise
          static void
          render (const RefPtr<Context>& cr,
                  const Transform_2D& transform,
-                 const Vector_Data_2D& vector_data_2d,
+                 const Data_2D& data_2d,
                  const Integer vector_element,
                  const Color_Chooser& color_chooser);
 

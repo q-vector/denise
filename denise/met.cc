@@ -581,6 +581,15 @@ Wind::get_string (const Real speed_multiplier,
    return Dstring::render (format, direction, speed);
 }
 
+Dstring
+Wind::get_string (const Dstring& format,
+                  const Real speed_multiplier) const
+{
+   const Real direction = get_direction ();
+   const Real speed = get_speed () * speed_multiplier;
+   return Dstring::render (format, direction, speed);
+}
+
 Wind::Category
 Wind::get_category (const Real speed)
 {

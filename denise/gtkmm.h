@@ -3364,7 +3364,7 @@ namespace denise
          get_domain_2d () const;
 
          virtual Domain_2D
-         get_render_domain (const Geodetic_Vector_Data_2D& gvd_2d) const;
+         get_render_domain (const Geodetic_Data_2D& gd_2d) const;
 
       public:
 
@@ -3547,7 +3547,7 @@ namespace denise
 
          virtual void
          render_time_series (const RefPtr<Context>& cr,
-                             const Vector_Data_1D& time_series,
+                             const Data_1D& time_series,
                              const Integer vector_element) const;
 
          virtual void
