@@ -4407,11 +4407,26 @@ Geodetic_Mesh::cairo (const RefPtr<Context> cr,
    const Lat_Long anchor_lat_long_a (anchor_lat_a, anchor_long_a);
    const Lat_Long anchor_lat_long_b (anchor_lat_b, anchor_long_b);
 
-   const Integer index = size () - 1;
+   vector<Lat_Long> anchor_lat_long_vector;
+   anchor_lat_long_vector.push_back (anchor_lat_long_a);
+   anchor_lat_long_vector.push_back (anchor_lat_long_b);
+   cairo (cr, transform, anchor_lat_long_vector);
 
+}
+
+void
+Geodetic_Mesh::cairo (const RefPtr<Context> cr,
+                      const Geodetic_Transform& transform,
+                      const vector<Lat_Long>& anchor_lat_long_vector) const
+{
+
+   const Integer index = size () - 1;
    Mesh_2D::render (cr, transform);
-   render_label_lat_long (cr, transform, index, anchor_lat_long_a, "%.0f");
-   render_label_lat_long (cr, transform, index, anchor_lat_long_b, "%.0f");
+
+   for (auto anchor_lat_long : anchor_lat_long_vector)
+   {
+      render_label_lat_long (cr, transform, index, anchor_lat_long, "%.0f");
+   }
 
 }
 
