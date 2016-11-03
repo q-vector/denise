@@ -94,6 +94,7 @@ namespace denise
       RefPtr<Context> cr = Context::create (surface);
       //cr->select_font_face ("Verdana", FONT_SLANT_NORMAL, FONT_WEIGHT_NORMAL);
       cr->select_font_face ("DejaVu Sans", FONT_SLANT_NORMAL, FONT_WEIGHT_NORMAL);
+      cr->set_fill_rule (FILL_RULE_EVEN_ODD);
       cr->set_line_cap (LINE_CAP_ROUND);
       cr->set_line_join (LINE_JOIN_ROUND);
       return cr;
