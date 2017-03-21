@@ -172,7 +172,7 @@ void
 Image_Buffer::initialize (const Dwidget& widget)
 {
 
-   if (image_surface == 0)
+   if (!image_surface)
    {
       const Integer w = Integer (round (widget.get_width ()));
       const Integer h = Integer (round (widget.get_height ()));
@@ -195,7 +195,7 @@ Image_Buffer::get_cr () const
 void
 Image_Buffer::blit (const RefPtr<Context>& cr)
 {
-   if (image_surface != 0)
+   if (image_surface)
    {
       cr->set_source (image_surface, 0, 0);
       cr->paint ();
@@ -1516,8 +1516,8 @@ Dcanvas::refresh (const RefPtr<Context>& cr)
 
    //gdk_threads_enter ();
 
-   if (image_surface == 0) { return; }
-   if (widget_surface == 0) { return; }
+   if (!image_surface) { return; }
+   if (!widget_surface) { return; }
 
    const RefPtr<Context> widget_cr = get_widget_cr ();
    widget_cr->set_source (image_surface, 0, 0);
@@ -1550,8 +1550,8 @@ Dcanvas::refresh (const RefPtr<Context>& cr,
 
    //gdk_threads_enter ();
 
-   if (image_surface == 0) { return; }
-   if (widget_surface == 0) { return; }
+   if (!image_surface) { return; }
+   if (!widget_surface) { return; }
 
    const Rect rect (point, width, height);
 
@@ -1576,7 +1576,7 @@ Dcanvas::render ()
 
    if (!packed) { pack (); }
 
-   if (image_surface != 0)
+   if (image_surface)
    {
       const RefPtr<Context>& cr = Context::create (image_surface);
       cr->select_font_face ("Verdana", FONT_SLANT_NORMAL, FONT_WEIGHT_NORMAL);
