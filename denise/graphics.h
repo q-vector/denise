@@ -246,7 +246,7 @@ namespace denise
    class Color_Gradient : public Paintable
    {
 
-      public:
+      protected:
 
          enum Type
          {
@@ -275,6 +275,8 @@ namespace denise
          Real
          radius_b;
 
+      public:
+
          Color_Gradient (const Color& color_a,
                          const Color& color_b,
                          const Point_2D& point_a,
@@ -286,6 +288,9 @@ namespace denise
                          const Point_2D& point_b,
                          const Real radius_a,
                          const Real radius_b);
+
+         void
+         cairo (const RefPtr<Context>& cr) const;
 
    };
 

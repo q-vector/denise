@@ -561,7 +561,7 @@ Wind::get_direction_string (const Integer n,
    }
 
    const Real cardinal_direction = (dd == 0 ? n : dd) * delta_d;
-   const Dstring& fmt = (no_format ? "%.1f\u00b0" : format);
+   const Dstring& fmt = (no_format ? "%03.0f\u00b0" : format);
    return Dstring::render (fmt, cardinal_direction);
 
 }
@@ -836,37 +836,37 @@ Wind_Transform::reverse (Real& direction,
    direction = (theta * 180/M_PI + 90);
 }
 
-Wind_Rose_Threshold::Wind_Rose_Threshold (const Real threshold,
-                                          const Dstring& label_str)
+Wind_Rose::Threshold::Threshold (const Real threshold,
+                                 const Dstring& label_str)
    : value (threshold),
      label_str (label_str)
 {
 }
 
-Wind_Rose_Record::Wind_Rose_Record (const Real threshold_value,
-                                    const Real percentage,
-                                    const Dstring& label_str)
+Wind_Rose::Record::Record (const Real threshold_value,
+                           const Real percentage,
+                           const Dstring& label_str)
    : threshold (threshold_value, label_str),
      percentage (percentage)
 {
 }
 
-Wind_Rose_Record::Wind_Rose_Record (const Wind_Rose_Threshold& wrt,
-                                    const Real percentage)
-   : threshold (wrt),
+Wind_Rose::Record::Record (const Wind_Rose::Threshold& threshold,
+                           const Real percentage)
+   : threshold (threshold),
      percentage (percentage)
 {
 }
 
 void
-Wind_Rose_Arm::render (const RefPtr<Context> cr,
-                       const Color& pen_color,
-                       const Color_Chooser& color_chooser,
-                       const Point_2D& point,
-                       const Real direction,
-                       const Real percentage_size,
-                       const Real delta_width,
-                       const bool show_label) const
+Wind_Rose::Arm::render (const RefPtr<Context> cr,
+                        const Color& pen_color,
+                        const Color_Chooser& color_chooser,
+                        const Point_2D& point,
+                        const Real direction,
+                        const Real percentage_size,
+                        const Real delta_width,
+                        const bool show_label) const
 {
 
    Polygon polygon;
@@ -885,9 +885,9 @@ Wind_Rose_Arm::render (const RefPtr<Context> cr,
    for (Integer i = 0; i < size (); i++)
    {
 
-      const Wind_Rose_Record& wrr = at (i);
-      const Real& threshold = wrr.threshold.value;
-      const Real& percentage = wrr.percentage;
+      const Wind_Rose::Record& record = at (i);
+      const Real& threshold = record.threshold.value;
+      const Real& percentage = record.percentage;
 
       if (percentage > 0)
       {
@@ -931,7 +931,7 @@ Wind_Rose_Arm::render (const RefPtr<Context> cr,
 
          if (show_label)
          {
-            Label label (wrr.threshold.label_str, pc, 'r', 'c');
+            Label label (record.threshold.label_str, pc, 'r', 'c');
             label.set_text_angle (M_PI - theta);
             label.cairo (cr);
          }
@@ -947,17 +947,121 @@ Wind_Rose_Arm::render (const RefPtr<Context> cr,
 }
 
 void
-Wind_Rose::init (const Integer number_of_directions,
-                 const vector<Wind_Rose_Threshold>& threshold_vector,
-                 const Dstring& unit_string,
-                 const Real multiplier)
+Wind_Rose::init (const Dstring& unit_string)
+{
+   this->unit_string = unit_string;
+   this->multiplier = get_multiplier (unit_string);
+}
+
+Wind_Rose::Thresholds
+Wind_Rose::get_thresholds (const Tuple& threshold_tuple) const
+{
+
+   Wind_Rose::Thresholds thresholds;
+
+   for (const auto& value : threshold_tuple)
+   {
+      const Dstring format = "%g" + unit_string;
+      const Dstring label_str = Dstring::render (format, value);
+      const Wind_Rose::Threshold threshold (value, label_str);
+      thresholds.push_back (threshold);
+   }
+
+   return thresholds;
+
+}
+
+Real
+Wind_Rose::get_multiplier (const Dstring& unit_string)
+{
+   if (unit_string == "kt") { return 0.51444444; }
+   if (unit_string == "m/s") { return 1; }
+   if (unit_string == "km/h") { return 0.277777778; }
+   return GSL_NAN;
+}
+
+Wind_Rose::Wind_Rose (const Integer number_of_directions,
+                      const Wind_Rose::Thresholds& thresholds,
+                      const Dstring& unit_string)
+{
+   reset (number_of_directions, thresholds, unit_string);
+}
+
+Wind_Rose::Wind_Rose (const Integer number_of_directions,
+                      const Tuple& threshold_tuple,
+                      const Dstring& unit_string)
+{
+   reset (number_of_directions, threshold_tuple, unit_string);
+}
+
+Wind_Rose::Wind_Rose (const Integer number_of_directions,
+                      const Dstring& threshold_vector_string,
+                      const Dstring& unit_string)
+{
+
+   if (threshold_vector_string == "beaufort")
+   {
+
+      const Real multiplier = get_multiplier (unit_string);
+
+      thresholds.push_back (Wind_Rose::Threshold (0.51 / multiplier, "LT"));
+      thresholds.push_back (Wind_Rose::Threshold (3.60 / multiplier, "MD"));
+      thresholds.push_back (Wind_Rose::Threshold (8.75 / multiplier, "FS"));
+      thresholds.push_back (Wind_Rose::Threshold (11.32 / multiplier, "SG"));
+      thresholds.push_back (Wind_Rose::Threshold (17.49 / multiplier, "GA"));
+      thresholds.push_back (Wind_Rose::Threshold (24.69 / multiplier, "SM"));
+      thresholds.push_back (Wind_Rose::Threshold (32.92 / multiplier, "HC"));
+
+      reset (number_of_directions, thresholds, unit_string);
+
+   }
+   else
+   if (threshold_vector_string == "full_beaufort")
+   {
+
+      Wind_Rose::Thresholds thresholds;
+      const Real multiplier = get_multiplier (unit_string);
+
+      thresholds.push_back (Wind_Rose::Threshold (0.51 / multiplier, "F1"));
+      thresholds.push_back (Wind_Rose::Threshold (1.54 / multiplier, "F2"));
+      thresholds.push_back (Wind_Rose::Threshold (3.60 / multiplier, "F3"));
+      thresholds.push_back (Wind_Rose::Threshold (5.66 / multiplier, "F4"));
+      thresholds.push_back (Wind_Rose::Threshold (8.75 / multiplier, "F5"));
+      thresholds.push_back (Wind_Rose::Threshold (11.32 / multiplier, "F6"));
+      thresholds.push_back (Wind_Rose::Threshold (13.89 / multiplier, "F7"));
+      thresholds.push_back (Wind_Rose::Threshold (17.49 / multiplier, "F8"));
+      thresholds.push_back (Wind_Rose::Threshold (21.09 / multiplier, "F9"));
+      thresholds.push_back (Wind_Rose::Threshold (24.69 / multiplier, "F10"));
+      thresholds.push_back (Wind_Rose::Threshold (28.81 / multiplier, "F11"));
+      thresholds.push_back (Wind_Rose::Threshold (32.92 / multiplier, "F12"));
+
+      reset (number_of_directions, thresholds, unit_string);
+
+   }
+   else
+   {
+      const Tuple threshold_tuple (threshold_vector_string);
+      reset (number_of_directions, threshold_tuple, unit_string);
+   }
+
+}
+
+Wind_Rose::~Wind_Rose ()
+{
+   delete count_data;
+}
+
+void
+Wind_Rose::reset (const Integer number_of_directions,
+                  const Wind_Rose::Thresholds& thresholds,
+                  const Dstring& unit_string)
 {
 
    Integer n = number_of_directions;
-   Integer m = threshold_vector.size ();
+   Integer m = thresholds.size ();
 
    this->number_of_directions = n;
-   this->threshold_vector = threshold_vector;
+   this->thresholds = thresholds;
    this->delta_direction = Real (360) / number_of_directions;
 
    //count_data_ptr = new Data_2D<Integer> (n, m);
@@ -972,129 +1076,17 @@ Wind_Rose::init (const Integer number_of_directions,
    calm_count = 0;
    total_count = 0;
 
-   init (unit_string, multiplier);
+   init (unit_string);
 
 }
 
 void
-Wind_Rose::init (const Integer number_of_directions,
-                 const Tuple& threshold_tuple,
-                 const Dstring& unit_string,
-                 const Real multiplier)
+Wind_Rose::reset (const Integer number_of_directions,
+                  const Tuple& threshold_tuple,
+                  const Dstring& unit_string)
 {
-
-   vector<Wind_Rose_Threshold> threshold_vector;
-
-   for (Integer i = 0; i < threshold_tuple.size (); i++)
-   {
-
-      const Real& threshold = threshold_tuple[i];
-
-      //Dstring label_str = Dstring::render ("%g", threshold);
-      //if (i == threshold_tuple.size () - 1) { label_str = ">= " + label_str; }
-      //else { label_str += string_render (" - %g", threshold_tuple[i+1]); }
-
-      const Dstring format = "%g" + unit_string;
-      const Dstring label_str = Dstring::render (format, threshold);
-
-      threshold_vector.push_back (Wind_Rose_Threshold (threshold, label_str));
-
-   }
-
-   init (number_of_directions, threshold_vector, unit_string, multiplier);
-
-}
-
-void
-Wind_Rose::init (const Dstring& unit_string,
-                 const Real multiplier)
-{
-   this->unit_string = unit_string;
-   this->multiplier = get_multiplier (unit_string);
-}
-
-Real
-Wind_Rose::get_multiplier (const Dstring& unit_string)
-{
-   if (unit_string == "kt") { return 0.51444444; }
-   if (unit_string == "m/s") { return 1; }
-   if (unit_string == "km/h") { return 0.277777778; }
-   return GSL_NAN;
-}
-
-Wind_Rose::Wind_Rose (const Integer number_of_directions,
-                      const vector<Wind_Rose_Threshold>& threshold_vector,
-                      const Dstring& unit_string,
-                      const Real multiplier)
-{
-   init (number_of_directions, threshold_vector, unit_string, multiplier);
-}
-
-Wind_Rose::Wind_Rose (const Integer number_of_directions,
-                      const Tuple& threshold_tuple,
-                      const Dstring& unit_string,
-                      const Real multiplier)
-{
-   init (number_of_directions, threshold_tuple, unit_string, multiplier);
-}
-
-Wind_Rose::Wind_Rose (const Integer number_of_directions,
-                      const Dstring& threshold_vector_string,
-                      const Dstring& unit_string,
-                      const Real multiplier)
-{
-
-   if (threshold_vector_string == "beaufort")
-   {
-
-      vector<Wind_Rose_Threshold> tv;
-      const Real multiplier = get_multiplier (unit_string);
-
-      tv.push_back (Wind_Rose_Threshold (0.51 / multiplier, "LT"));
-      tv.push_back (Wind_Rose_Threshold (3.60 / multiplier, "MD"));
-      tv.push_back (Wind_Rose_Threshold (8.75 / multiplier, "FS"));
-      tv.push_back (Wind_Rose_Threshold (11.32 / multiplier, "SG"));
-      tv.push_back (Wind_Rose_Threshold (17.49 / multiplier, "GA"));
-      tv.push_back (Wind_Rose_Threshold (24.69 / multiplier, "SM"));
-      tv.push_back (Wind_Rose_Threshold (32.92 / multiplier, "HC"));
-
-      init (number_of_directions, tv, unit_string, multiplier);
-
-   }
-   else
-   if (threshold_vector_string == "full_beaufort")
-   {
-
-      vector<Wind_Rose_Threshold> tv;
-      const Real multiplier = get_multiplier (unit_string);
-
-      tv.push_back (Wind_Rose_Threshold (0.51 / multiplier, "F1"));
-      tv.push_back (Wind_Rose_Threshold (1.54 / multiplier, "F2"));
-      tv.push_back (Wind_Rose_Threshold (3.60 / multiplier, "F3"));
-      tv.push_back (Wind_Rose_Threshold (5.66 / multiplier, "F4"));
-      tv.push_back (Wind_Rose_Threshold (8.75 / multiplier, "F5"));
-      tv.push_back (Wind_Rose_Threshold (11.32 / multiplier, "F6"));
-      tv.push_back (Wind_Rose_Threshold (13.89 / multiplier, "F7"));
-      tv.push_back (Wind_Rose_Threshold (17.49 / multiplier, "F8"));
-      tv.push_back (Wind_Rose_Threshold (21.09 / multiplier, "F9"));
-      tv.push_back (Wind_Rose_Threshold (24.69 / multiplier, "F10"));
-      tv.push_back (Wind_Rose_Threshold (28.81 / multiplier, "F11"));
-      tv.push_back (Wind_Rose_Threshold (32.92 / multiplier, "F12"));
-
-      init (number_of_directions, tv, unit_string, multiplier);
-
-   }
-   else
-   {
-      const Tuple threshold_tuple (threshold_vector_string);
-      init (number_of_directions, threshold_tuple, unit_string, multiplier);
-   }
-
-}
-
-Wind_Rose::~Wind_Rose ()
-{
-   delete count_data;
+   const Wind_Rose::Thresholds& thresholds = get_thresholds (threshold_tuple);
+   reset (number_of_directions, thresholds, unit_string);
 }
 
 const Integer&
@@ -1103,16 +1095,16 @@ Wind_Rose::get_number_of_directions () const
    return number_of_directions;
 }
 
-const vector<Wind_Rose_Threshold>&
-Wind_Rose::get_threshold_vector () const
+const Wind_Rose::Thresholds&
+Wind_Rose::get_thresholds () const
 {
-   return threshold_vector;
+   return thresholds;
 }
 
-const Wind_Rose_Threshold&
+const Wind_Rose::Threshold&
 Wind_Rose::get_max_threshold () const
 {
-   return threshold_vector.back ();
+   return thresholds.back ();
 }
 
 Tuple
@@ -1120,13 +1112,10 @@ Wind_Rose::get_threshold_tuple () const
 {
 
    Tuple tuple;
-   typedef vector<Wind_Rose_Threshold> Wrtv;
 
-   for (Wrtv::const_iterator iterator = threshold_vector.begin ();
-        iterator != threshold_vector.end (); iterator++)
+   for (const Threshold& threshold : thresholds)
    {
-      const Real threshold_value = iterator->value;
-      tuple.push_back (threshold_value);
+      tuple.push_back (threshold.value);
    }
 
    return tuple;
@@ -1148,7 +1137,7 @@ Wind_Rose::get_count (const Integer direction_index,
    {
       const Integer d = direction_index;
       const Integer s = speed_index;
-      return count_data[d * threshold_vector.size () + s];
+      return count_data[d * thresholds.size () + s];
    }
 }
 
@@ -1161,7 +1150,7 @@ Wind_Rose::get_count (const Integer direction_index,
    {
       const Integer d = direction_index;
       const Integer s = speed_index;
-      return count_data[d * threshold_vector.size () + s];
+      return count_data[d * thresholds.size () + s];
    }
 }
 
@@ -1176,7 +1165,7 @@ Wind_Rose::get_count_stronger (const Integer direction_index,
    else
    {
       Integer count = 0;
-      for (Integer si = speed_index; si < threshold_vector.size (); si++)
+      for (Integer si = speed_index; si < thresholds.size (); si++)
       {
          count += get_count (direction_index, si);
       }
@@ -1244,7 +1233,7 @@ Wind_Rose::get_index (const Wind& wind) const
 {
 
    const Real speed = wind.get_speed ();
-   const Real calm_threshold = threshold_vector.front ().value * multiplier;
+   const Real calm_threshold = thresholds.front ().value * multiplier;
    if (speed < calm_threshold) { return Index_2D (-1, -1); }
 
    const Real direction = wind.get_direction ();
@@ -1254,11 +1243,11 @@ Wind_Rose::get_index (const Wind& wind) const
    const Integer d = Integer (round (direction / dd)) % n;
 
    Integer s = 0;
-   typedef vector<Wind_Rose_Threshold>::const_iterator Iterator;
-   for (Iterator iterator = threshold_vector.begin ();
-        iterator != threshold_vector.end (); iterator++)
+   typedef vector<Wind_Rose::Threshold>::const_iterator Iterator;
+   for (Iterator iterator = thresholds.begin ();
+        iterator != thresholds.end (); iterator++)
    {
-      if (iterator == threshold_vector.begin ()) { continue; }
+      if (iterator == thresholds.begin ()) { continue; }
       const Real threshold = iterator->value * multiplier;
       if (speed < threshold) { break; }
       s++;
@@ -1272,10 +1261,10 @@ Wind_Rose::get_index (const Wind& wind) const
    Integer d = Integer (floor (aligned_direction / delta_direction));
    d %= number_of_directions;
 
-   for (Integer s = threshold_vector.size ()-1; s >= 0; s--)
+   for (Integer s = thresholds.size ()-1; s >= 0; s--)
    {
 
-      const Real& threshold = threshold_vector[s].value * multiplier;
+      const Real& threshold = thresholds[s].value * multiplier;
       if (speed >= threshold)
       {
          get_count (d, s)++;
@@ -1294,7 +1283,7 @@ Wind_Rose::clear ()
    calm_count = 0;
    for (Integer d = 0; d < number_of_directions; d++)
    {
-      for (Integer s = 0; s < threshold_vector.size (); s++)
+      for (Integer s = 0; s < thresholds.size (); s++)
       {
          get_count (d, s) = 0;
       }
@@ -1309,7 +1298,7 @@ Wind_Rose::add_wind (const Wind& wind)
    get_count (index_2d.i, index_2d.j)++;
 
    //Real speed = wind.get_speed ();
-   //const Real calm_threshold = threshold_vector.front ().value * multiplier;
+   //const Real calm_threshold = thresholds.front ().value * multiplier;
    //if (speed < calm_threshold) { calm_count++; } 
    //else
    //{
@@ -1332,37 +1321,37 @@ Wind_Rose::add_wind (const vector<Wind>& wind_vector)
 
 }
 
-Wind_Rose_Arm
-Wind_Rose::get_wind_rose_arm (const Integer direction_index) const
+Wind_Rose::Arm
+Wind_Rose::get_arm (const Integer direction_index) const
 {
 
-   Wind_Rose_Arm wind_rose_arm;
+   Wind_Rose::Arm arm;
 
-   for (Integer s = 0; s < threshold_vector.size (); s++)
+   for (Integer s = 0; s < thresholds.size (); s++)
    {
-      const Wind_Rose_Threshold& wrt = threshold_vector[s];
+      const Wind_Rose::Threshold& threshold = thresholds[s];
       Real percentage = get_percentage (direction_index, s);
-      wind_rose_arm.push_back (Wind_Rose_Record (wrt, percentage));
+      arm.push_back (Wind_Rose::Record (threshold, percentage));
    }
 
-   return wind_rose_arm;
+   return arm;
 
 }
 
-Wind_Rose_Arm
-Wind_Rose::get_unit_wind_rose_arm () const
+Wind_Rose::Arm
+Wind_Rose::get_unit_arm () const
 {
 
-   Wind_Rose_Arm wind_rose_arm;
+   Wind_Rose::Arm arm;
 
-   for (Integer s = 0; s < threshold_vector.size (); s++)
+   for (Integer s = 0; s < thresholds.size (); s++)
    {
-      const Wind_Rose_Threshold& wrt = threshold_vector[s];
-      Wind_Rose_Record wrr (wrt, 1.0);
-      wind_rose_arm.push_back (wrr);
+      const Wind_Rose::Threshold& threshold = thresholds[s];
+      Wind_Rose::Record record (threshold, 1.0);
+      arm.push_back (record);
    }
 
-   return wind_rose_arm;
+   return arm;
 
 }
 
@@ -1385,8 +1374,7 @@ Wind_Rose::render (const RefPtr<Context>& cr,
    Real delta_direction = Real (360) / Real (number_of_directions);
    Real calm_percentage = get_calm_percentage ();
 
-   const vector<Wind_Rose_Threshold>& threshold_vector =
-      get_threshold_vector ();
+   const Wind_Rose::Thresholds& thresholds = get_thresholds ();
 
    cr->save ();
    cr->move_to (0, 0);
@@ -1457,9 +1445,9 @@ Wind_Rose::render (const RefPtr<Context>& cr,
       Point_2D p (point.x + calm_ring_size * sin (theta),
                   point.y + calm_ring_size * cos (theta));
 
-      Wind_Rose_Arm wind_rose_arm = get_wind_rose_arm (d);
+      Wind_Rose::Arm arm = get_arm (d);
 
-      wind_rose_arm.render (cr, pen_color, color_chooser, p,
+      arm.render (cr, pen_color, color_chooser, p,
          direction, percentage_size, delta_width, false);
 
    }
@@ -1499,9 +1487,8 @@ Wind_Disc::Transform::Transform (const Wind_Disc& wind_disc,
      calm_radius (calm_radius),
      label_height (label_height)
 {
-   typedef vector<Wind_Rose_Threshold> Wrtv;
-   const Wrtv& threshold_vector = wind_disc.get_threshold_vector ();
-   const Real calm_threshold = threshold_vector.front ().value;
+   const Wind_Rose::Thresholds& thresholds = wind_disc.get_thresholds ();
+   const Real calm_threshold = thresholds.front ().value;
    const Real speed_span = max_speed - calm_threshold;
    const Real r_span = (max_radius - calm_radius - label_height);
    this->scale = (r_span / speed_span);
@@ -1576,9 +1563,8 @@ Wind_Disc::Transform::get_label_height () const
 Real
 Wind_Disc::Transform::get_radius (const Real speed) const
 {
-   typedef vector<Wind_Rose_Threshold> Wrtv;
-   const Wrtv& threshold_vector = wind_disc.get_threshold_vector ();
-   const Real calm_threshold = threshold_vector.front ().value;
+   const Wind_Rose::Thresholds& thresholds = wind_disc.get_thresholds ();
+   const Real calm_threshold = thresholds.front ().value;
    return calm_radius + scale * (speed - calm_threshold);
 }
 
@@ -1588,9 +1574,8 @@ Wind_Disc::Transform::get_speed (const Real radius) const
    if (radius < calm_radius) { return 0; }
    else
    {
-      typedef vector<Wind_Rose_Threshold> Wrtv;
-      const Wrtv& threshold_vector = wind_disc.get_threshold_vector ();
-      const Real calm_threshold = threshold_vector.front ().value;
+      const Wind_Rose::Thresholds& thresholds = wind_disc.get_thresholds ();
+      const Real calm_threshold = thresholds.front ().value;
       return (radius - calm_radius) / scale + calm_threshold;
    }
 }
@@ -1796,13 +1781,13 @@ Wind_Disc::render_ring_label (const RefPtr<Context> cr) const
       if (speed_label_tuple.size () == 0)
       {
 
-         typedef Wind_Rose_Threshold Wrt;
+         typedef Wind_Rose::Threshold Wrt;
 
          // no need to draw calm circle
-         for (Integer i = 1; i < threshold_vector.size (); i++)
+         for (Integer i = 1; i < thresholds.size (); i++)
          { 
 
-            const Wrt& wind_rose_threshold = threshold_vector[i];
+            const Wrt& wind_rose_threshold = thresholds[i];
             const Real speed = wind_rose_threshold.value;
             const Dstring& str = wind_rose_threshold.label_str;
 
@@ -1845,7 +1830,7 @@ Wind_Disc::render_mesh (const RefPtr<Context> cr) const
    clip_polygon.cairo (cr);
    cr->clip ();
 
-   const Real calm_threshold = threshold_vector.front ().value;
+   const Real calm_threshold = thresholds.front ().value;
    const Integer minor_i_start = Integer (ceil (calm_threshold));
    const Integer minor_i_end = Integer (floor (max_speed));
    const Integer minor_n = minor_i_end - minor_i_start + 1;;
@@ -1923,16 +1908,14 @@ Wind_Disc::render_scatter_plot (const RefPtr<Context> cr,
 
    const Transform_2D& t = *transform_ptr;
    const Real max_speed = transform_ptr->get_max_speed ();
-   const Real calm_threshold = threshold_vector.front ().value;
+   const Real calm_threshold = thresholds.front ().value;
 
    bool calm = false;
    bool out_of_bounds = false;
 
-   for (vector<Wind>::const_iterator iterator = wind_vector.begin ();
-        iterator != wind_vector.end (); iterator++)
+   for (const Wind& wind : wind_vector)
    {
 
-      const Wind& wind = *(iterator);
       const Real speed = wind.get_speed () / multiplier;
 
       if (wind.is_naw ()) { continue; }
@@ -1997,15 +1980,15 @@ Wind_Disc::render_percentages (const RefPtr<Context> cr) const
 
       const Real direction = i * d_direction;
 
-      for (Integer j = 0; j < threshold_vector.size (); j++)
+      for (Integer j = 0; j < thresholds.size (); j++)
       {
 
-         Real lower_speed = threshold_vector[j].value;
+         Real lower_speed = thresholds[j].value;
          if  (lower_speed >= max_speed) { break; }
 
-         Real upper_speed = threshold_vector[j+1].value;
+         Real upper_speed = thresholds[j+1].value;
          const Real truncated = (max_speed < upper_speed);
-         const Real strongest_speed = (j == threshold_vector.size () - 1);
+         const Real strongest_speed = (j == thresholds.size () - 1);
          if (truncated || strongest_speed)
          {
             upper_speed = max_speed;
@@ -2113,18 +2096,17 @@ Wind_Disc::Wind_Disc (const Integer number_of_directions,
                       const Point_2D& origin,
                       const Real max_radius,
                       const Tuple& speed_label_tuple,
+                      const Real max_speed,
                       const Color& major_color,
                       const Color& middle_color,
                       const Color& minor_color,
                       const Color& shade_color,
-                      const Real max_speed,
                       const Real font_size,
                       const Real scatter_ring_size,
                       const Real calm_radius,
                       const Real label_height,
-                      const Dstring& unit_string,
-                      const Real multiplier)
-   : Wind_Rose (number_of_directions, threshold_tuple, unit_string, multiplier),
+                      const Dstring& unit_string)
+   : Wind_Rose (number_of_directions, threshold_tuple, unit_string),
      speed_label_tuple (speed_label_tuple),
      major_color (major_color),
      middle_color (middle_color),
@@ -2146,6 +2128,17 @@ Wind_Disc::Wind_Disc (const Integer number_of_directions,
 Wind_Disc::~Wind_Disc ()
 {
    delete transform_ptr;
+}
+
+void
+Wind_Disc::set (const Integer number_of_directions,
+                const Tuple& threshold_tuple,
+                const Tuple& speed_label_tuple,
+                const Real max_speed)
+{
+   //Wind_Rose::set (number_of_directions, thresdhold_tuple); 
+   //this->speed_label_tuple = speed_lable_tuple;
+   //this->max_speed = max_speed;
 }
 
 void
@@ -2244,7 +2237,6 @@ Wind_Disc::render_index (const RefPtr<Context> cr,
 {
 
    const Integer s = index.j;
-   const vector<Wind_Rose_Threshold>& tv = threshold_vector;
 
    const Point_2D& origin = transform_ptr->get_origin ();
    const Color& color_0 = Color::hsb (0.0, 0.6, 0.6, 0.3);
@@ -2262,10 +2254,10 @@ Wind_Disc::render_index (const RefPtr<Context> cr,
       return;
    }
 
-   const bool top_speed = (s >= tv.size () - 1);
+   const bool top_speed = (s >= thresholds.size () - 1);
    const Real max_speed = transform_ptr->get_max_speed ();
-   const Real inner_speed = tv[s].value;
-   const Real outer_speed = (top_speed ? max_speed : tv[s + 1].value);
+   const Real inner_speed = thresholds[s].value;
+   const Real outer_speed = (top_speed ? max_speed : thresholds[s + 1].value);
    const Real inner_r = transform_ptr->get_radius (inner_speed);
    const Real outer_r = transform_ptr->get_radius (outer_speed);
 
@@ -2303,6 +2295,12 @@ const Real
 Wind_Disc::get_max_radius () const
 {
    return transform_ptr->get_max_radius ();
+}
+
+const Wind_Disc::Transform&
+Wind_Disc::get_transform () const
+{
+   return *transform_ptr;
 }
 
 Axisymmetric_Vortex::Axisymmetric_Vortex (const Real inflow)

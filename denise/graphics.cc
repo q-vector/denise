@@ -94,6 +94,7 @@ namespace denise
       RefPtr<Context> cr = Context::create (surface);
       //cr->select_font_face ("Verdana", FONT_SLANT_NORMAL, FONT_WEIGHT_NORMAL);
       cr->select_font_face ("DejaVu Sans", FONT_SLANT_NORMAL, FONT_WEIGHT_NORMAL);
+      cr->set_fill_rule (FILL_RULE_EVEN_ODD);
       cr->set_line_cap (LINE_CAP_ROUND);
       cr->set_line_join (LINE_JOIN_ROUND);
       return cr;
@@ -555,6 +556,32 @@ Color_Gradient::Color_Gradient (const Color& color_a,
      radius_a (radius_a),
      radius_b (radius_b)
 {
+}
+
+void
+Color_Gradient::cairo (const RefPtr<Context>& cr) const
+{
+
+   switch (type)
+   {
+
+      case LINEAR:
+      {
+         typedef LinearGradient L;
+         RefPtr<L> l = L::create (point_a.x, point_a.y, point_b.x, point_b.y);
+         l->add_color_stop_rgba (0, color_a.r, color_a.g, color_a.b, color_a.a);
+         l->add_color_stop_rgba (1, color_b.r, color_b.g, color_b.b, color_b.a);
+         cr->set_source (l);
+         break;
+      };
+
+      case RADIAL:
+      {
+         cerr << "Radial Color Gradient not implemented" << endl;
+         break;
+      };
+
+   }
 }
 
 void

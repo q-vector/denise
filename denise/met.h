@@ -419,64 +419,68 @@ namespace denise
 
    };
 
-   class Wind_Rose_Threshold
-   {
-
-      public:
-
-         Real
-         value;
-
-         Dstring
-         label_str;
-
-         Wind_Rose_Threshold (const Real threshold = GSL_NAN,
-                              const Dstring& label_str = "");
-
-   };
-
-   class Wind_Rose_Record
-   {
-
-      public:
-
-         Wind_Rose_Threshold
-         threshold;
-
-         Real
-         percentage;
-
-         Wind_Rose_Record (const Real threshold,
-                           const Real percentage,
-                           const Dstring& label_str = "");
-
-         Wind_Rose_Record (const Wind_Rose_Threshold& threshold,
-                           const Real percentage);
-
-   };
-
-   class Wind_Rose_Arm : public vector<Wind_Rose_Record>
-   {
-
-      public:
-
-         void
-         render (const RefPtr<Context> cr,
-                 const Color& pen_color,
-                 const Color_Chooser& color_chooser,
-                 const Point_2D& point,
-                 const Real direction,
-                 const Real percentage_size,
-                 const Real delta_width,
-                 const bool show_label) const;
-
-   };
-
    /// Wind_Rose
    class Wind_Rose
    {
 
       protected:
+
+         class Threshold
+         {
+
+            public:
+
+               Real
+               value;
+
+               Dstring
+               label_str;
+
+               Threshold (const Real threshold = GSL_NAN,
+                          const Dstring& label_str = "");
+
+         };
+
+         class Thresholds : public vector<Wind_Rose::Threshold>
+         {
+         };
+
+         class Record
+         {
+
+            public:
+
+               Wind_Rose::Threshold
+               threshold;
+
+               Real
+               percentage;
+
+               Record (const Real threshold,
+                       const Real percentage,
+                       const Dstring& label_str = "");
+
+               Record (const Wind_Rose::Threshold& threshold,
+                       const Real percentage);
+
+         };
+
+         class Arm : public vector<Wind_Rose::Record>
+         {
+
+            public:
+
+               void
+               render (const RefPtr<Context> cr,
+                       const Color& pen_color,
+                       const Color_Chooser& color_chooser,
+                       const Point_2D& point,
+                       const Real direction,
+                       const Real percentage_size,
+                       const Real delta_width,
+                       const bool show_label) const;
+
+         };
 
          Dstring
          unit_string;
@@ -499,24 +503,14 @@ namespace denise
          Integer
          number_of_directions;
 
-         vector<Wind_Rose_Threshold>
-         threshold_vector;
+         Thresholds
+         thresholds;
 
          void
-         init (const Integer number_of_directions,
-               const vector<Wind_Rose_Threshold>& threshold_vector,
-               const Dstring& unit_string,
-               const Real multiplier);
+         init (const Dstring& unit_string);
 
-         void
-         init (const Integer number_of_directions,
-               const Tuple& threshold_tuple,
-               const Dstring& unit_string,
-               const Real multiplier);
-
-         void
-         init (const Dstring& unit_string,
-               const Real multiplier);
+         Thresholds
+         get_thresholds (const Tuple& threshold_tuple) const;
 
          static Real
          get_multiplier (const Dstring& unit_string);
@@ -524,18 +518,16 @@ namespace denise
       public:
 
          Wind_Rose (const Integer number_of_directions,
-                    const vector<Wind_Rose_Threshold>& threshold_vector,
-                    const Dstring& unit_string = "kt",
-                    const Real multiplier = GSL_NAN);
+                    const Wind_Rose::Thresholds& thresholds,
+                    const Dstring& unit_string = "kt");
 
          /// Constructor
          ///
          /// \param number_of_directions number_of_directions of wind_rose
-         /// \param threshold_vector     vector holding speed thresholds
+         /// \param thresholds           vector holding speed thresholds
          Wind_Rose (const Integer number_of_directions,
                     const Tuple& threshold_tuple,
-                    const Dstring& unit_string = "kt",
-                    const Real multiplier = GSL_NAN);
+                    const Dstring& unit_string = "kt");
 
          /// Constructor
          ///
@@ -543,18 +535,27 @@ namespace denise
          /// \param threshold_vector_string string representing threshold vector
          Wind_Rose (const Integer number_of_directions,
                     const Dstring& threshold_vector_string,
-                    const Dstring& unit_string = "kt",
-                    const Real multiplier = GSL_NAN);
+                    const Dstring& unit_string = "kt");
 
          ~Wind_Rose ();
+
+         void
+         reset (const Integer number_of_directions,
+                const Wind_Rose::Thresholds& thresholds,
+                const Dstring& unit_string);
+
+         void
+         reset (const Integer number_of_directions,
+                const Tuple& threshold_tuple,
+                const Dstring& unit_string);
 
          const Integer&
          get_number_of_directions () const;
 
-         const vector<Wind_Rose_Threshold>&
-         get_threshold_vector () const;
+         const Wind_Rose::Thresholds&
+         get_thresholds () const;
 
-         const Wind_Rose_Threshold&
+         const Wind_Rose::Threshold&
          get_max_threshold () const;
 
          Tuple
@@ -623,11 +624,11 @@ namespace denise
          void
          add_wind (const vector<Wind>& wind_vector);
 
-         Wind_Rose_Arm
-         get_wind_rose_arm (const Integer direction_index) const;
+         Wind_Rose::Arm
+         get_arm (const Integer direction_index) const;
 
-         Wind_Rose_Arm
-         get_unit_wind_rose_arm () const;
+         Wind_Rose::Arm
+         get_unit_arm () const;
 
          void
          render (const RefPtr<Context>& cr,
@@ -659,7 +660,7 @@ namespace denise
    class Wind_Disc : public Wind_Rose
    {
 
-      private:
+      public:
 
          class Transform : public Transform_2D
          {
@@ -735,13 +736,15 @@ namespace denise
 
          };
 
+      private:
+
          Wind_Disc::Transform*
          transform_ptr;
 
          vector<Wind>
          wind_vector;
 
-         const Tuple
+         Tuple
          speed_label_tuple;
         
          const Color
@@ -818,19 +821,24 @@ namespace denise
                     const Point_2D& origin,
                     const Real max_radius,
                     const Tuple& speed_label_tuple = Tuple (),
+                    const Real max_speed = GSL_NAN,
                     const Color& major_color = Color (0.0, 0.0, 0.0, 0.8),
                     const Color& middle_color = Color (0.2, 0.2, 0.2, 0.5),
                     const Color& minor_color = Color (0.4, 0.4, 0.4, 0.2),
                     const Color& shade_color = Color (0.6, 0.6, 0.6, 0.2),
-                    const Real max_speed = GSL_NAN,
                     const Real font_size = 12,
                     const Real scatter_ring_size = 10,
                     const Real calm_radius = 40,
                     const Real label_height = 24,
-                    const Dstring& unit_string = "kt",
-                    const Real multiplier = GSL_NAN);
+                    const Dstring& unit_string = "kt");
 
          ~Wind_Disc ();
+
+         void
+         set (const Integer number_of_directions,
+              const Tuple& threshold_tuple,
+              const Tuple& speed_label_tuple,
+              const Real max_speed);
 
          void
          set_position (const Point_2D& origin,
@@ -863,6 +871,9 @@ namespace denise
 
          const Real
          get_max_radius () const;
+
+         const Wind_Disc::Transform&
+         get_transform () const;
 
    };
 

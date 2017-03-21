@@ -1719,6 +1719,11 @@ namespace denise
          cairo (const RefPtr<Context> cr,
                 const Geodetic_Transform& transform) const;
 
+         void
+         cairo (const RefPtr<Context> cr,
+                const Geodetic_Transform& transform,
+                const vector<Lat_Long>& anchor_lat_long_vector) const;
+
    };
 
    ostream&
