@@ -2203,7 +2203,7 @@ Wind_Disc::render (const RefPtr<Context> cr,
    cr->fill ();
    
    render_background (cr);
-   render_scatter_plot (cr, hue, dir_scatter);
+   //render_scatter_plot (cr, hue, dir_scatter);
 
    if (outline) { render_percentage_d (cr, hue); }
    render_percentages (cr);
