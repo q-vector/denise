@@ -801,7 +801,7 @@ Gtopo30::get_data (const Transform_2D& transform)
       {
          const Real y = Real (j);
 
-         transform.reverse (latitude, longitude, x, y);
+         transform.r (latitude, longitude, x, y);
          const Real& datum = get_datum (lat_long);
          data[i*size_2d.j + j] = datum;
 

@@ -1772,8 +1772,8 @@ Journey::get_iterator (const Transform_2D& transform,
          ll_a.standardize (standard_longitude);
          ll_b.standardize (standard_longitude);
 
-         transform.transform (p_a.x, p_a.y, ll_a.latitude, ll_a.longitude);
-         transform.transform (p_b.x, p_b.y, ll_b.latitude, ll_b.longitude);
+         transform.t (p_a.x, p_a.y, ll_a.latitude, ll_a.longitude);
+         transform.t (p_b.x, p_b.y, ll_b.latitude, ll_b.longitude);
 
          if (Edge::distance (p_a, p_b, point_2d) < threshold)
          {
@@ -1823,8 +1823,8 @@ Journey::get_iterator (const Transform_2D& transform,
          ll_a.standardize (standard_longitude);
          ll_b.standardize (standard_longitude);
 
-         transform.transform (p_a.x, p_a.y, ll_a.latitude, ll_a.longitude);
-         transform.transform (p_b.x, p_b.y, ll_b.latitude, ll_b.longitude);
+         transform.t (p_a.x, p_a.y, ll_a.latitude, ll_a.longitude);
+         transform.t (p_b.x, p_b.y, ll_b.latitude, ll_b.longitude);
 
          if (Edge::distance (p_a, p_b, point_2d) < threshold)
          {
@@ -2253,7 +2253,7 @@ Geodetic_Transform::reverse (Lat_Long& lat_long,
 {
    Real& latitude = lat_long.latitude;
    Real& longitude = lat_long.longitude;
-   reverse (latitude, longitude, point.x, point.y);
+   r (latitude, longitude, point.x, point.y);
    standardize (lat_long);
 }
 
@@ -2273,7 +2273,7 @@ Lat_Long
 Geodetic_Transform::get_lat_long (const Point_2D& point) const
 {
    Lat_Long lat_long;
-   reverse (lat_long.latitude, lat_long.longitude, point.x, point.y);
+   r (lat_long.latitude, lat_long.longitude, point.x, point.y);
    standardize (lat_long);
    return lat_long;
 }
@@ -2416,21 +2416,21 @@ Equidistant_Cylindrical_Transform::out_of_domain (const Real latitude,
 }
 
 void
-Equidistant_Cylindrical_Transform::transform (Real& x,
-                                              Real& y,
-                                              const Real latitude,
-                                              const Real longitude) const
+Equidistant_Cylindrical_Transform::t (Real& x,
+                                      Real& y,
+                                      const Real latitude,
+                                      const Real longitude) const
 {
-   affine_transform.transform (x, y, latitude, longitude);
+   affine_transform.t (x, y, latitude, longitude);
 }
 
 void
-Equidistant_Cylindrical_Transform::reverse (Real& latitude,
-                                            Real& longitude,
-                                            const Real x,
-                                            const Real y) const
+Equidistant_Cylindrical_Transform::r (Real& latitude,
+                                      Real& longitude,
+                                      const Real x,
+                                      const Real y) const
 {
-   affine_transform.reverse (latitude, longitude, x, y);
+   affine_transform.r (latitude, longitude, x, y);
    Lat_Long::standardize (latitude, longitude, data.lat_long.longitude);
 }
 
@@ -2538,10 +2538,10 @@ Lambert_Conic_Transform::out_of_domain (const Real latitude,
 }
 
 void
-Lambert_Conic_Transform::transform (Real& x,
-                                    Real& y,
-                                    const Real latitude,
-                                    const Real longitude) const
+Lambert_Conic_Transform::t (Real& x,
+                            Real& y,
+                            const Real latitude,
+                            const Real longitude) const
 {
 
    const Real& n = cone_constant;
@@ -2558,10 +2558,10 @@ Lambert_Conic_Transform::transform (Real& x,
 }
 
 void
-Lambert_Conic_Transform::reverse (Real& latitude,
-                                  Real& longitude,
-                                  const Real x,
-                                  const Real y) const
+Lambert_Conic_Transform::r (Real& latitude,
+                            Real& longitude,
+                            const Real x,
+                            const Real y) const
 {
 
    const Real dx = x - ref_point.x;
@@ -2682,10 +2682,10 @@ Mercator_Transform::out_of_domain (const Real latitude,
 }
 
 void
-Mercator_Transform::transform (Real& x,
-                               Real& y,
-                               const Real latitude,
-                               const Real longitude) const
+Mercator_Transform::t (Real& x,
+                       Real& y,
+                       const Real latitude,
+                       const Real longitude) const
 {
    //yy = project_y (latitude) / data.scale - offset_y;
    //yy = offset_y - project_y (latitude) / data.scale;
@@ -2694,10 +2694,10 @@ Mercator_Transform::transform (Real& x,
 }
 
 void
-Mercator_Transform::reverse (Real& latitude,
-                             Real& longitude,
-                             const Real x,
-                             const Real y) const
+Mercator_Transform::r (Real& latitude,
+                       Real& longitude,
+                       const Real x,
+                       const Real y) const
 {
    //latitude = reverse_latitude ((y + offset_y) * data.scale);
    latitude = reverse_latitude ((offset_y - y) * data.scale);
@@ -2755,10 +2755,10 @@ Polar_Stereographic_Transform::out_of_domain (const Real latitude,
 }
 
 void
-Polar_Stereographic_Transform::transform (Real& x,
-                                          Real& y,
-                                          const Real latitude,
-                                          const Real longitude) const
+Polar_Stereographic_Transform::t (Real& x,
+                                  Real& y,
+                                  const Real latitude,
+                                  const Real longitude) const
 {
 
    Real r = get_r (latitude);
@@ -2775,10 +2775,10 @@ Polar_Stereographic_Transform::transform (Real& x,
 }
 
 void
-Polar_Stereographic_Transform::reverse (Real& latitude,
-                                        Real& longitude,
-                                        const Real x,
-                                        const Real y) const
+Polar_Stereographic_Transform::r (Real& latitude,
+                                  Real& longitude,
+                                  const Real x,
+                                  const Real y) const
 {
 
    const Real dx = x - ref_point.x;
@@ -2873,10 +2873,10 @@ Perspective_Transform::out_of_domain (const Real latitude,
 }
 
 void
-Perspective_Transform::transform (Real& x,
-                                  Real& y,
-                                  const Real latitude, 
-                                  const Real longitude) const
+Perspective_Transform::t (Real& x,
+                          Real& y,
+                          const Real latitude, 
+                          const Real longitude) const
 {
 
 //   ttt.transform (x, y, latitude, longitude);
@@ -2904,10 +2904,10 @@ Perspective_Transform::transform (Real& x,
 }
 
 void
-Perspective_Transform::reverse (Real& latitude,
-                                Real& longitude,
-                                const Real x,
-                                const Real y) const
+Perspective_Transform::r (Real& latitude,
+                          Real& longitude,
+                          const Real x,
+                          const Real y) const
 {
 
    if (x == ref_point.x && y == ref_point.y)
@@ -2962,7 +2962,7 @@ Perspective_Transform::cairo (const RefPtr<Context> cr,
       if (Geodesy::get_distance (ref_lat_long, lat_long) <= r_m)
       {
 
-         transform (x, y, lat_long.latitude, lat_long.longitude);
+         t (x, y, lat_long.latitude, lat_long.longitude);
 
          if (first_point)
          {
@@ -3027,10 +3027,10 @@ Geos_Transform::out_of_domain (const Real latitude,
 }
 
 void
-Geos_Transform::transform (Real& x,
-                           Real& y,
-                           const Real latitude,
-                           const Real longitude) const
+Geos_Transform::t (Real& x,
+                   Real& y,
+                   const Real latitude,
+                   const Real longitude) const
 {
 
    const Real lambda = (longitude - nadir_longitude) * DEGREE_TO_RADIAN;
@@ -3053,10 +3053,10 @@ Geos_Transform::transform (Real& x,
 }
 
 void
-Geos_Transform::reverse (Real& latitude,
-                         Real& longitude,
-                         const Real x,
-                         const Real y) const
+Geos_Transform::r (Real& latitude,
+                   Real& longitude,
+                   const Real x,
+                   const Real y) const
 {
 
    const Real xx = (x - coff) / cfac * 65536 * DEGREE_TO_RADIAN;
@@ -3139,10 +3139,10 @@ Mollweide_Transform::get_phi (const Real theta) const
 }
 
 void
-Mollweide_Transform::transform (Real& x,
-                                Real& y,
-                                const Real latitude,
-                                const Real longitude) const
+Mollweide_Transform::t (Real& x,
+                        Real& y,
+                        const Real latitude,
+                        const Real longitude) const
 {
    const Real theta = get_theta (latitude * DEGREE_TO_RADIAN);
    const Real lambda = longitude * DEGREE_TO_RADIAN;
@@ -3151,10 +3151,10 @@ Mollweide_Transform::transform (Real& x,
 }
 
 void
-Mollweide_Transform::reverse (Real& latitude,
-                              Real& longitude,
-                              const Real x,
-                              const Real y) const
+Mollweide_Transform::r (Real& latitude,
+                        Real& longitude,
+                        const Real x,
+                        const Real y) const
 {
    const Real theta = asin ((anchor.y - y) / k);
    const Real lambda = (x - anchor.x) / (k * M_2_PI * cos (theta));

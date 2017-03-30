@@ -43,7 +43,7 @@ namespace denise
 
    class Ellipse;
 
-   class Treatment : public Tuple
+   class Sample : public Tuple
    {
 
       private:
@@ -60,12 +60,12 @@ namespace denise
 
       public:
 
-         Treatment (const double* data,
-                    const Integer size);
+         Sample (const double* data,
+                 const Integer size);
 
-         Treatment (const Tuple& tuple);
+         Sample (const Tuple& tuple);
 
-         ~Treatment ();
+         ~Sample ();
 
          void
          sort ();

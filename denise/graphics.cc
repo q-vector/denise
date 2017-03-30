@@ -269,6 +269,38 @@ Color::hsb (const Real h,
 }
 
 Color
+Color::with_hue (const Real h) const
+{
+   Color color;
+   color.set_hsb (h, get_saturation (), get_brightness (), this->a);
+   return color;
+}
+
+Color
+Color::with_saturation (const Real s) const
+{
+   Color color;
+   color.set_hsb (get_hue (), s, get_brightness (), this->a);
+   return color;
+}
+
+Color
+Color::with_brightness (const Real b) const
+{
+   Color color;
+   color.set_hsb (get_hue (), get_saturation (), b, this->a);
+   return color;
+}
+
+Color
+Color::with_alpha (const Real a) const
+{
+   Color color;
+   color.set_hsb (get_hue (), get_saturation (), get_brightness (), a);
+   return color;
+}
+
+Color
 Color::get_nac ()
 {
    return Color (GSL_NAN, GSL_NAN, GSL_NAN, GSL_NAN);

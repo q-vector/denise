@@ -24,6 +24,7 @@
 #include <cmath>
 #include <cstdio>
 #include <iostream>
+#include <set>
 #include <cairomm/context.h>
 #include <denise/analysis.h>
 #include <denise/basics.h>
@@ -268,6 +269,8 @@ namespace denise
 
          /// Copy Constuctor
          Wind (const Wind& wind);
+
+         Wind (const Dstring& dstring);
 
          static Wind
          direction_speed (const Real direction,
@@ -702,16 +705,16 @@ namespace denise
                               const Real y) const;
 
                void
-               transform (Real& x,
-                          Real& y,
-                          const Real direction, 
-                          const Real speed) const;
+               t (Real& x,
+                  Real& y,
+                  const Real direction, 
+                  const Real speed) const;
 
                void
-               reverse (Real& direction,
-                        Real& speed,
-                        const Real x, 
-                        const Real y) const;
+               r (Real& direction,
+                  Real& speed,
+                  const Real x, 
+                  const Real y) const;
 
                const Point_2D&
                get_origin () const;
@@ -803,16 +806,9 @@ namespace denise
                               const Real line_width) const;
 
          void
-         render_percentages (const RefPtr<Context> cr) const;
-
-         void
          render_percentage (const RefPtr<Context> cr,
                             const Point_2D& point,
                             const Real percentage) const;
-
-         void
-         render_percentage_d (const RefPtr<Context> cr,
-                              const Real hue) const;
 
       public:
 
@@ -863,8 +859,19 @@ namespace denise
          render_bg (const RefPtr<Context> cr) const;
 
          void
+         render_percentages (const RefPtr<Context> cr) const;
+
+         void
+         render_percentage_d (const RefPtr<Context> cr,
+                              const Real hue) const;
+
+         void
          render_index (const RefPtr<Context> cr,
                        const Index_2D& index) const;
+
+         void
+         render_index_set (const RefPtr<Context> cr,
+                           const std::set<Index_2D>& index_set) const;
 
          const Point_2D&
          get_origin () const;

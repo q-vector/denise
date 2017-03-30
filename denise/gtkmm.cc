@@ -6771,7 +6771,7 @@ Console_2D::Marker_Store::try_dragging (Console_2D& console_2d,
    const Transform_2D& transform = console_2d.get_transform ();
    const Point_2D& point = event.point;
 
-   transform.reverse (marker.x, marker.y, point.x, point.y);
+   transform.r (marker.x, marker.y, point.x, point.y);
    marker.set_str ("");
 
    if (event.control ())
@@ -6923,7 +6923,7 @@ Console_2D::Route_Store::button_1_pressed (Console_2D& console_2d,
    if (on_node)
    {
       // clicked on a route node
-      transform.reverse (node->x, node->y, point.x, point.y);
+      transform.r (node->x, node->y, point.x, point.y);
       console_2d.queue_draw ();
    }
    else
@@ -7036,7 +7036,7 @@ Console_2D::Route_Store::try_dragging (Console_2D& console_2d,
    {
 
       Point_2D& p = *(node);
-      transform.reverse (p.x, p.y, point.x, point.y);
+      transform.r (p.x, p.y, point.x, point.y);
 
       if (event.control ())
       {
@@ -7126,7 +7126,7 @@ Console_2D::Shape_Store::button_1_pressed (Console_2D& console_2d,
       if (!double_clicked) { return false; }
 
       // double clicked on thin air, initiate a new shape
-      transform.reverse (node->x, node->y, point.x, point.y);
+      transform.r (node->x, node->y, point.x, point.y);
       insert (*node);
       console_2d.refresh_all ();
       return true;
@@ -7155,7 +7155,7 @@ Console_2D::Shape_Store::button_1_pressed (Console_2D& console_2d,
       else
       {
          // Grab the node
-         transform.reverse (node->x, node->y, point.x, point.y);
+         transform.r (node->x, node->y, point.x, point.y);
          console_2d.queue_draw ();
          return true;
       }
@@ -7940,7 +7940,7 @@ Map_Console::Zoom_Box::manipulate (const Dmouse_Motion_Event& event)
       manipulate_data.set_point (point);
 
       Real latitude, longitude;
-      gt.reverse (latitude, longitude, centre.x, centre.y);
+      gt.r (latitude, longitude, centre.x, centre.y);
       tilt = M_PI/2 + gt.get_theta (0, 1, latitude, longitude);
 
    }

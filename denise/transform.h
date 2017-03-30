@@ -61,15 +61,15 @@ namespace denise
          out_of_domain (const Real x) const = 0;
 
          virtual void
-         transform (Real& transformed,
-                    const Real x) const = 0;
+         t (Real& transformed,
+            const Real x) const = 0;
 
          virtual Real
          transform (const Real x) const;
 
          virtual void
-         reverse (Real& reversed,
-                  const Real x) const = 0;
+         r (Real& reversed,
+            const Real x) const = 0;
 
          virtual Real
          reverse (const Real x) const;
@@ -123,10 +123,10 @@ namespace denise
          is_out_of_domain (const Point_2D& point_2d) const;
 
          virtual void
-         transform (Real& transformed_x,
-                    Real& transformed_y,
-                    const Real x,
-                    const Real y) const;
+         t (Real& transformed_x,
+            Real& transformed_y,
+            const Real x,
+            const Real y) const;
 
          virtual Point_2D
          transform (const Real x,
@@ -136,10 +136,10 @@ namespace denise
          transform (const Point_2D& point_2d) const;
 
          virtual void
-         reverse (Real& reversed_x,
-                  Real& reversed_y,
-                  const Real x,
-                  const Real y) const;
+         r (Real& reversed_x,
+            Real& reversed_y,
+            const Real x,
+            const Real y) const;
 
          virtual Point_2D
          reverse (const Real x,
@@ -242,15 +242,15 @@ namespace denise
          translate (const Real translation);
 
          virtual void
-         transform (Real& transformed,
-                    const Real x) const;
+         t (Real& transformed,
+            const Real x) const;
 
          virtual Real
          transform (const Real x) const;
 
          virtual void
-         reverse (Real& reversed,
-                  const Real x) const;
+         r (Real& reversed,
+            const Real x) const;
 
          virtual Real
          reverse (const Real x) const;
@@ -317,10 +317,10 @@ namespace denise
          get_fixed_points () const;
 
          virtual void
-         transform (Real& transformed_x,
-                    Real& transformed_y,
-                    const Real x,
-                    const Real y) const;
+         t (Real& transformed_x,
+            Real& transformed_y,
+            const Real x,
+            const Real y) const;
 
          virtual Point_2D
          transform (const Real x,
@@ -330,10 +330,10 @@ namespace denise
          transform (const Point_2D& point_2d) const;
 
          virtual void
-         reverse (Real& reversed_x,
-                  Real& reversed_y,
-                  const Real x,
-                  const Real y) const;
+         r (Real& reversed_x,
+            Real& reversed_y,
+            const Real x,
+            const Real y) const;
 
          virtual Point_2D
          reverse (const Real x,
@@ -390,7 +390,7 @@ namespace denise
          m[2][3];
 
          Real
-         r[2];
+         a[2];
 
          Real
          determinant;
@@ -452,8 +452,8 @@ namespace denise
          get_translation_y () const;
 
          virtual void
-         transform (Real& transformed_x,
-                    Real& transformed_y,
+         t (Real& transformed_x,
+            Real& transformed_y,
                     const Real x,
                     const Real y) const;
 
@@ -465,10 +465,10 @@ namespace denise
          transform (const Point_2D& point_2d) const;
 
          virtual void
-         reverse (Real& reversed_x,
-                  Real& reversed_y,
-                  const Real x,
-                  const Real y) const;
+         r (Real& reversed_x,
+            Real& reversed_y,
+            const Real x,
+            const Real y) const;
 
          virtual Point_2D
          reverse (const Real x,

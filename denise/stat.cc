@@ -24,14 +24,14 @@ using namespace std;
 using namespace denise;
 
 int
-Treatment::compare (const void* a,
-                    const void* b)
+Sample::compare (const void* a,
+                 const void* b)
 {
    return *(double*)a > *(double*)b;
 }
 
-Treatment::Treatment (const double* data,
-                      const Integer size)
+Sample::Sample (const double* data,
+                const Integer size)
    : size (size)
 {
 
@@ -44,7 +44,7 @@ Treatment::Treatment (const double* data,
 
 }
 
-Treatment::Treatment (const Tuple& tuple)
+Sample::Sample (const Tuple& tuple)
    : size (tuple.size ())
 {
 
@@ -57,37 +57,37 @@ Treatment::Treatment (const Tuple& tuple)
 
 }
 
-Treatment::~Treatment ()
+Sample::~Sample ()
 {
    delete[] data;
 }
 
 void
-Treatment::sort ()
+Sample::sort ()
 {
-   qsort (data, size, sizeof (double), (Treatment::compare));
+   qsort (data, size, sizeof (double), (Sample::compare));
 }
 
 const double*
-Treatment::get_data () const
+Sample::get_data () const
 {
    return data;
 }
 
 Integer
-Treatment::get_size () const
+Sample::get_size () const
 {
    return size;
 }
 
 Real
-Treatment::get_mean () const
+Sample::get_mean () const
 {
    return gsl_stats_mean (data, 1, size);
 }
 
 Real
-Treatment::get_mean_square () const
+Sample::get_mean_square () const
 {
    double* squares = new double[size];
    for (Integer i = 0; i < size; i++) { squares[i] = gsl_pow_2 (data[i]); }
@@ -97,74 +97,73 @@ Treatment::get_mean_square () const
 }
 
 Real
-Treatment::get_root_mean_square () const
+Sample::get_root_mean_square () const
 {
    return get_rms ();
 }
 
 Real
-Treatment::get_rms () const
+Sample::get_rms () const
 {
    return sqrt (get_mean_square ());
 }
 
-
 Real
-Treatment::get_variance () const
+Sample::get_variance () const
 {
    return gsl_stats_variance (data, 1, size);
 }
 
 Real
-Treatment::get_sd () const
+Sample::get_sd () const
 {
    return get_standard_deviation ();
 }
 
 Real
-Treatment::get_standard_deviation () const
+Sample::get_standard_deviation () const
 {
    return sqrt (get_variance ());
 }
 
 Real 
-Treatment::get_max () const
+Sample::get_max () const
 {
    return gsl_stats_max (data, 1, size);
 }
 
 Real
-Treatment::get_min () const
+Sample::get_min () const
 {
    return gsl_stats_min (data, 1, size);
 }
 
 Real 
-Treatment::get_median () const
+Sample::get_median () const
 {
    return gsl_stats_median_from_sorted_data (data, 1, size);
 }
 
 Real
-Treatment::get_first_quartile () const
+Sample::get_first_quartile () const
 {
    return get_percentile (25);
 }
 
 Real
-Treatment::get_second_quartile () const
+Sample::get_second_quartile () const
 {
    return get_median ();
 }
 
 Real
-Treatment::get_third_quartile () const
+Sample::get_third_quartile () const
 {
    return get_percentile (75);
 }
 
 Real
-Treatment::get_percentile (const Real percentage) const
+Sample::get_percentile (const Real percentage) const
 {
    return gsl_stats_quantile_from_sorted_data (data, 1, size, percentage*1e-2);
 }

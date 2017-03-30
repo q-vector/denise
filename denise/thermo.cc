@@ -5337,7 +5337,7 @@ Tephigram::transform (Point_2D& point_2d,
 {
    const Real t = thermo_point.get_t ();
    const Real log_theta = log (thermo_point.get_theta () + K);
-   Affine_Transform_2D::transform (point_2d.x, point_2d.y, t, log_theta);
+   Affine_Transform_2D::t (point_2d.x, point_2d.y, t, log_theta);
 }
 
 void
@@ -5345,7 +5345,7 @@ Tephigram::reverse_tp (Thermo_Point& thermo_point,
                        const Point_2D& point) const
 {
    Real t, log_theta;
-   Affine_Transform_2D::reverse (t, log_theta, point.x, point.y);
+   Affine_Transform_2D::r (t, log_theta, point.x, point.y);
    thermo_point.set_t_theta (t, exp (log_theta) - K, p_0);
 }
 
@@ -5391,7 +5391,7 @@ Emagram::transform (Point_2D& point_2d,
 {
    const Real t = thermo_point.get_t ();
    const Real log_p = log (thermo_point.get_p ());
-   Affine_Transform_2D::transform (point_2d.x, point_2d.y, t, log_p);
+   Affine_Transform_2D::t (point_2d.x, point_2d.y, t, log_p);
 }
 
 void
@@ -5399,7 +5399,7 @@ Emagram::reverse_tp (Thermo_Point& thermo_point,
                      const Point_2D& point) const
 {
    Real t, log_p;
-   Affine_Transform_2D::reverse (t, log_p, point.x, point.y);
+   Affine_Transform_2D::r (t, log_p, point.x, point.y);
    thermo_point.set_t_p (t, exp (log_p), p_0);
 }
 

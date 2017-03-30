@@ -392,6 +392,15 @@ Wind::Wind (const Wind& wind)
 {
 }
 
+Wind::Wind (const Dstring& str)
+{
+   const Tokens tokens (str, "/");
+   if (tokens.size () != 2) { u = GSL_NAN; v = GSL_NAN; }
+   const Real direction = stof (tokens[0]);
+   const Real speed = stof (tokens[1]);
+   set_from_direction_speed (direction, speed);
+}
+
 Wind
 Wind::direction_speed (const Real direction,
                        const Real speed)
@@ -564,6 +573,58 @@ Wind::get_direction_string (const Integer n,
    const Dstring& fmt = (no_format ? "%03.0f\u00b0" : format);
    return Dstring::render (fmt, cardinal_direction);
 
+}
+
+Wind
+Wind::operator + (const Wind& wind) const
+{
+   return Wind (u + wind.u, v + wind.v);
+}
+
+void
+Wind::operator += (const Wind& wind)
+{
+   u += wind.u;
+   v += wind.v;
+}
+
+Wind
+Wind::operator - (const Wind& wind) const
+{
+   return Wind (u - wind.u, v - wind.v);
+}
+
+void
+Wind::operator -= (const Wind& wind)
+{
+   u -= wind.u;
+   v -= wind.v;
+}
+
+Wind
+Wind::operator * (const Real a) const
+{
+   return Wind (u * a, v * a);
+}
+
+void
+Wind::operator *= (const Real a)
+{
+   u *= a;
+   v *= a;
+}
+
+Wind
+Wind::operator / (const Real a) const
+{
+   return Wind (u / a, v / a);
+}
+
+void
+Wind::operator /= (const Real a)
+{
+   u /= a;
+   v /= a;
 }
 
 bool
@@ -822,7 +883,7 @@ Wind_Transform::transform (Real& x,
                            const Real speed) const
 {
    const Real theta = (direction - 90) * M_PI/180;
-   Polar_Transform_2D::transform (x, y, speed, theta);
+   Polar_Transform_2D::t (x, y, speed, theta);
 }
 
 void
@@ -832,7 +893,7 @@ Wind_Transform::reverse (Real& direction,
                          const Real y) const
 {
    Real theta;
-   Polar_Transform_2D::reverse (speed, theta, x, y);
+   Polar_Transform_2D::r (speed, theta, x, y);
    direction = (theta * 180/M_PI + 90);
 }
 
@@ -1505,10 +1566,10 @@ Wind_Disc::Transform::out_of_domain (const Real x,
 }
 
 void
-Wind_Disc::Transform::transform (Real& x,
-                                 Real& y,
-                                 const Real direction,
-                                 const Real speed) const
+Wind_Disc::Transform::t (Real& x,
+                         Real& y,
+                         const Real direction,
+                         const Real speed) const
 {
    const Real r = get_radius (speed);
    const Real theta = direction * DEGREE_TO_RADIAN;
@@ -1517,10 +1578,10 @@ Wind_Disc::Transform::transform (Real& x,
 }
  
 void
-Wind_Disc::Transform::reverse (Real& direction,
-                               Real& speed,
-                               const Real x, 
-                               const Real y) const
+Wind_Disc::Transform::r (Real& direction,
+                         Real& speed,
+                         const Real x, 
+                         const Real y) const
 {
    const Real dx = (x - origin.x);
    const Real dy = -(y - origin.y);
@@ -1594,7 +1655,8 @@ Wind_Disc::render_directions (const RefPtr<Context> cr) const
 
    if (is_even (number_of_directions))
    {
-      render_directions_even (cr);
+//      render_directions_even (cr);
+      render_directions_odd (cr);
    }
    else
    {
@@ -1968,51 +2030,6 @@ Wind_Disc::render_scatter_ring (const RefPtr<Context> cr,
 }
 
 void
-Wind_Disc::render_percentages (const RefPtr<Context> cr) const
-{
-
-   const Transform_2D& t = *transform_ptr;
-   const Real max_speed = transform_ptr->get_max_speed ();
-   const Real d_direction = 360.0 / number_of_directions;
-
-   for (Integer i = 0; i < number_of_directions; i++)
-   {
-
-      const Real direction = i * d_direction;
-
-      for (Integer j = 0; j < thresholds.size (); j++)
-      {
-
-         Real lower_speed = thresholds[j].value;
-         if  (lower_speed >= max_speed) { break; }
-
-         Real upper_speed = thresholds[j+1].value;
-         const Real truncated = (max_speed < upper_speed);
-         const Real strongest_speed = (j == thresholds.size () - 1);
-         if (truncated || strongest_speed)
-         {
-            upper_speed = max_speed;
-         }
-
-         const Real speed = (lower_speed + upper_speed) / 2;
-
-         const Point_2D& p = t.transform (Point_2D (direction, speed));
-         const Real percentage = truncated ?
-            get_percentage_stronger (i, j) : get_percentage (i, j);
-
-         render_percentage (cr, p, percentage);
-
-      }
-
-   }
-
-   const Point_2D& origin = transform_ptr->get_origin ();
-   const Real calm_percentage = get_calm_percentage ();
-   render_percentage (cr, origin, calm_percentage);
-
-}
-
-void
 Wind_Disc::render_percentage (const RefPtr<Context> cr,
                               const Point_2D& point,
                               const Real percentage) const
@@ -2032,62 +2049,6 @@ Wind_Disc::render_percentage (const RefPtr<Context> cr,
    color_j.cairo (cr);
    label.set_offset (Point_2D (0, 0));
    label.cairo (cr);
-
-}
-
-void
-Wind_Disc::render_percentage_d (const RefPtr<Context> cr,
-                                const Real hue) const
-{
-
-   Real max_p = GSL_NEGINF;
-   Real* percentages = new Real[number_of_directions];
-
-   for (Integer i = 0; i < number_of_directions; i++)
-   {
-      const Real p = get_percentage_d (i);
-      percentages[i] = p;
-      if (p > max_p) { max_p = p; }
-   }
-
-   max_p *= 1.1;
-
-   const Point_2D& origin = transform_ptr->get_origin ();
-   const Real max_speed = transform_ptr->get_max_speed ();
-   const Real max_r = transform_ptr->get_radius (max_speed);
-   const Real min_r = transform_ptr->get_calm_radius ();
-   const Real m = (max_r - min_r) / max_p;
-
-   const Transform_2D& t = *transform_ptr;
-//   spline.set_interpolation (gsl_interp_cspline_periodic);
-
-   const Color& color = Color::hsb (hue, 0.8, 0.5, 0.5);
-
-   cr->save ();
-   cr->set_line_width (6);
-   cr->set_fill_rule (FILL_RULE_EVEN_ODD);
-   color.cairo (cr);
-
-   const Real delta_p = 360.0 / number_of_directions;
-   for (Integer i = 0; i < number_of_directions; i++)
-   {
-
-      const Real d = i * delta_p - 90;
-      const Real dl = d - delta_p/2;
-      const Real dr = d + delta_p/2;
-      const Real theta_l = dl * DEGREE_TO_RADIAN;
-      const Real theta_r = dr * DEGREE_TO_RADIAN;
-
-      const Real r = percentages[i] * m + min_r;
-      cr->arc (origin.x, origin.y, r, theta_l, theta_r);
-
-   }
-
-   delete[] percentages;
-
-   cr->close_path ();
-   cr->stroke ();
-   cr->restore ();
 
 }
 
@@ -2181,7 +2142,7 @@ Wind_Disc::get_wind (const Point_2D& point) const
    }
 
    Real direction, speed;
-   transform_ptr->reverse (direction, speed, point.x, point.y);
+   transform_ptr->r (direction, speed, point.x, point.y);
    return Wind::direction_speed (direction, speed * multiplier);
 
 }
@@ -2193,16 +2154,7 @@ Wind_Disc::render (const RefPtr<Context> cr,
                    const Real dir_scatter) const
 {
 
-   const Point_2D& origin = transform_ptr->get_origin ();
-   const Real max_radius = transform_ptr->get_max_radius ();
-
-   cr->save ();
-   cr->set_font_size (font_size);
-   Color (1, 1, 1, 1).cairo (cr);
-   Ring (max_radius).cairo (cr, origin);
-   cr->fill ();
-   
-   render_background (cr);
+   render_bg (cr);
    //render_scatter_plot (cr, hue, dir_scatter);
 
    if (outline) { render_percentage_d (cr, hue); }
@@ -2221,12 +2173,113 @@ Wind_Disc::render_bg (const RefPtr<Context> cr) const
 
    cr->save ();
    cr->set_font_size (font_size);
-   Color (1, 1, 1, 1).cairo (cr);
+   Color::white ().cairo (cr);
    Ring (max_radius).cairo (cr, origin);
    cr->fill ();
    
    render_background (cr);
 
+   cr->restore ();
+
+}
+
+void
+Wind_Disc::render_percentages (const RefPtr<Context> cr) const
+{
+
+   const Transform_2D& t = *transform_ptr;
+   const Real max_speed = transform_ptr->get_max_speed ();
+   const Real d_direction = 360.0 / number_of_directions;
+
+   for (Integer i = 0; i < number_of_directions; i++)
+   {
+
+      const Real direction = i * d_direction;
+
+      for (Integer j = 0; j < thresholds.size (); j++)
+      {
+
+         Real lower_speed = thresholds[j].value;
+         if  (lower_speed >= max_speed) { break; }
+
+         Real upper_speed = thresholds[j+1].value;
+         const Real truncated = (max_speed < upper_speed);
+         const Real strongest_speed = (j == thresholds.size () - 1);
+         if (truncated || strongest_speed)
+         {
+            upper_speed = max_speed;
+         }
+
+         const Real speed = (lower_speed + upper_speed) / 2;
+
+         const Point_2D& p = t.transform (Point_2D (direction, speed));
+         const Real percentage = truncated ?
+            get_percentage_stronger (i, j) : get_percentage (i, j);
+
+         render_percentage (cr, p, percentage);
+
+      }
+
+   }
+
+   const Point_2D& origin = transform_ptr->get_origin ();
+   const Real calm_percentage = get_calm_percentage ();
+   render_percentage (cr, origin, calm_percentage);
+
+}
+
+void
+Wind_Disc::render_percentage_d (const RefPtr<Context> cr,
+                                const Real hue) const
+{
+
+   Real max_p = GSL_NEGINF;
+   Real* percentages = new Real[number_of_directions];
+
+   for (Integer i = 0; i < number_of_directions; i++)
+   {
+      const Real p = get_percentage_d (i);
+      percentages[i] = p;
+      if (p > max_p) { max_p = p; }
+   }
+
+   max_p *= 1.1;
+
+   const Point_2D& origin = transform_ptr->get_origin ();
+   const Real max_speed = transform_ptr->get_max_speed ();
+   const Real max_r = transform_ptr->get_radius (max_speed);
+   const Real min_r = transform_ptr->get_calm_radius ();
+   const Real m = (max_r - min_r) / max_p;
+
+   const Transform_2D& t = *transform_ptr;
+//   spline.set_interpolation (gsl_interp_cspline_periodic);
+
+   const Color& color = Color::hsb (hue, 0.8, 0.5, 0.5);
+
+   cr->save ();
+   cr->set_line_width (6);
+   cr->set_fill_rule (FILL_RULE_EVEN_ODD);
+   color.cairo (cr);
+
+   const Real delta_p = 360.0 / number_of_directions;
+   for (Integer i = 0; i < number_of_directions; i++)
+   {
+
+      const Real d = i * delta_p - 90;
+      const Real dl = d - delta_p/2;
+      const Real dr = d + delta_p/2;
+      const Real theta_l = dl * DEGREE_TO_RADIAN;
+      const Real theta_r = dr * DEGREE_TO_RADIAN;
+
+      const Real r = percentages[i] * m + min_r;
+      cr->arc (origin.x, origin.y, r, theta_l, theta_r);
+
+   }
+
+   delete[] percentages;
+
+   cr->close_path ();
+   cr->stroke ();
    cr->restore ();
 
 }
@@ -2239,16 +2292,19 @@ Wind_Disc::render_index (const RefPtr<Context> cr,
    const Integer s = index.j;
 
    const Point_2D& origin = transform_ptr->get_origin ();
-   const Color& color_0 = Color::hsb (0.0, 0.6, 0.6, 0.3);
-   const Color& color_1 = Color::hsb (0.1, 0.5, 0.6, 0.3);
+   const Color& color_0 = Color::hsb (0.25, 0.65, 0.65, 0.3);
+   const Color& color_1 = Color::hsb (0.45, 0.45, 0.55, 0.3);
+   const Stripped stripped (color_0, color_1, 25);
+   const Color& pen = Color::hsb (0.35, 0.6, 0.8, 0.5);
+
+   cr->save ();
+   cr->set_line_width (5);
 
    if (index.i == -1 && index.j == -1)
    {
-      cr->save ();
-      //Color (0.5, 0.5, 1, 0.3).cairo (cr);
-      Stripped (color_0, color_1, 20).cairo (cr);
       const Real calm_radius = transform_ptr->get_calm_radius ();
       Circle (origin, calm_radius).cairo (cr); 
+      stripped.cairo (cr);
       cr->fill ();
       cr->restore ();
       return;
@@ -2266,23 +2322,32 @@ Wind_Disc::render_index (const RefPtr<Context> cr,
    const Real left_direction = direction - d_direction / 2;
    const Real right_direction = direction + d_direction / 2;
 
-
    Point_2D lo, ri;
-   transform_ptr->transform (lo.x, lo.y, left_direction, outer_speed);
-   transform_ptr->transform (ri.x, ri.y, right_direction, inner_speed);
+   transform_ptr->t (lo.x, lo.y, left_direction, outer_speed);
+   transform_ptr->t (ri.x, ri.y, right_direction, inner_speed);
 
    const Real theta_l = atan2 (lo.y - origin.y, lo.x - origin.x);
    const Real theta_r = atan2 (ri.y - origin.y, ri.x - origin.x);
 
-   cr->save ();
-   Stripped (color_0, color_1, 20).cairo (cr);
+   stripped.cairo (cr);
    cr->move_to (lo.x, lo.y);
    cr->arc (origin.x, origin.y, outer_r, theta_l, theta_r);
    cr->arc_negative (origin.x, origin.y, inner_r, theta_r, theta_l);
-   //cr->line_to (p.x, p.y);
+   cr->line_to (lo.x, lo.y);
    cr->fill ();
+
    cr->restore ();
 
+}
+
+void
+Wind_Disc::render_index_set (const RefPtr<Context> cr,
+                             const std::set<Index_2D>& index_set) const
+{
+   for (const Index_2D& index_2d : index_set)
+   {
+      render_index (cr, index_2d);
+   }
 }
 
 const Point_2D&

@@ -562,8 +562,8 @@ Circle::Circle ()
          
 Circle::Circle (const Point_2D& center,
                 const Real radius)
-      : center (center),
-        radius (radius)
+   : center (center),
+     radius (radius)
 {
 }
          
@@ -706,7 +706,7 @@ Circle::is_nac () const
 void
 Circle::cairo (const RefPtr<Context>& cr) const
 {
-   cr->move_to (center.x, center.y);
+   cr->move_to (center.x + radius, center.y);
    cr->arc (center.x, center.y, radius, 0, 2*M_PI);
 }
 
@@ -1122,7 +1122,7 @@ Simple_Polyline::transform (const Transform_2D& transform)
         iterator != end (); iterator++)
    {
       Point_2D& point = *(iterator);
-      transform.transform (point.x, point.y, point.x, point.y);
+      transform.t (point.x, point.y, point.x, point.y);
    }
 }
 
@@ -1133,7 +1133,7 @@ Simple_Polyline::reverse (const Transform_2D& transform)
         iterator != end (); iterator++)
    {
       Point_2D& point = *(iterator);
-      transform.reverse (point.x, point.y, point.x, point.y);
+      transform.r (point.x, point.y, point.x, point.y);
    }
 }
 
@@ -2840,7 +2840,7 @@ Polygon::transform (const Transform_2D& transform)
       {
          Real& x = current_ptr->x;
          Real& y = current_ptr->y;
-         transform.transform (x, y, x, y);
+         transform.t (x, y, x, y);
          current_ptr = current_ptr->next_ptr;
       }
       while (current_ptr != current_handle_ptr);
@@ -2864,7 +2864,7 @@ Polygon::reverse (const Transform_2D& transform)
       {
          Real& x = current_ptr->x;
          Real& y = current_ptr->y;
-         transform.reverse (x, y, x, y);
+         transform.r (x, y, x, y);
          current_ptr = current_ptr->next_ptr;
       }
       while (current_ptr != current_handle_ptr);

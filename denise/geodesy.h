@@ -828,10 +828,10 @@ namespace denise
          get_scale () const;
 
          virtual void
-         reverse (Real& latitude,
-                  Real& longitude,
-                  const Real x,
-                  const Real y) const = 0;
+         r (Real& latitude,
+            Real& longitude,
+            const Real x,
+            const Real y) const = 0;
 
          void
          reverse (Lat_Long& lat_long,
@@ -884,16 +884,16 @@ namespace denise
                         const Real longitude) const;
 
          void
-         transform (Real& x,
-                    Real& y,
-                    const Real latitude,
-                    const Real longitude) const;
+         t (Real& x,
+            Real& y,
+            const Real latitude,
+            const Real longitude) const;
 
          void
-         reverse (Real& latitude,
-                  Real& longitude,
-                  const Real x,
-                  const Real y) const;
+         r (Real& latitude,
+            Real& longitude,
+            const Real x,
+            const Real y) const;
    
    }; 
 
@@ -953,16 +953,16 @@ namespace denise
                         const Real longitude) const;
 
          void
-         transform (Real& x,
-                    Real& y,
-                    const Real latitude,
-                    const Real longitude) const;
+         t (Real& x,
+            Real& y,
+            const Real latitude,
+            const Real longitude) const;
 
          void
-         reverse (Real& latitude,
-                  Real& longitude,
-                  const Real x,
-                  const Real y) const;
+         r (Real& latitude,
+            Real& longitude,
+            const Real x,
+            const Real y) const;
 
          void
          transform_uv (Real& u,
@@ -1025,16 +1025,16 @@ namespace denise
                         const Real longitude) const;
 
          void
-         transform (Real& x,
-                    Real& y,
-                    const Real latitude,
-                    const Real longitude) const;
+         t (Real& x,
+            Real& y,
+            const Real latitude,
+            const Real longitude) const;
 
          void
-         reverse (Real& latitude,
-                  Real& longitude,
-                  const Real x,
-                  const Real y) const;
+         r (Real& latitude,
+            Real& longitude,
+            const Real x,
+            const Real y) const;
 
          Real
          get_theta (const Real u,
@@ -1082,16 +1082,16 @@ namespace denise
                         const Real longitude) const;
 
          void
-         transform (Real& x,
-                    Real& y,
-                    const Real latitude,
-                    const Real longitude) const;
+         t (Real& x,
+            Real& y,
+            const Real latitude,
+            const Real longitude) const;
 
          void
-         reverse (Real& latitude,
-                  Real& longitude,
-                  const Real x,
-                  const Real y) const;
+         r (Real& latitude,
+            Real& longitude,
+            const Real x,
+            const Real y) const;
 
          void
          transform_uv (Real& u,
@@ -1150,16 +1150,16 @@ namespace denise
                         const Real longitude) const;
 
          void
-         transform (Real& transformed_x,
-                    Real& transformed_y,
-                    const Real x, 
-                    const Real y) const;
+         t (Real& transformed_x,
+            Real& transformed_y,
+            const Real x, 
+            const Real y) const;
          
          void
-         reverse (Real& reversed_x,
-                  Real& reversed_y,
-                  const Real x,
-                  const Real y) const;
+         r (Real& reversed_x,
+            Real& reversed_y,
+            const Real x,
+            const Real y) const;
 
          void
          cairo (const RefPtr<Context> cr,
@@ -1207,16 +1207,16 @@ namespace denise
                         const Real longitude) const;
 
          void
-         transform (Real& transformed_x,
-                    Real& transformed_y,
-                    const Real x, 
-                    const Real y) const;
+         t (Real& transformed_x,
+            Real& transformed_y,
+            const Real x, 
+            const Real y) const;
          
          void
-         reverse (Real& reversed_x,
-                  Real& reversed_y,
-                  const Real x,
-                  const Real y) const;
+         r (Real& reversed_x,
+            Real& reversed_y,
+            const Real x,
+            const Real y) const;
 
    };
 
@@ -1260,16 +1260,16 @@ namespace denise
                         const Real longitude) const;
 
          void
-         transform (Real& transformed_x,
-                    Real& transformed_y,
-                    const Real x, 
-                    const Real y) const;
+         t (Real& transformed_x,
+            Real& transformed_y,
+            const Real x, 
+            const Real y) const;
          
          void
-         reverse (Real& reversed_x,
-                  Real& reversed_y,
-                  const Real x,
-                  const Real y) const;
+         r (Real& reversed_x,
+            Real& reversed_y,
+            const Real x,
+            const Real y) const;
 
    };
 

@@ -38,7 +38,7 @@ Transform_2D::cr (const Cairo::RefPtr<Cairo::Context>& cr,
    {
 
       const Point_2D& point = *(iterator);
-      transform (x, y, point.x, point.y);
+      t (x, y, point.x, point.y);
 
       if (iterator == simple_polyline.begin ())
       {
@@ -67,7 +67,7 @@ Transform_2D::cr (const Cairo::RefPtr<Cairo::Context>& cr,
         iterator != simple_polyline.end (); iterator++)
    {
       const Point_2D& point = *(iterator);
-      transform (p.x, p.y, point.x, point.y);
+      t (p.x, p.y, point.x, point.y);
       sp.add (p);
    }
 
@@ -124,7 +124,7 @@ Transform_2D::cr (const Cairo::RefPtr<Cairo::Context>& cr,
       for (Integer i = 0; i < n; i++)
       {
          const Point_2D& point = (const Point_2D&)(*current_ptr);
-         transform (x, y, point.x, point.y);
+         t (x, y, point.x, point.y);
          if (i == 0) { cr->move_to (x, y); }
          else        { cr->line_to (x, y); }
          current_ptr = current_ptr->next_ptr;
@@ -142,17 +142,17 @@ Transform_2D::cr (const Cairo::RefPtr<Cairo::Context>& cr,
 Real
 Transform_1D::transform (const Real x) const
 {
-   Real t;
-   transform (t, x);
-   return t;
+   Real y;
+   t (y, x);
+   return y;
 }
 
 Real
 Transform_1D::reverse (const Real x) const
 {
-   Real r;
-   reverse (r, x);
-   return r;
+   Real y;
+   r (y, x);
+   return y;
 }
 
 Transform_2D::Transform_2D ()
@@ -251,10 +251,10 @@ Transform_2D::is_out_of_domain (const Point_2D& point_2d) const
 }
 
 void
-Transform_2D::transform (Real& transformed_x,
-                         Real& transformed_y,
-                         const Real x,
-                         const Real y) const
+Transform_2D::t (Real& transformed_x,
+                 Real& transformed_y,
+                 const Real x,
+                 const Real y) const
 {
    transformed_x = x;
    transformed_y = y;
@@ -265,7 +265,7 @@ Transform_2D::transform (const Real x,
                          const Real y) const
 {
    Point_2D p;
-   transform (p.x, p.y, x, y);
+   t (p.x, p.y, x, y);
    return p;
 }
 
@@ -273,15 +273,15 @@ Point_2D
 Transform_2D::transform (const Point_2D& point_2d) const
 {
    Point_2D p;
-   transform (p.x, p.y, point_2d.x, point_2d.y);
+   t (p.x, p.y, point_2d.x, point_2d.y);
    return p;
 }
 
 void
-Transform_2D::reverse (Real& reversed_x,
-                       Real& reversed_y,
-                       const Real x,
-                       const Real y) const
+Transform_2D::r (Real& reversed_x,
+                 Real& reversed_y,
+                 const Real x,
+                 const Real y) const
 {
    reversed_x = x;
    reversed_y = y;
@@ -292,7 +292,7 @@ Transform_2D::reverse (const Real x,
                        const Real y) const
 {
    Point_2D p;
-   reverse (p.x, p.y, x, y);
+   r (p.x, p.y, x, y);
    return p;
 }
 
@@ -300,7 +300,7 @@ Point_2D
 Transform_2D::reverse (const Point_2D& point_2d) const
 {
    Point_2D p;
-   reverse (p.x, p.y, point_2d.x, point_2d.y);
+   r (p.x, p.y, point_2d.x, point_2d.y);
    return p;
 }
 
@@ -348,9 +348,9 @@ Transform_2D::cairo (const Cairo::RefPtr<Cairo::Context>& cr,
 
    Real x, y;
 
-   transform (x, y, edge.point_a.x, edge.point_a.y);
+   t (x, y, edge.point_a.x, edge.point_a.y);
    cr->move_to (x, y);
-   transform (x, y, edge.point_b.x, edge.point_b.y);
+   t (x, y, edge.point_b.x, edge.point_b.y);
    cr->move_to (x, y);
 
 }
@@ -364,7 +364,7 @@ Transform_2D::cairo (const Cairo::RefPtr<Cairo::Context>& cr,
    const Real radius = circle.get_radius ();
 
    Real x, y;
-   transform (x, y, center.x, center.y);
+   t (x, y, center.x, center.y);
 
    cr->move_to (x, y);
    cr->arc (x, y, radius, 0, 2*M_PI);
@@ -505,8 +505,8 @@ Affine_Transform_1D::translate (const Real translation)
 }
 
 void
-Affine_Transform_1D::transform (Real& transformed,
-                                const Real x) const
+Affine_Transform_1D::t (Real& transformed,
+                        const Real x) const
 {
    transformed = s * x + o;
 }
@@ -518,8 +518,8 @@ Affine_Transform_1D::transform (const Real x) const
 }
 
 void
-Affine_Transform_1D::reverse (Real& reversed,
-                              const Real x) const
+Affine_Transform_1D::r (Real& reversed,
+                        const Real x) const
 {
    reversed = (x - o) / s;
 }
@@ -656,10 +656,10 @@ Moebius_Transform::get_fixed_points () const
 }
 
 void
-Moebius_Transform::transform (Real& transformed_x,
-                              Real& transformed_y,
-                              const Real x,
-                              const Real y) const
+Moebius_Transform::t (Real& transformed_x,
+                      Real& transformed_y,
+                      const Real x,
+                      const Real y) const
 {
 
    const complex<Real> z (x, y);
@@ -684,10 +684,10 @@ Moebius_Transform::transform (const Point_2D& point_2d) const
 }
 
 void
-Moebius_Transform::reverse (Real& reversed_x,
-                            Real& reversed_y,
-                            const Real x,
-                            const Real y) const
+Moebius_Transform::r (Real& reversed_x,
+                      Real& reversed_y,
+                      const Real x,
+                      const Real y) const
 {
 
    const complex<Real> w (x, y);
@@ -770,8 +770,8 @@ Moebius_Transform::get_theta (const Real u,
 void
 Affine_Transform_2D::init ()
 {
-   r[0] = m[0][1] * m[1][2] - m[1][1] * m[0][2];
-   r[1] = m[0][2] * m[1][0] - m[1][2] * m[0][0];
+   a[0] = m[0][1] * m[1][2] - m[1][1] * m[0][2];
+   a[1] = m[0][2] * m[1][0] - m[1][2] * m[0][0];
    determinant = m[0][0] * m[1][1] - m[0][1] * m[1][0];
 }
 
@@ -919,10 +919,10 @@ Affine_Transform_2D::get_translation_y () const
 }
 
 void
-Affine_Transform_2D::transform (Real& transformed_x,
-                                Real& transformed_y,
-                                const Real x,
-                                const Real y) const
+Affine_Transform_2D::t (Real& transformed_x,
+                        Real& transformed_y,
+                        const Real x,
+                        const Real y) const
 {
    transformed_x = m[0][0] * x + m[0][1] * y + m[0][2];
    transformed_y = m[1][0] * x + m[1][1] * y + m[1][2];
@@ -942,13 +942,13 @@ Affine_Transform_2D::transform (const Point_2D& point_2d) const
 }
 
 void
-Affine_Transform_2D::reverse (Real& reversed_x,
-                              Real& reversed_y,
-                              const Real x,
-                              const Real y) const
+Affine_Transform_2D::r (Real& reversed_x,
+                        Real& reversed_y,
+                        const Real x,
+                        const Real y) const
 {
-   reversed_x = (m[1][1] * x - m[0][1] * y + r[0]) / determinant;
-   reversed_y = (m[0][0] * y - m[1][0] * x + r[1]) / determinant;
+   reversed_x = (m[1][1] * x - m[0][1] * y + a[0]) / determinant;
+   reversed_y = (m[0][0] * y - m[1][0] * x + a[1]) / determinant;
 }
 
 Point_2D

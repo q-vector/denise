@@ -121,6 +121,18 @@ namespace denise
               const Real b,
               const Real a = 1.0);
 
+         Color
+         with_hue (const Real h) const;
+
+         Color
+         with_saturation (const Real s) const;
+
+         Color
+         with_brightness (const Real b) const;
+
+         Color
+         with_alpha (const Real a) const;
+
          static Color
          get_nac ();
 

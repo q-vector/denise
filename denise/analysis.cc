@@ -5127,8 +5127,8 @@ Cartesian_Transform_1D::transform (const Real x) const
 }
 
 void
-Cartesian_Transform_1D::transform (Real& transformed,
-                                   const Real x) const
+Cartesian_Transform_1D::t (Real& transformed,
+                           const Real x) const
 {
    transformed = (log ? std::log (x) : x) * s + o;
 }
@@ -5137,15 +5137,15 @@ Real
 Cartesian_Transform_1D::reverse (const Real x) const
 {
    Real reversed;
-   this->reverse (reversed, x);
+   this->r (reversed, x);
    return reversed;
 }
 
 void
-Cartesian_Transform_1D::reverse (Real& reversed,
-                                 const Real x) const
+Cartesian_Transform_1D::r (Real& reversed,
+                           const Real x) const
 {
-   Affine_Transform_1D::reverse (reversed, x);
+   Affine_Transform_1D::r (reversed, x);
    if (log) { reversed = exp (reversed); }
 }
 
@@ -5221,22 +5221,22 @@ Log_Transform_2D::out_of_domain (const Real x,
 }
 
 void
-Log_Transform_2D::transform (Real& transformed_x,
-                             Real& transformed_y,
-                             const Real x,
-                             const Real y) const
+Log_Transform_2D::t (Real& transformed_x,
+                     Real& transformed_y,
+                     const Real x,
+                     const Real y) const
 {
-   Cartesian_Transform_2D::transform (transformed_x, transformed_y,
+   Cartesian_Transform_2D::t (transformed_x, transformed_y,
       (log_x ? log (x) : x), (log_y ? log (y) : y));
 }
 
 void
-Log_Transform_2D::reverse (Real& reversed_x,
-                           Real& reversed_y,
-                           const Real x,
-                           const Real y) const
+Log_Transform_2D::r (Real& reversed_x,
+                     Real& reversed_y,
+                     const Real x,
+                     const Real y) const
 {
-   Cartesian_Transform_2D::reverse (reversed_x, reversed_y, x, y);
+   Cartesian_Transform_2D::r (reversed_x, reversed_y, x, y);
    if (log_x) { reversed_x = exp (reversed_x); }
    if (log_y) { reversed_y = exp (reversed_y); }
 }
@@ -5270,8 +5270,8 @@ Polar_Transform_2D::Polar_Transform_2D ()
 
 Polar_Transform_2D::Polar_Transform_2D (const Point_2D& origin,
                                         const Real scale)
-                              : origin (origin),
-                                 scale (scale)
+   : origin (origin),
+     scale (scale)
 {
    set (origin, scale);
 }
@@ -5292,10 +5292,10 @@ Polar_Transform_2D::out_of_domain (const Real r,
 }
 
 void
-Polar_Transform_2D::transform (Real& x,
-                               Real& y,
-                               const Real r,
-                               const Real theta) const
+Polar_Transform_2D::t (Real& x,
+                       Real& y,
+                       const Real r,
+                       const Real theta) const
 {
    const Real scaled_r = scale * r;
    x = origin.x + scaled_r * cos (theta);
@@ -5303,15 +5303,21 @@ Polar_Transform_2D::transform (Real& x,
 }
 
 void
-Polar_Transform_2D::reverse (Real& r,
-                             Real& theta,
-                             const Real x,
-                             const Real y) const
+Polar_Transform_2D::r (Real& radius,
+                       Real& theta,
+                       const Real x,
+                       const Real y) const
 {
    const Real dx = (x - origin.x);
    const Real dy = (y - origin.y);
-   r = sqrt (dx*dx + dy*dy) / scale;
+   radius = sqrt (dx*dx + dy*dy) / scale;
    theta = atan2 (dy, dx);
+}
+
+Real
+Polar_Transform_2D::get_scale () const
+{
+   return scale;
 }
 
 Parabolic_Transform_2D::Parabolic_Transform_2D (const Point_2D& origin)
@@ -5327,20 +5333,20 @@ Parabolic_Transform_2D::out_of_domain (const Real u,
 }
 
 void
-Parabolic_Transform_2D::transform (Real& x,
-                                   Real& y,
-                                   const Real u,
-                                   const Real v) const
+Parabolic_Transform_2D::t (Real& x,
+                           Real& y,
+                           const Real u,
+                           const Real v) const
 {
    x = origin.x + (u*u - v*v) / 2;
    y = origin.y + u*v;
 }
 
 void
-Parabolic_Transform_2D::reverse (Real& u,
-                                 Real& v,
-                                 const Real x,
-                                 const Real y) const
+Parabolic_Transform_2D::r (Real& u,
+                           Real& v,
+                           const Real x,
+                           const Real y) const
 {
    u = GSL_NAN;
    v = GSL_NAN;
@@ -5361,20 +5367,20 @@ Elliptic_Transform_2D::out_of_domain (const Real u,
 }
 
 void
-Elliptic_Transform_2D::transform (Real& x,
-                                  Real& y,
-                                  const Real u,
-                                  const Real v) const
+Elliptic_Transform_2D::t (Real& x,
+                          Real& y,
+                          const Real u,
+                          const Real v) const
 {
    x = origin.x + scale * cosh (u) * cos (v);
    y = origin.y + scale * sinh (u) * sin (v);
 }
 
 void
-Elliptic_Transform_2D::reverse (Real& u,
-                                Real& v,
-                                const Real x,
-                                const Real y) const
+Elliptic_Transform_2D::r (Real& u,
+                          Real& v,
+                          const Real x,
+                          const Real y) const
 {
    u = GSL_NAN;
    v = GSL_NAN;
@@ -5395,10 +5401,10 @@ Bipolar_Transform_2D::out_of_domain (const Real u,
 }
 
 void
-Bipolar_Transform_2D::transform (Real& x,
-                                 Real& y,
-                                 const Real u,
-                                 const Real v) const
+Bipolar_Transform_2D::t (Real& x,
+                         Real& y,
+                         const Real u,
+                         const Real v) const
 {
    const Real denominator = cosh (v) - cos (u);
    x = origin.x + scale * sinh (v) / denominator;
@@ -5406,10 +5412,10 @@ Bipolar_Transform_2D::transform (Real& x,
 }
 
 void
-Bipolar_Transform_2D::reverse (Real& u,
-                               Real& v,
-                               const Real x,
-                               const Real y) const
+Bipolar_Transform_2D::r (Real& u,
+                         Real& v,
+                         const Real x,
+                         const Real y) const
 {
    u = GSL_NAN;
    v = GSL_NAN;
@@ -5566,7 +5572,7 @@ Graph_Raster::Graph_Raster (const Transform_2D& transform,
    {
       for (Integer j = anchor.j; j < end_index.j; j++)
       {
-         transform.reverse (x, y, Real (i), Real (j));
+         transform.r (x, y, Real (i), Real (j));
          const Real value = f (x, y);
          const Color& c = (fabs (value) < width ? color : transparent);
          set_pixel (i - anchor.i, j - anchor.j, c);

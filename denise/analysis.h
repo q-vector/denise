@@ -1357,8 +1357,8 @@ namespace denise
                                  const bool log = false);
 
          void
-         transform (Real& transformed,
-                    const Real x) const;
+         t (Real& transformed,
+            const Real x) const;
 
          Real
          transform (const Real x) const;
@@ -1367,8 +1367,8 @@ namespace denise
          reverse (const Real x) const;
 
          void
-         reverse (Real& reversed,
-                  const Real x) const;
+         r (Real& reversed,
+            const Real x) const;
 
    };
 
@@ -1427,16 +1427,16 @@ namespace denise
                         const Real y) const;
 
          void
-         transform (Real& transformed_x,
-                    Real& transformed_y,
-                    const Real x,
-                    const Real y) const;
+         t (Real& transformed_x,
+            Real& transformed_y,
+            const Real x,
+            const Real y) const;
 
          void
-         reverse (Real& reversed_x,
-                  Real& reversed_y,
-                  const Real x,
-                  const Real y) const;
+         r (Real& reversed_x,
+            Real& reversed_y,
+            const Real x,
+            const Real y) const;
 
          void
          transform_uv (Real& u,
@@ -1479,16 +1479,19 @@ namespace denise
                         const Real theta) const;
 
          virtual void
-         transform (Real& x,
-                    Real& y,
-                    const Real r,
-                    const Real theta) const;
+         t (Real& x,
+            Real& y,
+            const Real r,
+            const Real theta) const;
 
          virtual void
-         reverse (Real& r,
-                  Real& theta,
-                  const Real x,
-                  const Real y) const;
+         r (Real& radius,
+            Real& theta,
+            const Real x,
+            const Real y) const;
+
+         Real
+         get_scale () const;
 
    };
 
@@ -1509,16 +1512,16 @@ namespace denise
                         const Real v) const;
 
          void
-         transform (Real& x,
-                    Real& y,
-                    const Real u,
-                    const Real v) const;
+         t (Real& x,
+            Real& y,
+            const Real u,
+            const Real v) const;
 
          void
-         reverse (Real& u,
-                  Real& v,
-                  const Real x,
-                  const Real y) const;
+         r (Real& u,
+            Real& v,
+            const Real x,
+            const Real y) const;
 
    };
 
@@ -1543,16 +1546,16 @@ namespace denise
                         const Real v) const;
 
          void
-         transform (Real& x,
-                    Real& y,
-                    const Real u,
-                    const Real v) const;
+         t (Real& x,
+            Real& y,
+            const Real u,
+            const Real v) const;
 
          void
-         reverse (Real& u,
-                  Real& v,
-                  const Real x,
-                  const Real y) const;
+         r (Real& u,
+            Real& v,
+            const Real x,
+            const Real y) const;
 
    };
 
@@ -1577,16 +1580,16 @@ namespace denise
                         const Real v) const;
 
          void
-         transform (Real& x,
-                    Real& y,
-                    const Real u,
-                    const Real v) const;
+         t (Real& x,
+            Real& y,
+            const Real u,
+            const Real v) const;
 
          void
-         reverse (Real& u,
-                  Real& v,
-                  const Real x,
-                  const Real y) const;
+         r (Real& u,
+            Real& v,
+            const Real x,
+            const Real y) const;
 
    };
 
