@@ -1156,6 +1156,12 @@ Wind_Rose::get_number_of_directions () const
    return number_of_directions;
 }
 
+const Real
+Wind_Rose::get_calm_threshold () const
+{
+   return get_thresholds ().front ().value;
+}
+
 const Wind_Rose::Thresholds&
 Wind_Rose::get_thresholds () const
 {
@@ -1571,8 +1577,11 @@ Wind_Disc::Transform::t (Real& x,
                          const Real direction,
                          const Real speed) const
 {
-   const Real r = get_radius (speed);
-   const Real theta = direction * DEGREE_TO_RADIAN;
+   const Real calm_threshold = wind_disc.get_calm_threshold ();
+   const bool calm = (speed < calm_threshold);
+   const Real d = (calm ? random (0, 360) : direction);
+   const Real theta = d * DEGREE_TO_RADIAN;
+   const Real r = calm ? random (0, calm_radius - 8) : get_radius (speed);
    x = origin.x + r * sin (theta);
    y = origin.y - r * cos (theta);
 }
@@ -1624,8 +1633,7 @@ Wind_Disc::Transform::get_label_height () const
 Real
 Wind_Disc::Transform::get_radius (const Real speed) const
 {
-   const Wind_Rose::Thresholds& thresholds = wind_disc.get_thresholds ();
-   const Real calm_threshold = thresholds.front ().value;
+   const Real calm_threshold = wind_disc.get_calm_threshold ();
    return calm_radius + scale * (speed - calm_threshold);
 }
 
@@ -1635,8 +1643,7 @@ Wind_Disc::Transform::get_speed (const Real radius) const
    if (radius < calm_radius) { return 0; }
    else
    {
-      const Wind_Rose::Thresholds& thresholds = wind_disc.get_thresholds ();
-      const Real calm_threshold = thresholds.front ().value;
+      const Real calm_threshold = wind_disc.get_calm_threshold ();
       return (radius - calm_radius) / scale + calm_threshold;
    }
 }

@@ -555,6 +555,9 @@ namespace denise
          const Integer&
          get_number_of_directions () const;
 
+         const Real
+         get_calm_threshold () const;
+
          const Wind_Rose::Thresholds&
          get_thresholds () const;
 
