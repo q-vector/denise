@@ -4371,6 +4371,7 @@ Time_Chooser::on_mouse_button_pressed (const Dmouse_Button_Event& event)
          }
 
          return true;
+
       }
 
       const Dtime& dtime = get_time (point, true);
