@@ -4460,7 +4460,6 @@ Time_Chooser::pack ()
       button_box.index_2d.j = Integer (round (anchor_y));
       button_box.size_2d.i = Integer (round (width - margin));
 
-
       const Real anim_button_w = Real (button_box.size_2d.i);
 
       const Point_2D anim_anchor (anchor_x, anchor_y);

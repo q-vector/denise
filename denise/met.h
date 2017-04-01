@@ -735,6 +735,9 @@ namespace denise
                get_label_height () const;
 
                Real
+               get_length (const Real speed) const;
+
+               Real
                get_radius (const Real speed) const;
 
                Real

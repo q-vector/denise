@@ -1631,6 +1631,12 @@ Wind_Disc::Transform::get_label_height () const
 }
 
 Real
+Wind_Disc::Transform::get_length (const Real speed) const
+{
+   return scale * speed;
+}
+
+Real
 Wind_Disc::Transform::get_radius (const Real speed) const
 {
    const Real calm_threshold = wind_disc.get_calm_threshold ();
