@@ -42,8 +42,8 @@ namespace denise
    class Dwidget;
    class Dcanvas;
    class Dcontainer;
-   class Map_Console;
    class Geodetic_Transform;
+   class Map_Console;
 
    enum Orientation
    {
@@ -1592,6 +1592,15 @@ namespace denise
                     const Orientation orientation,
                     const Real width,
                     const Real height);
+
+         bool
+         is_empty () const;
+
+         Integer
+         get_size () const;
+
+         const Tokens&
+         get_tokens () const;
 
          Real
          get_preferred_width () const;

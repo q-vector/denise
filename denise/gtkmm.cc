@@ -2241,6 +2241,8 @@ Dtoggle_Button::toggle ()
 {
    switched_on = !(switched_on);
    state = (switched_on ? BUTTON_ON : BUTTON_OFF);
+   signal.emit ();
+   str_signal.emit (str);
 }
 
 const bool&
@@ -2961,6 +2963,24 @@ Popup::set_shape (const Point_2D& anchor,
 {
    this->orientation = orientation;
    being_packed (anchor, width, height);
+}
+
+bool
+Popup::is_empty () const
+{
+   return (get_size () == 0);
+}
+
+Integer
+Popup::get_size () const
+{
+   return tokens.size ();
+}
+
+const Tokens&
+Popup::get_tokens () const
+{
+   return tokens;
 }
 
 Real
