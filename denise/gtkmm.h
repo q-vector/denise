@@ -680,6 +680,9 @@ namespace denise
          Title
          title;
 
+         Box_2D
+         viewport;
+
          RefPtr<ImageSurface>
          widget_surface;
 

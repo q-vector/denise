@@ -272,8 +272,8 @@ Histogram_1D::render (const RefPtr<Context> cr,
    color.cairo (cr);
    cr->fill ();
 
-   const Real start_y = domain_y.start;
-   const Real end_y = domain_y.end;
+   const Real start_y = *(axis.begin ());
+   const Real end_y = *(axis.rbegin ());
    const Edge baseline (Point_2D (0, start_y), Point_2D (0, end_y));
    baseline_color.cairo (cr);
    baseline.cairo (cr, transform);
