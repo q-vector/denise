@@ -127,6 +127,14 @@ Dashes::cairo (const RefPtr<Context>& cr,
    cr->set_dash (d, offset);
 }
 
+Color::Color ()
+   : r (0.0),
+     g (0.0),
+     b (0.0),
+     a (1.0)
+{
+}
+
 Color::Color (const Color& color)
    : r (color.r),
      g (color.g),
@@ -148,95 +156,7 @@ Color::Color (const Real r,
 
 Color::Color (const Dstring& str)
 {
-
-   const Tokens tokens (str.get_lower_case (), ":");
-   const Integer n = tokens.size ();
-
-   if (tokens[0] == "black")
-   {
-      const Real a = (n > 1 ? stof (tokens[1]) : 1.0);
-      set (Color::black (a));
-   }
-   else
-   if (tokens[0] == "white")
-   {
-      const Real a = (n > 1 ? stof (tokens[1]) : 1.0);
-      set (Color::white (a));
-   }
-   else
-   if (tokens[0] == "gray")
-   {
-      const Real b = (n > 1 ? stof (tokens[1]) : 0.5);
-      const Real a = (n > 2 ? stof (tokens[2]) : 1.0);
-      set (Color::gray (b, a));
-   }
-   else
-   if (tokens[0] == "red")
-   {
-      const Real a = (n > 1 ? stof (tokens[1]) : 1.0);
-      set (Color::red (a));
-   }
-   else
-   if (tokens[0] == "green")
-   {
-      const Real a = (n > 1 ? stof (tokens[1]) : 1.0);
-      set (Color::green (a));
-   }
-   else
-   if (tokens[0] == "blue")
-   {
-      const Real a = (n > 1 ? stof (tokens[1]) : 1.0);
-      set (Color::blue (a));
-   }
-   else
-   if (tokens[0] == "cyan")
-   {
-      const Real a = (n > 1 ? stof (tokens[1]) : 1.0);
-      set (Color::cyan (a));
-   }
-   else
-   if (tokens[0] == "yellow")
-   {
-      const Real a = (n > 1 ? stof (tokens[1]) : 1.0);
-      set (Color::yellow (a));
-   }
-   else
-   if (tokens[0] == "magenta")
-   {
-      const Real a = (n > 1 ? stof (tokens[1]) : 1.0);
-      set (Color::magenta (a));
-   }
-   else
-   if (tokens[0] == "land")
-   {
-      const Real a = (n > 1 ? stof (tokens[1]) : 1.0);
-      set (Color::land (a));
-   }
-   else
-   if (tokens[0] == "sea")
-   {
-      const Real a = (n > 1 ? stof (tokens[1]) : 1.0);
-      set (Color::sea (a));
-   }
-   else
-   if (tokens[0] == "rgb")
-   {
-      const Real r = stof (tokens[1]);
-      const Real g = stof (tokens[2]);
-      const Real b = stof (tokens[3]);
-      const Real a = (n > 4 ? stof (tokens[4]) : 1.0);
-      set (r, g, b, a);
-   }
-   else
-   if (tokens[0] == "hsb")
-   {
-      const Real h = stof (tokens[1]);
-      const Real s = stof (tokens[2]);
-      const Real b = stof (tokens[3]);
-      const Real a = (n > 4 ? stof (tokens[4]) : 1.0);
-      set_hsb (h, s, b, a);
-   }
-
+   set (str);
 }
 
 Color::Color (const RefPtr<Context>& cr)
@@ -266,6 +186,27 @@ Color::hsb (const Real h,
    Color color;
    color.set_hsb (h, s, b, a);
    return color;
+}
+
+Color::Color (const Integer palette_number,
+              const Real a)
+{
+
+   const Integer i = (palette_number % 8);
+   const Dstring& suffix = Dstring::render (":%.2f", a);
+
+   switch (i)
+   {
+      case 0: set (Dstring ("#5DA5DA") + suffix); break;
+      case 1: set (Dstring ("#FAA43A") + suffix); break;
+      case 2: set (Dstring ("#60BD68") + suffix); break;
+      case 3: set (Dstring ("#F17CB0") + suffix); break;
+      case 4: set (Dstring ("#B2912F") + suffix); break;
+      case 5: set (Dstring ("#B276B2") + suffix); break;
+      case 6: set (Dstring ("#DECF3F") + suffix); break;
+      case 7: set (Dstring ("#F15854") + suffix); break;
+   }
+
 }
 
 Color
@@ -461,6 +402,112 @@ Color::set_hsb (const Real h,
          case 5: this->r = b; this->g = x; this->b = y; break;
       }
 
+   }
+
+}
+
+void
+Color::set (const Dstring& str)
+{
+
+   const Tokens tokens (str.get_lower_case (), ":");
+   const Integer n = tokens.size ();
+
+   if (tokens[0][0] == '#')
+   {
+      const Dstring& r_hex = Dstring ("0x") + str.substr (1, 2);
+      const Dstring& g_hex = Dstring ("0x") + str.substr (3, 2);
+      const Dstring& b_hex = Dstring ("0x") + str.substr (5, 2);
+      const Real r = stoi (r_hex, 0, 16) / 255.0;
+      const Real g = stoi (g_hex, 0, 16) / 255.0;
+      const Real b = stoi (b_hex, 0, 16) / 255.0;
+      const Real a = (n > 1 ? stof (tokens[1]) : 1.0);
+      set (r, g, b, a);
+   }
+   else
+   if (tokens[0] == "black")
+   {
+      const Real a = (n > 1 ? stof (tokens[1]) : 1.0);
+      set (Color::black (a));
+   }
+   else
+   if (tokens[0] == "white")
+   {
+      const Real a = (n > 1 ? stof (tokens[1]) : 1.0);
+      set (Color::white (a));
+   }
+   else
+   if (tokens[0] == "gray")
+   {
+      const Real b = (n > 1 ? stof (tokens[1]) : 0.5);
+      const Real a = (n > 2 ? stof (tokens[2]) : 1.0);
+      set (Color::gray (b, a));
+   }
+   else
+   if (tokens[0] == "red")
+   {
+      const Real a = (n > 1 ? stof (tokens[1]) : 1.0);
+      set (Color::red (a));
+   }
+   else
+   if (tokens[0] == "green")
+   {
+      const Real a = (n > 1 ? stof (tokens[1]) : 1.0);
+      set (Color::green (a));
+   }
+   else
+   if (tokens[0] == "blue")
+   {
+      const Real a = (n > 1 ? stof (tokens[1]) : 1.0);
+      set (Color::blue (a));
+   }
+   else
+   if (tokens[0] == "cyan")
+   {
+      const Real a = (n > 1 ? stof (tokens[1]) : 1.0);
+      set (Color::cyan (a));
+   }
+   else
+   if (tokens[0] == "yellow")
+   {
+      const Real a = (n > 1 ? stof (tokens[1]) : 1.0);
+      set (Color::yellow (a));
+   }
+   else
+   if (tokens[0] == "magenta")
+   {
+      const Real a = (n > 1 ? stof (tokens[1]) : 1.0);
+      set (Color::magenta (a));
+   }
+   else
+   if (tokens[0] == "land")
+   {
+      const Real a = (n > 1 ? stof (tokens[1]) : 1.0);
+      set (Color::land (a));
+   }
+   else
+   if (tokens[0] == "sea")
+   {
+      const Real a = (n > 1 ? stof (tokens[1]) : 1.0);
+      set (Color::sea (a));
+   }
+   else
+   if (tokens[0] == "rgb")
+   {
+      const Real r = stof (tokens[1]);
+      const Real g = stof (tokens[2]);
+      const Real b = stof (tokens[3]);
+      const Real a = (n > 4 ? stof (tokens[4]) : 1.0);
+      set (r, g, b, a);
+   }
+   else
+   if (tokens[0] == "hsb")
+   {
+      const Real h = stof (tokens[1]);
+      const Real s = stof (tokens[2]);
+      const Real b = stof (tokens[3]);
+      const Real a = (n > 4 ? stof (tokens[4]) : 1.0);
+      set_hsb (h, s, b, a);
    }
 
 }

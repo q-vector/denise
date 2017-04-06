@@ -100,20 +100,25 @@ namespace denise
          Real
          a;
 
+         Color ();
+
          Color (const Color& color);
 
          /// Creates an sRGB color withthe specified values.
          ///
          /// If rgb is set true, the constructor expects HSV values
          /// instead of RGB values.
-         Color (const Real r = 0,
-                const Real g = 0,
-                const Real b = 0,
+         Color (const Real r,
+                const Real g,
+                const Real b,
                 const Real a = 1.0);
 
          Color (const Dstring& str);
 
          Color (const RefPtr<Context>& cr);
+
+         Color (const Integer palette_number,
+                const Real a = 1.0);
 
          static Color
          hsb (const Real h,
@@ -196,6 +201,9 @@ namespace denise
                   const Real s,
                   const Real b,
                   const Real a = 1.0);
+
+         void
+         set (const Dstring& str);
 
          /// Scales the brightness of this Color
          ///
