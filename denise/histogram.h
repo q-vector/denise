@@ -47,6 +47,11 @@ namespace denise
    class Histogram
    {
 
+      protected:
+
+         Integer
+         number_of_points;
+
       public:
 
          class Axis : public set<Real>
@@ -80,6 +85,14 @@ namespace denise
                get_bin_bottom (const Real x) const;
 
          };
+
+         Histogram ();
+
+         virtual void
+         increment ();
+
+         const Integer&
+         get_number_of_points () const;
 
    };
 
@@ -131,14 +144,17 @@ namespace denise
                     const Real weight = 1);
 
          void
-         render (const RefPtr<Context> cr,
+         render (const RefPtr<Context>& cr,
                  const Transform_2D& transform,
-                 const Domain_1D& domain_y,
                  const Dstring& bin_fmt,
                  const Dstring& value_format,
                  const Color& color,
                  const Color& value_color,
                  const Color& baseline_color) const;
+
+         void
+         render_outline (const RefPtr<Context>& cr,
+                         const Transform_2D& transform) const;
 
    };
 

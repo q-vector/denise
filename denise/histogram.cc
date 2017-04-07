@@ -101,6 +101,23 @@ Histogram::Axis::get_bin_bottom (const Real x) const
    return (*(--(lower_bound (x))));
 }
 
+Histogram::Histogram ()
+   : number_of_points (0)
+{
+}
+
+void
+Histogram::increment ()
+{
+   number_of_points++;
+}
+
+const Integer&
+Histogram::get_number_of_points () const
+{
+   return number_of_points;
+}
+
 Histogram_1D::Histogram_1D (const Real interval,
                             const Real offset)
    : axis (interval, offset),
@@ -161,6 +178,7 @@ Histogram_1D::clear ()
    std::map<Real, Real>::clear ();
    max_value = 0;
    min_value = 0;
+   number_of_points = 0;
 }
 
 void
@@ -170,6 +188,8 @@ Histogram_1D::increment (const Real x,
 
    if (gsl_isnan (x)) { return; }
    if (axis.is_flexi ()) { axis.extend (x); }
+
+   Histogram::increment ();
 
    const Real bin_top = axis.get_bin_top (x);
    Histogram_1D::iterator i = find (bin_top);
@@ -190,9 +210,8 @@ Histogram_1D::increment (const Real x,
 }
 
 void
-Histogram_1D::render (const RefPtr<Context> cr,
+Histogram_1D::render (const RefPtr<Context>& cr,
                       const Transform_2D& transform,
-                      const Domain_1D& domain_y,
                       const Dstring& bin_format,
                       const Dstring& value_format,
                       const Color& color,
@@ -277,6 +296,47 @@ Histogram_1D::render (const RefPtr<Context> cr,
    const Edge baseline (Point_2D (0, start_y), Point_2D (0, end_y));
    baseline_color.cairo (cr);
    baseline.cairo (cr, transform);
+   cr->stroke ();
+
+}
+
+void
+Histogram_1D::render_outline (const RefPtr<Context>& cr,
+                              const Transform_2D& transform) const
+{
+
+   Polyline polyline;
+
+   for (Axis::const_iterator iterator = axis.begin ();
+        iterator != axis.end (); iterator++)
+   {
+
+      Axis::const_iterator next = iterator; next++;
+      const bool first = (iterator == axis.begin ());
+      const bool last = (next == axis.end ());
+
+      const Real bin_bottom = *(iterator);
+      const Real bin_top = *(next);
+
+      if (first)
+      {
+         polyline.add (Point_2D (0, bin_bottom));
+      }
+
+      if (!last)
+      {
+         const Real value = get_value (bin_top);
+         polyline.add (Point_2D (value, bin_bottom));
+         polyline.add (Point_2D (value, bin_top));
+      }
+      else
+      {
+         polyline.add (Point_2D (0, bin_bottom));
+      }
+
+   }
+
+   polyline.cairo (cr, transform);
    cr->stroke ();
 
 }
@@ -367,6 +427,7 @@ Histogram_2D::clear ()
    std::map<Point_2D, Real>::clear ();
    max_value = 0;
    min_value = 0;
+   number_of_points = 0;
 }
 
 void
@@ -380,6 +441,8 @@ Histogram_2D::increment (const Point_2D& point_2d,
    if (gsl_isnan (x) || gsl_isnan (y)) { return; }
    if (axis_x.is_flexi ()) { axis_x.extend (x); }
    if (axis_y.is_flexi ()) { axis_y.extend (y); }
+
+   Histogram::increment ();
 
    const Real bin_top_x = axis_x.get_bin_top (x);
    const Real bin_top_y = axis_y.get_bin_top (y);
