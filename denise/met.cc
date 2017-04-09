@@ -1666,10 +1666,14 @@ void
 Wind_Disc::render_directions (const RefPtr<Context> cr) const
 {
 
+   if ((number_of_directions % 3) == 0)
+   {
+      render_directions_3 (cr);
+   }
+   else
    if (is_even (number_of_directions))
    {
-//      render_directions_even (cr);
-      render_directions_odd (cr);
+      render_directions_even (cr);
    }
    else
    {
@@ -1707,6 +1711,45 @@ Wind_Disc::render_direction_labels (const RefPtr<Context> cr) const
       label.set_text_angle (theta);
       label.set_offset (Point_2D (0, -label_height / 2));
       label.cairo (cr, *transform_ptr);
+
+   }
+
+   cr->restore ();
+
+}
+
+void
+Wind_Disc::render_directions_3 (const RefPtr<Context> cr) const
+{
+
+   const Real delta_theta = 2*M_PI / number_of_directions;
+   const Real dt = delta_theta / 2;
+
+   const Point_2D& origin = transform_ptr->get_origin ();
+   const Real max_speed = transform_ptr->get_max_speed ();
+   const Real label_height = transform_ptr->get_label_height ();
+
+   const Real outer_r = transform_ptr->get_radius (max_speed) + label_height;
+   const Real middle_r = transform_ptr->get_radius (max_speed);
+   const Real inner_r = transform_ptr->get_calm_radius ();
+
+   const Color& color = shade_color;
+
+   cr->save ();
+   color.cairo (cr);
+
+   for (Integer i = 0; i < number_of_directions / 3; i++)
+   {
+
+      const Real theta = i * 3*delta_theta - M_PI/2;
+
+      const Real x = origin.x + middle_r * cos (theta - dt);
+      const Real y = origin.y + middle_r * sin (theta - dt);
+
+      cr->move_to (x, y);
+      cr->arc (origin.x, origin.y, inner_r, theta - dt, theta + dt);
+      cr->arc_negative (origin.x, origin.y, outer_r, theta + dt, theta - dt);
+      cr->fill ();
 
    }
 

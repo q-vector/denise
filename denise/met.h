@@ -784,6 +784,9 @@ namespace denise
          render_direction_labels (const RefPtr<Context> cr) const;
 
          void
+         render_directions_3 (const RefPtr<Context> cr) const;
+
+         void
          render_directions_even (const RefPtr<Context> cr) const;
 
          void
@@ -827,7 +830,7 @@ namespace denise
                     const Color& major_color = Color (0.0, 0.0, 0.0, 0.8),
                     const Color& middle_color = Color (0.2, 0.2, 0.2, 0.5),
                     const Color& minor_color = Color (0.4, 0.4, 0.4, 0.2),
-                    const Color& shade_color = Color (0.6, 0.6, 0.6, 0.2),
+                    const Color& shade_color = Color (0.6, 0.6, 0.6, 0.1),
                     const Real font_size = 12,
                     const Real scatter_ring_size = 10,
                     const Real calm_radius = 40,

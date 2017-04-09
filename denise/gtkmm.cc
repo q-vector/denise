@@ -2085,7 +2085,8 @@ void
 Spin_Button::add_token (const Dstring& token,
                         const bool clear_first)
 {
-   const Tokens tokens (token);
+   Tokens tokens;
+   tokens.push_back (token);
    add_tokens (tokens, clear_first);
 }
 
