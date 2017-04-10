@@ -515,8 +515,8 @@ namespace denise
          Thresholds
          get_thresholds (const Tuple& threshold_tuple) const;
 
-         static Real
-         get_multiplier (const Dstring& unit_string);
+         Real
+         get_multiplier () const;
 
       public:
 
@@ -718,6 +718,9 @@ namespace denise
                   Real& speed,
                   const Real x, 
                   const Real y) const;
+
+               Wind
+               get_wind (const Point_2D& point) const;
 
                const Point_2D&
                get_origin () const;

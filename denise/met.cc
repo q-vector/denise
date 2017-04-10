@@ -1011,7 +1011,7 @@ void
 Wind_Rose::init (const Dstring& unit_string)
 {
    this->unit_string = unit_string;
-   this->multiplier = get_multiplier (unit_string);
+   this->multiplier = get_multiplier ();
 }
 
 Wind_Rose::Thresholds
@@ -1033,7 +1033,7 @@ Wind_Rose::get_thresholds (const Tuple& threshold_tuple) const
 }
 
 Real
-Wind_Rose::get_multiplier (const Dstring& unit_string)
+Wind_Rose::get_multiplier () const
 {
    if (unit_string == "kt") { return 0.51444444; }
    if (unit_string == "m/s") { return 1; }
@@ -1063,7 +1063,7 @@ Wind_Rose::Wind_Rose (const Integer number_of_directions,
    if (threshold_vector_string == "beaufort")
    {
 
-      const Real multiplier = get_multiplier (unit_string);
+      const Real multiplier = get_multiplier ();
 
       thresholds.push_back (Wind_Rose::Threshold (0.51 / multiplier, "LT"));
       thresholds.push_back (Wind_Rose::Threshold (3.60 / multiplier, "MD"));
@@ -1081,7 +1081,7 @@ Wind_Rose::Wind_Rose (const Integer number_of_directions,
    {
 
       Wind_Rose::Thresholds thresholds;
-      const Real multiplier = get_multiplier (unit_string);
+      const Real multiplier = get_multiplier ();
 
       thresholds.push_back (Wind_Rose::Threshold (0.51 / multiplier, "F1"));
       thresholds.push_back (Wind_Rose::Threshold (1.54 / multiplier, "F2"));
@@ -1598,6 +1598,15 @@ Wind_Disc::Transform::r (Real& direction,
    const Real d = atan2 (dx, dy) * RADIAN_TO_DEGREE;
    direction = (d < 0 ? d + 360 : d);
    speed = get_speed (radius);
+}
+
+Wind
+Wind_Disc::Transform::get_wind (const Point_2D& point) const
+{
+   Real d, s;
+   r (d, s, point.x, point.y);
+   s *= wind_disc.get_multiplier ();
+   return Wind::direction_speed (d, s);
 }
 
 const Point_2D&
