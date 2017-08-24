@@ -2431,6 +2431,25 @@ Polygon::Polygon ()
 {
 }
 
+Polygon::Polygon (igzstream& file)
+   : first_handle_ptr (NULL),
+     domain_x (GSL_POSINF, GSL_NEGINF),
+     domain_y (GSL_POSINF, GSL_NEGINF),
+     min_edge_length (GSL_POSINF)
+{
+   bool new_handle = false;
+   for (Dstring is; getline (file, is); )
+   {
+      const Tokens tokens (is, " ");
+      if (tokens.size () < 2) { new_handle = true; continue; }
+      const Real x = stof (tokens[0]);
+      const Real y = stof (tokens[1]);
+      const Point_2D point (x, y);
+      add (point, new_handle);
+      new_handle = false;
+   }
+}
+
 Polygon::Polygon (const Dstring& str)
    : first_handle_ptr (NULL),
      domain_x (GSL_POSINF, GSL_NEGINF),

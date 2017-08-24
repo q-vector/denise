@@ -70,14 +70,11 @@ Dtime::init (const Dstring& time_string,
    if (time_string == "nat") { this->t = GSL_NAN; return; }
 
    struct tm tm_struct;
-   tm_struct.tm_min = 0; tm_struct.tm_sec = 0; tm_struct.tm_sec = 0;
-   tm_struct.tm_min = 0; tm_struct.tm_hour = 0; tm_struct.tm_mday = 0;
-   tm_struct.tm_mon = 0; tm_struct.tm_year = 0; tm_struct.tm_wday = 0;
-   tm_struct.tm_yday = 0; tm_struct.tm_isdst = 0;
+   tm_struct.tm_min = 0; tm_struct.tm_sec = 0; tm_struct.tm_hour = 0;
+   tm_struct.tm_mday = 0; tm_struct.tm_mon = 0; tm_struct.tm_year = 0;
+   tm_struct.tm_wday = 0; tm_struct.tm_yday = 0; tm_struct.tm_isdst = 0;
 
-   const string& ts = time_string.get_string ();
-   const string& fmt = format.get_string ();
-   strptime (ts.c_str (), fmt.c_str (), &tm_struct);
+   strptime (time_string.c_str (), format.c_str (), &tm_struct);
 
    if (tm_struct.tm_min < 0 || tm_struct.tm_min > 59) { tm_struct.tm_min = 0; }
    if (tm_struct.tm_sec < 0 || tm_struct.tm_sec > 61) { tm_struct.tm_sec = 0; }

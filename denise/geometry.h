@@ -34,6 +34,7 @@
 #include <denise/basics.h>
 #include <denise/cairoable.h>
 #include <denise/exception.h>
+#include <denise/gzstream.h>
 #include <denise/linalg.h>
 #include <denise/util.h>
 
@@ -776,6 +777,8 @@ namespace denise
       public:
 
          Polygon ();
+
+         Polygon (igzstream& file);
 
          Polygon (const Dstring& str);
 

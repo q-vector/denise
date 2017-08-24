@@ -243,6 +243,8 @@ namespace denise
 
    };
 
+   typedef Config_File Rc_File;
+
 }
 
 #endif /* DENISE_UTIL_H */

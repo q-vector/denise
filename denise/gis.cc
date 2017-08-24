@@ -105,7 +105,6 @@ Gshhs::Header::read (igzstream& file)
 
    uint8_t* temp_buffer = new uint8_t[old_size];
 
-
    file.read ((char*)temp_buffer, old_size);
    if ((file.rdstate () & igzstream::eofbit) != 0) { return false; }
 
