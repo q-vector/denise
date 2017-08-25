@@ -774,22 +774,23 @@ namespace denise
                        const Integer label_stride) const;
 
          void
-         init_a (const Field_2D& field_2d,
-                 const Integer vector_element,
-                 const Tuple& coordinate_tuple_x,
-                 const Tuple& coordinate_tuple_y);
+         workout_isolines (const Field_2D& field_2d,
+                           const Integer vector_element,
+                           const Tuple& coordinate_tuple_x,
+                           const Tuple& coordinate_tuple_y);
 
          void
-         init_a (const Field_2D& field_2d,
-                 const Scalarization_2d scalarization_2d,
-                 const Integer vector_element_0,
-                 const Integer vector_element_1,
-                 const Tuple& coordinate_tuple_x,
-                 const Tuple& coordinate_tuple_y);
+         workout_isolines (const Field_2D& field_2d,
+                           const Scalarization_2d scalarization_2d,
+                           const Integer vector_element_0,
+                           const Integer vector_element_1,
+                           const Tuple& coordinate_tuple_x,
+                           const Tuple& coordinate_tuple_y);
 
          void
-         init_b (const Tuple& level_tuple,
-                 const Real epsilon);
+         connect_isolines (const Tuple& level_tuple,
+                           const bool ignore_nan,
+                           const Real epsilon);
 
          void
          init (const Field_2D& field_2d,
@@ -797,6 +798,7 @@ namespace denise
                const Real step,
                const Tuple& coordinate_tuple_x,
                const Tuple& coordinate_tuple_y,
+               const bool ignore_nan,
                const Real epsilon);
 
          void
@@ -805,6 +807,7 @@ namespace denise
                const Tuple& level_tuple,
                const Tuple& coordinate_tuple_x,
                const Tuple& coordinate_tuple_y,
+               const bool ignore_nan,
                const Real epsilon);
 
          void
@@ -815,6 +818,7 @@ namespace denise
                const Real step,
                const Tuple& coordinate_tuple_x,
                const Tuple& coordinate_tuple_y,
+               const bool ignore_nan,
                const Real epsilon);
 
          void
@@ -825,6 +829,7 @@ namespace denise
                const Tuple& level_tuple,
                const Tuple& coordinate_tuple_x,
                const Tuple& coordinate_tuple_y,
+               const bool ignore_nan,
                const Real epsilon);
 
       public:
@@ -833,12 +838,14 @@ namespace denise
          Contour (const Data_2D& data_2d,
                   const Integer vector_element,
                   const Tuple& level_tuple,
+                  const bool ignore_nan = false,
                   const Real epsilon = GSL_NAN);
 
          // 2
          Contour (const Data_2D& data_2d,
                   const Integer vector_element,
                   const Real step,
+                  const bool ignore_nan = false,
                   const Real epsilon = GSL_NAN);
 
          // 3
@@ -846,6 +853,7 @@ namespace denise
                   const Integer vector_element,
                   const Tuple& level_tuple,
                   const Domain_2D& domain_2d,
+                  const bool ignore_nan = false,
                   const Real epsilon = GSL_NAN);
 
          // 4
@@ -853,6 +861,7 @@ namespace denise
                   const Integer vector_element,
                   const Real step,
                   const Domain_2D& domain_2d,
+                  const bool ignore_nan = false,
                   const Real epsilon = GSL_NAN);
 
          // 5
@@ -861,6 +870,7 @@ namespace denise
                   const Tuple& level_tuple,
                   const Tuple& coordinate_tuple_x,
                   const Tuple& coordinate_tuple_y,
+                  const bool ignore_nan = false,
                   const Real epsilon = GSL_NAN);
 
          // 6
@@ -869,6 +879,7 @@ namespace denise
                   const Real step,
                   const Tuple& coordinate_tuple_x,
                   const Tuple& coordinate_tuple_y,
+                  const bool ignore_nan = false,
                   const Real epsilon = GSL_NAN);
 
          // 7
@@ -877,6 +888,7 @@ namespace denise
                   const Tuple& level_tuple,
                   const Size_2D& size_2d,
                   const Domain_2D& domain_2d,
+                  const bool ignore_nan = false,
                   const Real epsilon = GSL_NAN);
 
          // 8
@@ -885,6 +897,7 @@ namespace denise
                   const Real step,
                   const Size_2D& size_2d,
                   const Domain_2D& domain_2d,
+                  const bool ignore_nan = false,
                   const Real epsilon = GSL_NAN);
 
          // 9
@@ -893,6 +906,7 @@ namespace denise
                   const Integer vector_element_0,
                   const Integer vector_element_1,
                   const Tuple& level_tuple,
+                  const bool ignore_nan = false,
                   const Real epsilon = GSL_NAN);
 
          // 10
@@ -901,6 +915,7 @@ namespace denise
                   const Integer vector_element_0,
                   const Integer vector_element_1,
                   const Real step,
+                  const bool ignore_nan = false,
                   const Real epsilon = GSL_NAN);
 
          // 11
@@ -910,6 +925,7 @@ namespace denise
                   const Integer vector_element_1,
                   const Tuple& level_tuple,
                   const Domain_2D& domain_2d,
+                  const bool ignore_nan = false,
                   const Real epsilon = GSL_NAN);
 
          // 12
@@ -919,6 +935,7 @@ namespace denise
                   const Integer vector_element_1,
                   const Real step,
                   const Domain_2D& domain_2d,
+                  const bool ignore_nan = false,
                   const Real epsilon = GSL_NAN);
 
          // 13
@@ -929,6 +946,7 @@ namespace denise
                   const Tuple& level_tuple,
                   const Tuple& coordinate_tuple_x,
                   const Tuple& coordinate_tuple_y,
+                  const bool ignore_nan = false,
                   const Real epsilon = GSL_NAN);
 
          // 14
@@ -939,28 +957,33 @@ namespace denise
                   const Real step,
                   const Tuple& coordinate_tuple_x,
                   const Tuple& coordinate_tuple_y,
+                  const bool ignore_nan = false,
                   const Real epsilon = GSL_NAN);
 
          // 15
          Contour (const Scalar_Data_2D& scalar_data_2d,
                   const Tuple& level_tuple,
+                  const bool ignore_nan = false,
                   const Real epsilon = GSL_NAN);
 
          // 16
          Contour (const Scalar_Data_2D& scalar_data_2d,
                   const Real step,
+                  const bool ignore_nan = false,
                   const Real epsilon = GSL_NAN);
 
          // 17
          Contour (const Scalar_Data_2D& scalar_data_2d,
                   const Tuple& level_tuple,
                   const Domain_2D& domain_2d,
+                  const bool ignore_nan = false,
                   const Real epsilon = GSL_NAN);
 
          // 18
          Contour (const Scalar_Data_2D& scalar_data_2d,
                   const Real step,
                   const Domain_2D& domain_2d,
+                  const bool ignore_nan = false,
                   const Real epsilon = GSL_NAN);
 
          // 19
@@ -968,6 +991,7 @@ namespace denise
                   const Tuple& level_tuple,
                   const Tuple& coordinate_tuple_x,
                   const Tuple& coordinate_tuple_y,
+                  const bool ignore_nan = false,
                   const Real epsilon = GSL_NAN);
 
          // 20
@@ -975,6 +999,7 @@ namespace denise
                   const Real step,
                   const Tuple& coordinate_tuple_x,
                   const Tuple& coordinate_tuple_y,
+                  const bool ignore_nan = false,
                   const Real epsilon = GSL_NAN);
 
          // 21
@@ -983,6 +1008,7 @@ namespace denise
                   const Tuple& level_tuple,
                   const Size_2D& size_2d,
                   const Domain_2D& domain_2d,
+                  const bool ignore_nan = false,
                   const Real epsilon = GSL_NAN);
 
          // 22
@@ -991,6 +1017,7 @@ namespace denise
                   const Real step,
                   const Size_2D& size_2d,
                   const Domain_2D& domain_2d,
+                  const bool ignore_nan = false,
                   const Real epsilon = GSL_NAN);
 
          ~Contour ();

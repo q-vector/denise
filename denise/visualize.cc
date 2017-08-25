@@ -2136,10 +2136,10 @@ Contour::render_label (const RefPtr<Context>& cr,
 
 // Basically patching up "naughty" grid values
 void
-Contour::init_a (const Field_2D& field_2d,
-                 const Integer vector_element,
-                 const Tuple& coordinate_tuple_x,
-                 const Tuple& coordinate_tuple_y)
+Contour::workout_isolines (const Field_2D& field_2d,
+                           const Integer vector_element,
+                           const Tuple& coordinate_tuple_x,
+                           const Tuple& coordinate_tuple_y)
 {
 
    const Tuple& tuple_x = coordinate_tuple_x;
@@ -2167,12 +2167,12 @@ Contour::init_a (const Field_2D& field_2d,
 
 // Basically patching up "naughty" grid values
 void
-Contour::init_a (const Field_2D& field_2d,
-                 const Scalarization_2d scalarization_2d,
-                 const Integer vector_element_0,
-                 const Integer vector_element_1,
-                 const Tuple& coordinate_tuple_x,
-                 const Tuple& coordinate_tuple_y)
+Contour::workout_isolines (const Field_2D& field_2d,
+                           const Scalarization_2d scalarization_2d,
+                           const Integer vector_element_0,
+                           const Integer vector_element_1,
+                           const Tuple& coordinate_tuple_x,
+                           const Tuple& coordinate_tuple_y)
 {
 
    const Field_2D& vf_2d = field_2d;
@@ -2232,8 +2232,9 @@ Contour::init_a (const Field_2D& field_2d,
 }
 
 void
-Contour::init_b (const Tuple& level_tuple,
-                 const Real epsilon)
+Contour::connect_isolines (const Tuple& level_tuple,
+                           const bool ignore_nan,
+                           const Real epsilon)
 {
 
    valid_polygon_ptr = NULL;
@@ -2270,12 +2271,15 @@ Contour::init_b (const Tuple& level_tuple,
 
    //valid_polygon_ptr = new Valid_Polygon (*scalar_data_2d_ptr);
 
-   const bool nil = (level_tuple.size () == 0);
-   const Real substitude = (nil ? 0 :
-      level_tuple.back () +
-      M_PI * (level_tuple.back () -
-       level_tuple.front ()));
-   substitude_nan (substitude);
+   if (!ignore_nan)
+   {
+      const bool nil = (level_tuple.size () == 0);
+      const Real substitude = (nil ? 0 :
+         level_tuple.back () +
+         M_PI * (level_tuple.back () -
+          level_tuple.front ()));
+      substitude_nan (substitude);
+   }
 
    for (Integer i = 0; i < tuple_x.size (); i++)
    {
@@ -2308,11 +2312,13 @@ Contour::init (const Field_2D& field_2d,
                const Real step,
                const Tuple& coordinate_tuple_x,
                const Tuple& coordinate_tuple_y,
+               const bool ignore_nan,
                const Real epsilon)
 {
 
    const Field_2D& vf_2d = field_2d;
-   init_a (vf_2d, vector_element, coordinate_tuple_x, coordinate_tuple_y);
+   workout_isolines (vf_2d, vector_element,
+      coordinate_tuple_x, coordinate_tuple_y);
 
    const Real start = min_value - modulo (min_value, step);
    const Real end = max_value - modulo (max_value, step) + step;
@@ -2328,7 +2334,7 @@ Contour::init (const Field_2D& field_2d,
       this->level_tuple = Tuple ();
    }
 
-   init_b (level_tuple, ep);
+   connect_isolines (level_tuple, ignore_nan, ep);
 
 }
 
@@ -2338,16 +2344,18 @@ Contour::init (const Field_2D& field_2d,
                const Tuple& level_tuple,
                const Tuple& coordinate_tuple_x,
                const Tuple& coordinate_tuple_y,
+               const bool ignore_nan,
                const Real epsilon)
 {
 
    const Field_2D& vf_2d = field_2d;
-   init_a (vf_2d, vector_element, coordinate_tuple_x, coordinate_tuple_y);
+   workout_isolines (vf_2d, vector_element,
+      coordinate_tuple_x, coordinate_tuple_y);
 
    const Real ep = (gsl_finite (epsilon) ? epsilon : 
       std::max (fabs (max_value), fabs (min_value)) * 1e-5);
 
-   init_b (level_tuple, ep);
+   connect_isolines (level_tuple, ignore_nan, ep);
 
 }
 
@@ -2359,10 +2367,11 @@ Contour::init (const Field_2D& field_2d,
                const Real step,
                const Tuple& coordinate_tuple_x,
                const Tuple& coordinate_tuple_y,
+               const bool ignore_nan,
                const Real epsilon)
 {
 
-   init_a (field_2d, scalarization_2d, vector_element_0,
+   workout_isolines (field_2d, scalarization_2d, vector_element_0,
       vector_element_1, coordinate_tuple_x, coordinate_tuple_y);
 
    const Real start = min_value - modulo (min_value, step);
@@ -2379,7 +2388,7 @@ Contour::init (const Field_2D& field_2d,
       this->level_tuple = Tuple ();
    }
 
-   init_b (level_tuple, epsilon);
+   connect_isolines (level_tuple, ignore_nan, epsilon);
 
 }
 
@@ -2391,16 +2400,17 @@ Contour::init (const Field_2D& field_2d,
                const Tuple& level_tuple,
                const Tuple& coordinate_tuple_x,
                const Tuple& coordinate_tuple_y,
+               const bool ignore_nan,
                const Real epsilon)
 {
 
-   init_a (field_2d, scalarization_2d, vector_element_0,
+   workout_isolines (field_2d, scalarization_2d, vector_element_0,
       vector_element_1, coordinate_tuple_x, coordinate_tuple_y);
 
    const Real ep = (gsl_finite (epsilon) ? epsilon : 
       std::max (fabs (max_value), fabs (min_value)) * 1e-5);
 
-   init_b (level_tuple, ep);
+   connect_isolines (level_tuple, ignore_nan, ep);
 
 }
 
@@ -2408,6 +2418,7 @@ Contour::init (const Field_2D& field_2d,
 Contour::Contour (const Data_2D& data_2d,
                   const Integer vector_element,
                   const Tuple& level_tuple,
+                  const bool ignore_nan,
                   const Real epsilon)
    : level_tuple (level_tuple),
      scalar_data_2d_ptr (NULL),
@@ -2422,7 +2433,7 @@ Contour::Contour (const Data_2D& data_2d,
    const Tuple& tuple_y = data_2d.get_coordinate_tuple (1);
 
    init (data_2d, vector_element, level_tuple,
-      tuple_x, tuple_y, epsilon);
+      tuple_x, tuple_y, ignore_nan, epsilon);
 
 }
 
@@ -2430,6 +2441,7 @@ Contour::Contour (const Data_2D& data_2d,
 Contour::Contour (const Data_2D& data_2d,
                   const Integer vector_element,
                   const Real step,
+                  const bool ignore_nan,
                   const Real epsilon)
    : scalar_data_2d_ptr (NULL),
      cell_ptrs (NULL),
@@ -2442,7 +2454,7 @@ Contour::Contour (const Data_2D& data_2d,
    const Tuple& tuple_x = data_2d.get_coordinate_tuple (0);
    const Tuple& tuple_y = data_2d.get_coordinate_tuple (1);
 
-   init (data_2d, vector_element, step, tuple_x, tuple_y, epsilon);
+   init (data_2d, vector_element, step, tuple_x, tuple_y, ignore_nan, epsilon);
 
 }
 
@@ -2451,6 +2463,7 @@ Contour::Contour (const Data_2D& data_2d,
                   const Integer vector_element,
                   const Tuple& level_tuple,
                   const Domain_2D& domain_2d,
+                  const bool ignore_nan,
                   const Real epsilon)
    : level_tuple (level_tuple),
      scalar_data_2d_ptr (NULL),
@@ -2496,7 +2509,7 @@ Contour::Contour (const Data_2D& data_2d,
    }
 
    init (data_2d, vector_element, level_tuple,
-      tuple_x, tuple_y, epsilon);
+      tuple_x, tuple_y, ignore_nan, epsilon);
 
 }
 
@@ -2505,6 +2518,7 @@ Contour::Contour (const Data_2D& data_2d,
                   const Integer vector_element,
                   const Real step,
                   const Domain_2D& domain_2d,
+                  const bool ignore_nan,
                   const Real epsilon)
    : scalar_data_2d_ptr (NULL),
      cell_ptrs (NULL),
@@ -2548,7 +2562,7 @@ Contour::Contour (const Data_2D& data_2d,
       }
    }
 
-   init (data_2d, vector_element, step, tuple_x, tuple_y, epsilon);
+   init (data_2d, vector_element, step, tuple_x, tuple_y, ignore_nan, epsilon);
 
 }
 
@@ -2558,6 +2572,7 @@ Contour::Contour (const Data_2D& data_2d,
                   const Tuple& level_tuple,
                   const Tuple& coordinate_tuple_x,
                   const Tuple& coordinate_tuple_y,
+                  const bool ignore_nan,
                   const Real epsilon)
    : level_tuple (level_tuple),
      scalar_data_2d_ptr (NULL),
@@ -2568,7 +2583,7 @@ Contour::Contour (const Data_2D& data_2d,
      valid_polygon_ptr (NULL)
 {
    init (data_2d, vector_element, level_tuple,
-      coordinate_tuple_x, coordinate_tuple_y, epsilon);
+      coordinate_tuple_x, coordinate_tuple_y, ignore_nan, epsilon);
 }
 
 // 6
@@ -2577,6 +2592,7 @@ Contour::Contour (const Data_2D& data_2d,
                   const Real step,
                   const Tuple& coordinate_tuple_x,
                   const Tuple& coordinate_tuple_y,
+                  const bool ignore_nan,
                   const Real epsilon)
    : scalar_data_2d_ptr (NULL),
      cell_ptrs (NULL),
@@ -2586,7 +2602,7 @@ Contour::Contour (const Data_2D& data_2d,
      valid_polygon_ptr (NULL)
 {
    init (data_2d, vector_element, step, coordinate_tuple_x,
-      coordinate_tuple_y, epsilon);
+      coordinate_tuple_y, ignore_nan, epsilon);
 }
 
 // 7
@@ -2595,6 +2611,7 @@ Contour::Contour (const Data_2D& data_2d,
                   const Tuple& level_tuple,
                   const Size_2D& size_2d,
                   const Domain_2D& domain_2d,
+                  const bool ignore_nan,
                   const Real epsilon)
    : level_tuple (level_tuple),
      scalar_data_2d_ptr (NULL),
@@ -2617,7 +2634,7 @@ Contour::Contour (const Data_2D& data_2d,
    const Tuple tuple_y = Tuple (size_2d.j, start_y, end_y);
 
    init (data_2d, vector_element, level_tuple,
-      tuple_x, tuple_y, epsilon);
+      tuple_x, tuple_y, ignore_nan, epsilon);
 
 }
 
@@ -2627,6 +2644,7 @@ Contour::Contour (const Data_2D& data_2d,
                   const Real step,
                   const Size_2D& size_2d,
                   const Domain_2D& domain_2d,
+                  const bool ignore_nan,
                   const Real epsilon)
    : scalar_data_2d_ptr (NULL),
      cell_ptrs (NULL),
@@ -2648,7 +2666,7 @@ Contour::Contour (const Data_2D& data_2d,
    const Tuple tuple_y = Tuple (size_2d.j, start_y, end_y);
 
    init (data_2d, vector_element, step,
-      tuple_x, tuple_y, epsilon);
+      tuple_x, tuple_y, ignore_nan, epsilon);
 
 }
 
@@ -2658,6 +2676,7 @@ Contour::Contour (const Data_2D& data_2d,
                   const Integer vector_element_0,
                   const Integer vector_element_1,
                   const Tuple& level_tuple,
+                  const bool ignore_nan,
                   const Real epsilon)
    : level_tuple (level_tuple),
      scalar_data_2d_ptr (NULL),
@@ -2673,7 +2692,7 @@ Contour::Contour (const Data_2D& data_2d,
 
    init (data_2d, scalarization_2d, vector_element_0,
       vector_element_1, level_tuple, tuple_x, tuple_y,
-      epsilon);
+      ignore_nan, epsilon);
 
 }
 
@@ -2683,6 +2702,7 @@ Contour::Contour (const Data_2D& data_2d,
                   const Integer vector_element_0,
                   const Integer vector_element_1,
                   const Real step,
+                  const bool ignore_nan,
                   const Real epsilon)
    : scalar_data_2d_ptr (NULL),
      cell_ptrs (NULL),
@@ -2696,7 +2716,7 @@ Contour::Contour (const Data_2D& data_2d,
    const Tuple& tuple_y = data_2d.get_coordinate_tuple (1);
 
    init (data_2d, scalarization_2d, vector_element_0,
-      vector_element_1, step, tuple_x, tuple_y, epsilon);
+      vector_element_1, step, tuple_x, tuple_y, ignore_nan, epsilon);
 
 }
 
@@ -2707,6 +2727,7 @@ Contour::Contour (const Data_2D& data_2d,
                   const Integer vector_element_1,
                   const Tuple& level_tuple,
                   const Domain_2D& domain_2d,
+                  const bool ignore_nan,
                   const Real epsilon)
    : level_tuple (level_tuple),
      scalar_data_2d_ptr (NULL),
@@ -2753,7 +2774,7 @@ Contour::Contour (const Data_2D& data_2d,
 
    init (data_2d, scalarization_2d, vector_element_0,
       vector_element_1, level_tuple, tuple_x, tuple_y,
-      epsilon);
+      ignore_nan, epsilon);
 
 }
 
@@ -2764,6 +2785,7 @@ Contour::Contour (const Data_2D& data_2d,
                   const Integer vector_element_1,
                   const Real step,
                   const Domain_2D& domain_2d,
+                  const bool ignore_nan,
                   const Real epsilon)
    : scalar_data_2d_ptr (NULL),
      cell_ptrs (NULL),
@@ -2809,7 +2831,7 @@ Contour::Contour (const Data_2D& data_2d,
 
    init (data_2d, scalarization_2d, vector_element_0,
       vector_element_1, step, tuple_x, tuple_y,
-      epsilon);
+      ignore_nan, epsilon);
 
 }
 
@@ -2821,6 +2843,7 @@ Contour::Contour (const Data_2D& data_2d,
                   const Tuple& level_tuple,
                   const Tuple& coordinate_tuple_x,
                   const Tuple& coordinate_tuple_y,
+                  const bool ignore_nan,
                   const Real epsilon)
    : level_tuple (level_tuple),
      scalar_data_2d_ptr (NULL),
@@ -2832,7 +2855,7 @@ Contour::Contour (const Data_2D& data_2d,
 {
    init (data_2d, scalarization_2d, vector_element_0,
       vector_element_1, level_tuple, coordinate_tuple_x,
-      coordinate_tuple_y, epsilon);
+      coordinate_tuple_y, ignore_nan, epsilon);
 }
 
 // 14
@@ -2843,6 +2866,7 @@ Contour::Contour (const Data_2D& data_2d,
                   const Real step,
                   const Tuple& coordinate_tuple_x,
                   const Tuple& coordinate_tuple_y,
+                  const bool ignore_nan,
                   const Real epsilon)
    : scalar_data_2d_ptr (NULL),
      cell_ptrs (NULL),
@@ -2853,12 +2877,13 @@ Contour::Contour (const Data_2D& data_2d,
 {
    init (data_2d, scalarization_2d, vector_element_0,
       vector_element_1, step, coordinate_tuple_x,
-      coordinate_tuple_y, epsilon);
+      coordinate_tuple_y, ignore_nan, epsilon);
 }
 
 // 15
 Contour::Contour (const Scalar_Data_2D& scalar_data_2d,
                   const Tuple& level_tuple,
+                  const bool ignore_nan,
                   const Real epsilon)
    : level_tuple (level_tuple),
      scalar_data_2d_ptr (NULL),
@@ -2872,13 +2897,15 @@ Contour::Contour (const Scalar_Data_2D& scalar_data_2d,
    const Tuple& tuple_x = scalar_data_2d.get_coordinate_tuple (0);
    const Tuple& tuple_y = scalar_data_2d.get_coordinate_tuple (1);
 
-   init ((const Field_2D&)scalar_data_2d, 0, level_tuple, tuple_x, tuple_y, epsilon);
+   init ((const Field_2D&)scalar_data_2d, 0, level_tuple,
+      tuple_x, tuple_y, ignore_nan, epsilon);
 
 }
 
 // 16
 Contour::Contour (const Scalar_Data_2D& scalar_data_2d,
                   const Real step,
+                  const bool ignore_nan,
                   const Real epsilon)
    : scalar_data_2d_ptr (NULL),
      cell_ptrs (NULL),
@@ -2891,7 +2918,7 @@ Contour::Contour (const Scalar_Data_2D& scalar_data_2d,
    const Tuple& tuple_x = scalar_data_2d.get_coordinate_tuple (0);
    const Tuple& tuple_y = scalar_data_2d.get_coordinate_tuple (1);
 
-   init (scalar_data_2d, 0, step, tuple_x, tuple_y, epsilon);
+   init (scalar_data_2d, 0, step, tuple_x, tuple_y, ignore_nan, epsilon);
 
 }
 
@@ -2899,6 +2926,7 @@ Contour::Contour (const Scalar_Data_2D& scalar_data_2d,
 Contour::Contour (const Scalar_Data_2D& scalar_data_2d,
                   const Tuple& level_tuple,
                   const Domain_2D& domain_2d,
+                  const bool ignore_nan,
                   const Real epsilon)
    : level_tuple (level_tuple),
      scalar_data_2d_ptr (NULL),
@@ -2943,7 +2971,7 @@ Contour::Contour (const Scalar_Data_2D& scalar_data_2d,
       }
    }
 
-   init (scalar_data_2d, 0, level_tuple, tuple_x, tuple_y, epsilon);
+   init (scalar_data_2d, 0, level_tuple, tuple_x, tuple_y, ignore_nan, epsilon);
 
 }
 
@@ -2951,6 +2979,7 @@ Contour::Contour (const Scalar_Data_2D& scalar_data_2d,
 Contour::Contour (const Scalar_Data_2D& scalar_data_2d,
                   const Real step,
                   const Domain_2D& domain_2d,
+                  const bool ignore_nan,
                   const Real epsilon)
    : scalar_data_2d_ptr (NULL),
      cell_ptrs (NULL),
@@ -2994,7 +3023,7 @@ Contour::Contour (const Scalar_Data_2D& scalar_data_2d,
       }
    }
 
-   init (scalar_data_2d, 0, step, tuple_x, tuple_y, epsilon);
+   init (scalar_data_2d, 0, step, tuple_x, tuple_y, ignore_nan, epsilon);
 
 }
 
@@ -3003,6 +3032,7 @@ Contour::Contour (const Scalar_Data_2D& scalar_data_2d,
                   const Tuple& level_tuple,
                   const Tuple& coordinate_tuple_x,
                   const Tuple& coordinate_tuple_y,
+                  const bool ignore_nan,
                   const Real epsilon)
    : level_tuple (level_tuple),
      scalar_data_2d_ptr (NULL),
@@ -3013,7 +3043,7 @@ Contour::Contour (const Scalar_Data_2D& scalar_data_2d,
      valid_polygon_ptr (NULL)
 {
    init (scalar_data_2d, 0, level_tuple, coordinate_tuple_x,
-      coordinate_tuple_y, epsilon);
+      coordinate_tuple_y, ignore_nan, epsilon);
 }
 
 // 20
@@ -3021,6 +3051,7 @@ Contour::Contour (const Scalar_Data_2D& scalar_data_2d,
                   const Real step,
                   const Tuple& coordinate_tuple_x,
                   const Tuple& coordinate_tuple_y,
+                  const bool ignore_nan,
                   const Real epsilon)
    : scalar_data_2d_ptr (NULL),
      cell_ptrs (NULL),
@@ -3030,7 +3061,7 @@ Contour::Contour (const Scalar_Data_2D& scalar_data_2d,
      valid_polygon_ptr (NULL)
 {
    init (scalar_data_2d, 0, step, coordinate_tuple_x,
-      coordinate_tuple_y, epsilon);
+      coordinate_tuple_y, ignore_nan, epsilon);
 }
 
 // 21
@@ -3039,6 +3070,7 @@ Contour::Contour (const Field_2D& field_2d,
                   const Tuple& level_tuple,
                   const Size_2D& size_2d,
                   const Domain_2D& domain_2d,
+                  const bool ignore_nan,
                   const Real epsilon)
    : level_tuple (level_tuple),
      scalar_data_2d_ptr (NULL),
@@ -3061,7 +3093,7 @@ Contour::Contour (const Field_2D& field_2d,
    const Tuple tuple_y = Tuple (size_2d.j, start_y, end_y);
 
    init (field_2d, vector_element, level_tuple,
-      tuple_x, tuple_y, epsilon);
+      tuple_x, tuple_y, ignore_nan, epsilon);
 
 }
 
@@ -3071,6 +3103,7 @@ Contour::Contour (const Field_2D& field_2d,
                   const Real step,
                   const Size_2D& size_2d,
                   const Domain_2D& domain_2d,
+                  const bool ignore_nan,
                   const Real epsilon)
    : scalar_data_2d_ptr (NULL),
      cell_ptrs (NULL),
@@ -3091,7 +3124,7 @@ Contour::Contour (const Field_2D& field_2d,
    const Tuple tuple_x = Tuple (size_2d.i, start_x, end_x);
    const Tuple tuple_y = Tuple (size_2d.j, start_y, end_y);
 
-   init (field_2d, vector_element, step, tuple_x, tuple_y, epsilon);
+   init (field_2d, vector_element, step, tuple_x, tuple_y, ignore_nan, epsilon);
 
 }
 
